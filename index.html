@@ -1319,7 +1319,7 @@ function renderPressupostosEdit(){
   const borderColor=bloquejat?'var(--amber)':'var(--green)';
   const iconClass=bloquejat?'ti-lock':'ti-lock-open';
   const titleColor=bloquejat?'var(--amber-text)':'var(--green-text)';
-  const titleText=bloquejat?'Pressupost bloquejat i aprovat':'Pressupost obert - en fase d\'elaboració';
+  const titleText=bloquejat?'Pressupost bloquejat i aprovat':'Pressupost obert - en fase elaboracio';
   const subText=bloquejat?('Bloquejat per '+DB.pres_config.bloquejatPer+' el '+DB.pres_config.data):'Els responsables poden introduir i modificar els imports planificats';
   const btnHtml=canLock?('<button class="btn '+(bloquejat?'':'btn-primary')+'" onclick="'+(bloquejat?'desbloquejarpres()':'bloquejarPres()')+'" style="font-size:12px;flex-shrink:0"><i class="ti '+(bloquejat?'ti-lock-open':'ti-lock')+'"></i> '+(bloquejat?'Desbloquejar':'Bloquejar i aprovar')+'</button>'):'';
   document.getElementById('pres-estat-bar').innerHTML=
