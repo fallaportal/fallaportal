@@ -157,6 +157,19 @@ tr:hover td{background:var(--bg2)}
   </div>
 </div>
 
+<div id="noauth-screen" class="hidden" style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--bg3)">
+  <div style="background:var(--bg);border:0.5px solid var(--border);border-radius:var(--rl);padding:40px;text-align:center;max-width:400px;width:90%">
+    <i class="ti ti-lock" style="font-size:48px;color:var(--red);margin-bottom:16px;display:block"></i>
+    <div style="font-size:18px;font-weight:500;margin-bottom:10px">Accés no autoritzat</div>
+    <div style="font-size:13px;color:var(--text2);margin-bottom:24px;line-height:1.6">
+      No tens accés a aquesta aplicació.<br>
+      Contacta amb IT de la Falla Portal per sol·licitar accés.
+    </div>
+    <div style="font-size:12px;color:var(--text3);background:var(--bg2);padding:8px 14px;border-radius:var(--r);margin-bottom:20px" id="noauth-email"></div>
+    <button class="btn" onclick="signOut()" style="width:100%;justify-content:center"><i class="ti ti-logout"></i> Tancar sessió</button>
+  </div>
+</div>
+
 <div id="app" class="hidden">
   <div class="sidebar">
     <div class="sb-logo">
@@ -397,7 +410,8 @@ const ROLES={
   treasury:{label:'Tresoreria',color:'p-info',canRegister:true,canFons:true,canImport:true,canConfig:true,canUsers:false,viewAll:true},
   area:{label:"Resp. d'Àrea",color:'p-ok',canRegister:true,canFons:false,canImport:false,canConfig:false,canUsers:false,viewAll:false},
   delegat:{label:'Resp. Delegació',color:'p-warn',canRegister:true,canFons:false,canImport:false,canConfig:false,canUsers:false,viewAll:false},
-  board:{label:'Junta (lectura)',color:'p-danger',canRegister:false,canFons:false,canImport:false,canConfig:false,canUsers:false,viewAll:true}
+  board:{label:'Junta (lectura)',color:'p-danger',canRegister:false,canFons:false,canImport:false,canConfig:false,canUsers:false,viewAll:true},
+  noauth:{label:'No autoritzat',color:'p-danger',canRegister:false,canFons:false,canImport:false,canConfig:false,canUsers:false,viewAll:false}
 };
 
 let tokenClient=null,accessToken=null,currentUser=null;
@@ -584,8 +598,8 @@ function getUsuari(){
   // Si no hi ha usuaris configurats, el primer que entra és president
   if(!DB.config.usuaris||DB.config.usuaris.length===0)
     return{id:'sys',nom:currentUser.name,email,rol:'president',arees:[],delegacions:[]};
-  // Email no reconegut = lectura
-  return{id:'guest',nom:currentUser.name,email,rol:'board',arees:[],delegacions:[]};
+  // Email no reconegut = no autoritzat
+  return{id:'guest',nom:currentUser.name,email,rol:'noauth',arees:[],delegacions:[]};
 }
 
 function getRol(){const u=getUsuari();return u?u.rol:'delegat';}
@@ -632,6 +646,13 @@ function buildNav(){
 }
 
 function initApp(){
+  const rol=getRol();
+  if(rol==='noauth'){
+    document.getElementById('login-screen').classList.add('hidden');
+    document.getElementById('noauth-screen').classList.remove('hidden');
+    document.getElementById('noauth-email').textContent='Email: '+currentUser.email;
+    return;
+  }
   document.getElementById('login-screen').classList.add('hidden');
   document.getElementById('app').classList.remove('hidden');
   const u=getUsuari();
