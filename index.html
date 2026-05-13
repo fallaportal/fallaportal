@@ -161,23 +161,24 @@ tr:hover td{background:var(--bg2)}
 .saldo-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;font-size:13px;border-bottom:0.5px solid var(--border)}
 .saldo-row:last-child{border-bottom:none;padding-top:10px;font-size:15px;font-weight:500}
 .fons-av{width:36px;height:36px;border-radius:50%;background:var(--blue-bg);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:var(--blue-text);flex-shrink:0}
-.mov-form{max-width:500px;display:flex;flex-direction:column;gap:8px;padding-bottom:16px}
-.mov-top{display:flex;align-items:center;gap:10px;margin-bottom:2px}
-.mov-top .type-toggle{display:grid;grid-template-columns:1fr 1fr;gap:5px;width:180px}
-.mov-import-big{flex:1;font-size:28px;font-weight:600;text-align:right;padding:8px 12px;border:0.5px solid var(--border2);border-radius:var(--r);background:var(--bg);color:var(--text);outline:none}
+.mov-form{max-width:500px;display:flex;flex-direction:column;gap:12px;padding-bottom:24px}
+.mov-top{display:flex;align-items:stretch;gap:12px;margin-bottom:2px}
+.mov-top .type-toggle{display:grid;grid-template-columns:1fr 1fr;gap:6px;flex:0 0 auto}
+.mov-top .type-btn{font-size:14px;padding:12px 10px}
+.mov-import-big{flex:1;font-size:32px;font-weight:600;text-align:right;padding:10px 14px;border:0.5px solid var(--border2);border-radius:var(--r);background:var(--bg);color:var(--text);outline:none;min-width:0}
 .mov-import-big:focus{border-color:var(--blue)}
-.mov-via-row{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:5px}
-.mov-via-row .via-btn{padding:7px 4px;font-size:12px;justify-content:center;flex-direction:column;gap:2px;text-align:center}
-.mov-via-row .via-btn i{font-size:18px}
-.mov-row2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.mov-field{display:flex;flex-direction:column;gap:3px}
-.mov-field label{font-size:12px;color:var(--text2);font-weight:500}
-.mov-field input,.mov-field select,.mov-field textarea{font-size:14px;padding:7px 10px;border:0.5px solid var(--border2);border-radius:var(--r);background:var(--bg);color:var(--text);outline:none;font-family:inherit}
+.mov-via-row{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.mov-via-row .via-btn{padding:12px 6px;font-size:11px;justify-content:center;flex-direction:column;align-items:center;gap:4px;text-align:center;border-radius:var(--r)}
+.mov-via-row .via-btn i{font-size:22px}
+.mov-row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.mov-field{display:flex;flex-direction:column;gap:5px}
+.mov-field label{font-size:13px;color:var(--text2);font-weight:500}
+.mov-field input,.mov-field select,.mov-field textarea{font-size:15px;padding:10px 12px;border:0.5px solid var(--border2);border-radius:var(--r);background:var(--bg);color:var(--text);outline:none;font-family:inherit}
 .mov-field input:focus,.mov-field select:focus,.mov-field textarea:focus{border-color:var(--blue)}
 .opt-label{font-size:11px;color:var(--text3);font-weight:400}
 @media(max-width:768px){
-  .mov-top .type-toggle{width:160px}
-  .mov-top .type-btn{font-size:13px;padding:8px 6px}
+  .mov-top .type-btn{font-size:13px;padding:10px 8px}
+  .mov-via-row .via-btn i{font-size:20px}
 }
 .tag-multi{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
 .info-box{padding:10px 12px;background:var(--blue-bg);border-radius:var(--r);font-size:12px;color:var(--blue-text);margin-bottom:12px}
@@ -263,10 +264,10 @@ tr:hover td{background:var(--bg2)}
 
         <!-- Via -->
         <div class="mov-via-row">
-          <button class="via-btn active" id="via-efectiu" onclick="setVia('Efectiu')"><i class="ti ti-wallet"></i> Efectiu</button>
-          <button class="via-btn" id="via-b1" onclick="setVia('01 Banc')"><i class="ti ti-building-bank"></i> <span id="via-b1-name">Caixabank</span></button>
-          <button class="via-btn" id="via-b2" onclick="setVia('02 Banc')"><i class="ti ti-building-bank"></i> <span id="via-b2-name">Caixa Popular</span></button>
-          <button class="via-btn" id="via-tpv" onclick="setVia('TPV')"><i class="ti ti-credit-card"></i> TPV</button>
+          <button class="via-btn active" id="via-efectiu" onclick="setVia('Efectiu')"><i class="ti ti-wallet"></i><span>Efectiu</span></button>
+          <button class="via-btn" id="via-b1" onclick="setVia('01 Banc')"><i class="ti ti-building-bank"></i><span id="via-b1-name">Banc 1</span></button>
+          <button class="via-btn" id="via-b2" onclick="setVia('02 Banc')"><i class="ti ti-building-bank"></i><span id="via-b2-name">Banc 2</span></button>
+          <button class="via-btn" id="via-tpv" onclick="setVia('TPV')"><i class="ti ti-credit-card"></i><span>TPV</span></button>
         </div>
 
         <!-- Àrea + Delegació -->
@@ -414,6 +415,7 @@ tr:hover td{background:var(--bg2)}
       <div id="cfg-events" class="hidden"></div>
       <div id="cfg-bancs" class="hidden"></div>
       <div id="cfg-rols" class="hidden"></div>
+      <div id="cfg-regles" class="hidden"></div>
       <div id="cfg-usuaris" class="hidden"></div>
     </div>
   </div>
@@ -422,15 +424,15 @@ tr:hover td{background:var(--bg2)}
 <nav class="mobile-nav" id="mobile-nav">
   <div class="mob-item active" id="mob-dashboard" onclick="showPageMob('dashboard','mob-dashboard')"><i class="ti ti-home"></i>Inici</div>
   <div class="mob-item" id="mob-moviments" onclick="showPageMob('moviments','mob-moviments')"><i class="ti ti-plus"></i>Moviment</div>
-  <div class="mob-item" id="mob-historial" onclick="showPageMob('historial','mob-historial')"><i class="ti ti-list"></i>Historial</div>
-  <div class="mob-item" id="mob-pressupostos" onclick="showPageMob('pressupostos-edit','mob-pressupostos')"><i class="ti ti-chart-bar"></i>Pres.</div>
+  <div class="mob-item" id="mob-fons" onclick="showPageMob('lliurament','mob-fons')"><i class="ti ti-arrow-down-left"></i>Fons</div>
+  <div class="mob-item" id="mob-tancament" onclick="showPageMob('tancament','mob-tancament')"><i class="ti ti-lock"></i>Caixa</div>
   <div class="mob-item" id="mob-mes" onclick="showMobMenu()"><i class="ti ti-dots"></i>Més</div>
 </nav>
 
 <div id="mob-menu-overlay" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:250" onclick="closeMobMenu()"></div>
 <div id="mob-menu" class="hidden" style="position:fixed;bottom:56px;left:0;right:0;background:var(--bg);border-top:0.5px solid var(--border);z-index:260;padding:8px 0">
-  <div onclick="showPageMob('lliurament','');closeMobMenu()" style="padding:12px 20px;font-size:14px;display:flex;align-items:center;gap:12px;cursor:pointer"><i class="ti ti-arrow-down-left" style="font-size:18px;color:var(--text2)"></i> Fons delegats</div>
-  <div onclick="showPageMob('tancament','');closeMobMenu()" style="padding:12px 20px;font-size:14px;display:flex;align-items:center;gap:12px;cursor:pointer"><i class="ti ti-lock" style="font-size:18px;color:var(--text2)"></i> Tancament caixa</div>
+  <div onclick="showPageMob('historial','');closeMobMenu()" style="padding:12px 20px;font-size:14px;display:flex;align-items:center;gap:12px;cursor:pointer"><i class="ti ti-list" style="font-size:18px;color:var(--text2)"></i> Historial</div>
+  <div onclick="showPageMob('pressupostos-edit','');closeMobMenu()" style="padding:12px 20px;font-size:14px;display:flex;align-items:center;gap:12px;cursor:pointer"><i class="ti ti-chart-bar" style="font-size:18px;color:var(--text2)"></i> Pressupostos</div>
   <div onclick="showPageMob('resultats','');closeMobMenu()" style="padding:12px 20px;font-size:14px;display:flex;align-items:center;gap:12px;cursor:pointer"><i class="ti ti-file-text" style="font-size:18px;color:var(--text2)"></i> Estat de Resultats</div>
   <div onclick="showPageMob('flux','');closeMobMenu()" style="padding:12px 20px;font-size:14px;display:flex;align-items:center;gap:12px;cursor:pointer"><i class="ti ti-arrows-exchange" style="font-size:18px;color:var(--text2)"></i> Flux d'Efectiu</div>
   <div onclick="showPageMob('manual','');closeMobMenu()" style="padding:12px 20px;font-size:14px;display:flex;align-items:center;gap:12px;cursor:pointer"><i class="ti ti-help-circle" style="font-size:18px;color:var(--text2)"></i> Manual d'usuari</div>
@@ -527,6 +529,64 @@ tr:hover td{background:var(--bg2)}
     <div class="modal-footer">
       <button class="btn" onclick="closeModal('modal-pres')">Cancel·lar</button>
       <button class="btn btn-primary" onclick="savePresPla()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-regla">
+  <div class="modal">
+    <div class="modal-title" id="mr-title">Nova regla de mapeig</div>
+    <div class="field-row">
+      <div class="field">
+        <label>Font de dades</label>
+        <select id="mr-font">
+          <option value="b1">Caixabank</option>
+          <option value="b2">Caixa Popular</option>
+          <option value="app">falles.app</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Prioritat <span style="color:var(--text3);font-size:11px">(1=màxima)</span></label>
+        <input type="number" id="mr-prioritat" value="10" min="1" max="99" style="width:80px">
+      </div>
+    </div>
+    <div class="field">
+      <label>Patrons <span style="color:var(--text3);font-size:12px">(paraules separades per comes)</span></label>
+      <input type="text" id="mr-patrons" placeholder="p.e. HIDRAQUA,HIDRAQUA GENERAL">
+    </div>
+    <div class="field">
+      <label>Tipus de regla</label>
+      <select id="mr-tipus" onchange="updateMrTipus()">
+        <option value="auto">Assignació automàtica a delegació/concepte</option>
+        <option value="tpv">Conciliació TPV</option>
+        <option value="ignore">Ignorar aquest moviment</option>
+      </select>
+    </div>
+    <div id="mr-dest-fields">
+      <div class="field-row">
+        <div class="field">
+          <label>Àrea</label>
+          <select id="mr-area" onchange="onMrAreaChange()">
+            <option value="">— Selecciona —</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Delegació</label>
+          <select id="mr-deleg"><option value="">— Primer àrea —</option></select>
+        </div>
+      </div>
+      <div class="field">
+        <label>Concepte <span style="color:var(--text3);font-size:11px">(opcional)</span></label>
+        <input type="text" id="mr-concepte" placeholder="p.e. Llum, Assegurances...">
+      </div>
+    </div>
+    <div class="field" style="display:flex;align-items:center;gap:10px">
+      <input type="checkbox" id="mr-activa" checked style="width:auto;margin:0">
+      <label for="mr-activa" style="margin:0;cursor:pointer">Regla activa</label>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('modal-regla')">Cancel·lar</button>
+      <button class="btn btn-primary" onclick="saveRegla()">Guardar regla</button>
     </div>
   </div>
 </div>
@@ -730,7 +790,7 @@ let DB={
     ],
     usuaris:[]
   },
-  moviments:[],fons:[],tancaments:{},pres_plans:[],pres_config:{any:'26/27',estat:'obert',bloquejatPer:'',bloquejatEmail:'',data:''},pres_historial:[]
+  moviments:[],fons:[],tancaments:{},pres_plans:[],pres_config:{any:'26/27',estat:'obert',bloquejatPer:'',bloquejatEmail:'',data:''},pres_historial:[],regles:[]
 };
 
 const fmt=v=>Math.abs(v).toLocaleString('ca-ES',{maximumFractionDigits:0})+' €';
@@ -799,18 +859,19 @@ async function loadUserInfo(){
 const SHEETS_API='https://sheets.googleapis.com/v4/spreadsheets/'+SHEET_ID;
 
 const TABS={
-  moviments:{name:'moviments',headers:['id','data','tipus','via','areaId','areaNom','delegacioId','delegacioNom','eventId','eventNom','concepte','establiment','responsable','responsableEmail','import','notes']},
-  fons:{name:'fons',headers:['id','data','tipus','delegId','delegEmail','import','nota','registratPer']},
-  tancaments:{name:'tancaments',headers:['eventId','eventNom','data','efectiu','tpv','tancat','registratPer']},
-  arees:{name:'arees',headers:['id','nom','responsable']},
-  delegacions:{name:'delegacions',headers:['id','areaId','nom','responsable']},
-  events:{name:'events',headers:['id','delegId','nom','year','responsable','status']},
-  bancs:{name:'bancs',headers:['id','codi','nom','tipus']},
-  usuaris:{name:'usuaris',headers:['id','nom','email','rol']},
-  usuaris_assignacions:{name:'usuaris_assignacions',headers:['userId','userNom','tipus','id','nom']},
-  pres_plans:{name:'pres_plans',headers:['any','delegacioId','delegacioNom','eventId','eventNom','concepte','tipus','importPla','notes']},
-  pres_config:{name:'pres_config',headers:['any','estat','bloquejatPer','bloquejatEmail','data']},
-  pres_historial:{name:'pres_historial',headers:['data','accio','any','usuari','email','motiu']}
+  moviments:{name:'01 Moviments',headers:['id','data','tipus','via','areaId','areaNom','delegacioId','delegacioNom','eventId','eventNom','concepte','establiment','responsable','responsableEmail','import','notes']},
+  fons:{name:'02 Fons',headers:['id','data','tipus','delegId','delegEmail','import','nota','registratPer']},
+  tancaments:{name:'03 Tancaments',headers:['eventId','eventNom','data','efectiu','tpv','tancat','registratPer']},
+  arees:{name:'04 Arees',headers:['id','nom','responsable']},
+  delegacions:{name:'05 Delegacions',headers:['id','areaId','nom','responsable']},
+  events:{name:'06 Events',headers:['id','delegId','nom','year','responsable','status']},
+  bancs:{name:'07 Bancs',headers:['id','codi','nom','tipus']},
+  usuaris:{name:'08 Usuaris',headers:['id','nom','email','rol']},
+  usuaris_assignacions:{name:'09 Usuaris Assignacions',headers:['userId','userNom','tipus','id','nom']},
+  pres_plans:{name:'10 Pressupostos Plans',headers:['any','delegacioId','delegacioNom','eventId','eventNom','concepte','tipus','importPla','notes']},
+  pres_config:{name:'11 Pressupostos Config',headers:['any','estat','bloquejatPer','bloquejatEmail','data']},
+  pres_historial:{name:'12 Pressupostos Historial',headers:['data','accio','any','usuari','email','motiu']},
+  regles:{name:'13 Regles CSV',headers:['id','font','patrons','areaId','areaNom','delegacioId','delegacioNom','concepte','tipus','movtype','prioritat','activa']}
 };
 
 async function sheetsReq(method,url,body=null){
@@ -980,6 +1041,9 @@ async function loadFromSheets(){
   DB.pres_historial=presHistRows;
   const presConfigRows=await readTab('pres_config');
   if(presConfigRows.length>0)DB.pres_config=presConfigRows[presConfigRows.length-1];
+  const reglesRows=await readTab('regles');
+  DB.regles=reglesRows.map(r=>({...r,prioritat:parseInt(r.prioritat)||10,activa:r.activa!=='false'}));
+  if(!DB.regles.length)DB.regles=getDefaultRegles();
 }
 
 async function save(key){
@@ -1000,6 +1064,8 @@ async function save(key){
       await writeTab('bancs',TABS.bancs.headers,bancs);
       await writeTab('usuaris',TABS.usuaris.headers,usuaris);
       await writeTab('usuaris_assignacions',TABS.usuaris_assignacions.headers,assignacions);
+    }else if(key==='regles'){
+      await writeTab('regles',TABS.regles.headers,DB.regles);
     }else if(key==='pres_plans'){
       await writeTab('pres_plans',TABS.pres_plans.headers,DB.pres_plans);
     }else if(key==='pres_config'){
@@ -1201,8 +1267,8 @@ function populateMovimentSelects(){
   onMovAreaChange();
   const b1=DB.config.bancs.find(b=>b.id==='b1');
   const b2=DB.config.bancs.find(b=>b.id==='b2');
-  if(b1)document.getElementById('via-b1-name').textContent=b1.nom;
-  if(b2)document.getElementById('via-b2-name').textContent=b2.nom;
+  if(b1)document.getElementById('via-b1-name').textContent=b1.nom.length>8?b1.nom.split(' ')[0]:b1.nom;
+  if(b2)document.getElementById('via-b2-name').textContent=b2.nom.length>8?b2.nom.split(' ')[0]:b2.nom;
 }
 
 function onMovAreaChange(){
@@ -1841,6 +1907,7 @@ function renderConfig(){
     {id:'events',label:'Events'},
     {id:'bancs',label:'Bancs'},
     {id:'rols',label:'Mestre de Rols'},
+    {id:'regles',label:'Regles CSV'},
     ...(canUsers?[{id:'usuaris',label:'Usuaris'}]:[])
   ];
   document.getElementById('cfg-tabs-bar').innerHTML=tabs.map((t,i)=>`<button class="btn${i===0?' btn-primary':''}" id="cfg-tab-${t.id}" onclick="showCfgTab('${t.id}')">${t.label}</button>`).join('');
@@ -1854,7 +1921,7 @@ function showCfgTab(tab){
     if(el)el.classList.toggle('hidden',t!==tab);
     if(btn)btn.className='btn'+(t===tab?' btn-primary':'');
   });
-  ({areas:renderCfgAreas,events:renderCfgEvents,bancs:renderCfgBancs,rols:renderCfgRols,usuaris:renderCfgUsuaris}[tab]||function(){})();
+  ({areas:renderCfgAreas,events:renderCfgEvents,bancs:renderCfgBancs,rols:renderCfgRols,regles:renderCfgRegles,usuaris:renderCfgUsuaris}[tab]||function(){})();
 }
 
 function renderCfgAreas(){
@@ -2143,6 +2210,200 @@ async function deleteBanc(id){
 
 
 // MESTRE DE ROLS
+function getDefaultRegles(){
+  return[
+    {id:'r01',font:'b1',patrons:'HIDRAQUA,HIDRAQUA GENERAL',areaId:'01',areaNom:'Administració i Secretaria',delegacioId:'0104',delegacioNom:'Jurídica i Contractacions',concepte:'Aigua',tipus:'auto',movtype:'gast',prioritat:1,activa:true},
+    {id:'r02',font:'b1',patrons:'COMISIO,COMISSIO,COMISION',areaId:'01',areaNom:'Administració i Secretaria',delegacioId:'0102',delegacioNom:'Tresoreria',concepte:'Comissions bancàries',tipus:'auto',movtype:'gast',prioritat:2,activa:true},
+    {id:'r03',font:'b1',patrons:'LIQUIDACION TPV,LIQUIDACIO TPV',areaId:'',areaNom:'',delegacioId:'',delegacioNom:'',concepte:'',tipus:'tpv',movtype:'ing',prioritat:3,activa:true},
+    {id:'r04',font:'b1',patrons:'QUOTES,QUOTA FALLERS,REBUT FALLA',areaId:'01',areaNom:'Administració i Secretaria',delegacioId:'0102',delegacioNom:'Tresoreria',concepte:'Quotes de fallers',tipus:'auto',movtype:'ing',prioritat:4,activa:true},
+    {id:'r05',font:'b1',patrons:'ENDESA,IBERDROLA,NATURGY',areaId:'01',areaNom:'Administració i Secretaria',delegacioId:'0104',delegacioNom:'Jurídica i Contractacions',concepte:'Llum',tipus:'auto',movtype:'gast',prioritat:5,activa:true},
+    {id:'r06',font:'b1',patrons:'ASSEGURANCES,ALLIANZ,MAPFRE',areaId:'01',areaNom:'Administració i Secretaria',delegacioId:'0104',delegacioNom:'Jurídica i Contractacions',concepte:'Assegurances',tipus:'auto',movtype:'gast',prioritat:6,activa:true},
+    {id:'r07',font:'b2',patrons:'LIQUIDACION TPV,LIQUIDACIO TPV',areaId:'',areaNom:'',delegacioId:'',delegacioNom:'',concepte:'',tipus:'tpv',movtype:'ing',prioritat:1,activa:true},
+    {id:'r08',font:'app',patrons:'activacio_saldo,ACTIVACIO',areaId:'01',areaNom:'Administració i Secretaria',delegacioId:'0102',delegacioNom:'Tresoreria',concepte:'Saldo falles.app',tipus:'auto',movtype:'ing',prioritat:1,activa:true},
+    {id:'r09',font:'app',patrons:'compra,COMPRA',areaId:'',areaNom:'',delegacioId:'',delegacioNom:'',concepte:'',tipus:'ignore',movtype:'auto',prioritat:2,activa:true}
+  ];
+}
+
+const TIPUS_REGLA={
+  auto:'Assignació automàtica',
+  tpv:'Conciliació TPV',
+  ignore:'Ignorar moviment'
+};
+const FONT_LABELS={b1:'Caixabank',b2:'Caixa Popular',app:'falles.app'};
+
+function applyRegles(concepte,font){
+  const regles=(DB.regles||[]).filter(r=>r.font===font&&r.activa).sort((a,b)=>a.prioritat-b.prioritat);
+  const cu=concepte.toUpperCase();
+  for(const r of regles){
+    const patrons=(r.patrons||'').split(',').map(p=>p.trim().toUpperCase()).filter(Boolean);
+    if(patrons.some(p=>cu.includes(p)))return r;
+  }
+  return null;
+}
+
+let editReglaId=null;
+
+function renderCfgRegles(){
+  const canEdit=perm('canConfig');
+  const fonts=['b1','b2','app'];
+  let html='';
+
+  // Info box
+  html+='<div class="info-box" style="margin-bottom:16px">'+
+    '<i class="ti ti-info-circle" style="font-size:16px;flex-shrink:0"></i>'+
+    'Les regles s\'apliquen per ordre de prioritat quan s\'importa un CSV. El camp Patrons accepta multiples paraules separades per comes. Si el concepte del banc conte alguna, s\'aplica la regla.</div></div>';
+
+  fonts.forEach(function(font){
+    const regles=(DB.regles||[]).filter(r=>r.font===font).sort((a,b)=>a.prioritat-b.prioritat);
+    html+='<div style="margin-bottom:20px">';
+    html+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">';
+    html+='<div style="font-weight:500;font-size:15px"><i class="ti ti-building-bank" style="margin-right:6px"></i>'+FONT_LABELS[font]+'</div>';
+    if(canEdit){
+      html+='<button class="btn btn-primary" style="font-size:13px" data-font="'+font+'" onclick="openModalRegla(null,this.dataset.font)">'+
+        '<i class="ti ti-plus"></i> Nova regla</button>';
+    }
+    html+='</div>';
+
+    if(!regles.length){
+      html+='<div style="color:var(--text3);font-size:13px;padding:10px 0">Cap regla definida.</div>';
+    }else{
+      html+='<div class="card" style="padding:0;overflow:hidden">';
+      regles.forEach(function(r,i){
+        const tipusColor=r.tipus==='auto'?'p-ok':r.tipus==='tpv'?'p-info':'p-warn';
+        html+='<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:0.5px solid var(--border);'+(r.activa?'':'opacity:.5')+'">';
+        html+='<div style="font-size:12px;font-weight:600;color:var(--text3);width:20px;text-align:center">'+r.prioritat+'</div>';
+        html+='<div style="flex:1;min-width:0">';
+        html+='<div style="font-family:monospace;font-size:13px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+r.patrons+'</div>';
+        if(r.tipus==='auto'){
+          html+='<div style="font-size:12px;color:var(--text2);margin-top:2px">'+
+            (r.areaNom?r.areaNom+' · ':'')+
+            (r.delegacioNom?r.delegacioNom:'')+
+            (r.concepte?' · '+r.concepte:'')+'</div>';
+        }
+        html+='</div>';
+        html+='<span class="pill '+tipusColor+'">'+TIPUS_REGLA[r.tipus]+'</span>';
+        if(canEdit){
+          html+='<button class="btn" style="font-size:12px;padding:3px 8px;margin-left:4px" data-rid="'+r.id+'" onclick="openModalRegla(this.dataset.rid,null)"><i class="ti ti-edit"></i></button>';
+          html+='<button class="btn" style="font-size:12px;padding:3px 8px" data-rid="'+r.id+'" onclick="deleteRegla(this.dataset.rid)"><i class="ti ti-trash"></i></button>';
+        }
+        html+='</div>';
+      });
+      html+='</div>';
+    }
+    html+='</div>';
+  });
+
+  // Simulador ràpid
+  html+='<div class="card" style="margin-top:8px">';
+  html+='<div class="card-title">Simulador — prova una regla</div>';
+  html+='<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">';
+  html+='<input type="text" id="sim-concepte" placeholder="p.e. LIQUIDACION TPV 13/05/2026" style="flex:1;min-width:180px" oninput="simularRegla()">';
+  html+='<select id="sim-font" onchange="simularRegla()" style="width:160px">';
+  fonts.forEach(function(f){html+='<option value="'+f+'">'+FONT_LABELS[f]+'</option>';});
+  html+='</select></div>';
+  html+='<div id="sim-result" style="font-size:13px;color:var(--text3)">Introdueix un concepte per simular...</div>';
+  html+='</div>';
+
+  document.getElementById('cfg-regles').innerHTML=html;
+}
+
+function simularRegla(){
+  const concepte=document.getElementById('sim-concepte').value.trim();
+  const font=document.getElementById('sim-font').value;
+  const res=document.getElementById('sim-result');
+  if(!concepte){res.textContent='Introdueix un concepte per simular...';res.style.color='var(--text3)';return;}
+  const r=applyRegles(concepte,font);
+  if(r){
+    res.style.color='var(--text)';
+    let txt='<span style="color:var(--green);font-weight:500"><i class="ti ti-check"></i> Regla trobada (prioritat '+r.prioritat+')</span><br>';
+    txt+='Patrons: <span style="font-family:monospace">'+r.patrons+'</span><br>';
+    txt+='Tipus: '+TIPUS_REGLA[r.tipus];
+    if(r.tipus==='auto')txt+='<br>Destí: '+r.areaNom+' → '+r.delegacioNom+(r.concepte?' → '+r.concepte:'');
+    res.innerHTML=txt;
+  }else{
+    res.innerHTML='<span style="color:var(--amber)"><i class="ti ti-alert-triangle"></i> Cap regla coincideix - el moviment es marcarà com a pendent d&apos;assignar</span>';
+  }
+}
+
+function openModalRegla(id,font){
+  editReglaId=id;
+  const r=id?DB.regles.find(x=>x.id===id):null;
+  document.getElementById('mr-title').textContent=id?'Editar regla':'Nova regla de mapeig';
+  document.getElementById('mr-font').value=r?r.font:(font||'b1');
+  document.getElementById('mr-font').disabled=!!id;
+  document.getElementById('mr-patrons').value=r?r.patrons:'';
+  document.getElementById('mr-tipus').value=r?r.tipus:'auto';
+  document.getElementById('mr-prioritat').value=r?r.prioritat:10;
+  document.getElementById('mr-activa').checked=r?r.activa:true;
+  updateMrTipus();
+  // Omplir àrees
+  const mrArea=document.getElementById('mr-area');
+  mrArea.innerHTML='<option value="">— Selecciona —</option>';
+  DB.config.areas.forEach(function(a){
+    mrArea.innerHTML+='<option value="'+a.id+'">'+a.id+' - '+a.name+'</option>';
+  });
+  if(r&&r.tipus==='auto'){
+    mrArea.value=r.areaId||'';
+    onMrAreaChange();
+    document.getElementById('mr-deleg').value=r.delegacioId||'';
+    document.getElementById('mr-concepte').value=r.concepte||'';
+  }
+  openModal('modal-regla');
+}
+
+function updateMrTipus(){
+  const t=document.getElementById('mr-tipus').value;
+  document.getElementById('mr-dest-fields').style.display=t==='auto'?'block':'none';
+}
+
+function onMrAreaChange(){
+  const areaId=document.getElementById('mr-area').value;
+  const delegSel=document.getElementById('mr-deleg');
+  delegSel.innerHTML='<option value="">— Selecciona delegació —</option>';
+  DB.config.delegacions.filter(d=>d.areaId===areaId).forEach(function(d){
+    delegSel.innerHTML+='<option value="'+d.id+'">'+d.id+' - '+d.name+'</option>';
+  });
+}
+
+async function saveRegla(){
+  const font=document.getElementById('mr-font').value;
+  const patrons=document.getElementById('mr-patrons').value.trim();
+  const tipus=document.getElementById('mr-tipus').value;
+  const prioritat=parseInt(document.getElementById('mr-prioritat').value)||10;
+  const activa=document.getElementById('mr-activa').checked;
+  if(!patrons){showToast('Els patrons son obligatoris',true);return;}
+  let areaId='',areaNom='',delegacioId='',delegacioNom='',concepte='';
+  if(tipus==='auto'){
+    areaId=document.getElementById('mr-area').value;
+    delegacioId=document.getElementById('mr-deleg').value;
+    concepte=document.getElementById('mr-concepte').value.trim();
+    const area=DB.config.areas.find(a=>a.id===areaId);
+    const deleg=DB.config.delegacions.find(d=>d.id===delegacioId);
+    areaNom=area?area.name:'';
+    delegacioNom=deleg?deleg.name:'';
+  }
+  const regla={id:editReglaId||'r'+Date.now(),font,patrons,areaId,areaNom,delegacioId,delegacioNom,concepte,tipus,movtype:'auto',prioritat,activa};
+  if(editReglaId){
+    const idx=DB.regles.findIndex(x=>x.id===editReglaId);
+    if(idx>=0)DB.regles[idx]=regla;
+  }else{
+    DB.regles.push(regla);
+  }
+  saveCache();
+  closeModal('modal-regla');
+  renderCfgRegles();
+  showToast('Regla guardada');
+  save('regles').catch(function(e){showToast('Error: '+e.message,true);});
+}
+
+async function deleteRegla(id){
+  if(!confirm('Eliminar aquesta regla?'))return;
+  DB.regles=DB.regles.filter(r=>r.id!==id);
+  saveCache();renderCfgRegles();
+  showToast('Regla eliminada');
+  save('regles').catch(function(e){console.warn(e);});
+}
+
 function renderCfgRols(){
   document.getElementById('cfg-rols').innerHTML=`
     <div class="card">
