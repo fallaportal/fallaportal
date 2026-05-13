@@ -483,6 +483,50 @@ tr:hover td{background:var(--bg2)}
   </div>
 </div>
 
+<div class="modal-overlay" id="modal-area">
+  <div class="modal">
+    <div class="modal-title" id="ma-title">Nova àrea</div>
+    <div class="field-row">
+      <div class="field">
+        <label>ID àrea <span style="color:var(--text3);font-size:11px">(p.e. 08)</span></label>
+        <input type="text" id="ma-id" placeholder="08" maxlength="2" style="width:80px">
+      </div>
+      <div class="field">
+        <label>Color</label>
+        <input type="color" id="ma-color" value="#888780" style="height:38px;padding:2px 4px">
+      </div>
+    </div>
+    <div class="field"><label>Nom de l'àrea</label><input type="text" id="ma-nom" placeholder="p.e. Esports i Lleure"></div>
+    <div class="field"><label>Responsable(s)</label><input type="text" id="ma-resp" placeholder="p.e. Joan Garcia · Maria López"></div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('modal-area')">Cancel·lar</button>
+      <button class="btn btn-primary" onclick="saveArea()">Guardar àrea</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-deleg">
+  <div class="modal">
+    <div class="modal-title" id="md-title">Nova delegació</div>
+    <div class="field-row">
+      <div class="field">
+        <label>ID delegació <span style="color:var(--text3);font-size:11px">(p.e. 0801)</span></label>
+        <input type="text" id="md-id" placeholder="0801" maxlength="4">
+      </div>
+      <div class="field">
+        <label>Àrea</label>
+        <select id="md-area"></select>
+      </div>
+    </div>
+    <div class="field"><label>Nom de la delegació</label><input type="text" id="md-nom" placeholder="p.e. Futbol Sala"></div>
+    <div class="field"><label>Responsable</label><input type="text" id="md-resp" placeholder="p.e. Joan Garcia"></div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('modal-deleg')">Cancel·lar</button>
+      <button class="btn btn-primary" onclick="saveDeleg()">Guardar delegació</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -1020,7 +1064,7 @@ function renderDashboard(){
   </div>`).join('')||'<div style="color:var(--text3);font-size:12px">Sense moviments</div>';
   document.getElementById('dash-alerts').innerHTML='<div class="alert-item" style="background:var(--green-bg)"><i class="ti ti-circle-check" style="color:var(--green)"></i><span>Tot dins dels límits pressupostaris</span></div>';
   if(perm('viewAll')){
-    const delegats=DB.config.usuaris.filter(u=>['area','delegat'].includes(u.rol));
+    const delegats=DB.config.usuaris.filter(u=>u.rol!=='noauth');
     document.getElementById('dash-fons').innerHTML=delegats.length?delegats.map(u=>{
       const rebuts=(DB.fons||[]).filter(f=>f.delegId===u.id&&f.tipus==='lliurament').reduce((s,f)=>s+f.import,0);
       const gastat=(DB.moviments||[]).filter(m=>m.responsableEmail===u.email&&m.tipus==='gast').reduce((s,m)=>s+m.import,0);
@@ -1157,7 +1201,7 @@ function filterHist(){
 function renderFons(){
   const c=document.getElementById('fons-view');
   if(perm('canFons')&&perm('viewAll')){
-    const delegats=DB.config.usuaris.filter(u=>['area','delegat'].includes(u.rol));
+    const delegats=DB.config.usuaris.filter(u=>u.rol!=='noauth');
     c.innerHTML=`<div style="display:flex;gap:8px;margin-bottom:14px">
       <button class="btn btn-primary" onclick="openModal('modal-lliurament')"><i class="ti ti-plus"></i> Nou lliurament</button>
       <button class="btn" onclick="openModal('modal-devolucio')"><i class="ti ti-corner-down-left"></i> Registrar devolució</button>
@@ -1207,7 +1251,7 @@ function renderFonsCard(u){
 }
 
 function populateDelegatSelects(){
-  const delegats=DB.config.usuaris.filter(u=>['area','delegat'].includes(u.rol));
+  const delegats=DB.config.usuaris.filter(u=>u.rol!=='noauth');
   ['ll-delegat','dev-delegat'].forEach(id=>{
     const sel=document.getElementById(id);
     sel.innerHTML=delegats.map(u=>`<option value="${u.id}">${u.nom}</option>`).join('');
@@ -1722,24 +1766,137 @@ function showCfgTab(tab){
 }
 
 function renderCfgAreas(){
-  document.getElementById('cfg-areas').innerHTML=DB.config.areas.map(a=>{
-    const deleg=DB.config.delegacions.filter(d=>d.areaId===a.id);
-    const col=AREA_COLORS[a.id]||'#888';
-    return`<div class="deleg-block" style="margin-bottom:8px">
-      <div class="deleg-head">
-        <div style="width:8px;height:8px;border-radius:50%;background:${col}"></div>
-        <div style="font-weight:500;flex:1">${a.id} · ${a.name}</div>
-        <div style="font-size:11px;color:var(--text2)">${a.resp}</div>
-      </div>
-      <div style="padding:6px 14px">
-        ${deleg.map(d=>`<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:0.5px solid var(--border);font-size:12px">
-          <div style="width:4px;height:4px;border-radius:50%;background:${col}"></div>
-          <div style="flex:1;font-weight:500">${d.id} · ${d.name}</div>
-          <div style="color:var(--text2)">${d.resp}</div>
-        </div>`).join('')}
-      </div>
-    </div>`;
-  }).join('');
+  const canEdit=perm('canConfig');
+  let html='';
+  if(canEdit){
+    html+='<div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">';
+    html+='<button class="btn btn-primary" onclick="openModalArea(null)"><i class="ti ti-plus"></i> Nova area</button>';
+    html+='<button class="btn" onclick="openModalDeleg(null)"><i class="ti ti-plus"></i> Nova delegacio</button>';
+    html+='</div>';
+  }
+  DB.config.areas.forEach(function(a){
+    var deleg=DB.config.delegacions.filter(function(d){return d.areaId===a.id;});
+    var col=AREA_COLORS[a.id]||'#888';
+    var bid='ca'+a.id;
+    html+='<div class="deleg-block" style="margin-bottom:8px">';
+    html+='<div class="deleg-head" data-bid="'+bid+'" onclick="toggleDelegClick(this)">';
+    html+='<i class="ti ti-chevron-right chevron"></i>';
+    html+='<div style="width:8px;height:8px;border-radius:50%;background:'+col+'"></div>';
+    html+='<div style="font-weight:500;flex:1">'+a.id+' - '+a.name+'</div>';
+    html+='<div style="font-size:11px;color:var(--text2);margin-right:8px">'+a.resp+'</div>';
+    if(canEdit){
+      html+='<button class="btn" style="font-size:11px;padding:3px 8px;margin-right:4px" data-id="'+a.id+'" onclick="cfgEditArea(event,this.dataset.id)"><i class="ti ti-edit"></i></button>';
+      html+='<button class="btn" style="font-size:11px;padding:3px 8px" data-id="'+a.id+'" onclick="cfgDelArea(event,this.dataset.id)"><i class="ti ti-trash"></i></button>';
+    }
+    html+='</div>';
+    html+='<div class="deleg-body" id="'+bid+'">';
+    deleg.forEach(function(d){
+      html+='<div style="display:flex;align-items:center;gap:8px;padding:7px 14px;border-top:0.5px solid var(--border);font-size:12px">';
+      html+='<div style="width:4px;height:4px;border-radius:50%;background:'+col+'"></div>';
+      html+='<div style="flex:1;font-weight:500">'+d.id+' - '+d.name+'</div>';
+      html+='<div style="color:var(--text2);margin-right:8px">'+d.resp+'</div>';
+      if(canEdit){
+        html+='<button class="btn" style="font-size:11px;padding:3px 8px;margin-right:4px" data-id="'+d.id+'" onclick="cfgEditDeleg(event,this.dataset.id)"><i class="ti ti-edit"></i></button>';
+        html+='<button class="btn" style="font-size:11px;padding:3px 8px" data-id="'+d.id+'" onclick="cfgDelDeleg(event,this.dataset.id)"><i class="ti ti-trash"></i></button>';
+      }
+      html+='</div>';
+    });
+    html+='</div></div>';
+  });
+  document.getElementById('cfg-areas').innerHTML=html;
+}
+
+function cfgEditArea(e,id){e.stopPropagation();openModalArea(id);}
+function cfgDelArea(e,id){e.stopPropagation();deleteArea(id);}
+function cfgEditDeleg(e,id){e.stopPropagation();openModalDeleg(id);}
+function cfgDelDeleg(e,id){e.stopPropagation();deleteDeleg(id);}
+
+let editAreaId=null,editDelegId=null;
+
+function openModalArea(id){
+  editAreaId=id;
+  const a=id?DB.config.areas.find(x=>x.id===id):null;
+  document.getElementById('ma-title').textContent=id?'Editar àrea':'Nova àrea';
+  document.getElementById('ma-id').value=a?.id||'';
+  document.getElementById('ma-id').disabled=!!id;
+  document.getElementById('ma-nom').value=a?.name||'';
+  document.getElementById('ma-resp').value=a?.resp||'';
+  document.getElementById('ma-color').value=id?(AREA_COLORS[id]||'#888780'):'#888780';
+  openModal('modal-area');
+}
+
+async function saveArea(){
+  const id=document.getElementById('ma-id').value.trim().padStart(2,'0');
+  const nom=document.getElementById('ma-nom').value.trim();
+  const resp=document.getElementById('ma-resp').value.trim();
+  const color=document.getElementById('ma-color').value;
+  if(!id||!nom){showToast('ID i nom són obligatoris',true);return;}
+  if(!editAreaId&&DB.config.areas.find(a=>a.id===id)){showToast('Ja existeix una àrea amb aquest ID',true);return;}
+  if(editAreaId){
+    const a=DB.config.areas.find(x=>x.id===editAreaId);
+    if(a){a.name=nom;a.resp=resp;}
+  }else{
+    DB.config.areas.push({id,name:nom,resp});
+    AREA_COLORS[id]=color;
+  }
+  saveCache();
+  closeModal('modal-area');
+  renderCfgAreas();
+  showToast('Àrea guardada');
+  save('config').catch(e=>showToast('Error: '+e.message,true));
+}
+
+async function deleteArea(id){
+  const deleg=DB.config.delegacions.filter(d=>d.areaId===id);
+  if(deleg.length&&!confirm('Aquesta area te '+deleg.length+' delegacions. Eliminar-les totes?'))return;
+  if(!confirm('Eliminar area '+id+'?'))return;
+  DB.config.areas=DB.config.areas.filter(a=>a.id!==id);
+  DB.config.delegacions=DB.config.delegacions.filter(d=>d.areaId!==id);
+  saveCache();renderCfgAreas();
+  showToast('Àrea eliminada');
+  save('config').catch(e=>console.warn(e));
+}
+
+function openModalDeleg(id){
+  editDelegId=id;
+  const d=id?DB.config.delegacions.find(x=>x.id===id):null;
+  document.getElementById('md-title').textContent=id?'Editar delegació':'Nova delegació';
+  document.getElementById('md-id').value=d?.id||'';
+  document.getElementById('md-id').disabled=!!id;
+  const areaSel=document.getElementById('md-area');
+  areaSel.innerHTML=DB.config.areas.map(a=>'<option value="'+a.id+'">'+a.id+' · '+a.name+'</option>').join('');
+  if(d)areaSel.value=d.areaId;
+  document.getElementById('md-nom').value=d?.name||'';
+  document.getElementById('md-resp').value=d?.resp||'';
+  openModal('modal-deleg');
+}
+
+async function saveDeleg(){
+  const id=document.getElementById('md-id').value.trim();
+  const areaId=document.getElementById('md-area').value;
+  const nom=document.getElementById('md-nom').value.trim();
+  const resp=document.getElementById('md-resp').value.trim();
+  if(!id||!nom||!areaId){showToast('ID, àrea i nom són obligatoris',true);return;}
+  if(!editDelegId&&DB.config.delegacions.find(d=>d.id===id)){showToast('Ja existeix una delegació amb aquest ID',true);return;}
+  if(editDelegId){
+    const d=DB.config.delegacions.find(x=>x.id===editDelegId);
+    if(d){d.name=nom;d.resp=resp;d.areaId=areaId;}
+  }else{
+    DB.config.delegacions.push({id,areaId,name:nom,resp});
+  }
+  saveCache();
+  closeModal('modal-deleg');
+  renderCfgAreas();
+  showToast('Delegació guardada');
+  save('config').catch(e=>showToast('Error: '+e.message,true));
+}
+
+async function deleteDeleg(id){
+  if(!confirm('Eliminar delegacio '+id+'?'))return;
+  DB.config.delegacions=DB.config.delegacions.filter(d=>d.id!==id);
+  saveCache();renderCfgAreas();
+  showToast('Delegació eliminada');
+  save('config').catch(e=>console.warn(e));
 }
 
 function renderCfgEvents(){
@@ -1886,6 +2043,18 @@ function showMobMenu(){
 function closeMobMenu(){
   document.getElementById('mob-menu').classList.add('hidden');
   document.getElementById('mob-menu-overlay').classList.add('hidden');
+}
+function toggleDeleg(bid){
+  const b=document.getElementById(bid);
+  if(b){
+    b.classList.toggle('open');
+    const head=b.previousElementSibling;
+    if(head){const ch=head.querySelector('.chevron');if(ch)ch.classList.toggle('open');}
+  }
+}
+function toggleDelegClick(el){
+  const bid=el.getAttribute('data-bid');
+  if(bid)toggleDeleg(bid);
 }
 function openModal(id){document.getElementById(id).classList.add('open');}
 function closeModal(id){document.getElementById(id).classList.remove('open');}
