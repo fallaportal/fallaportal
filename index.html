@@ -161,31 +161,34 @@ tr:hover td{background:var(--bg2)}
 .saldo-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;font-size:13px;border-bottom:0.5px solid var(--border)}
 .saldo-row:last-child{border-bottom:none;padding-top:10px;font-size:15px;font-weight:500}
 .fons-av{width:36px;height:36px;border-radius:50%;background:var(--blue-bg);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:var(--blue-text);flex-shrink:0}
-.mov-form{max-width:500px;display:flex;flex-direction:column;gap:10px;padding-bottom:80px}
-.mov-top{display:flex;align-items:stretch;gap:10px}
-.mov-top .type-toggle{display:grid;grid-template-columns:1fr 1fr;gap:6px;flex:0 0 auto;width:160px}
-.mov-top .type-btn{font-size:14px;padding:14px 8px;border-radius:var(--r)}
-.mov-import-big{flex:1;font-size:36px;font-weight:600;text-align:right;padding:10px 14px;border:0.5px solid var(--border2);border-radius:var(--r);background:var(--bg);color:var(--text);outline:none;min-width:0}
-.mov-import-big:focus{border-color:var(--blue)}
-.mov-via-row{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
-.mov-via-row .via-btn{padding:10px 4px;font-size:12px;justify-content:center;flex-direction:column;align-items:center;gap:3px;text-align:center;border-radius:var(--r)}
-.mov-via-row .via-btn i{font-size:20px}
+.mov-header{background:var(--bg2);padding:12px 16px 0;border-bottom:0.5px solid var(--border)}
+.mov-tipus-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+.mov-tipus-btn{padding:12px;border-radius:var(--r);border:0.5px solid var(--border2);background:transparent;font-size:15px;font-weight:500;font-family:inherit;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px}
+.mov-tipus-btn.gast.active{background:var(--red-bg);border-color:var(--red);color:var(--red-text)}
+.mov-tipus-btn.ing.active{background:var(--green-bg);border-color:var(--green);color:var(--green-text)}
+.mov-import-input{width:100%;font-size:40px;font-weight:700;text-align:right;padding:8px 4px;border:none;background:transparent;color:var(--text);outline:none;margin-bottom:10px;font-family:inherit}
+.mov-via-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;padding-bottom:12px}
+.mov-via-btn{display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 4px;border-radius:var(--r);border:0.5px solid var(--border);background:transparent;cursor:pointer;font-size:11px;font-family:inherit;color:var(--text2)}
+.mov-via-btn i{font-size:20px}
+.mov-via-btn.active{background:var(--blue-bg);border-color:var(--blue);color:var(--blue-text)}
+.mov-body{padding:14px 16px;display:flex;flex-direction:column;gap:12px;padding-bottom:100px}
 .mov-row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .mov-field{display:flex;flex-direction:column;gap:4px}
 .mov-field label{font-size:13px;color:var(--text2);font-weight:500}
-.mov-field input,.mov-field select,.mov-field textarea{font-size:15px;padding:11px 12px;border:0.5px solid var(--border2);border-radius:var(--r);background:var(--bg);color:var(--text);outline:none;font-family:inherit;width:100%}
+.mov-field input,.mov-field select,.mov-field textarea{font-size:15px;padding:10px 12px;border:0.5px solid var(--border2);border-radius:var(--r);background:var(--bg);color:var(--text);outline:none;font-family:inherit;width:100%}
 .mov-field input:focus,.mov-field select:focus,.mov-field textarea:focus{border-color:var(--blue)}
+.mov-extra-toggle{display:flex;align-items:center;gap:6px;padding:6px 0;cursor:pointer;color:var(--text3);font-size:13px;border-top:0.5px solid var(--border)}
+.mov-extra-toggle i{font-size:14px;transition:transform .2s}
+.mov-extra-toggle i.open{transform:rotate(90deg)}
+.mov-footer-btn{position:fixed;bottom:56px;left:0;right:0;padding:10px 16px;background:var(--bg);border-top:0.5px solid var(--border);z-index:99}
+.mov-footer-btn button{width:100%;padding:15px;font-size:16px;font-weight:600;border-radius:var(--r);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;font-family:inherit}
 .opt-label{font-size:11px;color:var(--text3);font-weight:400}
-.mov-registrar-btn{position:fixed;bottom:56px;left:0;right:0;padding:10px 16px;background:var(--bg);border-top:0.5px solid var(--border);z-index:50;display:none}
-.mov-registrar-btn button{width:100%;padding:14px;font-size:16px;font-weight:600;border-radius:var(--r)}
-@media(max-width:768px){
-  .mov-registrar-btn{display:block}
-  .mov-registrar-btn-inline{display:none!important}
-  .mov-form{padding-bottom:130px}
-}
 @media(min-width:769px){
-  .mov-registrar-btn{display:none}
-  .mov-registrar-btn-inline{display:flex!important}
+  .mov-header{background:transparent;border:none;padding:0;max-width:500px}
+  .mov-body{padding:14px 0;max-width:500px;padding-bottom:20px}
+  .mov-footer-btn{display:none}
+  #btn-registrar{display:flex!important}
+  .mov-import-input{font-size:32px;border:0.5px solid var(--border2);border-radius:var(--r);padding:10px 14px;background:var(--bg)}
 }
 .tag-multi{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
 .info-box{padding:10px 12px;background:var(--blue-bg);border-radius:var(--r);font-size:12px;color:var(--blue-text);margin-bottom:12px}
@@ -257,74 +260,58 @@ tr:hover td{background:var(--bg2)}
       </div>
     </div>
 
-    <div id="page-moviments" class="page">
-      <div class="mov-form">
-
-        <!-- Tipus + Import -->
-        <div class="mov-top">
-          <div class="type-toggle" style="margin-bottom:0;flex:0 0 auto">
-            <button class="type-btn gast active" id="btn-gast" onclick="setMovType('gast')"><i class="ti ti-arrow-up-right"></i> Despesa</button>
-            <button class="type-btn ing" id="btn-ing" onclick="setMovType('ing')"><i class="ti ti-arrow-down-left"></i> Ingrés</button>
-          </div>
-          <input type="number" id="mov-import" placeholder="0,00" min="0" step="0.01" inputmode="decimal" class="mov-import-big">
+    <div id="page-moviments" class="page" style="padding:0">
+      <div class="mov-header">
+        <div class="mov-tipus-row">
+          <button class="mov-tipus-btn gast active" id="btn-gast" onclick="setMovType('gast')">
+            <i class="ti ti-arrow-up-right"></i> Despesa
+          </button>
+          <button class="mov-tipus-btn ing" id="btn-ing" onclick="setMovType('ing')">
+            <i class="ti ti-arrow-down-left"></i> Ingrés
+          </button>
         </div>
-
-        <!-- Via -->
-        <div class="mov-via-row">
-          <button class="via-btn active" id="via-efectiu" onclick="setVia('Efectiu')"><i class="ti ti-wallet"></i><span>Efectiu</span></button>
-          <button class="via-btn" id="via-b1" onclick="setVia('01 Banc')"><i class="ti ti-building-bank"></i><span id="via-b1-name">Banc 1</span></button>
-          <button class="via-btn" id="via-b2" onclick="setVia('02 Banc')"><i class="ti ti-building-bank"></i><span id="via-b2-name">Banc 2</span></button>
-          <button class="via-btn" id="via-tpv" onclick="setVia('TPV')"><i class="ti ti-credit-card"></i><span>TPV</span></button>
+        <input type="number" id="mov-import" placeholder="0,00" min="0" step="0.01" inputmode="decimal" class="mov-import-input">
+        <div class="mov-via-grid">
+          <button class="mov-via-btn active" id="via-efectiu" onclick="setVia('Efectiu')"><i class="ti ti-wallet"></i><span>Efectiu</span></button>
+          <button class="mov-via-btn" id="via-b1" onclick="setVia('01 Banc')"><i class="ti ti-building-bank"></i><span id="via-b1-name">Banc 1</span></button>
+          <button class="mov-via-btn" id="via-b2" onclick="setVia('02 Banc')"><i class="ti ti-building-bank"></i><span id="via-b2-name">Banc 2</span></button>
+          <button class="mov-via-btn" id="via-tpv" onclick="setVia('TPV')"><i class="ti ti-credit-card"></i><span>TPV</span></button>
         </div>
-
-        <!-- Àrea + Delegació -->
+      </div>
+      <div class="mov-body">
         <div class="mov-row2">
           <div class="mov-field"><label>Àrea</label><select id="mov-area" onchange="onMovAreaChange()"></select></div>
           <div class="mov-field"><label>Delegació</label><select id="mov-deleg" onchange="onMovDelegChange()"></select></div>
         </div>
-
-        <!-- Event (opcional) - sols apareix si hi ha events per a la delegació -->
         <div class="mov-field" id="mov-event-field" style="display:none">
           <label>Event <span class="opt-label">(opcional)</span></label>
           <select id="mov-event"></select>
         </div>
-
-        <!-- Concepte -->
         <div class="mov-field">
           <label>Concepte</label>
           <input type="text" id="mov-concept" placeholder="Descriu el concepte...">
         </div>
-
-        <!-- Data + Establiment -->
         <div class="mov-row2">
           <div class="mov-field"><label>Data</label><input type="date" id="mov-data"></div>
           <div class="mov-field"><label>Establiment <span class="opt-label">(opc.)</span></label><input type="text" id="mov-establiment" placeholder="p.e. Monaco..."></div>
         </div>
-
-        <!-- Més opcions -->
-        <div id="mov-extra-toggle" onclick="toggleMovExtra()" style="display:flex;align-items:center;gap:6px;padding:6px 0;cursor:pointer;color:var(--text3);font-size:13px;border-top:0.5px solid var(--border);margin-top:4px">
-          <i class="ti ti-chevron-right" id="mov-extra-ch" style="font-size:14px;transition:transform .2s"></i>
-          Notes i justificant
+        <div class="mov-extra-toggle" onclick="toggleMovExtra()">
+          <i class="ti ti-chevron-right" id="mov-extra-ch"></i> Notes i justificant
         </div>
         <div id="mov-extra" style="display:none">
-          <div class="mov-field"><label>Notes</label><textarea id="mov-notes" rows="2" style="resize:none"></textarea></div>
+          <div class="mov-field" style="margin-top:8px"><label>Notes</label><textarea id="mov-notes" rows="2" style="resize:none"></textarea></div>
           <div class="mov-field"><label>Justificant <span class="opt-label">(foto/PDF)</span></label><input type="file" id="mov-photo" accept="image/*,application/pdf" style="font-size:13px"></div>
         </div>
-
-        <!-- Botó inline per desktop -->
-        <button class="btn btn-danger mov-registrar-btn-inline" style="width:100%;padding:13px;font-size:15px;margin-top:4px;border-radius:var(--r)" id="btn-registrar" onclick="registrarMoviment()">
+        <button class="btn btn-danger" id="btn-registrar" onclick="registrarMoviment()" style="width:100%;padding:14px;font-size:16px;margin-top:8px;border-radius:var(--r);display:none">
+          <i class="ti ti-check"></i> Registrar despesa
+        </button>
+      </div>
+      <div class="mov-footer-btn" id="mov-footer-btn">
+        <button id="btn-registrar-mob" onclick="registrarMoviment()" style="background:var(--red);color:#fff">
           <i class="ti ti-check"></i> Registrar despesa
         </button>
       </div>
     </div>
-
-    <!-- Botó fixat per mòbil -->
-    <div class="mov-registrar-btn">
-      <button class="btn btn-danger" id="btn-registrar-mob" onclick="registrarMoviment()" style="width:100%;padding:14px;font-size:16px;font-weight:600;border-radius:var(--r)">
-        <i class="ti ti-check"></i> Registrar despesa
-      </button>
-    </div>
-
     <div id="page-lliurament" class="page">
       <div class="page-title">Fons delegats</div>
       <div class="page-sub">Control de bestretes i saldo disponible</div>
@@ -1263,6 +1250,12 @@ function initApp(){
   buildNav();
   populateMovimentSelects();
   renderDashboard();
+  // Mostrar footer btn sols al mobil
+  const isMob=window.innerWidth<=768;
+  const footer=document.getElementById('mov-footer-btn');
+  const btnDesk=document.getElementById('btn-registrar');
+  if(footer)footer.style.display=isMob?'block':'none';
+  if(btnDesk)btnDesk.style.display=isMob?'none':'flex';
 }
 
 function showPage(id){
@@ -1329,21 +1322,25 @@ let movType='gast',movVia='Efectiu';
 
 function setMovType(t){
   movType=t;
-  document.getElementById('btn-gast').className='type-btn gast'+(t==='gast'?' active':'');
-  document.getElementById('btn-ing').className='type-btn ing'+(t==='ing'?' active':'');
-  const color=t==='gast'?'danger':'primary';
-  const label='<i class="ti ti-check"></i> Registrar '+(t==='gast'?'despesa':'ingrés');
-  const btnInline=document.getElementById('btn-registrar');
-  if(btnInline){btnInline.className='btn btn-'+color+' mov-registrar-btn-inline';btnInline.style.cssText='width:100%;padding:13px;font-size:15px;margin-top:4px;border-radius:var(--r)';btnInline.innerHTML=label;}
-  const btnMob=document.getElementById('btn-registrar-mob');
-  if(btnMob){btnMob.className='btn btn-'+color;btnMob.style.cssText='width:100%;padding:14px;font-size:16px;font-weight:600;border-radius:var(--r)';btnMob.innerHTML=label;}
+  document.getElementById('btn-gast').className='mov-tipus-btn gast'+(t==='gast'?' active':'');
+  document.getElementById('btn-ing').className='mov-tipus-btn ing'+(t==='ing'?' active':'');
+  const isDanger=t==='gast';
+  const label='<i class="ti ti-check"></i> Registrar '+(isDanger?'despesa':'ingrés');
+  const bg=isDanger?'var(--red)':'var(--green)';
+  ['btn-registrar','btn-registrar-mob'].forEach(function(id){
+    const btn=document.getElementById(id);
+    if(btn){btn.innerHTML=label;btn.style.background=bg;}
+  });
 }
 
 function setVia(v){
   movVia=v;
-  ['efectiu','b1','b2','tpv'].forEach(k=>document.getElementById('via-'+k).classList.remove('active'));
+  ['efectiu','b1','b2','tpv'].forEach(function(k){
+    const el=document.getElementById('via-'+k);
+    if(el)el.classList.remove('active');
+  });
   const map={'Efectiu':'efectiu','01 Banc':'b1','02 Banc':'b2','TPV':'tpv'};
-  if(map[v])document.getElementById('via-'+map[v]).classList.add('active');
+  if(map[v]){const el=document.getElementById('via-'+map[v]);if(el)el.classList.add('active');}
 }
 
 function populateMovimentSelects(){
@@ -2624,13 +2621,10 @@ function toggleDeleg(bid){
 function toggleMovExtra(){
   const el=document.getElementById('mov-extra');
   const ch=document.getElementById('mov-extra-ch');
-  if(el.style.display==='none'){
-    el.style.display='block';
-    ch.style.transform='rotate(90deg)';
-  }else{
-    el.style.display='none';
-    ch.style.transform='rotate(0deg)';
-  }
+  if(!el)return;
+  const open=el.style.display==='none'||el.style.display==='';
+  el.style.display=open?'block':'none';
+  if(ch)ch.className='ti ti-chevron-right'+(open?' open':'');
 }
 function toggleDelegClick(el){
   const bid=el.getAttribute('data-bid');
