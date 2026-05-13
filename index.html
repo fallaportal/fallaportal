@@ -230,7 +230,12 @@ tr:hover td{background:var(--bg2)}
   <div class="sidebar">
     <div class="sb-logo">
       <div class="sb-logo-text">Falla <span>Portal</span></div>
-      <div class="sb-fiscal">Any fiscal 26/27</div>
+      <div class="sb-fiscal" style="display:flex;align-items:center;gap:4px">
+      <span style="font-size:12px;color:var(--text3)">Any fiscal:</span>
+      <select id="sb-any-fiscal" onchange="canviarExercici(this.value)"
+        style="background:transparent;border:none;color:var(--text3);font-size:12px;cursor:pointer;padding:0;outline:none;font-family:inherit;max-width:80px">
+      </select>
+    </div>
     </div>
     <div class="sb-user">
       <div class="u-av" id="sb-av">?</div>
@@ -806,7 +811,7 @@ let DB={
       {id:'b3',codi:'Efectiu',nom:'Caixa efectiu',tipus:'cash'},
       {id:'b4',codi:'TPV',nom:'TPV targetes',tipus:'tpv'}
     ],
-    usuaris:[]
+    usuaris:[],anyFiscal:'26/27',exercicis:['26/27']
   },
   moviments:[],fons:[],tancaments:{},pres_plans:[],pres_config:{any:'26/27',estat:'obert',bloquejatPer:'',bloquejatEmail:'',data:''},pres_historial:[],regles:[]
 };
@@ -845,6 +850,53 @@ window.onload=()=>{
 };
 
 function signIn(){if(tokenClient)tokenClient.requestAccessToken();}
+function initExerciciSelector(){
+  const sel=document.getElementById('sb-any-fiscal');
+  if(!sel)return;
+  const exercicis=DB.config.exercicis||['26/27'];
+  const current=getAnyFiscal();
+  sel.innerHTML=exercicis.map(function(e){
+    return'<option value="'+e+'"'+(e===current?' selected':'')+'>'+e+'</option>';
+  }).join('');
+}
+
+function canviarExercici(any){
+  DB.config.anyFiscal=any;
+  // Actualitzar títols i refrescar pàgina activa
+  document.querySelector('.page-sub') && renderDashboard();
+  const activePage=document.querySelector('.page.active');
+  if(activePage){
+    const id=activePage.id.replace('page-','');
+    const renders={dashboard:renderDashboard,historial:renderHistorial,
+      pressupostos:renderPressupostosEdit,lliurament:renderFons,
+      tancament:renderTancamentList,resultats:renderResultats,flux:renderFlux};
+    if(renders[id])renders[id]();
+  }
+  showToast('Exercici '+any+' seleccionat');
+}
+
+async function obrirNouExercici(){
+  const canDo=getRol()==='president'||getRol()==='treasury';
+  if(!canDo){showToast('Sols President o Tresoreria poden canviar exercici',true);return;}
+  // Calcular nou any fiscal
+  const current=getAnyFiscal();
+  const parts=current.split('/');
+  const nextStart=parseInt(parts[0])+1;
+  const nextEnd=parseInt(parts[1])+1;
+  const nouAny=nextStart+'/'+nextEnd;
+  if(!confirm('Tancar exercici '+current+' i obrir '+nouAny+'? Les dades de '+current+' es conserven i es podran consultar.'))return;
+  if(!DB.config.exercicis)DB.config.exercicis=['26/27'];
+  if(!DB.config.exercicis.includes(nouAny)){
+    DB.config.exercicis.push(nouAny);
+  }
+  DB.config.anyFiscal=nouAny;
+  // Actualitzar selector
+  initExerciciSelector();
+  canviarExercici(nouAny);
+  await save('config');
+  showToast('Exercici '+nouAny+' obert correctament');
+}
+
 function signOut(){
   if(accessToken)google.accounts.oauth2.revoke(accessToken,()=>{});
   accessToken=null;currentUser=null;
@@ -1201,6 +1253,7 @@ function getUsuari(){
 }
 
 function getRol(){const u=getUsuari();return u?u.rol:'delegat';}
+function getAnyFiscal(){return DB.config.anyFiscal||'26/27';}
 function perm(p){return ROLES[getRol()]?.[p]||false;}
 
 function getMyArees(){
@@ -1265,6 +1318,7 @@ function initApp(){
   document.getElementById('dev-data').value=today();
   buildNav();
   populateMovimentSelects();
+  initExerciciSelector();
   renderDashboard();
   // Mostrar footer btn sols al mobil
   const isMob=window.innerWidth<=768;
@@ -1308,7 +1362,8 @@ function showPage(id){
 // DASHBOARD
 function renderDashboard(){
   const myArees=getMyArees();
-  const movs=(DB.moviments||[]).filter(m=>myArees.includes(m.areaId)||perm('viewAll'));
+  const af=getAnyFiscal();
+  const movs=(DB.moviments||[]).filter(m=>(m.anyFiscal===af||!m.anyFiscal)&&(myArees.includes(m.areaId)||perm('viewAll')));
   const ing=movs.filter(m=>m.tipus==='ing').reduce((s,m)=>s+m.import,0);
   const gast=movs.filter(m=>m.tipus==='gast').reduce((s,m)=>s+m.import,0);
   const net=ing-gast;
@@ -1419,7 +1474,7 @@ async function registrarMoviment(){
   const event=DB.config.events.find(e=>e.id===eventId);
   const u=getUsuari();
   const mov={
-    id:'m'+Date.now(),tipus:movType,via:movVia,
+    id:'m'+Date.now(),anyFiscal:getAnyFiscal(),tipus:movType,via:movVia,
     areaId,areaNom:area?.name||'',delegacioId:delegId,delegacioNom:deleg?.name||'',
     eventId:eventId||'',eventNom:event?.name||'',
     concepte:document.getElementById('mov-concept').value,
@@ -1462,7 +1517,8 @@ function filterHist(){
   const aF=document.getElementById('hist-area').value;
   const tF=document.getElementById('hist-tipus').value;
   const myArees=getMyArees();
-  let movs=[...(DB.moviments||[])].filter(m=>perm('viewAll')||myArees.includes(m.areaId)).sort((a,b)=>b.data.localeCompare(a.data));
+  const afH=getAnyFiscal();
+  let movs=[...(DB.moviments||[])].filter(m=>(m.anyFiscal===afH||!m.anyFiscal)&&(perm('viewAll')||myArees.includes(m.areaId))).sort((a,b)=>b.data.localeCompare(a.data));
   if(q)movs=movs.filter(m=>(m.concepte||'').toLowerCase().includes(q)||(m.establiment||'').toLowerCase().includes(q));
   if(aF)movs=movs.filter(m=>m.areaId===aF);
   if(tF)movs=movs.filter(m=>m.tipus===tF);
@@ -1516,29 +1572,61 @@ function renderFons(){
 }
 
 function renderFonsCard(u){
-  const rebuts=(DB.fons||[]).filter(f=>f.delegId===u.id&&f.tipus==='lliurament').reduce((s,f)=>s+f.import,0);
-  const gastat=(DB.moviments||[]).filter(m=>m.responsableEmail===u.email&&m.tipus==='gast').reduce((s,m)=>s+m.import,0);
-  const devol=(DB.fons||[]).filter(f=>f.delegId===u.id&&f.tipus==='devolucio').reduce((s,f)=>s+f.import,0);
+  const af=getAnyFiscal();
+  const fonsArr=(DB.fons||[]).filter(f=>(f.anyFiscal===af||!f.anyFiscal)&&f.delegId===u.id);
+  const rebuts=fonsArr.filter(f=>f.tipus==='lliurament').reduce((s,f)=>s+f.import,0);
+  const gastat=(DB.moviments||[]).filter(m=>(m.anyFiscal===af||!m.anyFiscal)&&m.responsableEmail===u.email&&m.tipus==='gast').reduce((s,m)=>s+m.import,0);
+  const devol=fonsArr.filter(f=>f.tipus==='devolucio').reduce((s,f)=>s+f.import,0);
   const saldo=rebuts-gastat-devol;
   const pct=rebuts>0?Math.min(100,Math.round(gastat/rebuts*100)):0;
   const ini=u.nom.split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase();
-  return`<div class="card" style="margin-bottom:10px">
-    <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
-      <div class="fons-av">${ini}</div>
-      <div style="flex:1"><div style="font-weight:500">${u.nom}</div>
-        <div style="font-size:11px;color:var(--text2)">${(u.arees||[]).map(id=>DB.config.areas.find(a=>a.id===id)?.name||id).join(', ')}</div>
-      </div>
-      <div style="text-align:right">
-        <div style="font-size:18px;font-weight:500;color:${saldo<0?'var(--red)':saldo===0?'var(--text2)':'var(--green)'}">${fmt(Math.abs(saldo))}</div>
-        <div style="font-size:10px;color:var(--text3)">${saldo<0?'excedit':saldo===0?'liquidat':'disponible'}</div>
-      </div>
-    </div>
-    <div style="height:5px;background:var(--border);border-radius:3px;overflow:hidden;margin-bottom:8px"><div style="height:100%;border-radius:3px;width:${pct}%;background:${pct>=100?'var(--red)':pct>=75?'var(--amber)':'var(--green)'}"></div></div>
-    <div style="display:flex;gap:6px">
-      <button class="btn" style="font-size:12px" onclick="openLliuramentFor('${u.id}')"><i class="ti ti-plus"></i> Lliurar fons</button>
-      <button class="btn" style="font-size:12px" onclick="openDevolucioFor('${u.id}')"><i class="ti ti-corner-down-left"></i> Devolució</button>
-    </div>
-  </div>`;
+  const rol=getRol();
+  const myEmail=(currentUser?.email||'').toLowerCase();
+  const histHtml=fonsArr.length?
+    '<div style="margin-top:10px;border-top:0.5px solid var(--border);padding-top:8px">'+
+    '<div style="font-size:12px;font-weight:500;color:var(--text2);margin-bottom:6px">Historial '+af+'</div>'+
+    fonsArr.sort((a,b)=>b.data.localeCompare(a.data)).map(function(f){
+      const canDel=rol==='president'||rol==='treasury'||((f.registratPer||'').toLowerCase()===myEmail);
+      const isLl=f.tipus==='lliurament';
+      return'<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:0.5px solid var(--border);font-size:12px">'+
+        '<i class="ti '+(isLl?'ti-arrow-down-left':'ti-corner-down-left')+'" style="color:'+(isLl?'var(--green)':'var(--blue,#378ADD)')+'"></i>'+
+        '<div style="flex:1">'+
+          '<div style="font-weight:500">'+(f.nota||f.tipus)+'</div>'+
+          '<div style="font-size:11px;color:var(--text3)">'+f.data+(f.registratPer?' · '+f.registratPer:'')+'</div>'+
+        '</div>'+
+        '<div style="font-weight:500;color:'+(isLl?'var(--green)':'var(--red)')+'">'+
+          (isLl?'+':'-')+fmtD(f.import)+'</div>'+
+        (canDel?'<button class="btn" style="font-size:11px;padding:2px 6px;color:var(--red)" data-fid="'+f.id+'" onclick="deleteFons(this.dataset.fid)"><i class="ti ti-trash"></i></button>':'')+
+      '</div>';
+    }).join('')+
+    '</div>':'';
+  return'<div class="card" style="margin-bottom:10px">'+
+    '<div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">'+
+      '<div class="fons-av">'+ini+'</div>'+
+      '<div style="flex:1"><div style="font-weight:500">'+u.nom+'</div>'+
+        '<div style="font-size:11px;color:var(--text2)">'+(u.arees||[]).map(function(id){const a=DB.config.areas.find(function(x){return x.id===id;});return a?a.name:id;}).join(', ')+'</div>'+
+      '</div>'+
+      '<div style="text-align:right">'+
+        '<div style="font-size:18px;font-weight:500;color:'+(saldo<0?'var(--red)':saldo===0?'var(--text2)':'var(--green)')+'">'+fmt(Math.abs(saldo))+'</div>'+
+        '<div style="font-size:10px;color:var(--text3)">'+(saldo<0?'excedit':saldo===0?'liquidat':'disponible')+'</div>'+
+      '</div>'+
+    '</div>'+
+    '<div style="height:5px;background:var(--border);border-radius:3px;overflow:hidden;margin-bottom:8px">'+
+      '<div style="height:100%;border-radius:3px;width:'+pct+'%;background:'+(pct>=100?'var(--red)':pct>=75?'var(--amber)':'var(--green)')+'"></div>'+
+    '</div>'+
+    '<div style="display:flex;gap:6px">'+
+      '<button class="btn" style="font-size:12px" data-uid="'+u.id+'" onclick="openLliuramentFor(this.dataset.uid)"><i class="ti ti-plus"></i> Lliurar fons</button>'+
+      '<button class="btn" style="font-size:12px" data-uid="'+u.id+'" onclick="openDevolucioFor(this.dataset.uid)"><i class="ti ti-corner-down-left"></i> Devolució</button>'+
+    '</div>'+histHtml+
+  '</div>';
+}
+
+async function deleteFons(id){
+  if(!confirm('Eliminar aquest lliurament?'))return;
+  DB.fons=DB.fons.filter(function(f){return f.id!==id;});
+  saveCache();renderFons();
+  showToast('Lliurament eliminat');
+  save('fons').catch(function(e){showToast('Error: '+e.message,true);});
 }
 
 function populateDelegatSelects(){
@@ -1558,7 +1646,7 @@ async function saveLliurament(){
   if(!imp||imp<=0){showToast('Import invàlid',true);return;}
   const u=DB.config.usuaris.find(x=>x.id===delegId);
   if(!DB.fons)DB.fons=[];
-  const fItem={id:'f'+Date.now(),tipus:'lliurament',delegId,delegEmail:u?.email||'',import:imp,data:document.getElementById('ll-data').value,nota:document.getElementById('ll-nota').value,registratPer:currentUser?.email};
+  const fItem={id:'f'+Date.now(),anyFiscal:getAnyFiscal(),tipus:'lliurament',delegId,delegEmail:u?.email||'',import:imp,data:document.getElementById('ll-data').value,nota:document.getElementById('ll-nota').value,registratPer:currentUser?.name||currentUser?.email||''};
   DB.fons.push(fItem);
   saveCache();
   closeModal('modal-lliurament');showToast('Lliurament registrat');renderFons();
@@ -1571,10 +1659,14 @@ async function saveDevolucio(){
   if(!imp||imp<=0){showToast('Import invàlid',true);return;}
   const u=DB.config.usuaris.find(x=>x.id===delegId);
   if(!DB.fons)DB.fons=[];
-  const dItem={id:'f'+Date.now(),tipus:'devolucio',delegId,delegEmail:u?.email||'',import:imp,data:document.getElementById('dev-data').value,nota:document.getElementById('dev-nota').value,registratPer:currentUser?.email};
+  const dItem={id:'f'+Date.now(),anyFiscal:getAnyFiscal(),tipus:'devolucio',delegId,delegEmail:u?.email||'',import:imp,data:document.getElementById('dev-data').value,nota:document.getElementById('dev-nota').value,registratPer:currentUser?.name||currentUser?.email||''};
   DB.fons.push(dItem);
   saveCache();
-  closeModal('modal-devolucio');showToast('Devolució registrada');renderFons();
+  closeModal('modal-devolucio');
+  document.getElementById('dev-import').value='';
+  document.getElementById('dev-nota').value='';
+  document.getElementById('dev-data').value=today();
+  showToast('Devolució registrada');renderFons();
   saveFons(dItem).catch(e=>showToast('Error guardant: '+e.message,true));
 }
 
@@ -1632,7 +1724,7 @@ async function tancarEvent(){
   const tpv=parseFloat(document.getElementById('tanc-tpv').value)||0;
   if(!ef&&!tpv){showToast('Introdueix almenys un import',true);return;}
   if(!DB.tancaments)DB.tancaments={};
-  const tItem={eventId:tancEventId,eventNom:DB.config.events.find(e=>e.id===tancEventId)?.name||'',efectiu:ef,tpv,data:today(),tancat:true,registratPer:currentUser?.email};
+  const tItem={eventId:tancEventId,anyFiscal:getAnyFiscal(),eventNom:DB.config.events.find(e=>e.id===tancEventId)?.name||'',efectiu:ef,tpv,data:today(),tancat:true,registratPer:currentUser?.email};
   DB.tancaments[tancEventId]=tItem;
   saveCache();
   showToast('Event tancat correctament');renderTancamentList();
@@ -1771,7 +1863,7 @@ async function savePresPla(){
   const importPla=parseFloat(document.getElementById('mp-import').value)||0;
   if(!importPla){showToast('Introdueix un import vàlid',true);return;}
   const pla={
-    any:'26/27',delegacioId:delegId,delegacioNom:deleg?.name||'',
+    any:getAnyFiscal(),delegacioId:delegId,delegacioNom:deleg?.name||'',
     eventId,eventNom:event?.name||'',concepte,tipus,importPla,notes:''
   };
   // Eliminar si ja existia la mateixa combinació
@@ -1817,7 +1909,8 @@ async function desbloquejarpres(){
 
 // RESULTATS
 function renderResultats(){
-  const movs=perm('viewAll')?(DB.moviments||[]):(DB.moviments||[]).filter(m=>getMyArees().includes(m.areaId));
+  const afR=getAnyFiscal();
+  const movs=(perm('viewAll')?(DB.moviments||[]):(DB.moviments||[]).filter(m=>getMyArees().includes(m.areaId))).filter(m=>m.anyFiscal===afR||!m.anyFiscal);
   const ing=movs.filter(m=>m.tipus==='ing').reduce((s,m)=>s+m.import,0);
   const gast=movs.filter(m=>m.tipus==='gast').reduce((s,m)=>s+m.import,0);
   const net=ing-gast;
@@ -1847,7 +1940,8 @@ function renderResultats(){
     '<span style="color:'+(net>=0?'var(--green)':'var(--red)')+'">'+fmtS(net)+'</span></div></div>';
 }
 function renderFlux(){
-  const movs=DB.moviments||[];
+  const afF=getAnyFiscal();
+  const movs=(DB.moviments||[]).filter(m=>m.anyFiscal===afF||!m.anyFiscal);
   const ing=movs.filter(m=>m.tipus==='ing').reduce((s,m)=>s+m.import,0);
   const gast=movs.filter(m=>m.tipus==='gast').reduce((s,m)=>s+m.import,0);
   document.getElementById('flux-ini').textContent='0 €';
@@ -2043,7 +2137,11 @@ function renderConfig(){
     {id:'regles',label:'Regles CSV'},
     ...(canUsers?[{id:'usuaris',label:'Usuaris'}]:[])
   ];
-  document.getElementById('cfg-tabs-bar').innerHTML=tabs.map((t,i)=>`<button class="btn${i===0?' btn-primary':''}" id="cfg-tab-${t.id}" onclick="showCfgTab('${t.id}')">${t.label}</button>`).join('');
+  const tabsBtns=tabs.map(function(t,i){
+    return '<button class="btn'+(i===0?' btn-primary':'')+'" id="cfg-tab-'+t.id+'" data-tab="'+t.id+'" onclick="showCfgTab(this.dataset.tab)">'+t.label+'</button>';
+  }).join('');
+  const nouExBtn=perm('canConfig')?'<button class="btn" onclick="obrirNouExercici()" style="margin-left:8px;color:var(--amber)"><i class="ti ti-calendar-plus"></i> Nou exercici</button>':'';
+  document.getElementById('cfg-tabs-bar').innerHTML=tabsBtns+nouExBtn;
   showCfgTab('areas');
 }
 
