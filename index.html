@@ -631,7 +631,7 @@ tr:hover td{background:var(--bg2)}
 
 <div class="modal-overlay" id="modal-copy-dir">
   <div class="modal" style="max-width:400px">
-    <div class="modal-title"><i class="ti ti-users" style="font-size:16px;margin-right:6px"></i>Copiar directiva entre exercicis</div>
+    html+='<button class="btn" onclick="openModalCopyDirectiva()" style="color:var(--pink,#D4537E)"><i class="ti ti-copy"></i> Copiar directiva</button>';
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
       <div class="field"><label>Any fiscal origen</label><select id="cd-origen"></select></div>
       <div class="field"><label>Any fiscal desti</label><select id="cd-desti"></select></div>
@@ -2963,7 +2963,7 @@ function renderCfgExercicis(){
     html+='<button class="btn btn-primary" onclick="obrirNouExercici()"><i class="ti ti-calendar-plus"></i> Nou exercici</button>';
     html+='<button class="btn" onclick="openModalTancarExercici()" style="color:var(--amber)"><i class="ti ti-lock"></i> Tancar exercici actual</button>';
     html+='<button class="btn" onclick="openModalCopyPres()" style="color:var(--blue,#378ADD)"><i class="ti ti-copy"></i> Copiar pressupost</button>';
-    html+='<button class="btn" onclick="showPage(\"directiva\")" style="color:var(--purple,#7F77DD)"><i class="ti ti-users"></i> Gestionar directiva</button>';
+    html+='<button class="btn" data-page="directiva" onclick="showPage(this.dataset.page)" style="color:var(--purple,#7F77DD)"><i class="ti ti-users"></i> Gestionar directiva</button>';
     html+='<button class="btn" onclick="openModalCopyDirectiva()" style="color:var(--pink,#D4537E)"><i class="ti ti-copy"></i> Copiar directiva</button>';
     html+='</div>';
   }
