@@ -960,6 +960,27 @@ async function obrirNouExercici(){
   showToast('Exercici '+nouAny+' obert correctament');
 }
 
+function openModal(id){
+  const el=document.getElementById(id);
+  if(el)el.classList.add('open');
+}
+function closeModal(id){
+  const el=document.getElementById(id);
+  if(el)el.classList.remove('open');
+}
+function toggleDeleg(bid){
+  const b=document.getElementById(bid);
+  if(b){
+    b.classList.toggle('open');
+    const head=b.previousElementSibling;
+    if(head){const ch=head.querySelector('.chevron');if(ch)ch.classList.toggle('open');}
+  }
+}
+function toggleDelegClick(el){
+  const bid=el.getAttribute('data-bid');
+  if(bid)toggleDeleg(bid);
+}
+
 function openModalUsuari(id){
   editUserId=id||null;
   const u=id?(DB.config.usuaris||[]).find(function(x){return x.id===id;}):null;
