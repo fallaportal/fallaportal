@@ -161,24 +161,31 @@ tr:hover td{background:var(--bg2)}
 .saldo-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;font-size:13px;border-bottom:0.5px solid var(--border)}
 .saldo-row:last-child{border-bottom:none;padding-top:10px;font-size:15px;font-weight:500}
 .fons-av{width:36px;height:36px;border-radius:50%;background:var(--blue-bg);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:var(--blue-text);flex-shrink:0}
-.mov-form{max-width:500px;display:flex;flex-direction:column;gap:12px;padding-bottom:24px}
-.mov-top{display:flex;align-items:stretch;gap:12px;margin-bottom:2px}
-.mov-top .type-toggle{display:grid;grid-template-columns:1fr 1fr;gap:6px;flex:0 0 auto}
-.mov-top .type-btn{font-size:14px;padding:12px 10px}
-.mov-import-big{flex:1;font-size:32px;font-weight:600;text-align:right;padding:10px 14px;border:0.5px solid var(--border2);border-radius:var(--r);background:var(--bg);color:var(--text);outline:none;min-width:0}
+.mov-form{max-width:500px;display:flex;flex-direction:column;gap:10px;padding-bottom:80px}
+.mov-top{display:flex;align-items:stretch;gap:10px}
+.mov-top .type-toggle{display:grid;grid-template-columns:1fr 1fr;gap:6px;flex:0 0 auto;width:160px}
+.mov-top .type-btn{font-size:14px;padding:14px 8px;border-radius:var(--r)}
+.mov-import-big{flex:1;font-size:36px;font-weight:600;text-align:right;padding:10px 14px;border:0.5px solid var(--border2);border-radius:var(--r);background:var(--bg);color:var(--text);outline:none;min-width:0}
 .mov-import-big:focus{border-color:var(--blue)}
-.mov-via-row{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
-.mov-via-row .via-btn{padding:12px 6px;font-size:11px;justify-content:center;flex-direction:column;align-items:center;gap:4px;text-align:center;border-radius:var(--r)}
-.mov-via-row .via-btn i{font-size:22px}
-.mov-row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.mov-field{display:flex;flex-direction:column;gap:5px}
+.mov-via-row{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.mov-via-row .via-btn{padding:10px 4px;font-size:12px;justify-content:center;flex-direction:column;align-items:center;gap:3px;text-align:center;border-radius:var(--r)}
+.mov-via-row .via-btn i{font-size:20px}
+.mov-row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.mov-field{display:flex;flex-direction:column;gap:4px}
 .mov-field label{font-size:13px;color:var(--text2);font-weight:500}
-.mov-field input,.mov-field select,.mov-field textarea{font-size:15px;padding:10px 12px;border:0.5px solid var(--border2);border-radius:var(--r);background:var(--bg);color:var(--text);outline:none;font-family:inherit}
+.mov-field input,.mov-field select,.mov-field textarea{font-size:15px;padding:11px 12px;border:0.5px solid var(--border2);border-radius:var(--r);background:var(--bg);color:var(--text);outline:none;font-family:inherit;width:100%}
 .mov-field input:focus,.mov-field select:focus,.mov-field textarea:focus{border-color:var(--blue)}
 .opt-label{font-size:11px;color:var(--text3);font-weight:400}
+.mov-registrar-btn{position:fixed;bottom:56px;left:0;right:0;padding:10px 16px;background:var(--bg);border-top:0.5px solid var(--border);z-index:50;display:none}
+.mov-registrar-btn button{width:100%;padding:14px;font-size:16px;font-weight:600;border-radius:var(--r)}
 @media(max-width:768px){
-  .mov-top .type-btn{font-size:13px;padding:10px 8px}
-  .mov-via-row .via-btn i{font-size:20px}
+  .mov-registrar-btn{display:block}
+  .mov-registrar-btn-inline{display:none!important}
+  .mov-form{padding-bottom:130px}
+}
+@media(min-width:769px){
+  .mov-registrar-btn{display:none}
+  .mov-registrar-btn-inline{display:flex!important}
 }
 .tag-multi{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
 .info-box{padding:10px 12px;background:var(--blue-bg);border-radius:var(--r);font-size:12px;color:var(--blue-text);margin-bottom:12px}
@@ -276,8 +283,8 @@ tr:hover td{background:var(--bg2)}
           <div class="mov-field"><label>Delegació</label><select id="mov-deleg" onchange="onMovDelegChange()"></select></div>
         </div>
 
-        <!-- Event (opcional) -->
-        <div class="mov-field" id="mov-event-field">
+        <!-- Event (opcional) - sols apareix si hi ha events per a la delegació -->
+        <div class="mov-field" id="mov-event-field" style="display:none">
           <label>Event <span class="opt-label">(opcional)</span></label>
           <select id="mov-event"></select>
         </div>
@@ -304,10 +311,18 @@ tr:hover td{background:var(--bg2)}
           <div class="mov-field"><label>Justificant <span class="opt-label">(foto/PDF)</span></label><input type="file" id="mov-photo" accept="image/*,application/pdf" style="font-size:13px"></div>
         </div>
 
-        <button class="btn btn-danger" style="width:100%;padding:13px;font-size:15px;margin-top:8px;border-radius:var(--r)" id="btn-registrar" onclick="registrarMoviment()">
+        <!-- Botó inline per desktop -->
+        <button class="btn btn-danger mov-registrar-btn-inline" style="width:100%;padding:13px;font-size:15px;margin-top:4px;border-radius:var(--r)" id="btn-registrar" onclick="registrarMoviment()">
           <i class="ti ti-check"></i> Registrar despesa
         </button>
       </div>
+    </div>
+
+    <!-- Botó fixat per mòbil -->
+    <div class="mov-registrar-btn">
+      <button class="btn btn-danger" id="btn-registrar-mob" onclick="registrarMoviment()" style="width:100%;padding:14px;font-size:16px;font-weight:600;border-radius:var(--r)">
+        <i class="ti ti-check"></i> Registrar despesa
+      </button>
     </div>
 
     <div id="page-lliurament" class="page">
@@ -1347,10 +1362,12 @@ function setMovType(t){
   movType=t;
   document.getElementById('btn-gast').className='type-btn gast'+(t==='gast'?' active':'');
   document.getElementById('btn-ing').className='type-btn ing'+(t==='ing'?' active':'');
-  const btn=document.getElementById('btn-registrar');
-  btn.className='btn btn-'+(t==='gast'?'danger':'primary');
-  btn.style.cssText='width:100%;padding:12px;font-size:14px';
-  btn.innerHTML='<i class="ti ti-check"></i> Registrar '+(t==='gast'?'despesa':'ingrés');
+  const color=t==='gast'?'danger':'primary';
+  const label='<i class="ti ti-check"></i> Registrar '+(t==='gast'?'despesa':'ingrés');
+  const btnInline=document.getElementById('btn-registrar');
+  if(btnInline){btnInline.className='btn btn-'+color+' mov-registrar-btn-inline';btnInline.style.cssText='width:100%;padding:13px;font-size:15px;margin-top:4px;border-radius:var(--r)';btnInline.innerHTML=label;}
+  const btnMob=document.getElementById('btn-registrar-mob');
+  if(btnMob){btnMob.className='btn btn-'+color;btnMob.style.cssText='width:100%;padding:14px;font-size:16px;font-weight:600;border-radius:var(--r)';btnMob.innerHTML=label;}
 }
 
 function setVia(v){
