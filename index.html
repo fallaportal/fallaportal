@@ -540,7 +540,7 @@ async function loadUserInfo(){
       const r2=await fetch('https://www.googleapis.com/oauth2/v2/userinfo',{headers:{Authorization:'Bearer '+accessToken}});
       if(r2.ok){const u2=await r2.json();if(u2.name)name=u2.name;}
     }catch(e2){}
-    currentUser={name,email,initials:name.split(/[\s.]+/).slice(0,2).map(w=>w[0]||'').join('').toUpperCase()||'?'};
+    currentUser={name,email:email.toLowerCase(),initials:name.split(/[\s.]+/).slice(0,2).map(w=>w[0]||'').join('').toUpperCase()||'?'};
   }catch(e){
     // Fallback: demanar email manualment
     const email=prompt('Introdueix el teu email de Google:')||'';
@@ -757,7 +757,7 @@ async function saveFons(fonsItem){
 function getUsuari(){
   if(!currentUser)return null;
   const email=currentUser.email;
-  const u=DB.config.usuaris.find(x=>x.email===email);
+  const u=DB.config.usuaris.find(x=>(x.email||'').toLowerCase()===(email||'').toLowerCase());
   if(u)return u;
   // Email administrador = president/tresoreria sempre
   if(email==='it.fallaportal@gmail.com')
