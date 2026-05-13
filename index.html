@@ -936,10 +936,10 @@ async function initSheets(){
       if(existingNames.includes(oldName)&&existingNames.includes(newName)){
         // Llegir dades de la pestanya antiga
         try{
-          const oldData=await sheetsReq('GET',SHEETS_API+'/values/'+sheetRangeUrl(oldName,'A1:ZZ'));
+          const oldData=await sheetsReq('GET',SHEETS_API+'/values/'+sheetTabUrl(oldName));
           if(oldData.values&&oldData.values.length>1){
             // Verificar si la nova pestanya ja té dades (més d'una fila = capçalera + dades)
-            const newData=await sheetsReq('GET',SHEETS_API+'/values/'+sheetRangeUrl(newName,'A1:A2'));
+            const newData=await sheetsReq('GET',SHEETS_API+'/values/'+encodeURIComponent("'"+newName+"'!A1:A2"));
             const newHasData=newData.values&&newData.values.length>1;
             if(!newHasData){
               // Copiar totes les dades a la nova pestanya
@@ -974,10 +974,16 @@ function sheetRange(tabName,cell){
 function sheetRangeUrl(tabName,cell){
   return encodeURIComponent(sheetRange(tabName,cell));
 }
+function sheetTabUrl(tabName){
+  // Per llegir tota la pestanya sense rang
+  const name=tabName.includes(' ')?("'"+tabName+"'"):tabName;
+  return encodeURIComponent(name);
+}
 
 async function readTab(tabName){
   try{
-    const r=await sheetsReq('GET',SHEETS_API+'/values/'+sheetRangeUrl(tabName,'A1:ZZ'));
+    // Llegir tota la pestanya sense especificar rang (Sheets API retorna tot)
+    const r=await sheetsReq('GET',SHEETS_API+'/values/'+sheetTabUrl(tabName));
     if(!r.values||r.values.length<2)return[];
     const headers=r.values[0];
     return r.values.slice(1).filter(row=>row.some(c=>c)).map(row=>{
@@ -989,7 +995,7 @@ async function readTab(tabName){
 }
 
 async function writeTab(tabName,headers,rows){
-  await sheetsReq('POST',SHEETS_API+'/values/'+sheetRangeUrl(tabName)+':clear',{});
+  await sheetsReq('POST',SHEETS_API+'/values/'+sheetTabUrl(tabName)+':clear',{});
   const data=[headers,...(rows||[]).map(r=>headers.map(h=>r[h]!==undefined?String(r[h]):''))];
   await sheetsReq('PUT',
     SHEETS_API+'/values/'+sheetRangeUrl(tabName,'A1')+'?valueInputOption=RAW',
@@ -1126,43 +1132,6 @@ async function loadAllFromDrive(){
   });
 }
 
-async function loadFromSheets(){
-  await initSheets();
-  const movsRows=await readTab('moviments');
-  DB.moviments=movsRows.map(r=>({...r,import:parseFloat(r.import)||0}));
-  const fonsRows=await readTab('fons');
-  DB.fons=fonsRows.map(r=>({...r,import:parseFloat(r.import)||0}));
-  const tancRows=await readTab('tancaments');
-  DB.tancaments={};
-  tancRows.forEach(r=>{DB.tancaments[r.eventId]={...r,efectiu:parseFloat(r.efectiu)||0,tpv:parseFloat(r.tpv)||0};});
-  const arees=await readTab('arees');
-  const delegacions=await readTab('delegacions');
-  const events=await readTab('events');
-  const bancs=await readTab('bancs');
-  const usuaris=await readTab('usuaris');
-  const assignacions=await readTab('usuaris_assignacions');
-  if(arees.length>0||usuaris.length>0){
-    DB.config=rowsToConfig(arees,delegacions,events,bancs,usuaris,assignacions);
-  }
-  if(!DB.config.bancs||!DB.config.bancs.length){
-    DB.config.bancs=[
-      {id:'b1',codi:'01 Banc',nom:'Caixabank',tipus:'bank'},
-      {id:'b2',codi:'02 Banc',nom:'Caixa Popular',tipus:'bank'},
-      {id:'b3',codi:'Efectiu',nom:'Caixa efectiu',tipus:'cash'},
-      {id:'b4',codi:'TPV',nom:'TPV targetes',tipus:'tpv'}
-    ];
-  }
-  // Carregar pressupostos
-  const presRows=await readTab('pres_plans');
-  DB.pres_plans=presRows.map(r=>({...r,importPla:parseFloat(r.importPla)||0}));
-  const presHistRows=await readTab('pres_historial');
-  DB.pres_historial=presHistRows;
-  const presConfigRows=await readTab('pres_config');
-  if(presConfigRows.length>0)DB.pres_config=presConfigRows[presConfigRows.length-1];
-  const reglesRows=await readTab('regles');
-  DB.regles=reglesRows.map(r=>({...r,prioritat:parseInt(r.prioritat)||10,activa:r.activa!=='false'}));
-  if(!DB.regles.length)DB.regles=getDefaultRegles();
-}
 
 async function save(key){
   setSyncing(true);
