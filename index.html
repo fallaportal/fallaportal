@@ -810,10 +810,9 @@ function initApp(){
   document.getElementById('login-screen').classList.add('hidden');
   document.getElementById('app').classList.remove('hidden');
   const u=getUsuari();
-  document.getElementById('sb-name').textContent=u?.name||currentUser.name;
-  document.getElementById('sb-av').textContent=currentUser.initials;
-  const rol=getRol();
   const rolDef=ROLES[rol];
+  document.getElementById('sb-name').textContent=u?.nom||currentUser.name;
+  document.getElementById('sb-av').textContent=currentUser.initials;
   document.getElementById('sb-role').textContent=rolDef?.label||rol;
   document.getElementById('mov-data').value=today();
   document.getElementById('ll-data').value=today();
@@ -1406,16 +1405,16 @@ function updateMuFields(){
 async function saveUsuari(){
   const nom=document.getElementById('mu-nom').value.trim();
   const email=document.getElementById('mu-email').value.trim().toLowerCase();
-  const rol=document.getElementById('mu-rol').value;
+  const rolVal=document.getElementById('mu-rol').value;
   if(!nom||!email){showToast('Nom i email són obligatoris',true);return;}
   const arees=Array.from(document.querySelectorAll('#mu-arees-checks input:checked')).map(x=>x.value);
   const delegacions=Array.from(document.querySelectorAll('#mu-delegs-checks input:checked')).map(x=>x.value);
   if(!DB.config.usuaris)DB.config.usuaris=[];
   if(editingUserId){
     const u=DB.config.usuaris.find(x=>x.id===editingUserId);
-    if(u){u.nom=nom;u.email=email;u.rol=rol;u.arees=arees;u.delegacions=delegacions;}
+    if(u){u.nom=nom;u.email=email;u.rol=rolVal;u.arees=arees;u.delegacions=delegacions;}
   }else{
-    DB.config.usuaris.push({id:'u'+Date.now(),nom,email,rol,arees,delegacions});
+    DB.config.usuaris.push({id:'u'+Date.now(),nom,email,rol:rolVal,arees,delegacions});
   }
   await save('config');closeModal('modal-usuari');renderCfgUsuaris();showToast('Usuari guardat: '+nom);
   // Recarregar permisos si l'usuari editat és el mateix que ha entrat
