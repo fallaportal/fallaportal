@@ -74,7 +74,31 @@ input:focus,select:focus,textarea:focus{border-color:var(--blue)}
 .card-title{font-size:13px;font-weight:500;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:8px}
 .card-title span{font-size:11px;font-weight:400;color:var(--text2)}
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
-@media(max-width:768px){.row2{grid-template-columns:1fr}.main{margin-left:0;padding:16px}}
+@media(max-width:768px){
+  .row2{grid-template-columns:1fr}
+  .main{margin-left:0;padding:12px 10px 80px}
+  .sidebar{display:none}
+  .mobile-nav{display:flex!important}
+  .metrics{grid-template-columns:1fr 1fr}
+  .card{padding:12px}
+  table{font-size:11px}
+  th,td{padding:5px 6px}
+}
+@media(min-width:769px){
+  .mobile-nav{display:none!important}
+}
+.mobile-nav{
+  position:fixed;bottom:0;left:0;right:0;z-index:200;
+  background:var(--bg);border-top:0.5px solid var(--border);
+  display:flex;align-items:stretch;height:56px;
+}
+.mob-item{
+  flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:2px;cursor:pointer;font-size:9px;color:var(--text3);padding:4px 2px;
+  border-top:2px solid transparent;transition:all .15s;
+}
+.mob-item.active{color:var(--red);border-top-color:var(--red)}
+.mob-item i{font-size:20px}
 .btn{padding:7px 14px;border-radius:var(--r);border:0.5px solid var(--border2);background:transparent;font-size:13px;color:var(--text);display:inline-flex;align-items:center;gap:6px}
 .btn:hover{background:var(--bg2)}
 .btn-primary{background:var(--green);color:#fff;border-color:var(--green)}.btn-primary:hover{opacity:.9}
@@ -296,6 +320,19 @@ tr:hover td{background:var(--bg2)}
       </div>
     </div>
 
+    <div id="page-pressupostos-edit" class="page">
+      <div class="page-title">Pressupostos 26/27</div>
+      <div class="page-sub" id="pres-estat-sub">Any fiscal 26/27</div>
+      <div id="pres-estat-bar" style="margin-bottom:16px"></div>
+      <div id="pres-container-edit"></div>
+    </div>
+
+    <div id="page-manual" class="page">
+      <div class="page-title">Manual d'usuari</div>
+      <div class="page-sub">Guia completa de la Falla Portal · Gestió financera 26/27</div>
+      <div id="manual-container"></div>
+    </div>
+
     <div id="page-resultats" class="page">
       <div class="page-title">Estat de Resultats</div>
       <div class="page-sub">Any fiscal 26/27 · 1 abril 2026 – 31 març 2027</div>
@@ -332,6 +369,25 @@ tr:hover td{background:var(--bg2)}
       <div id="cfg-usuaris" class="hidden"></div>
     </div>
   </div>
+</div>
+
+<nav class="mobile-nav" id="mobile-nav">
+  <div class="mob-item active" id="mob-dashboard" onclick="showPageMob('dashboard','mob-dashboard')"><i class="ti ti-home"></i>Inici</div>
+  <div class="mob-item" id="mob-moviments" onclick="showPageMob('moviments','mob-moviments')"><i class="ti ti-plus"></i>Moviment</div>
+  <div class="mob-item" id="mob-historial" onclick="showPageMob('historial','mob-historial')"><i class="ti ti-list"></i>Historial</div>
+  <div class="mob-item" id="mob-pressupostos" onclick="showPageMob('pressupostos-edit','mob-pressupostos')"><i class="ti ti-chart-bar"></i>Pres.</div>
+  <div class="mob-item" id="mob-mes" onclick="showMobMenu()"><i class="ti ti-dots"></i>Més</div>
+</nav>
+
+<div id="mob-menu-overlay" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:250" onclick="closeMobMenu()"></div>
+<div id="mob-menu" class="hidden" style="position:fixed;bottom:56px;left:0;right:0;background:var(--bg);border-top:0.5px solid var(--border);z-index:260;padding:8px 0">
+  <div onclick="showPageMob('lliurament','');closeMobMenu()" style="padding:12px 20px;font-size:14px;display:flex;align-items:center;gap:12px;cursor:pointer"><i class="ti ti-arrow-down-left" style="font-size:18px;color:var(--text2)"></i> Fons delegats</div>
+  <div onclick="showPageMob('tancament','');closeMobMenu()" style="padding:12px 20px;font-size:14px;display:flex;align-items:center;gap:12px;cursor:pointer"><i class="ti ti-lock" style="font-size:18px;color:var(--text2)"></i> Tancament caixa</div>
+  <div onclick="showPageMob('resultats','');closeMobMenu()" style="padding:12px 20px;font-size:14px;display:flex;align-items:center;gap:12px;cursor:pointer"><i class="ti ti-file-text" style="font-size:18px;color:var(--text2)"></i> Estat de Resultats</div>
+  <div onclick="showPageMob('flux','');closeMobMenu()" style="padding:12px 20px;font-size:14px;display:flex;align-items:center;gap:12px;cursor:pointer"><i class="ti ti-arrows-exchange" style="font-size:18px;color:var(--text2)"></i> Flux d'Efectiu</div>
+  <div onclick="showPageMob('manual','');closeMobMenu()" style="padding:12px 20px;font-size:14px;display:flex;align-items:center;gap:12px;cursor:pointer"><i class="ti ti-help-circle" style="font-size:18px;color:var(--text2)"></i> Manual d'usuari</div>
+  <div onclick="showPageMob('configuracio','');closeMobMenu()" style="padding:12px 20px;font-size:14px;display:flex;align-items:center;gap:12px;cursor:pointer"><i class="ti ti-settings" style="font-size:18px;color:var(--text2)"></i> Configuració</div>
+  <div onclick="signOut();closeMobMenu()" style="padding:12px 20px;font-size:14px;display:flex;align-items:center;gap:12px;cursor:pointer;color:var(--red)"><i class="ti ti-logout" style="font-size:18px"></i> Tancar sessió</div>
 </div>
 
 <div class="modal-overlay" id="modal-lliurament">
@@ -393,6 +449,36 @@ tr:hover td{background:var(--bg2)}
     <div class="modal-footer">
       <button class="btn" onclick="closeModal('modal-usuari')">Cancel·lar</button>
       <button class="btn btn-primary" onclick="saveUsuari()">Guardar usuari</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-pres">
+  <div class="modal">
+    <div class="modal-title">Afegir línia de pressupost</div>
+    <div style="font-size:13px;color:var(--text2);margin-bottom:12px" id="mp-deleg-nom"></div>
+    <div class="field">
+      <label>Event</label>
+      <select id="mp-event"></select>
+    </div>
+    <div class="field">
+      <label>Tipus de línia</label>
+      <select id="mp-tipus" onchange="updateMpTipus()">
+        <option value="event">Import global de l'event</option>
+        <option value="concepte">Concepte concret dins de l'event</option>
+      </select>
+    </div>
+    <div class="field hidden" id="mp-concepte-field">
+      <label>Concepte</label>
+      <input type="text" id="mp-concepte" placeholder="p.e. Honoraris Orquestra, Begudes...">
+    </div>
+    <div class="field">
+      <label>Import planificat (€)</label>
+      <input type="number" id="mp-import" min="0" step="0.01" inputmode="decimal" placeholder="0.00">
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('modal-pres')">Cancel·lar</button>
+      <button class="btn btn-primary" onclick="savePresPla()">Guardar</button>
     </div>
   </div>
 </div>
@@ -508,7 +594,7 @@ let DB={
     ],
     usuaris:[]
   },
-  moviments:[],fons:[],tancaments:{}
+  moviments:[],fons:[],tancaments:{},pres_plans:[],pres_config:{any:'26/27',estat:'obert',bloquejatPer:'',bloquejatEmail:'',data:''},pres_historial:[]
 };
 
 const fmt=v=>Math.abs(v).toLocaleString('ca-ES',{maximumFractionDigits:0})+' €';
@@ -585,7 +671,10 @@ const TABS={
   events:{name:'events',headers:['id','delegId','nom','year','responsable','status']},
   bancs:{name:'bancs',headers:['id','codi','nom','tipus']},
   usuaris:{name:'usuaris',headers:['id','nom','email','rol']},
-  usuaris_assignacions:{name:'usuaris_assignacions',headers:['userId','userNom','tipus','id','nom']}
+  usuaris_assignacions:{name:'usuaris_assignacions',headers:['userId','userNom','tipus','id','nom']},
+  pres_plans:{name:'pres_plans',headers:['any','delegacioId','delegacioNom','eventId','eventNom','concepte','tipus','importPla','notes']},
+  pres_config:{name:'pres_config',headers:['any','estat','bloquejatPer','bloquejatEmail','data']},
+  pres_historial:{name:'pres_historial',headers:['data','accio','any','usuari','email','motiu']}
 };
 
 async function sheetsReq(method,url,body=null){
@@ -748,6 +837,13 @@ async function loadFromSheets(){
       {id:'b4',codi:'TPV',nom:'TPV targetes',tipus:'tpv'}
     ];
   }
+  // Carregar pressupostos
+  const presRows=await readTab('pres_plans');
+  DB.pres_plans=presRows.map(r=>({...r,importPla:parseFloat(r.importPla)||0}));
+  const presHistRows=await readTab('pres_historial');
+  DB.pres_historial=presHistRows;
+  const presConfigRows=await readTab('pres_config');
+  if(presConfigRows.length>0)DB.pres_config=presConfigRows[presConfigRows.length-1];
 }
 
 async function save(key){
@@ -768,6 +864,12 @@ async function save(key){
       await writeTab('bancs',TABS.bancs.headers,bancs);
       await writeTab('usuaris',TABS.usuaris.headers,usuaris);
       await writeTab('usuaris_assignacions',TABS.usuaris_assignacions.headers,assignacions);
+    }else if(key==='pres_plans'){
+      await writeTab('pres_plans',TABS.pres_plans.headers,DB.pres_plans);
+    }else if(key==='pres_config'){
+      await writeTab('pres_config',TABS.pres_config.headers,[DB.pres_config]);
+    }else if(key==='pres_historial'){
+      await writeTab('pres_historial',TABS.pres_historial.headers,DB.pres_historial);
     }
   }catch(e){showToast('Error guardant: '+e.message,true);}
   setSyncing(false);
@@ -846,6 +948,8 @@ function buildNav(){
     html+='<div class="nav-sec">Sistema</div>';
     html+='<div class="nav-item" onclick="showPage(\'configuracio\')"><i class="ti ti-settings"></i> Configuració</div>';
   }
+  html+='<div class="nav-sec">Ajuda</div>';
+  html+='<div class="nav-item" onclick="showPage(\'manual\')"><i class="ti ti-help-circle"></i> Manual d\'usuari</div>';
   nav.innerHTML=html;
 }
 
@@ -879,9 +983,10 @@ function showPage(id){
   document.querySelectorAll('.nav-item').forEach(n=>{
     if(n.getAttribute('onclick')&&n.getAttribute('onclick').includes("'"+id+"'"))n.classList.add('active');
   });
-  ({dashboard:renderDashboard,historial:renderHistorial,pressupostos:renderPressupostos,
-    lliurament:renderFons,tancament:renderTancamentList,resultats:renderResultats,
-    flux:renderFlux,configuracio:renderConfig}[id]||function(){})();
+  ({'pressupostos':renderPressupostosEdit,'dashboard':renderDashboard,'historial':renderHistorial,
+    'pressupostos-edit':renderPressupostosEdit,
+    'lliurament':renderFons,'tancament':renderTancamentList,'resultats':renderResultats,
+    'flux':renderFlux,'configuracio':renderConfig,'manual':renderManual}[id]||function(){})();
 }
 
 // DASHBOARD
@@ -1197,38 +1302,176 @@ async function tancarEvent(){
 }
 
 // PRESSUPOSTOS
-function renderPressupostos(){
-  const myArees=getMyArees();
-  const areas=DB.config.areas.filter(a=>myArees.includes(a.id)||perm('viewAll'));
-  document.getElementById('pres-container').innerHTML=areas.map(a=>{
-    const deleg=DB.config.delegacions.filter(d=>d.areaId===a.id);
-    const gReal=(DB.moviments||[]).filter(m=>m.tipus==='gast'&&m.areaId===a.id).reduce((s,m)=>s+m.import,0);
-    const iReal=(DB.moviments||[]).filter(m=>m.tipus==='ing'&&m.areaId===a.id).reduce((s,m)=>s+m.import,0);
-    const col=AREA_COLORS[a.id]||'#888';
-    const bid='pb'+a.id;
-    return`<div class="deleg-block">
-      <div class="deleg-head" onclick="document.getElementById('${bid}').classList.toggle('open');this.querySelector('.chevron').classList.toggle('open')">
-        <i class="ti ti-chevron-right chevron"></i>
-        <div style="width:8px;height:8px;border-radius:50%;background:${col}"></div>
-        <div style="font-weight:500;flex:1">${a.name}</div>
-        ${iReal>0?`<span style="font-size:12px;color:var(--green);margin-right:12px">+${fmt(iReal)}</span>`:''}
-        <span style="font-size:12px;color:${gReal>0?'var(--red)':'var(--text3)'}">${gReal>0?'-'+fmt(gReal):'—'}</span>
+function renderPressupostos(){showPage('pressupostos-edit');}
+
+function renderPressupostosEdit(){
+  const myDelegs=getMyDelegacions();
+  const estat=DB.pres_config?.estat||'obert';
+  const bloquejat=estat==='bloquejat';
+  const canLock=perm('canFons'); // Treasury i President
+
+  // Barra d'estat
+  document.getElementById('pres-estat-sub').textContent='Any fiscal 26/27 · Estat: '+estat.toUpperCase();
+  document.getElementById('pres-estat-bar').innerHTML=`
+    <div style="display:flex;align-items:center;gap:10px;padding:12px 16px;background:${bloquejat?'var(--amber-bg)':'var(--green-bg)'};border-radius:var(--r);border:0.5px solid ${bloquejat?'var(--amber)':'var(--green)'}">
+      <i class="ti ${bloquejat?'ti-lock':'ti-lock-open'}" style="font-size:18px;color:${bloquejat?'var(--amber)':'var(--green)'}"></i>
+      <div style="flex:1">
+        <div style="font-weight:500;color:${bloquejat?'var(--amber-text)':'var(--green-text)'}">${bloquejat?'Pressupost bloquejat i aprovat':'Pressupost obert — en fase d'elaboració'}</div>
+        <div style="font-size:11px;color:var(--text2);margin-top:2px">${bloquejat?'Bloquejat per '+DB.pres_config.bloquejatPer+' el '+DB.pres_config.data:'Els responsables poden introduir i modificar els imports planificats'}</div>
       </div>
-      <div class="deleg-body" id="${bid}">
-        ${deleg.map(d=>{
-          const dg=(DB.moviments||[]).filter(m=>m.tipus==='gast'&&m.delegacioId===d.id).reduce((s,m)=>s+m.import,0);
-          const di=(DB.moviments||[]).filter(m=>m.tipus==='ing'&&m.delegacioId===d.id).reduce((s,m)=>s+m.import,0);
-          const evs=DB.config.events.filter(e=>e.delegId===d.id);
-          return`<div class="sub-row">
-            <div style="flex:1;font-weight:500">${d.name}</div>
-            ${evs.length?`<span class="pill p-info" style="margin-right:8px">${evs.length} events</span>`:''}
-            ${di>0?`<span style="font-size:12px;color:var(--green);margin-right:8px">+${fmt(di)}</span>`:''}
-            <span style="font-size:12px;color:${dg>0?'var(--red)':'var(--text3)'}">${dg>0?'-'+fmt(dg):'—'}</span>
-          </div>`;
-        }).join('')}
-      </div>
+      ${canLock?`<button class="btn ${bloquejat?'':'btn-primary'}" onclick="${bloquejat?'desbloquejarpres()':'bloquejarPres()'}" style="font-size:12px;flex-shrink:0">
+        <i class="ti ${bloquejat?'ti-lock-open':'ti-lock'}"></i> ${bloquejat?'Desbloquejar':'Bloquejar i aprovar'}
+      </button>`:''}
     </div>`;
-  }).join('');
+
+  // Historial de bloquejos
+  const hist=DB.pres_historial||[];
+
+  // Delegacions visibles
+  const areas=DB.config.areas.filter(a=>perm('viewAll')||getMyArees().includes(a.id));
+  let html='';
+  areas.forEach(a=>{
+    const col=AREA_COLORS[a.id]||'#888';
+    const delegs=DB.config.delegacions.filter(d=>d.areaId===a.id&&(perm('viewAll')||myDelegs.includes(d.id)));
+    if(!delegs.length)return;
+    html+=`<div style="margin-bottom:20px">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+        <div style="width:8px;height:8px;border-radius:50%;background:${col}"></div>
+        <div style="font-weight:500;font-size:14px">${a.name}</div>
+      </div>`;
+    delegs.forEach(d=>{
+      const events=DB.config.events.filter(e=>e.delegId===d.id);
+      const dPlans=DB.pres_plans.filter(p=>p.delegacioId===d.id);
+      const totalPla=dPlans.reduce((s,p)=>s+p.importPla,0);
+      const totalReal=(DB.moviments||[]).filter(m=>m.delegacioId===d.id&&m.tipus==='gast').reduce((s,m)=>s+m.import,0);
+      const pct=totalPla>0?Math.min(100,Math.round(totalReal/totalPla*100)):0;
+      const bid='ped'+d.id;
+      html+=`<div class="deleg-block" style="margin-bottom:8px;margin-left:16px">
+        <div class="deleg-head" onclick="document.getElementById('${bid}').classList.toggle('open');this.querySelector('.chevron').classList.toggle('open')">
+          <i class="ti ti-chevron-right chevron"></i>
+          <div style="flex:1;font-weight:500">${d.name}</div>
+          <div style="font-size:12px;color:var(--text2);margin-right:12px">Pla: ${totalPla>0?fmt(totalPla):'—'}</div>
+          <div style="font-size:12px;color:${totalReal>0?'var(--red)':'var(--text3)'}">Real: ${totalReal>0?fmt(totalReal):'—'}</div>
+          ${totalPla>0?`<div style="font-size:11px;width:32px;text-align:right;color:${pct>=90?'var(--red)':pct>=75?'var(--amber)':'var(--green)'}">${pct}%</div>`:''}
+        </div>
+        <div class="deleg-body" id="${bid}">
+          ${!bloquejat&&(perm('viewAll')||myDelegs.includes(d.id))?`
+          <div style="padding:10px 14px;border-bottom:0.5px solid var(--border)">
+            <button class="btn btn-primary" style="font-size:12px" onclick="openModalPres('${d.id}','','event')">
+              <i class="ti ti-plus"></i> Afegir línia de pressupost
+            </button>
+          </div>`:''}
+          ${dPlans.length?dPlans.map(p=>`
+          <div style="display:flex;align-items:center;gap:8px;padding:8px 14px;border-bottom:0.5px solid var(--border);font-size:12px">
+            <div style="flex:1">
+              <div style="font-weight:500">${p.eventNom||'—'}</div>
+              ${p.concepte?`<div style="color:var(--text3);font-size:11px">${p.concepte}</div>`:''}
+            </div>
+            <span class="pill p-info">${p.tipus==='event'?'Event':'Concepte'}</span>
+            <div style="font-weight:500;width:80px;text-align:right">${fmt(p.importPla)}</div>
+            ${!bloquejat&&(perm('viewAll')||myDelegs.includes(d.id))?`
+            <button class="btn" style="font-size:11px;padding:3px 8px" onclick="deletePres('${p.delegacioId}','${p.eventId}','${p.concepte}')">
+              <i class="ti ti-trash"></i>
+            </button>`:''}
+          </div>`).join(''):`<div style="padding:10px 14px;color:var(--text3);font-size:12px">Sense imports planificats</div>`}
+          ${events.length&&!bloquejat&&(perm('viewAll')||myDelegs.includes(d.id))?'':`
+          `}
+        </div>
+      </div>`;
+    });
+    html+='</div>';
+  });
+  document.getElementById('pres-container-edit').innerHTML=html;
+
+  // Historial
+  if(hist.length){
+    document.getElementById('pres-container-edit').innerHTML+=`
+      <div class="card" style="margin-top:20px">
+        <div class="card-title">Historial de bloquejos</div>
+        ${hist.slice().reverse().map(h=>`<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:0.5px solid var(--border);font-size:12px">
+          <i class="ti ${h.accio==='bloquejat'?'ti-lock':'ti-lock-open'}" style="color:${h.accio==='bloquejat'?'var(--amber)':'var(--green)'}"></i>
+          <div style="flex:1"><span style="font-weight:500">${h.accio==='bloquejat'?'Bloquejat':'Desbloquejat'}</span> per ${h.usuari}</div>
+          <div style="color:var(--text3)">${h.data}</div>
+          ${h.motiu?`<div style="color:var(--text2)">${h.motiu}</div>`:''}
+        </div>`).join('')}
+      </div>`;
+  }
+}
+
+let presDelegId='',presEventId='',presTipus='event';
+
+function openModalPres(delegId,eventId,tipus){
+  presDelegId=delegId;presEventId=eventId;presTipus=tipus;
+  const deleg=DB.config.delegacions.find(d=>d.id===delegId);
+  const events=DB.config.events.filter(e=>e.delegId===delegId);
+  document.getElementById('mp-deleg-nom').textContent=deleg?.name||delegId;
+  const evSel=document.getElementById('mp-event');
+  evSel.innerHTML=events.map(e=>`<option value="${e.id}">${e.name}</option>`).join('');
+  if(eventId)evSel.value=eventId;
+  document.getElementById('mp-concepte').value='';
+  document.getElementById('mp-import').value='';
+  document.getElementById('mp-tipus').value=tipus;
+  updateMpTipus();
+  openModal('modal-pres');
+}
+
+function updateMpTipus(){
+  const t=document.getElementById('mp-tipus').value;
+  document.getElementById('mp-concepte-field').style.display=t==='concepte'?'block':'none';
+}
+
+async function savePresPla(){
+  const delegId=presDelegId;
+  const eventId=document.getElementById('mp-event').value;
+  const event=DB.config.events.find(e=>e.id===eventId);
+  const deleg=DB.config.delegacions.find(d=>d.id===delegId);
+  const tipus=document.getElementById('mp-tipus').value;
+  const concepte=tipus==='concepte'?document.getElementById('mp-concepte').value:'';
+  const importPla=parseFloat(document.getElementById('mp-import').value)||0;
+  if(!importPla){showToast('Introdueix un import vàlid',true);return;}
+  const pla={
+    any:'26/27',delegacioId:delegId,delegacioNom:deleg?.name||'',
+    eventId,eventNom:event?.name||'',concepte,tipus,importPla,notes:''
+  };
+  // Eliminar si ja existia la mateixa combinació
+  DB.pres_plans=DB.pres_plans.filter(p=>!(p.delegacioId===delegId&&p.eventId===eventId&&p.concepte===concepte));
+  DB.pres_plans.push(pla);
+  saveCache();
+  closeModal('modal-pres');
+  renderPressupostosEdit();
+  showToast('Import planificat guardat');
+  save('pres_plans').catch(e=>showToast('Error guardant: '+e.message,true));
+}
+
+async function deletePres(delegId,eventId,concepte){
+  if(!confirm('Eliminar aquesta línia de pressupost?'))return;
+  DB.pres_plans=DB.pres_plans.filter(p=>!(p.delegacioId===delegId&&p.eventId===eventId&&p.concepte===concepte));
+  saveCache();
+  renderPressupostosEdit();
+  save('pres_plans').catch(e=>console.warn(e));
+}
+
+async function bloquejarPres(){
+  const motiu=prompt('Motiu del bloqueig (opcional):','')||'';
+  const u=getUsuari();
+  DB.pres_config={any:'26/27',estat:'bloquejat',bloquejatPer:u?.nom||'',bloquejatEmail:u?.email||'',data:today()};
+  DB.pres_historial.push({data:today(),accio:'bloquejat',any:'26/27',usuari:u?.nom||'',email:u?.email||'',motiu});
+  saveCache();
+  renderPressupostosEdit();
+  showToast('Pressupost bloquejat i aprovat');
+  save('pres_config');save('pres_historial');
+}
+
+async function desbloquejarpres(){
+  const motiu=prompt('Motiu del desbloqueig (obligatori):');
+  if(!motiu){showToast('Cal indicar el motiu',true);return;}
+  const u=getUsuari();
+  DB.pres_config={any:'26/27',estat:'obert',bloquejatPer:'',bloquejatEmail:'',data:today()};
+  DB.pres_historial.push({data:today(),accio:'desbloquejat',any:'26/27',usuari:u?.nom||'',email:u?.email||'',motiu});
+  saveCache();
+  renderPressupostosEdit();
+  showToast('Pressupost desbloquejat');
+  save('pres_config');save('pres_historial');
 }
 
 // RESULTATS
@@ -1274,6 +1517,135 @@ function renderFlux(){
       <div class="flow-row" style="font-weight:500"><span>Net ${v}</span><span style="color:${(vi-vg)>=0?'var(--green)':'var(--red)'}">${fmtS(vi-vg)}</span></div>
     </div>`;
   }).join('');
+}
+
+function renderManual(){
+  document.getElementById('manual-container').innerHTML=`
+  <div class="card">
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px" id="man-tabs">
+      <button class="btn btn-primary" onclick="showManTab('intro')">Introducció</button>
+      <button class="btn" onclick="showManTab('moviments')">Moviments</button>
+      <button class="btn" onclick="showManTab('fons')">Fons delegats</button>
+      <button class="btn" onclick="showManTab('tancament')">Tancament caixa</button>
+      <button class="btn" onclick="showManTab('pressupostos')">Pressupostos</button>
+      <button class="btn" onclick="showManTab('rols')">Rols i permisos</button>
+    </div>
+    <div id="man-content"></div>
+  </div>`;
+  showManTab('intro');
+}
+
+const MANUAL={
+  intro:`<h3 style="margin-bottom:12px">Benvingut a la Falla Portal</h3>
+    <p style="color:var(--text2);line-height:1.6;margin-bottom:12px">
+      Aquesta app és el sistema de gestió financera de la Falla Portal per a l'any fiscal 26/27 (1 d'abril 2026 – 31 de març 2027).
+      Totes les dades es guarden automàticament a Google Sheets i estan disponibles per a tots els usuaris autoritzats en temps real.
+    </p>
+    <div style="background:var(--blue-bg);border-radius:var(--r);padding:12px;margin-bottom:12px;font-size:13px;color:var(--blue-text)">
+      <strong>Primer pas:</strong> El President o Tresorera han de donar d'alta els usuaris a Configuració → Usuaris, indicant el seu email de Google, rol i delegacions assignades.
+    </div>
+    <div style="font-size:13px;line-height:1.8">
+      <div style="font-weight:500;margin-bottom:8px">Mòduls disponibles:</div>
+      <div>📊 <strong>Dashboard</strong> — resum global de l'any fiscal</div>
+      <div>➕ <strong>Nou moviment</strong> — registrar un ingrés o despesa</div>
+      <div>💰 <strong>Fons delegats</strong> — control de bestretes</div>
+      <div>🔒 <strong>Tancament de caixa</strong> — tancar events</div>
+      <div>📋 <strong>Pressupostos</strong> — pla vs actuals</div>
+      <div>📜 <strong>Historial</strong> — tots els moviments</div>
+      <div>📄 <strong>Estat de Resultats</strong> — ingressos i despeses per àrea</div>
+      <div>💸 <strong>Flux d'Efectiu</strong> — moviments per via de pagament</div>
+    </div>`,
+  moviments:`<h3 style="margin-bottom:12px">Registrar un moviment</h3>
+    <p style="color:var(--text2);line-height:1.6;margin-bottom:12px">
+      Un moviment és qualsevol ingrés o despesa de la Falla. Cada responsable de delegació registra els seus propis moviments.
+    </p>
+    <div style="font-size:13px;line-height:1.8">
+      <div style="font-weight:500;margin-bottom:8px">Passos per registrar una despesa:</div>
+      <div>1. Clica <strong>Nou moviment</strong> al menú lateral</div>
+      <div>2. Selecciona <strong>Despesa</strong> o <strong>Ingrés</strong></div>
+      <div>3. Introdueix l'<strong>import</strong> en euros</div>
+      <div>4. Selecciona la <strong>via</strong>: Efectiu, Banc 1, Banc 2 o TPV</div>
+      <div>5. Selecciona l'<strong>àrea</strong> i la <strong>delegació</strong></div>
+      <div>6. Si és d'un event concret, selecciona'l</div>
+      <div>7. Escriu el <strong>concepte</strong> (p.e. "Honoraris Orquestra Monaco")</div>
+      <div>8. Indica l'<strong>establiment</strong> si escau (p.e. "Monaco S.L.")</div>
+      <div>9. Comprova la <strong>data</strong></div>
+      <div>10. Pots afegir una foto del <strong>justificant</strong></div>
+      <div>11. Clica <strong>Registrar</strong></div>
+    </div>
+    <div style="background:var(--amber-bg);border-radius:var(--r);padding:10px;margin-top:12px;font-size:12px;color:var(--amber-text)">
+      <strong>Important:</strong> Els moviments del TPV NO s'han de registrar manualment — es conciliaran automàticament quan s'importe el CSV del banc.
+    </div>`,
+  fons:`<h3 style="margin-bottom:12px">Fons delegats</h3>
+    <p style="color:var(--text2);line-height:1.6;margin-bottom:12px">
+      El sistema de fons delegats controla els diners de la Falla que estan en mans dels responsables.
+    </p>
+    <div style="font-size:13px;line-height:1.8">
+      <div style="font-weight:500;margin-bottom:8px">Com funciona:</div>
+      <div>1. <strong>Tresoreria lliura fons</strong> a un delegat (p.e. 500€ a Juanjo per la Festa Cloenda)</div>
+      <div>2. El delegat <strong>registra les despeses</strong> amb "Nou moviment" → via Efectiu</div>
+      <div>3. El saldo disponible = fons rebuts − despeses registrades</div>
+      <div>4. Al final de l'event, el delegat <strong>torna el sobrant</strong> a Tresoreria</div>
+      <div>5. Tresoreria registra la <strong>devolució</strong> per tancar el cicle</div>
+    </div>
+    <div style="background:var(--red-bg);border-radius:var(--r);padding:10px;margin-top:12px;font-size:12px;color:var(--red-text)">
+      <strong>Alerta:</strong> Si el saldo surt en roig, el delegat ha gastat més del que ha rebut. Cal que Tresoreria lliure més fons o que el delegat justifique les despeses addicionals.
+    </div>`,
+  tancament:`<h3 style="margin-bottom:12px">Tancament de caixa</h3>
+    <p style="color:var(--text2);line-height:1.6;margin-bottom:12px">
+      El tancament es fa un cop acabat l'event. El responsable declara l'efectiu recaptat i les vendes per TPV.
+    </p>
+    <div style="font-size:13px;line-height:1.8">
+      <div style="font-weight:500;margin-bottom:8px">Passos:</div>
+      <div>1. Ves a <strong>Tancament de caixa</strong></div>
+      <div>2. Selecciona l'event que vols tancar</div>
+      <div>3. Compta l'efectiu físic de la caixa i introdueix l'import</div>
+      <div>4. Mira el tiquet del terminal TPV i introdueix el total de vendes</div>
+      <div>5. Revisa el <strong>resultat net</strong> calculat automàticament</div>
+      <div>6. Clica <strong>Tancar i enviar a Tresoreria</strong></div>
+    </div>
+    <div style="background:var(--blue-bg);border-radius:var(--r);padding:10px;margin-top:12px;font-size:12px;color:var(--blue-text)">
+      <strong>Nota:</strong> El TPV es conciliarà definitivament quan s'importe el CSV bancari. El tancament manual és una declaració provisional.
+    </div>`,
+  pressupostos:`<h3 style="margin-bottom:12px">Pressupostos</h3>
+    <p style="color:var(--text2);line-height:1.6;margin-bottom:12px">
+      Cada responsable introdueix els imports planificats per a les seues delegacions. Un cop aprovats, es bloquegen.
+    </p>
+    <div style="font-size:13px;line-height:1.8">
+      <div style="font-weight:500;margin-bottom:8px">Flux d'aprovació:</div>
+      <div>1. <strong>Fase elaboració</strong> — cada responsable introdueix els imports per event o concepte</div>
+      <div>2. <strong>Revisió</strong> — Tresoreria o President revisen tots els pressupostos</div>
+      <div>3. <strong>Bloqueig</strong> — Tresoreria o President cliquen "Bloquejar i aprovar"</div>
+      <div>4. <strong>Execució</strong> — els moviments reals es comparen automàticament amb el pla</div>
+      <div>5. <strong>Desbloqueig puntual</strong> — si cal fer ajustos, Tresoreria pot desbloquejar amb motiu</div>
+    </div>
+    <div style="background:var(--amber-bg);border-radius:var(--r);padding:10px;margin-top:12px;font-size:12px;color:var(--amber-text)">
+      <strong>Important:</strong> Un cop bloquejat, cap responsable pot modificar els imports planificats. Tots els desbloquejos queden registrats amb data, usuari i motiu.
+    </div>`,
+  rols:`<h3 style="margin-bottom:12px">Rols i permisos</h3>
+    <p style="color:var(--text2);line-height:1.6;margin-bottom:12px">Cada usuari té un rol que defineix el que pot fer a l'app.</p>
+    <div style="font-size:13px">
+      ${Object.entries(ROLES).filter(([k])=>k!=='noauth').map(([key,r])=>`
+      <div style="padding:10px 0;border-bottom:0.5px solid var(--border)">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+          <span class="pill ${r.color}">${r.label}</span>
+        </div>
+        <div style="color:var(--text2);font-size:12px">
+          ${r.canRegister?'✓ Pot registrar moviments · ':'✗ No pot registrar moviments · '}
+          ${r.canFons?'✓ Pot lliurar fons · ':''}
+          ${r.canImport?'✓ Pot importar CSV · ':''}
+          ${r.canConfig?'✓ Accés a Configuració · ':''}
+          ${r.canUsers?'✓ Gestiona usuaris · ':''}
+          ${r.viewAll?'Veu tota la Falla':'Veu sols les seues àrees/delegacions'}
+        </div>
+      </div>`).join('')}
+    </div>`
+};
+
+function showManTab(tab){
+  document.querySelectorAll('#man-tabs .btn').forEach(b=>b.classList.remove('btn-primary'));
+  event.currentTarget?.classList.add('btn-primary');
+  document.getElementById('man-content').innerHTML=MANUAL[tab]||'';
 }
 
 function exportCSV(tipus){
@@ -1485,6 +1857,19 @@ async function deleteUsuari(id){
   await save('config');renderCfgUsuaris();showToast('Usuari eliminat');
 }
 
+function showPageMob(id,mobId){
+  showPage(id);
+  document.querySelectorAll('.mob-item').forEach(m=>m.classList.remove('active'));
+  if(mobId)document.getElementById(mobId)?.classList.add('active');
+}
+function showMobMenu(){
+  document.getElementById('mob-menu').classList.remove('hidden');
+  document.getElementById('mob-menu-overlay').classList.remove('hidden');
+}
+function closeMobMenu(){
+  document.getElementById('mob-menu').classList.add('hidden');
+  document.getElementById('mob-menu-overlay').classList.add('hidden');
+}
 function openModal(id){document.getElementById(id).classList.add('open');}
 function closeModal(id){document.getElementById(id).classList.remove('open');}
 </script>
