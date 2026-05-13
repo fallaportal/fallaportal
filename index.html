@@ -1,0 +1,1248 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Falla Portal</title>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#fff;--bg2:#f5f5f0;--bg3:#eeece6;
+  --text:#1a1a18;--text2:#6b6b66;--text3:#9a9994;
+  --border:rgba(0,0,0,0.12);--border2:rgba(0,0,0,0.25);
+  --green:#1D9E75;--green-bg:#E1F5EE;--green-text:#085041;
+  --red:#D85A30;--red-bg:#FAECE7;--red-text:#712B13;
+  --amber:#BA7517;--amber-bg:#FAEEDA;--amber-text:#633806;
+  --blue:#378ADD;--blue-bg:#E6F1FB;--blue-text:#0C447C;
+  --purple:#7F77DD;--purple-bg:#EEEDFE;--purple-text:#3C3489;
+  --pink:#D4537E;--pink-bg:#FBEAF0;--pink-text:#72243E;
+  --gray:#888780;--gray-bg:#F1EFE8;--gray-text:#444441;
+  --r:8px;--rl:12px;
+}
+@media(prefers-color-scheme:dark){:root{
+  --bg:#1e1e1c;--bg2:#2a2a28;--bg3:#2f2f2c;
+  --text:#e8e6e0;--text2:#a8a6a0;--text3:#6a6a64;
+  --border:rgba(255,255,255,0.1);--border2:rgba(255,255,255,0.2);
+}}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg3);color:var(--text);font-size:14px;min-height:100vh}
+.hidden{display:none!important}
+button{font-family:inherit;cursor:pointer}
+input,select,textarea{font-family:inherit;font-size:14px;background:var(--bg);color:var(--text);border:0.5px solid var(--border2);border-radius:var(--r);padding:8px 10px;width:100%;outline:none}
+input:focus,select:focus,textarea:focus{border-color:var(--blue)}
+#login-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--bg3)}
+.login-card{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--rl);padding:40px;text-align:center;max-width:380px;width:90%}
+.login-logo{font-size:26px;font-weight:600;margin-bottom:6px}.login-logo span{color:var(--red)}
+.login-sub{font-size:13px;color:var(--text2);margin-bottom:6px}
+.login-fiscal{font-size:11px;color:var(--text3);margin-bottom:28px;padding:5px 12px;background:var(--bg2);border-radius:20px;display:inline-block}
+.btn-google{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:12px;border-radius:var(--r);border:0.5px solid var(--border2);background:var(--bg);font-size:14px;font-weight:500;color:var(--text);transition:background .15s}
+.btn-google:hover{background:var(--bg2)}
+.login-note{font-size:11px;color:var(--text3);margin-top:16px}
+.login-err{margin-top:12px;font-size:12px;color:var(--red);padding:8px;background:var(--red-bg);border-radius:var(--r)}
+#app{display:flex;min-height:100vh}
+.sidebar{width:220px;background:var(--bg);border-right:0.5px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;overflow-y:auto;z-index:100}
+.sb-logo{padding:18px 16px 14px;border-bottom:0.5px solid var(--border)}
+.sb-logo-text{font-size:16px;font-weight:600}.sb-logo-text span{color:var(--red)}
+.sb-fiscal{font-size:10px;color:var(--text3);margin-top:2px}
+.sb-user{padding:10px 16px;border-bottom:0.5px solid var(--border);display:flex;align-items:center;gap:8px}
+.u-av{width:30px;height:30px;border-radius:50%;background:var(--blue-bg);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:var(--blue-text);flex-shrink:0}
+.u-name{font-size:12px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.u-role{font-size:10px;color:var(--text3)}
+.sb-nav{padding:6px 0;flex:1}
+.nav-sec{padding:10px 16px 3px;font-size:10px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:.06em}
+.nav-item{display:flex;align-items:center;gap:9px;padding:8px 16px;font-size:13px;color:var(--text2);border-left:2px solid transparent;cursor:pointer;transition:all .1s}
+.nav-item:hover{background:var(--bg2);color:var(--text)}
+.nav-item.active{background:var(--bg2);color:var(--text);border-left-color:var(--red);font-weight:500}
+.nav-item i{font-size:16px;flex-shrink:0}
+.sb-bottom{padding:12px 16px;border-top:0.5px solid var(--border)}
+.sync-ind{font-size:11px;color:var(--text3);display:flex;align-items:center;gap:5px}
+.sync-dot{width:6px;height:6px;border-radius:50%;background:var(--green)}
+.sync-dot.syncing{background:var(--amber);animation:pulse 1s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.btn-logout{width:100%;padding:7px;border-radius:var(--r);border:0.5px solid var(--border);background:transparent;font-size:12px;color:var(--text2);display:flex;align-items:center;gap:6px;justify-content:center;margin-top:8px}
+.btn-logout:hover{background:var(--bg2)}
+.main{margin-left:220px;flex:1;padding:24px;min-height:100vh}
+.page{display:none}.page.active{display:block}
+.page-title{font-size:18px;font-weight:500;margin-bottom:4px}
+.page-sub{font-size:12px;color:var(--text2);margin-bottom:20px}
+.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:20px}
+.metric{background:var(--bg2);border-radius:var(--r);padding:14px 16px}
+.metric-label{font-size:11px;color:var(--text2);margin-bottom:6px}
+.metric-value{font-size:22px;font-weight:500}
+.card{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--rl);padding:16px;margin-bottom:14px}
+.card-title{font-size:13px;font-weight:500;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.card-title span{font-size:11px;font-weight:400;color:var(--text2)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
+@media(max-width:768px){.row2{grid-template-columns:1fr}.main{margin-left:0;padding:16px}}
+.btn{padding:7px 14px;border-radius:var(--r);border:0.5px solid var(--border2);background:transparent;font-size:13px;color:var(--text);display:inline-flex;align-items:center;gap:6px}
+.btn:hover{background:var(--bg2)}
+.btn-primary{background:var(--green);color:#fff;border-color:var(--green)}.btn-primary:hover{opacity:.9}
+.btn-danger{background:var(--red);color:#fff;border-color:var(--red)}.btn-danger:hover{opacity:.9}
+.ok{color:var(--green)}.warn{color:var(--amber)}.danger{color:var(--red)}
+.area-row{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:0.5px solid var(--border)}
+.area-row:last-child{border-bottom:none}
+.area-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.area-name{font-size:13px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.area-bar-wrap{width:80px;height:5px;background:var(--border);border-radius:3px;flex-shrink:0;overflow:hidden}
+.area-bar{height:100%;border-radius:3px}
+.area-pct{font-size:11px;width:30px;text-align:right;flex-shrink:0}
+.area-amt{font-size:12px;width:60px;text-align:right;flex-shrink:0;font-weight:500}
+.flow-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:0.5px solid var(--border);font-size:12px}
+.flow-row:last-child{border-bottom:none}
+.alert-item{display:flex;align-items:flex-start;gap:10px;padding:8px 10px;border-radius:var(--r);margin-bottom:6px;font-size:12px}
+.recent-row{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:0.5px solid var(--border);font-size:12px}
+.recent-row:last-child{border-bottom:none}
+.rec-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.rec-desc{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rec-area{font-size:11px;color:var(--text2);flex-shrink:0}
+.rec-amt{font-weight:500;white-space:nowrap;margin-left:6px}
+.field{margin-bottom:12px}
+.field label{display:block;font-size:12px;color:var(--text2);margin-bottom:4px}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:200;align-items:center;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal{background:var(--bg);border-radius:var(--rl);padding:22px;width:90%;max-width:500px;border:0.5px solid var(--border2);max-height:90vh;overflow-y:auto}
+.modal-title{font-size:15px;font-weight:500;margin-bottom:16px}
+.modal-footer{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}
+.toast{position:fixed;bottom:24px;right:24px;padding:10px 16px;background:var(--green);color:#fff;border-radius:var(--r);font-size:13px;z-index:300;display:none;align-items:center;gap:8px;max-width:340px}
+.toast.show{display:flex}.toast.error{background:var(--red)}
+.pill{font-size:10px;padding:2px 8px;border-radius:10px}
+.p-ok{background:var(--green-bg);color:var(--green-text)}
+.p-warn{background:var(--amber-bg);color:var(--amber-text)}
+.p-danger{background:var(--red-bg);color:var(--red-text)}
+.p-info{background:var(--blue-bg);color:var(--blue-text)}
+.p-purple{background:var(--purple-bg);color:var(--purple-text)}
+.p-pink{background:var(--pink-bg);color:var(--pink-text)}
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{text-align:left;padding:6px 8px;font-size:11px;color:var(--text3);border-bottom:0.5px solid var(--border);white-space:nowrap}
+td{padding:7px 8px;border-bottom:0.5px solid var(--border)}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--bg2)}
+.type-toggle{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:16px}
+.type-btn{padding:10px;border-radius:var(--r);border:0.5px solid var(--border2);background:transparent;font-size:13px;font-weight:500}
+.type-btn.ing.active{background:var(--green-bg);border-color:var(--green);color:var(--green-text)}
+.type-btn.gast.active{background:var(--red-bg);border-color:var(--red);color:var(--red-text)}
+.via-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.via-btn{padding:8px 10px;border-radius:var(--r);border:0.5px solid var(--border);background:transparent;font-size:12px;display:flex;align-items:center;gap:6px;color:var(--text2)}
+.via-btn.active{background:var(--blue-bg);border-color:var(--blue);color:var(--blue-text)}
+.deleg-block{border:0.5px solid var(--border);border-radius:var(--rl);margin-bottom:8px;overflow:hidden}
+.deleg-head{display:flex;align-items:center;gap:8px;padding:10px 14px;background:var(--bg2);cursor:pointer}
+.deleg-body{display:none}.deleg-body.open{display:block}
+.sub-row{display:flex;align-items:center;gap:8px;padding:6px 14px;border-top:0.5px solid var(--border);font-size:12px}
+.sub-row:hover{background:var(--bg2)}
+.chevron{font-size:12px;color:var(--text3);transition:transform .2s}.chevron.open{transform:rotate(90deg)}
+.saldo-banner{border-radius:var(--rl);padding:18px;margin-bottom:14px;border:0.5px solid var(--border)}
+.saldo-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;font-size:13px;border-bottom:0.5px solid var(--border)}
+.saldo-row:last-child{border-bottom:none;padding-top:10px;font-size:15px;font-weight:500}
+.fons-av{width:36px;height:36px;border-radius:50%;background:var(--blue-bg);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:var(--blue-text);flex-shrink:0}
+.tag-multi{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
+.info-box{padding:10px 12px;background:var(--blue-bg);border-radius:var(--r);font-size:12px;color:var(--blue-text);margin-bottom:12px}
+</style>
+</head>
+<body>
+
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-logo">Falla <span>Portal</span></div>
+    <div class="login-sub">Sistema de gestió financera</div>
+    <div class="login-fiscal">Any fiscal 26/27 · Abr 2026 – Mar 2027</div>
+    <button class="btn-google" onclick="signIn()">
+      <svg viewBox="0 0 24 24" width="20" height="20"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+      Entrar amb Google
+    </button>
+    <div class="login-note">Accés restringit als membres autoritzats de la Falla Portal</div>
+    <div id="login-err" class="login-err hidden"></div>
+  </div>
+</div>
+
+<div id="app" class="hidden">
+  <div class="sidebar">
+    <div class="sb-logo">
+      <div class="sb-logo-text">Falla <span>Portal</span></div>
+      <div class="sb-fiscal">Any fiscal 26/27</div>
+    </div>
+    <div class="sb-user">
+      <div class="u-av" id="sb-av">?</div>
+      <div><div class="u-name" id="sb-name">—</div><div class="u-role" id="sb-role">—</div></div>
+    </div>
+    <div class="sb-nav" id="sb-nav"></div>
+    <div class="sb-bottom">
+      <div class="sync-ind"><div class="sync-dot" id="sync-dot"></div><span id="sync-text">Sincronitzat</span></div>
+      <button class="btn-logout" onclick="signOut()"><i class="ti ti-logout" style="font-size:14px"></i> Tancar sessió</button>
+    </div>
+  </div>
+
+  <div class="main">
+    <div id="page-dashboard" class="page active">
+      <div class="page-title">Dashboard</div>
+      <div class="page-sub" id="dash-sub">Any fiscal 26/27</div>
+      <div class="metrics">
+        <div class="metric"><div class="metric-label">Ingressos YTD</div><div class="metric-value ok" id="m-ing">0 €</div></div>
+        <div class="metric"><div class="metric-label">Despeses YTD</div><div class="metric-value danger" id="m-gast">0 €</div></div>
+        <div class="metric"><div class="metric-label">Resultat net</div><div class="metric-value" id="m-net">0 €</div></div>
+        <div class="metric"><div class="metric-label">Moviments</div><div class="metric-value" id="m-count">0</div></div>
+      </div>
+      <div class="row2">
+        <div class="card"><div class="card-title">Despesa per àrea</div><div id="dash-areas"><div style="color:var(--text3);font-size:12px">Sense dades</div></div></div>
+        <div class="card"><div class="card-title">Últims moviments</div><div id="dash-recent"><div style="color:var(--text3);font-size:12px">Sense moviments</div></div></div>
+      </div>
+      <div class="row2">
+        <div class="card"><div class="card-title">Alertes</div><div id="dash-alerts"></div></div>
+        <div class="card"><div class="card-title">Fons delegats</div><div id="dash-fons"><div style="color:var(--text3);font-size:12px">Configura usuaris per veure fons</div></div></div>
+      </div>
+    </div>
+
+    <div id="page-moviments" class="page">
+      <div class="page-title">Registrar moviment</div>
+      <div class="page-sub">Ingrés o despesa en efectiu, TPV o banc</div>
+      <div class="card" style="max-width:500px">
+        <div class="type-toggle">
+          <button class="type-btn gast active" id="btn-gast" onclick="setMovType('gast')"><i class="ti ti-arrow-up-right"></i> Despesa</button>
+          <button class="type-btn ing" id="btn-ing" onclick="setMovType('ing')"><i class="ti ti-arrow-down-left"></i> Ingrés</button>
+        </div>
+        <div class="field"><label>Import (€)</label><input type="number" id="mov-import" placeholder="0.00" min="0" step="0.01" inputmode="decimal" style="font-size:22px;font-weight:500;text-align:right"></div>
+        <div class="field">
+          <label>Via de pagament</label>
+          <div class="via-grid">
+            <button class="via-btn active" id="via-efectiu" onclick="setVia('Efectiu')"><i class="ti ti-wallet"></i> Efectiu</button>
+            <button class="via-btn" id="via-b1" onclick="setVia('01 Banc')"><i class="ti ti-building-bank"></i> <span id="via-b1-name">Caixabank</span></button>
+            <button class="via-btn" id="via-b2" onclick="setVia('02 Banc')"><i class="ti ti-building-bank"></i> <span id="via-b2-name">Caixa Popular</span></button>
+            <button class="via-btn" id="via-tpv" onclick="setVia('TPV')"><i class="ti ti-credit-card"></i> TPV</button>
+          </div>
+        </div>
+        <div class="field"><label>Àrea</label><select id="mov-area" onchange="onMovAreaChange()"></select></div>
+        <div class="field"><label>Delegació</label><select id="mov-deleg" onchange="onMovDelegChange()"></select></div>
+        <div class="field" id="mov-event-field"><label>Event <span style="color:var(--text3);font-size:11px">(opcional)</span></label><select id="mov-event"></select></div>
+        <div class="field"><label>Concepte</label><input type="text" id="mov-concept" placeholder="Descriu el concepte..."></div>
+        <div class="field"><label>Establiment / Proveïdor <span style="color:var(--text3);font-size:11px">(opcional)</span></label><input type="text" id="mov-establiment" placeholder="p.e. Mercadona, Monaco..."></div>
+        <div class="field"><label>Data</label><input type="date" id="mov-data"></div>
+        <div class="field"><label>Notes <span style="color:var(--text3);font-size:11px">(opcional)</span></label><textarea id="mov-notes" rows="2"></textarea></div>
+        <div class="field"><label>Justificant <span style="color:var(--text3);font-size:11px">(foto tiquet/factura)</span></label><input type="file" id="mov-photo" accept="image/*" capture="environment" style="font-size:12px"></div>
+        <button class="btn btn-danger" style="width:100%;padding:12px;font-size:14px" id="btn-registrar" onclick="registrarMoviment()"><i class="ti ti-check"></i> Registrar despesa</button>
+      </div>
+    </div>
+
+    <div id="page-lliurament" class="page">
+      <div class="page-title">Fons delegats</div>
+      <div class="page-sub">Control de bestretes i saldo disponible</div>
+      <div id="fons-view"></div>
+    </div>
+
+    <div id="page-tancament" class="page">
+      <div class="page-title">Tancament de caixa</div>
+      <div class="page-sub">Tanca un event i declara efectiu i TPV</div>
+      <div id="tancament-list"></div>
+      <div id="tancament-form" class="hidden">
+        <button class="btn" onclick="backTancament()" style="margin-bottom:14px"><i class="ti ti-arrow-left"></i> Tornar</button>
+        <div class="card" style="max-width:500px">
+          <div class="card-title" id="tanc-title">Tancament</div>
+          <div class="field"><label>Efectiu comptat a la caixa (€)</label><input type="number" id="tanc-efectiu" min="0" step="0.01" inputmode="decimal" placeholder="0.00" oninput="updateTancResum()"></div>
+          <div class="field"><label>Vendes TPV — tiquet del terminal (€)</label><input type="number" id="tanc-tpv" min="0" step="0.01" inputmode="decimal" placeholder="0.00" oninput="updateTancResum()"></div>
+          <div id="tanc-resum" style="background:var(--bg2);border-radius:var(--r);padding:12px;margin-bottom:14px;font-size:12px"></div>
+          <button class="btn btn-primary" style="width:100%;padding:12px" id="btn-tancar" onclick="tancarEvent()"><i class="ti ti-lock"></i> Tancar event i enviar a Tresoreria</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="page-pressupostos" class="page">
+      <div class="page-title">Pressupostos</div>
+      <div class="page-sub">Plan vs actuals · Any fiscal 26/27</div>
+      <div id="pres-container"></div>
+    </div>
+
+    <div id="page-historial" class="page">
+      <div class="page-title">Historial de moviments</div>
+      <div class="page-sub">Tots els moviments de l'any fiscal 26/27</div>
+      <div class="card">
+        <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
+          <input type="text" id="hist-search" placeholder="Cerca..." style="flex:1;min-width:180px" oninput="filterHist()">
+          <select id="hist-area" onchange="filterHist()" style="width:180px"><option value="">Totes les àrees</option></select>
+          <select id="hist-tipus" onchange="filterHist()" style="width:130px"><option value="">Tots</option><option value="ing">Ingressos</option><option value="gast">Despeses</option></select>
+        </div>
+        <div class="table-wrap">
+          <table><thead><tr><th>Data</th><th>Concepte</th><th>Àrea · Delegació</th><th>Event</th><th>Via</th><th>Responsable</th><th style="text-align:right">Import</th></tr></thead>
+          <tbody id="hist-tbody"></tbody></table>
+        </div>
+        <div style="font-size:11px;color:var(--text3);margin-top:10px;display:flex;justify-content:space-between"><span id="hist-count"></span><span id="hist-total"></span></div>
+      </div>
+    </div>
+
+    <div id="page-importacio" class="page">
+      <div class="page-title">Importar CSV</div>
+      <div class="page-sub">Extractes bancaris de Caixabank, Caixa Popular o falles.app</div>
+      <div class="card" style="max-width:500px">
+        <div class="field"><label>Font</label><select id="imp-font"><option value="b1">01 Banc — Caixabank</option><option value="b2">02 Banc — Caixa Popular</option><option value="app">falles.app</option></select></div>
+        <div class="field"><label>Arxiu CSV</label><input type="file" id="imp-file" accept=".csv,.txt" style="font-size:12px" onchange="previewCSV()"></div>
+        <div id="imp-preview" class="hidden">
+          <div style="font-size:12px;color:var(--text2);margin-bottom:8px" id="imp-info"></div>
+          <div class="table-wrap" style="max-height:200px;overflow-y:auto"><table id="imp-table"></table></div>
+          <button class="btn btn-primary" style="width:100%;margin-top:12px" onclick="importarCSV()"><i class="ti ti-database-import"></i> Processar i importar</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="page-resultats" class="page">
+      <div class="page-title">Estat de Resultats</div>
+      <div class="page-sub">Any fiscal 26/27 · 1 abril 2026 – 31 març 2027</div>
+      <div class="metrics">
+        <div class="metric"><div class="metric-label">Total ingressos</div><div class="metric-value ok" id="res-ing">0 €</div></div>
+        <div class="metric"><div class="metric-label">Total despeses</div><div class="metric-value danger" id="res-gast">0 €</div></div>
+        <div class="metric"><div class="metric-label">Resultat exercici</div><div class="metric-value" id="res-net">0 €</div></div>
+      </div>
+      <div id="res-container"></div>
+      <button class="btn" onclick="exportCSV('resultats')"><i class="ti ti-download"></i> Exportar CSV</button>
+    </div>
+
+    <div id="page-flux" class="page">
+      <div class="page-title">Estat de Flux d'Efectiu</div>
+      <div class="page-sub">Any fiscal 26/27 · Cobros i pagaments per via</div>
+      <div class="metrics">
+        <div class="metric"><div class="metric-label">Saldo inicial</div><div class="metric-value" id="flux-ini">0 €</div></div>
+        <div class="metric"><div class="metric-label">Cobraments</div><div class="metric-value ok" id="flux-ing">0 €</div></div>
+        <div class="metric"><div class="metric-label">Pagaments</div><div class="metric-value danger" id="flux-gast">0 €</div></div>
+        <div class="metric"><div class="metric-label">Saldo final</div><div class="metric-value" id="flux-fin">0 €</div></div>
+      </div>
+      <div id="flux-container"></div>
+      <button class="btn" onclick="exportCSV('flux')"><i class="ti ti-download"></i> Exportar CSV</button>
+    </div>
+
+    <div id="page-configuracio" class="page">
+      <div class="page-title">Configuració</div>
+      <div class="page-sub">Àrees, delegacions, events, bancs, rols i usuaris</div>
+      <div style="display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap" id="cfg-tabs-bar"></div>
+      <div id="cfg-areas" class="hidden"></div>
+      <div id="cfg-events" class="hidden"></div>
+      <div id="cfg-bancs" class="hidden"></div>
+      <div id="cfg-rols" class="hidden"></div>
+      <div id="cfg-usuaris" class="hidden"></div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-lliurament">
+  <div class="modal">
+    <div class="modal-title">Nou lliurament de fons</div>
+    <div class="field"><label>Delegat</label><select id="ll-delegat"></select></div>
+    <div class="field-row">
+      <div class="field"><label>Import (€)</label><input type="number" id="ll-import" min="0" step="0.01"></div>
+      <div class="field"><label>Data</label><input type="date" id="ll-data"></div>
+    </div>
+    <div class="field"><label>Nota</label><input type="text" id="ll-nota" placeholder="p.e. Fons per a la Festa Cloenda"></div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('modal-lliurament')">Cancel·lar</button>
+      <button class="btn btn-primary" onclick="saveLliurament()">Confirmar lliurament</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-devolucio">
+  <div class="modal">
+    <div class="modal-title">Registrar devolució de fons</div>
+    <div class="field"><label>Delegat</label><select id="dev-delegat"></select></div>
+    <div class="field-row">
+      <div class="field"><label>Import retornat (€)</label><input type="number" id="dev-import" min="0" step="0.01"></div>
+      <div class="field"><label>Data</label><input type="date" id="dev-data"></div>
+    </div>
+    <div class="field"><label>Nota</label><input type="text" id="dev-nota"></div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('modal-devolucio')">Cancel·lar</button>
+      <button class="btn btn-primary" onclick="saveDevolucio()">Confirmar devolució</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-usuari">
+  <div class="modal">
+    <div class="modal-title" id="mu-title">Nou usuari</div>
+    <div class="info-box">L'email ha de coincidir exactament amb el compte de Google del membre.</div>
+    <div class="field"><label>Nom complet</label><input type="text" id="mu-nom" placeholder="Nom i cognoms"></div>
+    <div class="field"><label>Email de Google</label><input type="email" id="mu-email" placeholder="exemple@gmail.com"></div>
+    <div class="field">
+      <label>Rol principal</label>
+      <select id="mu-rol">
+        <option value="president">President (accés total + gestió usuaris)</option>
+        <option value="treasury">Tresoreria (accés total financer)</option>
+        <option value="area">Responsable d'Àrea</option>
+        <option value="delegat">Responsable de Delegació</option>
+        <option value="board">Junta (sols lectura)</option>
+      </select>
+    </div>
+    <div class="field" id="mu-arees-field">
+      <label>Àrees assignades <span style="color:var(--text3);font-size:11px">(pots seleccionar múltiples)</span></label>
+      <div id="mu-arees-checks" style="display:flex;flex-direction:column;gap:6px;margin-top:4px"></div>
+    </div>
+    <div class="field" id="mu-delegs-field">
+      <label>Delegacions assignades <span style="color:var(--text3);font-size:11px">(a més de les de les àrees)</span></label>
+      <div id="mu-delegs-checks" style="display:flex;flex-direction:column;gap:6px;margin-top:4px;max-height:200px;overflow-y:auto"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('modal-usuari')">Cancel·lar</button>
+      <button class="btn btn-primary" onclick="saveUsuari()">Guardar usuari</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const CLIENT_ID='762692298201-gnhlho2ob1fb77s6uoevocji8r6afssm.apps.googleusercontent.com';
+const SCOPES='https://www.googleapis.com/auth/drive.appdata https://www.googleapis.com/auth/drive.file';
+const AREA_COLORS={'01':'#1D9E75','02':'#7F77DD','03':'#378ADD','04':'#BA7517','05':'#D4537E','06':'#D85A30','07':'#888780'};
+
+// MESTRE DE ROLS — defineix els permisos de cada rol
+const ROLES={
+  president:{label:'President',color:'p-purple',canRegister:true,canFons:true,canImport:true,canConfig:true,canUsers:true,viewAll:true},
+  treasury:{label:'Tresoreria',color:'p-info',canRegister:true,canFons:true,canImport:true,canConfig:true,canUsers:false,viewAll:true},
+  area:{label:"Resp. d'Àrea",color:'p-ok',canRegister:true,canFons:false,canImport:false,canConfig:false,canUsers:false,viewAll:false},
+  delegat:{label:'Resp. Delegació',color:'p-warn',canRegister:true,canFons:false,canImport:false,canConfig:false,canUsers:false,viewAll:false},
+  board:{label:'Junta (lectura)',color:'p-danger',canRegister:false,canFons:false,canImport:false,canConfig:false,canUsers:false,viewAll:true}
+};
+
+let tokenClient=null,accessToken=null,currentUser=null;
+let driveIds={moviments:null,fons:null,tancaments:null,config:null};
+let DB={
+  config:{
+    areas:[
+      {id:'01',name:'Administració i Secretaria',resp:'Noelia Grau · Miguel Vercher · Antonio Javier'},
+      {id:'02',name:'Comunicació i Imatge',resp:'Gema Felis'},
+      {id:'03',name:'Cultura i Activitats',resp:'Maria Jose Grau'},
+      {id:'04',name:'Festejos i Gastronomia',resp:'Juanjo Felis'},
+      {id:'05',name:'Indumentària, Protocol i Actes Oficials',resp:'Juamba Mafé'},
+      {id:'06',name:'Art i Monument',resp:'Arturo Alario'},
+      {id:'07',name:'Logística i Infraestructura',resp:'Cándido Jimenez · Emilio Pons'}
+    ],
+    delegacions:[
+      {id:'0101',areaId:'01',name:'Secretaria',resp:'Noelia Grau'},
+      {id:'0102',areaId:'01',name:'Tresoreria',resp:'Miguel Vercher'},
+      {id:'0103',areaId:'01',name:"Estatuts i Règim Intern",resp:'Gema Felis'},
+      {id:'0104',areaId:'01',name:'Jurídica i Contractacions',resp:'Antonio Javier'},
+      {id:'0105',areaId:'01',name:'Junta Local Fallera',resp:'Sylvie Andres'},
+      {id:'0201',areaId:'02',name:'Xarxes Socials i Web',resp:'Júlia Felis'},
+      {id:'0202',areaId:'02',name:'Premsa i Comunicació',resp:'Carme Carbó'},
+      {id:'0203',areaId:'02',name:'Disseny i Imatge Corporativa',resp:'Sara Gómez'},
+      {id:'0301',areaId:'03',name:'Cavalcada del Ninot',resp:'Tere Mifsud'},
+      {id:'0302',areaId:'03',name:'Cavalcada de Reis',resp:'Per assignar'},
+      {id:'0303',areaId:'03',name:'Llibret',resp:'Maria Jose Grau'},
+      {id:'0304',areaId:'03',name:'Infantil',resp:'Mariam Talens'},
+      {id:'0305',areaId:'03',name:'Esport',resp:'Josep Lluís Peiró'},
+      {id:'0401',areaId:'04',name:'Dinars, Sopars i Festes',resp:'Juanjo Felis'},
+      {id:'0402',areaId:'04',name:'Música, Ambientació i Audiovisuals',resp:'Nico Teruel'},
+      {id:'0501',areaId:'05',name:'Indumentària i suport als actes',resp:'Esther Magraner'},
+      {id:'0502',areaId:'05',name:'Protocol',resp:'Nuria Blasco'},
+      {id:'0503',areaId:'05',name:'Proclamació',resp:'Esther Magraner'},
+      {id:'0504',areaId:'05',name:'Presentació',resp:'Juamba Mafé'},
+      {id:'0505',areaId:'05',name:"Fallers d'Honor",resp:'Luisa Mifsud'},
+      {id:'0506',areaId:'05',name:'50è Aniversari',resp:'Sauro Carbó'},
+      {id:'0601',areaId:'06',name:'Monument Gran',resp:'Arturo Alario'},
+      {id:'0602',areaId:'06',name:'Monument Infantil',resp:'Emilio Pons'},
+      {id:'0603',areaId:'06',name:'Decoració Falles',resp:'Carla Grau · Gemma Altur'},
+      {id:'0701',areaId:'07',name:'Carpa i Muntatges',resp:'Cándido Jimenez'},
+      {id:'0702',areaId:'07',name:'Magatzem i Materials',resp:'Juanjo Felis'},
+      {id:'0703',areaId:'07',name:'Coordinació Tècnica i Innovacions',resp:'Emilio Grau'},
+      {id:'0704',areaId:'07',name:'Casal',resp:'Emilio Pons'},
+      {id:'0705',areaId:'07',name:'Pirotècnia',resp:'Ximo Peris'},
+      {id:'0706',areaId:'07',name:'Prevenció de Riscs',resp:'Per definir'}
+    ],
+    events:[
+      {id:'e01',delegId:'0401',name:'Festa Cloenda 2026',year:'2026',resp:'Juanjo Felis',status:'pendent'},
+      {id:'e02',delegId:'0401',name:'Festa Benvinguda 2026',year:'2026',resp:'Juanjo Felis',status:'pendent'},
+      {id:'e03',delegId:'0401',name:"Cap d'Any Anticipat 2026",year:'2026',resp:'Juanjo Felis',status:'pendent'},
+      {id:'e04',delegId:'0401',name:'Setmana Fallera 2027',year:'2027',resp:'Juanjo Felis',status:'pendent'},
+      {id:'e05',delegId:'0401',name:'Concurs Paelles 2026',year:'2026',resp:'Juanjo Felis',status:'pendent'},
+      {id:'e06',delegId:'0401',name:'Rifa 1.000€ 2026',year:'2026',resp:'Juanjo Felis',status:'pendent'},
+      {id:'e07',delegId:'0401',name:'Rifa Tela 2026',year:'2026',resp:'Juanjo Felis',status:'pendent'},
+      {id:'e08',delegId:'0503',name:'Proclamació 2026',year:'2026',resp:'Esther Magraner',status:'pendent'},
+      {id:'e09',delegId:'0504',name:'Presentació 2026',year:'2026',resp:'Juamba Mafé',status:'pendent'},
+      {id:'e10',delegId:'0301',name:'Cavalcada del Ninot 2027',year:'2027',resp:'Tere Mifsud',status:'pendent'},
+      {id:'e11',delegId:'0302',name:'Cavalcada de Reis 2027',year:'2027',resp:'Per assignar',status:'pendent'},
+      {id:'e12',delegId:'0506',name:'50è Aniversari 2026',year:'2026',resp:'Sauro Carbó',status:'pendent'},
+      {id:'e13',delegId:'0601',name:'Monument Gran 2027',year:'2027',resp:'Arturo Alario',status:'pendent'},
+      {id:'e14',delegId:'0602',name:'Monument Infantil 2027',year:'2027',resp:'Emilio Pons',status:'pendent'}
+    ],
+    bancs:[
+      {id:'b1',codi:'01 Banc',nom:'Caixabank',tipus:'bank'},
+      {id:'b2',codi:'02 Banc',nom:'Caixa Popular',tipus:'bank'},
+      {id:'b3',codi:'Efectiu',nom:'Caixa efectiu',tipus:'cash'},
+      {id:'b4',codi:'TPV',nom:'TPV targetes',tipus:'tpv'}
+    ],
+    usuaris:[]
+  },
+  moviments:[],fons:[],tancaments:{}
+};
+
+const fmt=v=>Math.abs(v).toLocaleString('ca-ES',{maximumFractionDigits:0})+' €';
+const fmtD=v=>Math.abs(v).toLocaleString('ca-ES',{minimumFractionDigits:2,maximumFractionDigits:2})+' €';
+const fmtS=v=>(v>=0?'+':'-')+fmt(v);
+const today=()=>new Date().toISOString().split('T')[0];
+
+function showToast(msg,err=false){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.className='toast show'+(err?' error':'');
+  setTimeout(()=>t.classList.remove('show'),3500);
+}
+function setSyncing(b){
+  document.getElementById('sync-dot').className='sync-dot'+(b?' syncing':'');
+  document.getElementById('sync-text').textContent=b?'Sincronitzant...':'Sincronitzat';
+}
+
+// AUTH
+window.onload=()=>{
+  tokenClient=google.accounts.oauth2.initTokenClient({
+    client_id:CLIENT_ID,scope:SCOPES,
+    callback:async(resp)=>{
+      if(resp.error){
+        const e=document.getElementById('login-err');
+        e.textContent='Error: '+resp.error+'. Assegura\'t que el teu email està a la llista d\'usuaris de prova a Google Cloud Console.';
+        e.classList.remove('hidden');return;
+      }
+      accessToken=resp.access_token;
+      await loadUserInfo();
+      await loadAllFromDrive();
+      initApp();
+    }
+  });
+};
+
+function signIn(){if(tokenClient)tokenClient.requestAccessToken();}
+function signOut(){
+  if(accessToken)google.accounts.oauth2.revoke(accessToken,()=>{});
+  accessToken=null;currentUser=null;
+  document.getElementById('app').classList.add('hidden');
+  document.getElementById('login-screen').classList.remove('hidden');
+}
+
+async function loadUserInfo(){
+  try{
+    const r=await fetch('https://www.googleapis.com/oauth2/v2/userinfo',{headers:{Authorization:'Bearer '+accessToken}});
+    const u=await r.json();
+    currentUser={name:u.name,email:u.email,initials:(u.name||'?').split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase()};
+  }catch(e){currentUser={name:'Usuari',email:'',initials:'?'};}
+}
+
+// DRIVE
+async function driveReq(method,url,body=null){
+  const opts={method,headers:{Authorization:'Bearer '+accessToken}};
+  if(body){opts.headers['Content-Type']='application/json';opts.body=JSON.stringify(body);}
+  const r=await fetch(url,opts);
+  if(!r.ok)throw new Error(r.status);
+  return r.json();
+}
+
+async function findOrCreate(name){
+  const q=encodeURIComponent("name='"+name+"' and 'appDataFolder' in parents and trashed=false");
+  const list=await driveReq('GET','https://www.googleapis.com/drive/v3/files?q='+q+'&spaces=appDataFolder&fields=files(id)');
+  if(list.files&&list.files.length)return list.files[0].id;
+  const f=await driveReq('POST','https://www.googleapis.com/drive/v3/files?fields=id',{name,parents:['appDataFolder'],mimeType:'application/json'});
+  return f.id;
+}
+
+async function readFile(id){
+  try{
+    const r=await fetch('https://www.googleapis.com/drive/v3/files/'+id+'?alt=media',{headers:{Authorization:'Bearer '+accessToken}});
+    if(!r.ok)return null;return await r.json();
+  }catch(e){return null;}
+}
+
+async function writeFile(id,data){
+  await fetch('https://www.googleapis.com/upload/drive/v3/files/'+id+'?uploadType=media',{
+    method:'PATCH',headers:{Authorization:'Bearer '+accessToken,'Content-Type':'application/json'},
+    body:JSON.stringify(data)
+  });
+}
+
+async function loadAllFromDrive(){
+  setSyncing(true);
+  try{
+    for(const k of['moviments','fons','tancaments','config']){
+      driveIds[k]=await findOrCreate('fallaportal_'+k+'.json');
+      const d=await readFile(driveIds[k]);
+      if(d)DB[k]=d;
+    }
+  }catch(e){showToast('Error carregant: '+e.message,true);}
+  setSyncing(false);
+}
+
+async function save(key){
+  if(!driveIds[key])return;
+  setSyncing(true);
+  try{await writeFile(driveIds[key],DB[key]);}
+  catch(e){showToast('Error guardant: '+e.message,true);}
+  setSyncing(false);
+}
+
+// PERMISOS
+function getUsuari(){
+  if(!currentUser)return null;
+  const u=DB.config.usuaris.find(x=>x.email===currentUser.email);
+  if(u)return u;
+  if(currentUser.email==='it.fallaportal@gmail.com')
+    return{id:'sys',name:currentUser.name,email:currentUser.email,rol:'treasury',arees:[],delegacions:[]};
+  return null;
+}
+
+function getRol(){const u=getUsuari();return u?u.rol:'delegat';}
+function perm(p){return ROLES[getRol()]?.[p]||false;}
+
+function getMyArees(){
+  const u=getUsuari();if(!u)return[];
+  if(ROLES[u.rol]?.viewAll)return DB.config.areas.map(a=>a.id);
+  return u.arees||[];
+}
+
+function getMyDelegacions(){
+  const u=getUsuari();if(!u)return[];
+  if(ROLES[u.rol]?.viewAll)return DB.config.delegacions.map(d=>d.id);
+  const res=[...(u.delegacions||[])];
+  (u.arees||[]).forEach(aId=>{
+    DB.config.delegacions.filter(d=>d.areaId===aId).forEach(d=>{if(!res.includes(d.id))res.push(d.id);});
+  });
+  return res;
+}
+
+// NAV DINÀMIC segons permisos
+function buildNav(){
+  const nav=document.getElementById('sb-nav');
+  const r=getRol();
+  const can=ROLES[r]||{};
+  let html='<div class="nav-sec">Principal</div>';
+  html+='<div class="nav-item active" onclick="showPage(\'dashboard\')"><i class="ti ti-home"></i> Dashboard</div>';
+  if(can.canRegister)html+='<div class="nav-item" onclick="showPage(\'moviments\')"><i class="ti ti-plus"></i> Nou moviment</div>';
+  if(can.canFons)html+='<div class="nav-item" onclick="showPage(\'lliurament\')"><i class="ti ti-arrow-down-left"></i> Fons delegats</div>';
+  html+='<div class="nav-item" onclick="showPage(\'tancament\')"><i class="ti ti-lock"></i> Tancament caixa</div>';
+  html+='<div class="nav-sec">Gestió</div>';
+  html+='<div class="nav-item" onclick="showPage(\'pressupostos\')"><i class="ti ti-chart-bar"></i> Pressupostos</div>';
+  html+='<div class="nav-item" onclick="showPage(\'historial\')"><i class="ti ti-list"></i> Historial</div>';
+  if(can.canImport)html+='<div class="nav-item" onclick="showPage(\'importacio\')"><i class="ti ti-upload"></i> Importar CSV</div>';
+  html+='<div class="nav-sec">Reportes</div>';
+  html+='<div class="nav-item" onclick="showPage(\'resultats\')"><i class="ti ti-file-text"></i> Estat de Resultats</div>';
+  html+='<div class="nav-item" onclick="showPage(\'flux\')"><i class="ti ti-arrows-exchange"></i> Flux d\'Efectiu</div>';
+  if(can.canConfig){
+    html+='<div class="nav-sec">Sistema</div>';
+    html+='<div class="nav-item" onclick="showPage(\'configuracio\')"><i class="ti ti-settings"></i> Configuració</div>';
+  }
+  nav.innerHTML=html;
+}
+
+function initApp(){
+  document.getElementById('login-screen').classList.add('hidden');
+  document.getElementById('app').classList.remove('hidden');
+  const u=getUsuari();
+  document.getElementById('sb-name').textContent=u?.name||currentUser.name;
+  document.getElementById('sb-av').textContent=currentUser.initials;
+  const rol=getRol();
+  const rolDef=ROLES[rol];
+  document.getElementById('sb-role').textContent=rolDef?.label||rol;
+  document.getElementById('mov-data').value=today();
+  document.getElementById('ll-data').value=today();
+  document.getElementById('dev-data').value=today();
+  buildNav();
+  populateMovimentSelects();
+  renderDashboard();
+}
+
+function showPage(id){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n=>{
+    if(n.getAttribute('onclick')&&n.getAttribute('onclick').includes("'"+id+"'"))n.classList.add('active');
+  });
+  ({dashboard:renderDashboard,historial:renderHistorial,pressupostos:renderPressupostos,
+    lliurament:renderFons,tancament:renderTancamentList,resultats:renderResultats,
+    flux:renderFlux,configuracio:renderConfig}[id]||function(){})();
+}
+
+// DASHBOARD
+function renderDashboard(){
+  const myArees=getMyArees();
+  const movs=(DB.moviments||[]).filter(m=>myArees.includes(m.areaId)||perm('viewAll'));
+  const ing=movs.filter(m=>m.tipus==='ing').reduce((s,m)=>s+m.import,0);
+  const gast=movs.filter(m=>m.tipus==='gast').reduce((s,m)=>s+m.import,0);
+  const net=ing-gast;
+  document.getElementById('m-ing').textContent=fmt(ing);
+  document.getElementById('m-gast').textContent=fmt(gast);
+  document.getElementById('m-count').textContent=movs.length;
+  document.getElementById('m-net').textContent=fmtS(net);
+  document.getElementById('m-net').className='metric-value '+(net>=0?'ok':'danger');
+  document.getElementById('dash-sub').textContent='Any fiscal 26/27 · '+movs.length+' moviments registrats';
+  const areas=DB.config.areas.filter(a=>myArees.includes(a.id)||perm('viewAll'));
+  document.getElementById('dash-areas').innerHTML=areas.map(a=>{
+    const ag=movs.filter(m=>m.tipus==='gast'&&m.areaId===a.id).reduce((s,m)=>s+m.import,0);
+    const col=AREA_COLORS[a.id]||'#888';
+    return ag>0?`<div class="area-row"><div class="area-dot" style="background:${col}"></div><div class="area-name">${a.name}</div><div class="area-amt">${fmt(ag)}</div></div>`:'';
+  }).join('')||'<div style="color:var(--text3);font-size:12px">Sense despeses registrades</div>';
+  const recent=[...movs].sort((a,b)=>b.data.localeCompare(a.data)).slice(0,5);
+  document.getElementById('dash-recent').innerHTML=recent.map(m=>`<div class="recent-row">
+    <div class="rec-dot" style="background:${m.tipus==='ing'?'var(--green)':'var(--red)'}"></div>
+    <div class="rec-desc">${m.concepte||'—'}</div>
+    <div class="rec-area">${m.delegacioNom||''}</div>
+    <div class="rec-amt" style="color:${m.tipus==='ing'?'var(--green)':'var(--red)'}">${m.tipus==='ing'?'+':'-'}${fmtD(m.import)}</div>
+  </div>`).join('')||'<div style="color:var(--text3);font-size:12px">Sense moviments</div>';
+  document.getElementById('dash-alerts').innerHTML='<div class="alert-item" style="background:var(--green-bg)"><i class="ti ti-circle-check" style="color:var(--green)"></i><span>Tot dins dels límits pressupostaris</span></div>';
+  if(perm('viewAll')){
+    const delegats=DB.config.usuaris.filter(u=>['area','delegat'].includes(u.rol));
+    document.getElementById('dash-fons').innerHTML=delegats.length?delegats.map(u=>{
+      const rebuts=(DB.fons||[]).filter(f=>f.delegId===u.id&&f.tipus==='lliurament').reduce((s,f)=>s+f.import,0);
+      const gastat=(DB.moviments||[]).filter(m=>m.responsableEmail===u.email&&m.tipus==='gast').reduce((s,m)=>s+m.import,0);
+      const saldo=rebuts-gastat;
+      const ini=u.nom.split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase();
+      return`<div style="display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:0.5px solid var(--border);font-size:12px">
+        <div class="fons-av" style="width:28px;height:28px;font-size:10px">${ini}</div>
+        <div style="flex:1"><div style="font-weight:500">${u.nom}</div></div>
+        <div style="font-weight:500;color:${saldo<0?'var(--red)':saldo===0?'var(--text2)':'var(--green)'}">${fmt(Math.abs(saldo))}</div>
+      </div>`;
+    }).join(''):'<div style="color:var(--text3);font-size:12px">Configura usuaris per veure fons</div>';
+  }
+}
+
+// MOVIMENT
+let movType='gast',movVia='Efectiu';
+
+function setMovType(t){
+  movType=t;
+  document.getElementById('btn-gast').className='type-btn gast'+(t==='gast'?' active':'');
+  document.getElementById('btn-ing').className='type-btn ing'+(t==='ing'?' active':'');
+  const btn=document.getElementById('btn-registrar');
+  btn.className='btn btn-'+(t==='gast'?'danger':'primary');
+  btn.style.cssText='width:100%;padding:12px;font-size:14px';
+  btn.innerHTML='<i class="ti ti-check"></i> Registrar '+(t==='gast'?'despesa':'ingrés');
+}
+
+function setVia(v){
+  movVia=v;
+  ['efectiu','b1','b2','tpv'].forEach(k=>document.getElementById('via-'+k).classList.remove('active'));
+  const map={'Efectiu':'efectiu','01 Banc':'b1','02 Banc':'b2','TPV':'tpv'};
+  if(map[v])document.getElementById('via-'+map[v]).classList.add('active');
+}
+
+function populateMovimentSelects(){
+  const areaSel=document.getElementById('mov-area');
+  areaSel.innerHTML='';
+  const myArees=getMyArees();
+  DB.config.areas.filter(a=>myArees.includes(a.id)).forEach(a=>{
+    const o=document.createElement('option');o.value=a.id;o.textContent=a.id+' · '+a.name;areaSel.appendChild(o);
+  });
+  onMovAreaChange();
+  const b1=DB.config.bancs.find(b=>b.id==='b1');
+  const b2=DB.config.bancs.find(b=>b.id==='b2');
+  if(b1)document.getElementById('via-b1-name').textContent=b1.nom;
+  if(b2)document.getElementById('via-b2-name').textContent=b2.nom;
+}
+
+function onMovAreaChange(){
+  const areaId=document.getElementById('mov-area').value;
+  const myDelegs=getMyDelegacions();
+  const delegSel=document.getElementById('mov-deleg');
+  delegSel.innerHTML='';
+  DB.config.delegacions.filter(d=>d.areaId===areaId&&myDelegs.includes(d.id)).forEach(d=>{
+    const o=document.createElement('option');o.value=d.id;o.textContent=d.id+' · '+d.name;delegSel.appendChild(o);
+  });
+  onMovDelegChange();
+}
+
+function onMovDelegChange(){
+  const delegId=document.getElementById('mov-deleg').value;
+  const evSel=document.getElementById('mov-event');
+  evSel.innerHTML='<option value="">— Sense event —</option>';
+  const evs=DB.config.events.filter(e=>e.delegId===delegId);
+  evs.forEach(e=>{const o=document.createElement('option');o.value=e.id;o.textContent=e.name;evSel.appendChild(o);});
+  document.getElementById('mov-event-field').style.display=evs.length?'block':'none';
+}
+
+async function registrarMoviment(){
+  const imp=parseFloat(document.getElementById('mov-import').value);
+  if(!imp||imp<=0){showToast('Introdueix un import vàlid',true);return;}
+  const areaId=document.getElementById('mov-area').value;
+  const delegId=document.getElementById('mov-deleg').value;
+  const eventId=document.getElementById('mov-event').value;
+  const area=DB.config.areas.find(a=>a.id===areaId);
+  const deleg=DB.config.delegacions.find(d=>d.id===delegId);
+  const event=DB.config.events.find(e=>e.id===eventId);
+  const u=getUsuari();
+  DB.moviments.push({
+    id:'m'+Date.now(),tipus:movType,via:movVia,
+    areaId,areaNom:area?.name||'',delegacioId:delegId,delegacioNom:deleg?.name||'',
+    eventId:eventId||'',eventNom:event?.name||'',
+    concepte:document.getElementById('mov-concept').value,
+    establiment:document.getElementById('mov-establiment').value,
+    data:document.getElementById('mov-data').value||today(),
+    responsable:u?.nom||currentUser?.name||'',responsableEmail:currentUser?.email||'',
+    import:imp,notes:document.getElementById('mov-notes').value
+  });
+  await save('moviments');
+  showToast('Registrat: '+(movType==='ing'?'+':'-')+fmtD(imp));
+  ['mov-import','mov-establiment','mov-notes','mov-concept'].forEach(id=>document.getElementById(id).value='');
+}
+
+// HISTORIAL
+function renderHistorial(){
+  const areaSel=document.getElementById('hist-area');
+  const cur=areaSel.value;
+  areaSel.innerHTML='<option value="">Totes les àrees</option>';
+  const myArees=getMyArees();
+  DB.config.areas.filter(a=>myArees.includes(a.id)).forEach(a=>{
+    const o=document.createElement('option');o.value=a.id;o.textContent=a.name;areaSel.appendChild(o);
+  });
+  areaSel.value=cur;
+  filterHist();
+}
+
+function filterHist(){
+  const q=(document.getElementById('hist-search').value||'').toLowerCase();
+  const aF=document.getElementById('hist-area').value;
+  const tF=document.getElementById('hist-tipus').value;
+  const myArees=getMyArees();
+  let movs=[...(DB.moviments||[])].filter(m=>perm('viewAll')||myArees.includes(m.areaId)).sort((a,b)=>b.data.localeCompare(a.data));
+  if(q)movs=movs.filter(m=>(m.concepte||'').toLowerCase().includes(q)||(m.establiment||'').toLowerCase().includes(q));
+  if(aF)movs=movs.filter(m=>m.areaId===aF);
+  if(tF)movs=movs.filter(m=>m.tipus===tF);
+  document.getElementById('hist-tbody').innerHTML=movs.map(m=>`<tr>
+    <td>${m.data}</td>
+    <td>${m.concepte||'—'}${m.establiment?` <span style="color:var(--text3)">· ${m.establiment}</span>`:''}</td>
+    <td style="color:var(--text2)">${m.areaNom||''} · ${m.delegacioNom||''}</td>
+    <td style="color:var(--text2)">${m.eventNom||'—'}</td>
+    <td>${m.via||'—'}</td>
+    <td style="color:var(--text2)">${m.responsable||'—'}</td>
+    <td style="text-align:right;font-weight:500;color:${m.tipus==='ing'?'var(--green)':'var(--red)'}">${m.tipus==='ing'?'+':'-'}${fmtD(m.import)}</td>
+  </tr>`).join('');
+  const ti=movs.filter(m=>m.tipus==='ing').reduce((s,m)=>s+m.import,0);
+  const tg=movs.filter(m=>m.tipus==='gast').reduce((s,m)=>s+m.import,0);
+  document.getElementById('hist-count').textContent=movs.length+' moviments';
+  document.getElementById('hist-total').textContent='+'+fmt(ti)+' · -'+fmt(tg);
+}
+
+// FONS DELEGATS
+function renderFons(){
+  const c=document.getElementById('fons-view');
+  if(perm('canFons')&&perm('viewAll')){
+    const delegats=DB.config.usuaris.filter(u=>['area','delegat'].includes(u.rol));
+    c.innerHTML=`<div style="display:flex;gap:8px;margin-bottom:14px">
+      <button class="btn btn-primary" onclick="openModal('modal-lliurament')"><i class="ti ti-plus"></i> Nou lliurament</button>
+      <button class="btn" onclick="openModal('modal-devolucio')"><i class="ti ti-corner-down-left"></i> Registrar devolució</button>
+    </div>`+(delegats.length?delegats.map(u=>renderFonsCard(u)).join(''):'<div class="card"><div style="color:var(--text3)">No hi ha delegats configurats. Afegeix usuaris a Configuració.</div></div>');
+    populateDelegatSelects();
+  }else{
+    const email=currentUser?.email;
+    const rebuts=(DB.fons||[]).filter(f=>f.delegEmail===email&&f.tipus==='lliurament').reduce((s,f)=>s+f.import,0);
+    const gastat=(DB.moviments||[]).filter(m=>m.responsableEmail===email&&m.tipus==='gast').reduce((s,m)=>s+m.import,0);
+    const devol=(DB.fons||[]).filter(f=>f.delegEmail===email&&f.tipus==='devolucio').reduce((s,f)=>s+f.import,0);
+    const saldo=rebuts-gastat-devol;
+    const pct=rebuts>0?Math.min(100,Math.round(gastat/rebuts*100)):0;
+    c.innerHTML=`<div class="saldo-banner">
+      <div class="saldo-row"><span style="color:var(--text2)">Fons rebuts de Tresoreria</span><span style="color:var(--green);font-weight:500">+${fmtD(rebuts)}</span></div>
+      <div class="saldo-row"><span style="color:var(--text2)">Pagaments registrats per tu</span><span style="color:var(--red);font-weight:500">${gastat>0?'-'+fmtD(gastat):'—'}</span></div>
+      <div class="saldo-row"><span style="color:var(--text2)">Devolucions</span><span style="color:var(--blue,#378ADD);font-weight:500">${devol>0?'-'+fmtD(devol):'—'}</span></div>
+      <div class="saldo-row"><span>Diners de la Falla a les teues mans</span><span style="color:${saldo<0?'var(--red)':saldo===0?'var(--text2)':'var(--green)'};font-size:20px">${fmtD(Math.abs(saldo))}</span></div>
+      <div style="height:8px;background:var(--border);border-radius:4px;margin-top:12px;overflow:hidden"><div style="height:100%;border-radius:4px;width:${pct}%;background:${pct>=100?'var(--red)':pct>=75?'var(--amber)':'var(--green)'}"></div></div>
+    </div>`;
+  }
+}
+
+function renderFonsCard(u){
+  const rebuts=(DB.fons||[]).filter(f=>f.delegId===u.id&&f.tipus==='lliurament').reduce((s,f)=>s+f.import,0);
+  const gastat=(DB.moviments||[]).filter(m=>m.responsableEmail===u.email&&m.tipus==='gast').reduce((s,m)=>s+m.import,0);
+  const devol=(DB.fons||[]).filter(f=>f.delegId===u.id&&f.tipus==='devolucio').reduce((s,f)=>s+f.import,0);
+  const saldo=rebuts-gastat-devol;
+  const pct=rebuts>0?Math.min(100,Math.round(gastat/rebuts*100)):0;
+  const ini=u.nom.split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase();
+  return`<div class="card" style="margin-bottom:10px">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
+      <div class="fons-av">${ini}</div>
+      <div style="flex:1"><div style="font-weight:500">${u.nom}</div>
+        <div style="font-size:11px;color:var(--text2)">${(u.arees||[]).map(id=>DB.config.areas.find(a=>a.id===id)?.name||id).join(', ')}</div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:18px;font-weight:500;color:${saldo<0?'var(--red)':saldo===0?'var(--text2)':'var(--green)'}">${fmt(Math.abs(saldo))}</div>
+        <div style="font-size:10px;color:var(--text3)">${saldo<0?'excedit':saldo===0?'liquidat':'disponible'}</div>
+      </div>
+    </div>
+    <div style="height:5px;background:var(--border);border-radius:3px;overflow:hidden;margin-bottom:8px"><div style="height:100%;border-radius:3px;width:${pct}%;background:${pct>=100?'var(--red)':pct>=75?'var(--amber)':'var(--green)'}"></div></div>
+    <div style="display:flex;gap:6px">
+      <button class="btn" style="font-size:12px" onclick="openLliuramentFor('${u.id}')"><i class="ti ti-plus"></i> Lliurar fons</button>
+      <button class="btn" style="font-size:12px" onclick="openDevolucioFor('${u.id}')"><i class="ti ti-corner-down-left"></i> Devolució</button>
+    </div>
+  </div>`;
+}
+
+function populateDelegatSelects(){
+  const delegats=DB.config.usuaris.filter(u=>['area','delegat'].includes(u.rol));
+  ['ll-delegat','dev-delegat'].forEach(id=>{
+    const sel=document.getElementById(id);
+    sel.innerHTML=delegats.map(u=>`<option value="${u.id}">${u.nom}</option>`).join('');
+  });
+}
+
+function openLliuramentFor(uid){document.getElementById('ll-delegat').value=uid;openModal('modal-lliurament');}
+function openDevolucioFor(uid){document.getElementById('dev-delegat').value=uid;openModal('modal-devolucio');}
+
+async function saveLliurament(){
+  const delegId=document.getElementById('ll-delegat').value;
+  const imp=parseFloat(document.getElementById('ll-import').value);
+  if(!imp||imp<=0){showToast('Import invàlid',true);return;}
+  const u=DB.config.usuaris.find(x=>x.id===delegId);
+  if(!DB.fons)DB.fons=[];
+  DB.fons.push({id:'f'+Date.now(),tipus:'lliurament',delegId,delegEmail:u?.email||'',import:imp,data:document.getElementById('ll-data').value,nota:document.getElementById('ll-nota').value,registratPer:currentUser?.email});
+  await save('fons');closeModal('modal-lliurament');showToast('Lliurament registrat');renderFons();
+}
+
+async function saveDevolucio(){
+  const delegId=document.getElementById('dev-delegat').value;
+  const imp=parseFloat(document.getElementById('dev-import').value);
+  if(!imp||imp<=0){showToast('Import invàlid',true);return;}
+  const u=DB.config.usuaris.find(x=>x.id===delegId);
+  if(!DB.fons)DB.fons=[];
+  DB.fons.push({id:'f'+Date.now(),tipus:'devolucio',delegId,delegEmail:u?.email||'',import:imp,data:document.getElementById('dev-data').value,nota:document.getElementById('dev-nota').value,registratPer:currentUser?.email});
+  await save('fons');closeModal('modal-devolucio');showToast('Devolució registrada');renderFons();
+}
+
+// TANCAMENT CAIXA
+let tancEventId=null;
+
+function renderTancamentList(){
+  document.getElementById('tancament-list').classList.remove('hidden');
+  document.getElementById('tancament-form').classList.add('hidden');
+  const myDelegs=getMyDelegacions();
+  const events=DB.config.events.filter(e=>perm('viewAll')||myDelegs.includes(e.delegId));
+  document.getElementById('tancament-list').innerHTML=events.map(ev=>{
+    const tc=(DB.tancaments||{})[ev.id];
+    return`<div class="card" style="cursor:pointer;margin-bottom:8px" onclick="selectTancEvent('${ev.id}')">
+      <div style="display:flex;align-items:center;gap:10px">
+        <i class="ti ti-calendar-event" style="font-size:18px;color:var(--text3)"></i>
+        <div style="flex:1"><div style="font-weight:500">${ev.name}</div>
+        <div style="font-size:11px;color:var(--text2)">${DB.config.delegacions.find(d=>d.id===ev.delegId)?.name||''}</div></div>
+        <span class="pill ${tc?'p-ok':'p-warn'}">${tc?'Tancat '+tc.data:'Pendent'}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function selectTancEvent(id){
+  tancEventId=id;
+  const ev=DB.config.events.find(e=>e.id===id);
+  const tc=(DB.tancaments||{})[id];
+  document.getElementById('tancament-list').classList.add('hidden');
+  document.getElementById('tancament-form').classList.remove('hidden');
+  document.getElementById('tanc-title').textContent='Tancament · '+ev?.name;
+  document.getElementById('tanc-efectiu').value=tc?.efectiu||'';
+  document.getElementById('tanc-tpv').value=tc?.tpv||'';
+  const btn=document.getElementById('btn-tancar');
+  if(tc){btn.disabled=true;btn.textContent='Ja tancat el '+tc.data;}
+  else{btn.disabled=false;btn.innerHTML='<i class="ti ti-lock"></i> Tancar i enviar a Tresoreria';}
+  updateTancResum();
+}
+
+function updateTancResum(){
+  const ef=parseFloat(document.getElementById('tanc-efectiu').value)||0;
+  const tpv=parseFloat(document.getElementById('tanc-tpv').value)||0;
+  const gast=(DB.moviments||[]).filter(m=>m.eventId===tancEventId&&m.tipus==='gast').reduce((s,m)=>s+m.import,0);
+  const net=ef+tpv-gast;
+  document.getElementById('tanc-resum').innerHTML=`
+    <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="color:var(--text2)">Efectiu declarat</span><span style="color:var(--green)">${fmtD(ef)}</span></div>
+    <div style="display:flex;justify-content:space-between;margin-bottom:8px;padding-bottom:8px;border-bottom:0.5px solid var(--border)"><span style="color:var(--text2)">TPV declarat</span><span>${fmtD(tpv)} <span style="font-size:10px;color:var(--text3)">(pendent CSV)</span></span></div>
+    <div style="display:flex;justify-content:space-between;font-weight:500"><span>Resultat net</span><span style="color:${net>=0?'var(--green)':'var(--red)'}">${fmtS(Math.round(net))}</span></div>`;
+}
+
+function backTancament(){renderTancamentList();}
+
+async function tancarEvent(){
+  const ef=parseFloat(document.getElementById('tanc-efectiu').value)||0;
+  const tpv=parseFloat(document.getElementById('tanc-tpv').value)||0;
+  if(!ef&&!tpv){showToast('Introdueix almenys un import',true);return;}
+  if(!DB.tancaments)DB.tancaments={};
+  DB.tancaments[tancEventId]={efectiu:ef,tpv,data:today(),tancat:true,registratPer:currentUser?.email};
+  await save('tancaments');showToast('Event tancat correctament');renderTancamentList();
+}
+
+// PRESSUPOSTOS
+function renderPressupostos(){
+  const myArees=getMyArees();
+  const areas=DB.config.areas.filter(a=>myArees.includes(a.id)||perm('viewAll'));
+  document.getElementById('pres-container').innerHTML=areas.map(a=>{
+    const deleg=DB.config.delegacions.filter(d=>d.areaId===a.id);
+    const gReal=(DB.moviments||[]).filter(m=>m.tipus==='gast'&&m.areaId===a.id).reduce((s,m)=>s+m.import,0);
+    const iReal=(DB.moviments||[]).filter(m=>m.tipus==='ing'&&m.areaId===a.id).reduce((s,m)=>s+m.import,0);
+    const col=AREA_COLORS[a.id]||'#888';
+    const bid='pb'+a.id;
+    return`<div class="deleg-block">
+      <div class="deleg-head" onclick="document.getElementById('${bid}').classList.toggle('open');this.querySelector('.chevron').classList.toggle('open')">
+        <i class="ti ti-chevron-right chevron"></i>
+        <div style="width:8px;height:8px;border-radius:50%;background:${col}"></div>
+        <div style="font-weight:500;flex:1">${a.name}</div>
+        ${iReal>0?`<span style="font-size:12px;color:var(--green);margin-right:12px">+${fmt(iReal)}</span>`:''}
+        <span style="font-size:12px;color:${gReal>0?'var(--red)':'var(--text3)'}">${gReal>0?'-'+fmt(gReal):'—'}</span>
+      </div>
+      <div class="deleg-body" id="${bid}">
+        ${deleg.map(d=>{
+          const dg=(DB.moviments||[]).filter(m=>m.tipus==='gast'&&m.delegacioId===d.id).reduce((s,m)=>s+m.import,0);
+          const di=(DB.moviments||[]).filter(m=>m.tipus==='ing'&&m.delegacioId===d.id).reduce((s,m)=>s+m.import,0);
+          const evs=DB.config.events.filter(e=>e.delegId===d.id);
+          return`<div class="sub-row">
+            <div style="flex:1;font-weight:500">${d.name}</div>
+            ${evs.length?`<span class="pill p-info" style="margin-right:8px">${evs.length} events</span>`:''}
+            ${di>0?`<span style="font-size:12px;color:var(--green);margin-right:8px">+${fmt(di)}</span>`:''}
+            <span style="font-size:12px;color:${dg>0?'var(--red)':'var(--text3)'}">${dg>0?'-'+fmt(dg):'—'}</span>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// RESULTATS
+function renderResultats(){
+  const movs=perm('viewAll')?(DB.moviments||[]):(DB.moviments||[]).filter(m=>getMyArees().includes(m.areaId));
+  const ing=movs.filter(m=>m.tipus==='ing').reduce((s,m)=>s+m.import,0);
+  const gast=movs.filter(m=>m.tipus==='gast').reduce((s,m)=>s+m.import,0);
+  const net=ing-gast;
+  document.getElementById('res-ing').textContent=fmt(ing);
+  document.getElementById('res-gast').textContent=fmt(gast);
+  document.getElementById('res-net').textContent=fmtS(net);
+  document.getElementById('res-net').className='metric-value '+(net>=0?'ok':'danger');
+  const areas=DB.config.areas.filter(a=>perm('viewAll')||getMyArees().includes(a.id));
+  document.getElementById('res-container').innerHTML=`
+    <div class="card"><div class="card-title">Ingressos per àrea</div>
+      ${areas.map(a=>{const v=movs.filter(m=>m.tipus==='ing'&&m.areaId===a.id).reduce((s,m)=>s+m.import,0);return v>0?`<div class="flow-row"><span>${a.name}</span><span style="color:var(--green);font-weight:500">+${fmt(v)}</span></div>`:''}).join('')||'<div style="color:var(--text3);font-size:12px">Sense ingressos</div>'}
+      <div class="flow-row" style="font-weight:500;border-top:1px solid var(--border2);margin-top:4px;padding-top:8px"><span>Total</span><span style="color:var(--green)">+${fmt(ing)}</span></div>
+    </div>
+    <div class="card"><div class="card-title">Despeses per àrea</div>
+      ${areas.map(a=>{const v=movs.filter(m=>m.tipus==='gast'&&m.areaId===a.id).reduce((s,m)=>s+m.import,0);return v>0?`<div class="flow-row"><span>${a.name}</span><span style="color:var(--red);font-weight:500">-${fmt(v)}</span></div>`:''}).join('')||'<div style="color:var(--text3);font-size:12px">Sense despeses</div>'}
+      <div class="flow-row" style="font-weight:500;border-top:1px solid var(--border2);margin-top:4px;padding-top:8px"><span>Total</span><span style="color:var(--red)">-${fmt(gast)}</span></div>
+    </div>
+    <div class="card"><div class="flow-row" style="font-size:15px;font-weight:500"><span>Resultat exercici 26/27</span><span style="color:${net>=0?'var(--green)':'var(--red)'}">${fmtS(net)}</span></div></div>`;
+}
+
+// FLUX
+function renderFlux(){
+  const movs=DB.moviments||[];
+  const ing=movs.filter(m=>m.tipus==='ing').reduce((s,m)=>s+m.import,0);
+  const gast=movs.filter(m=>m.tipus==='gast').reduce((s,m)=>s+m.import,0);
+  document.getElementById('flux-ini').textContent='0 €';
+  document.getElementById('flux-ing').textContent=fmt(ing);
+  document.getElementById('flux-gast').textContent=fmt(gast);
+  document.getElementById('flux-fin').textContent=fmtS(ing-gast);
+  document.getElementById('flux-fin').className='metric-value '+(ing>=gast?'ok':'danger');
+  document.getElementById('flux-container').innerHTML=['Efectiu','01 Banc','02 Banc','TPV'].map(v=>{
+    const vi=movs.filter(m=>m.tipus==='ing'&&m.via===v).reduce((s,m)=>s+m.import,0);
+    const vg=movs.filter(m=>m.tipus==='gast'&&m.via===v).reduce((s,m)=>s+m.import,0);
+    if(!vi&&!vg)return'';
+    return`<div class="card"><div class="card-title">${v}</div>
+      ${vi>0?`<div class="flow-row"><span style="color:var(--text2)">Cobraments</span><span style="color:var(--green);font-weight:500">+${fmt(vi)}</span></div>`:''}
+      ${vg>0?`<div class="flow-row"><span style="color:var(--text2)">Pagaments</span><span style="color:var(--red);font-weight:500">-${fmt(vg)}</span></div>`:''}
+      <div class="flow-row" style="font-weight:500"><span>Net ${v}</span><span style="color:${(vi-vg)>=0?'var(--green)':'var(--red)'}">${fmtS(vi-vg)}</span></div>
+    </div>`;
+  }).join('');
+}
+
+function exportCSV(tipus){
+  const movs=DB.moviments||[];
+  let csv,fn;
+  if(tipus==='resultats'){
+    csv='Tipus,Area,Delegacio,Event,Concepte,Data,Via,Responsable,Import\n';
+    movs.forEach(m=>{csv+=`${m.tipus==='ing'?'Ingres':'Despesa'},${m.areaNom},${m.delegacioNom},${m.eventNom||''},${m.concepte},${m.data},${m.via},${m.responsable},${m.import}\n`;});
+    fn='estat_resultats_2627.csv';
+  }else{
+    csv='Via,Tipus,Concepte,Data,Import\n';
+    movs.forEach(m=>{csv+=`${m.via},${m.tipus==='ing'?'Cobrament':'Pagament'},${m.concepte},${m.data},${m.import}\n`;});
+    fn='flux_efectiu_2627.csv';
+  }
+  const a=document.createElement('a');
+  a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
+  a.download=fn;a.click();
+}
+
+// IMPORTACIÓ
+function previewCSV(){
+  const file=document.getElementById('imp-file').files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    const lines=e.target.result.split('\n').filter(l=>l.trim());
+    document.getElementById('imp-preview').classList.remove('hidden');
+    document.getElementById('imp-info').textContent=lines.length+' files a '+file.name;
+    const rows=lines.slice(0,6).map(l=>l.split(/[;,\t]/));
+    document.getElementById('imp-table').innerHTML='<thead><tr>'+rows[0].map(h=>`<th>${h}</th>`).join('')+'</tr></thead><tbody>'+rows.slice(1).map(r=>'<tr>'+r.map(c=>`<td>${c}</td>`).join('')+'</tr>').join('')+'</tbody>';
+  };
+  reader.readAsText(file,'ISO-8859-1');
+}
+function importarCSV(){showToast('Disponible quan tingueu els formats CSV reals dels bancs');}
+
+// CONFIGURACIÓ
+function renderConfig(){
+  const canUsers=perm('canUsers');
+  const tabs=[
+    {id:'areas',label:'Àrees'},
+    {id:'events',label:'Events'},
+    {id:'bancs',label:'Bancs'},
+    {id:'rols',label:'Mestre de Rols'},
+    ...(canUsers?[{id:'usuaris',label:'Usuaris'}]:[])
+  ];
+  document.getElementById('cfg-tabs-bar').innerHTML=tabs.map((t,i)=>`<button class="btn${i===0?' btn-primary':''}" id="cfg-tab-${t.id}" onclick="showCfgTab('${t.id}')">${t.label}</button>`).join('');
+  showCfgTab('areas');
+}
+
+function showCfgTab(tab){
+  ['areas','events','bancs','rols','usuaris'].forEach(t=>{
+    const el=document.getElementById('cfg-'+t);
+    const btn=document.getElementById('cfg-tab-'+t);
+    if(el)el.classList.toggle('hidden',t!==tab);
+    if(btn)btn.className='btn'+(t===tab?' btn-primary':'');
+  });
+  ({areas:renderCfgAreas,events:renderCfgEvents,bancs:renderCfgBancs,rols:renderCfgRols,usuaris:renderCfgUsuaris}[tab]||function(){})();
+}
+
+function renderCfgAreas(){
+  document.getElementById('cfg-areas').innerHTML=DB.config.areas.map(a=>{
+    const deleg=DB.config.delegacions.filter(d=>d.areaId===a.id);
+    const col=AREA_COLORS[a.id]||'#888';
+    return`<div class="deleg-block" style="margin-bottom:8px">
+      <div class="deleg-head">
+        <div style="width:8px;height:8px;border-radius:50%;background:${col}"></div>
+        <div style="font-weight:500;flex:1">${a.id} · ${a.name}</div>
+        <div style="font-size:11px;color:var(--text2)">${a.resp}</div>
+      </div>
+      <div style="padding:6px 14px">
+        ${deleg.map(d=>`<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:0.5px solid var(--border);font-size:12px">
+          <div style="width:4px;height:4px;border-radius:50%;background:${col}"></div>
+          <div style="flex:1;font-weight:500">${d.id} · ${d.name}</div>
+          <div style="color:var(--text2)">${d.resp}</div>
+        </div>`).join('')}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderCfgEvents(){
+  document.getElementById('cfg-events').innerHTML=`<div class="card"><div class="table-wrap"><table>
+    <thead><tr><th>Nom</th><th>Delegació</th><th>Any</th><th>Responsable</th><th>Estat</th></tr></thead>
+    <tbody>${DB.config.events.map(e=>{
+      const d=DB.config.delegacions.find(x=>x.id===e.delegId);
+      return`<tr><td style="font-weight:500">${e.name}</td><td style="color:var(--text2)">${d?.name||e.delegId}</td><td>${e.year}</td><td style="color:var(--text2)">${e.resp}</td><td><span class="pill ${e.status==='tancat'?'p-ok':'p-warn'}">${e.status}</span></td></tr>`;
+    }).join('')}</tbody></table></div></div>`;
+}
+
+function renderCfgBancs(){
+  document.getElementById('cfg-bancs').innerHTML=DB.config.bancs.map(b=>`
+    <div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:0.5px solid var(--border)">
+      <i class="ti ${b.tipus==='bank'?'ti-building-bank':b.tipus==='cash'?'ti-wallet':'ti-credit-card'}" style="font-size:18px;color:var(--text2)"></i>
+      <div style="flex:1"><div style="font-weight:500">${b.nom}</div><div style="font-size:11px;color:var(--text3)">${b.codi}</div></div>
+      <button class="btn" style="font-size:12px" onclick="editBanc('${b.id}')"><i class="ti ti-edit"></i> Editar</button>
+    </div>`).join('');
+}
+
+async function editBanc(id){
+  const b=DB.config.bancs.find(x=>x.id===id);if(!b)return;
+  const nom=prompt('Nou nom per a '+b.codi+':',b.nom);
+  if(nom&&nom.trim()){b.nom=nom.trim();await save('config');renderCfgBancs();showToast('Banc actualitzat');}
+}
+
+// MESTRE DE ROLS
+function renderCfgRols(){
+  document.getElementById('cfg-rols').innerHTML=`
+    <div class="card">
+      <div class="card-title">Mestre de rols — permisos per rol</div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Rol</th><th>Registra moviments</th><th>Lliura fons</th><th>Importa CSV</th><th>Configuració</th><th>Gestió usuaris</th><th>Visibilitat</th></tr></thead>
+        <tbody>
+          ${Object.entries(ROLES).map(([key,r])=>`<tr>
+            <td><span class="pill ${r.color}">${r.label}</span></td>
+            <td style="text-align:center">${r.canRegister?'<i class="ti ti-check" style="color:var(--green)"></i>':'<i class="ti ti-x" style="color:var(--text3)"></i>'}</td>
+            <td style="text-align:center">${r.canFons?'<i class="ti ti-check" style="color:var(--green)"></i>':'<i class="ti ti-x" style="color:var(--text3)"></i>'}</td>
+            <td style="text-align:center">${r.canImport?'<i class="ti ti-check" style="color:var(--green)"></i>':'<i class="ti ti-x" style="color:var(--text3)"></i>'}</td>
+            <td style="text-align:center">${r.canConfig?'<i class="ti ti-check" style="color:var(--green)"></i>':'<i class="ti ti-x" style="color:var(--text3)"></i>'}</td>
+            <td style="text-align:center">${r.canUsers?'<i class="ti ti-check" style="color:var(--green)"></i>':'<i class="ti ti-x" style="color:var(--text3)"></i>'}</td>
+            <td style="color:var(--text2);font-size:12px">${r.viewAll?'Tota la Falla':'Les seues àrees/delegacions'}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table></div>
+      <div style="font-size:12px;color:var(--text3);margin-top:12px;padding-top:12px;border-top:0.5px solid var(--border)">
+        Els rols defineixen els permisos. Cada usuari té un rol principal i pot tenir múltiples àrees i delegacions assignades.
+      </div>
+    </div>`;
+}
+
+// MESTRE D'USUARIS
+let editingUserId=null;
+
+function renderCfgUsuaris(){
+  document.getElementById('cfg-usuaris').innerHTML=`
+    <div class="info-box">L'email ha de coincidir exactament amb el compte de Google del membre. L'email <strong>it.fallaportal@gmail.com</strong> té automàticament rol de Tresoreria.</div>
+    <button class="btn btn-primary" style="margin-bottom:12px" onclick="openModalUsuari(null)"><i class="ti ti-plus"></i> Afegir usuari</button>
+    <div class="card"><div class="table-wrap"><table>
+      <thead><tr><th>Nom</th><th>Email</th><th>Rol</th><th>Àrees assignades</th><th>Delegacions assignades</th><th></th></tr></thead>
+      <tbody>${DB.config.usuaris.map(u=>`<tr>
+        <td style="font-weight:500">${u.nom}</td>
+        <td style="color:var(--text2);font-size:12px">${u.email}</td>
+        <td><span class="pill ${ROLES[u.rol]?.color||'p-info'}">${ROLES[u.rol]?.label||u.rol}</span></td>
+        <td style="font-size:11px;color:var(--text2)">${(u.arees||[]).map(id=>id+' '+DB.config.areas.find(a=>a.id===id)?.name?.split(' ')[0]).join(', ')||'—'}</td>
+        <td style="font-size:11px;color:var(--text2)">${(u.delegacions||[]).map(id=>id).join(', ')||'—'}</td>
+        <td style="white-space:nowrap">
+          <button class="btn" style="font-size:11px;padding:3px 8px;margin-right:4px" onclick="openModalUsuari('${u.id}')"><i class="ti ti-edit"></i></button>
+          <button class="btn" style="font-size:11px;padding:3px 8px" onclick="deleteUsuari('${u.id}')"><i class="ti ti-trash"></i></button>
+        </td>
+      </tr>`).join('')||'<tr><td colspan="6" style="color:var(--text3);text-align:center;padding:16px">Sense usuaris configurats</td></tr>'}
+      </tbody>
+    </table></div></div>`;
+}
+
+function openModalUsuari(id){
+  editingUserId=id;
+  const u=id?DB.config.usuaris.find(x=>x.id===id):null;
+  document.getElementById('mu-title').textContent=id?'Editar usuari':'Nou usuari';
+  document.getElementById('mu-nom').value=u?.nom||'';
+  document.getElementById('mu-email').value=u?.email||'';
+  document.getElementById('mu-rol').value=u?.rol||'delegat';
+  // checkboxes àrees
+  document.getElementById('mu-arees-checks').innerHTML=DB.config.areas.map(a=>`
+    <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer">
+      <input type="checkbox" value="${a.id}" ${(u?.arees||[]).includes(a.id)?'checked':''} style="width:auto;margin:0">
+      <span>${a.id} · ${a.name}</span>
+    </label>`).join('');
+  // checkboxes delegacions
+  document.getElementById('mu-delegs-checks').innerHTML=DB.config.delegacions.map(d=>{
+    const area=DB.config.areas.find(a=>a.id===d.areaId);
+    return`<label style="display:flex;align-items:center;gap:8px;font-size:12px;cursor:pointer">
+      <input type="checkbox" value="${d.id}" ${(u?.delegacions||[]).includes(d.id)?'checked':''} style="width:auto;margin:0">
+      <span style="color:var(--text3)">${area?.id}</span> <span>${d.name}</span>
+    </label>`;
+  }).join('');
+  updateMuFields();
+  document.getElementById('mu-rol').onchange=updateMuFields;
+  openModal('modal-usuari');
+}
+
+function updateMuFields(){
+  const rol=document.getElementById('mu-rol').value;
+  const needsAssignment=['area','delegat'].includes(rol);
+  document.getElementById('mu-arees-field').style.display=needsAssignment?'block':'none';
+  document.getElementById('mu-delegs-field').style.display=needsAssignment?'block':'none';
+}
+
+async function saveUsuari(){
+  const nom=document.getElementById('mu-nom').value.trim();
+  const email=document.getElementById('mu-email').value.trim().toLowerCase();
+  const rol=document.getElementById('mu-rol').value;
+  if(!nom||!email){showToast('Nom i email són obligatoris',true);return;}
+  const arees=Array.from(document.querySelectorAll('#mu-arees-checks input:checked')).map(x=>x.value);
+  const delegacions=Array.from(document.querySelectorAll('#mu-delegs-checks input:checked')).map(x=>x.value);
+  if(!DB.config.usuaris)DB.config.usuaris=[];
+  if(editingUserId){
+    const u=DB.config.usuaris.find(x=>x.id===editingUserId);
+    if(u){u.nom=nom;u.email=email;u.rol=rol;u.arees=arees;u.delegacions=delegacions;}
+  }else{
+    DB.config.usuaris.push({id:'u'+Date.now(),nom,email,rol,arees,delegacions});
+  }
+  await save('config');closeModal('modal-usuari');renderCfgUsuaris();showToast('Usuari guardat: '+nom);
+}
+
+async function deleteUsuari(id){
+  if(!confirm('Eliminar aquest usuari?'))return;
+  DB.config.usuaris=DB.config.usuaris.filter(u=>u.id!==id);
+  await save('config');renderCfgUsuaris();showToast('Usuari eliminat');
+}
+
+function openModal(id){document.getElementById(id).classList.add('open');}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+</script>
+</body>
+</html>
