@@ -1140,7 +1140,7 @@ function filterHist(){
   if(tF)movs=movs.filter(m=>m.tipus===tF);
   document.getElementById('hist-tbody').innerHTML=movs.map(m=>`<tr>
     <td>${m.data}</td>
-    <td>${m.concepte||'—'}${m.establiment?` <span style="color:var(--text3)">· ${m.establiment}</span>`:''}</td>
+    <td>${(m.concepte||'—')+(m.establiment?' <span style="color:var(--text3)">· '+m.establiment+'</span>':'')}</td>
     <td style="color:var(--text2)">${m.areaNom||''} · ${m.delegacioNom||''}</td>
     <td style="color:var(--text2)">${m.eventNom||'—'}</td>
     <td>${m.via||'—'}</td>
@@ -1315,17 +1315,20 @@ function renderPressupostosEdit(){
 
   // Barra d'estat
   document.getElementById('pres-estat-sub').textContent='Any fiscal 26/27 · Estat: '+estat.toUpperCase();
-  document.getElementById('pres-estat-bar').innerHTML=`
-    <div style="display:flex;align-items:center;gap:10px;padding:12px 16px;background:${bloquejat?'var(--amber-bg)':'var(--green-bg)'};border-radius:var(--r);border:0.5px solid ${bloquejat?'var(--amber)':'var(--green)'}">
-      <i class="ti ${bloquejat?'ti-lock':'ti-lock-open'}" style="font-size:18px;color:${bloquejat?'var(--amber)':'var(--green)'}"></i>
-      <div style="flex:1">
-        <div style="font-weight:500;color:${bloquejat?'var(--amber-text)':'var(--green-text)'}">${bloquejat?'Pressupost bloquejat i aprovat':'Pressupost obert — en fase d'elaboració'}</div>
-        <div style="font-size:11px;color:var(--text2);margin-top:2px">${bloquejat?'Bloquejat per '+DB.pres_config.bloquejatPer+' el '+DB.pres_config.data:'Els responsables poden introduir i modificar els imports planificats'}</div>
-      </div>
-      ${canLock?`<button class="btn ${bloquejat?'':'btn-primary'}" onclick="${bloquejat?'desbloquejarpres()':'bloquejarPres()'}" style="font-size:12px;flex-shrink:0">
-        <i class="ti ${bloquejat?'ti-lock-open':'ti-lock'}"></i> ${bloquejat?'Desbloquejar':'Bloquejar i aprovar'}
-      </button>`:''}
-    </div>`;
+  const bgColor=bloquejat?'var(--amber-bg)':'var(--green-bg)';
+  const borderColor=bloquejat?'var(--amber)':'var(--green)';
+  const iconClass=bloquejat?'ti-lock':'ti-lock-open';
+  const titleColor=bloquejat?'var(--amber-text)':'var(--green-text)';
+  const titleText=bloquejat?'Pressupost bloquejat i aprovat':'Pressupost obert - en fase d\'elaboració';
+  const subText=bloquejat?('Bloquejat per '+DB.pres_config.bloquejatPer+' el '+DB.pres_config.data):'Els responsables poden introduir i modificar els imports planificats';
+  const btnHtml=canLock?('<button class="btn '+(bloquejat?'':'btn-primary')+'" onclick="'+(bloquejat?'desbloquejarpres()':'bloquejarPres()')+'" style="font-size:12px;flex-shrink:0"><i class="ti '+(bloquejat?'ti-lock-open':'ti-lock')+'"></i> '+(bloquejat?'Desbloquejar':'Bloquejar i aprovar')+'</button>'):'';
+  document.getElementById('pres-estat-bar').innerHTML=
+    '<div style="display:flex;align-items:center;gap:10px;padding:12px 16px;background:'+bgColor+';border-radius:var(--r);border:0.5px solid '+borderColor+'">'+
+    '<i class="ti '+iconClass+'" style="font-size:18px;color:'+borderColor+'"></i>'+
+    '<div style="flex:1">'+
+    '<div style="font-weight:500;color:'+titleColor+'">'+titleText+'</div>'+
+    '<div style="font-size:11px;color:var(--text2);margin-top:2px">'+subText+'</div>'+
+    '</div>'+btnHtml+'</div>';
 
   // Historial de bloquejos
   const hist=DB.pres_historial||[];
@@ -1355,7 +1358,7 @@ function renderPressupostosEdit(){
           <div style="flex:1;font-weight:500">${d.name}</div>
           <div style="font-size:12px;color:var(--text2);margin-right:12px">Pla: ${totalPla>0?fmt(totalPla):'—'}</div>
           <div style="font-size:12px;color:${totalReal>0?'var(--red)':'var(--text3)'}">Real: ${totalReal>0?fmt(totalReal):'—'}</div>
-          ${totalPla>0?`<div style="font-size:11px;width:32px;text-align:right;color:${pct>=90?'var(--red)':pct>=75?'var(--amber)':'var(--green)'}">${pct}%</div>`:''}
+          
         </div>
         <div class="deleg-body" id="${bid}">
           ${!bloquejat&&(perm('viewAll')||myDelegs.includes(d.id))?`
@@ -1368,7 +1371,7 @@ function renderPressupostosEdit(){
           <div style="display:flex;align-items:center;gap:8px;padding:8px 14px;border-bottom:0.5px solid var(--border);font-size:12px">
             <div style="flex:1">
               <div style="font-weight:500">${p.eventNom||'—'}</div>
-              ${p.concepte?`<div style="color:var(--text3);font-size:11px">${p.concepte}</div>`:''}
+              +(p.concepte?'<div style="color:var(--text3);font-size:11px">'+p.concepte+'</div>':'')}
             </div>
             <span class="pill p-info">${p.tipus==='event'?'Event':'Concepte'}</span>
             <div style="font-weight:500;width:80px;text-align:right">${fmt(p.importPla)}</div>
@@ -1395,7 +1398,7 @@ function renderPressupostosEdit(){
           <i class="ti ${h.accio==='bloquejat'?'ti-lock':'ti-lock-open'}" style="color:${h.accio==='bloquejat'?'var(--amber)':'var(--green)'}"></i>
           <div style="flex:1"><span style="font-weight:500">${h.accio==='bloquejat'?'Bloquejat':'Desbloquejat'}</span> per ${h.usuari}</div>
           <div style="color:var(--text3)">${h.data}</div>
-          ${h.motiu?`<div style="color:var(--text2)">${h.motiu}</div>`:''}
+          +(h.motiu?'<div style="color:var(--text2)">'+h.motiu+'</div>':'')}
         </div>`).join('')}
       </div>`;
   }
@@ -1488,19 +1491,26 @@ function renderResultats(){
   document.getElementById('res-net').textContent=fmtS(net);
   document.getElementById('res-net').className='metric-value '+(net>=0?'ok':'danger');
   const areas=DB.config.areas.filter(a=>perm('viewAll')||getMyArees().includes(a.id));
-  document.getElementById('res-container').innerHTML=`
-    <div class="card"><div class="card-title">Ingressos per àrea</div>
-      ${areas.map(a=>{const v=movs.filter(m=>m.tipus==='ing'&&m.areaId===a.id).reduce((s,m)=>s+m.import,0);return v>0?`<div class="flow-row"><span>${a.name}</span><span style="color:var(--green);font-weight:500">+${fmt(v)}</span></div>`:''}).join('')||'<div style="color:var(--text3);font-size:12px">Sense ingressos</div>'}
-      <div class="flow-row" style="font-weight:500;border-top:1px solid var(--border2);margin-top:4px;padding-top:8px"><span>Total</span><span style="color:var(--green)">+${fmt(ing)}</span></div>
-    </div>
-    <div class="card"><div class="card-title">Despeses per àrea</div>
-      ${areas.map(a=>{const v=movs.filter(m=>m.tipus==='gast'&&m.areaId===a.id).reduce((s,m)=>s+m.import,0);return v>0?`<div class="flow-row"><span>${a.name}</span><span style="color:var(--red);font-weight:500">-${fmt(v)}</span></div>`:''}).join('')||'<div style="color:var(--text3);font-size:12px">Sense despeses</div>'}
-      <div class="flow-row" style="font-weight:500;border-top:1px solid var(--border2);margin-top:4px;padding-top:8px"><span>Total</span><span style="color:var(--red)">-${fmt(gast)}</span></div>
-    </div>
-    <div class="card"><div class="flow-row" style="font-size:15px;font-weight:500"><span>Resultat exercici 26/27</span><span style="color:${net>=0?'var(--green)':'var(--red)'}">${fmtS(net)}</span></div></div>`;
+  let rowsIng='',rowsGast='';
+  areas.forEach(a=>{
+    const vi=movs.filter(m=>m.tipus==='ing'&&m.areaId===a.id).reduce((s,m)=>s+m.import,0);
+    const vg=movs.filter(m=>m.tipus==='gast'&&m.areaId===a.id).reduce((s,m)=>s+m.import,0);
+    if(vi>0)rowsIng+='<div class="flow-row"><span>'+a.name+'</span><span style="color:var(--green);font-weight:500">+'+fmt(vi)+'</span></div>';
+    if(vg>0)rowsGast+='<div class="flow-row"><span>'+a.name+'</span><span style="color:var(--red);font-weight:500">-'+fmt(vg)+'</span></div>';
+  });
+  document.getElementById('res-container').innerHTML=
+    '<div class="card"><div class="card-title">Ingressos per àrea</div>'+
+    (rowsIng||'<div style="color:var(--text3);font-size:12px">Sense ingressos</div>')+
+    '<div class="flow-row" style="font-weight:500;border-top:1px solid var(--border2);margin-top:4px;padding-top:8px">'+
+    '<span>Total ingressos</span><span style="color:var(--green)">+'+fmt(ing)+'</span></div></div>'+
+    '<div class="card"><div class="card-title">Despeses per àrea</div>'+
+    (rowsGast||'<div style="color:var(--text3);font-size:12px">Sense despeses</div>')+
+    '<div class="flow-row" style="font-weight:500;border-top:1px solid var(--border2);margin-top:4px;padding-top:8px">'+
+    '<span>Total despeses</span><span style="color:var(--red)">-'+fmt(gast)+'</span></div></div>'+
+    '<div class="card"><div class="flow-row" style="font-size:15px;font-weight:500">'+
+    '<span>Resultat exercici 26/27</span>'+
+    '<span style="color:'+(net>=0?'var(--green)':'var(--red)')+'">'+fmtS(net)+'</span></div></div>';
 }
-
-// FLUX
 function renderFlux(){
   const movs=DB.moviments||[];
   const ing=movs.filter(m=>m.tipus==='ing').reduce((s,m)=>s+m.import,0);
@@ -1515,8 +1525,8 @@ function renderFlux(){
     const vg=movs.filter(m=>m.tipus==='gast'&&m.via===v).reduce((s,m)=>s+m.import,0);
     if(!vi&&!vg)return'';
     return`<div class="card"><div class="card-title">${v}</div>
-      ${vi>0?`<div class="flow-row"><span style="color:var(--text2)">Cobraments</span><span style="color:var(--green);font-weight:500">+${fmt(vi)}</span></div>`:''}
-      ${vg>0?`<div class="flow-row"><span style="color:var(--text2)">Pagaments</span><span style="color:var(--red);font-weight:500">-${fmt(vg)}</span></div>`:''}
+      ${vi>0?'<div class="flow-row"><span style="color:var(--text2)">Cobraments</span><span style="color:var(--green);font-weight:500">+'+fmt(vi)+'</span></div>':''}
+      ${vg>0?'<div class="flow-row"><span style="color:var(--text2)">Pagaments</span><span style="color:var(--red);font-weight:500">-'+fmt(vg)+'</span></div>':''}
       <div class="flow-row" style="font-weight:500"><span>Net ${v}</span><span style="color:${(vi-vg)>=0?'var(--green)':'var(--red)'}">${fmtS(vi-vg)}</span></div>
     </div>`;
   }).join('');
