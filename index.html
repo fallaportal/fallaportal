@@ -278,6 +278,7 @@ tr:hover td{background:var(--bg2)}
         <div class="mov-g2">
           <div class="mov-data-box">
             <input type="date" id="mov-data">
+            <i class="ti ti-calendar" style="font-size:16px;color:var(--text3);margin-right:6px;pointer-events:none"></i>
             <span id="mov-data-label">Data</span>
           </div>
           <div class="mov-import-box">
@@ -305,9 +306,9 @@ tr:hover td{background:var(--bg2)}
           <label>Concepte</label>
           <input type="text" id="mov-concept" placeholder="Descriu el concepte...">
         </div>
-        <div class="mov-row2">
-          <div class="mov-field"><label>Data</label><input type="date" id="mov-data"></div>
-          <div class="mov-field"><label>Establiment <span class="opt-label">(opc.)</span></label><input type="text" id="mov-establiment" placeholder="p.e. Monaco..."></div>
+        <div class="mov-field">
+          <label>Establiment <span class="opt-label">(opcional)</span></label>
+          <input type="text" id="mov-establiment" placeholder="p.e. Monaco, Mercadona...">
         </div>
         <div class="mov-extra-toggle" onclick="toggleMovExtra()">
           <i class="ti ti-chevron-right" id="mov-extra-ch"></i> Notes i justificant
