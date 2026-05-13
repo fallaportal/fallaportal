@@ -403,6 +403,30 @@ tr:hover td{background:var(--bg2)}
 const CLIENT_ID='762692298201-gnhlho2ob1fb77s6uoevocji8r6afssm.apps.googleusercontent.com';
 const SCOPES='https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile';
 const SHEET_ID='1SUeIZbZN1kUxt5nNRkEVLZI__eHecYv4JZE5QNuGaQ0';
+const CACHE_KEY='fallaportal_cache';
+
+function saveCache(){
+  try{localStorage.setItem(CACHE_KEY,JSON.stringify({db:DB,ts:Date.now()}));}catch(e){}
+}
+
+function loadCache(){
+  try{
+    const c=localStorage.getItem(CACHE_KEY);
+    if(!c)return false;
+    const {db,ts}=JSON.parse(c);
+    if(Date.now()-ts>3600000)return false; // cache d'1 hora
+    if(db.moviments)DB.moviments=db.moviments;
+    if(db.fons)DB.fons=db.fons;
+    if(db.tancaments)DB.tancaments=db.tancaments;
+    if(db.config&&db.config.usuaris&&db.config.usuaris.length>0)DB.config=db.config;
+    return true;
+  }catch(e){return false;}
+}
+
+// Guardar en segon pla sense bloquejar la UI
+function saveBackground(key){
+  save(key).then(()=>saveCache()).catch(e=>console.warn('Save error:',e));
+}
 const AREA_COLORS={'01':'#1D9E75','02':'#7F77DD','03':'#378ADD','04':'#BA7517','05':'#D4537E','06':'#D85A30','07':'#888780'};
 
 // MESTRE DE ROLS — defineix els permisos de cada rol
@@ -677,40 +701,53 @@ function configToRows(){
 }
 
 async function loadAllFromDrive(){
+  // Carregar cache immediatament per mostrar dades ràpid
+  const hasCache=loadCache();
   setSyncing(true);
-  try{
-    await initSheets();
-    // Carregar moviments
-    const movsRows=await readTab('moviments');
-    DB.moviments=movsRows.map(r=>({...r,import:parseFloat(r.import)||0}));
-    // Carregar fons
-    const fonsRows=await readTab('fons');
-    DB.fons=fonsRows.map(r=>({...r,import:parseFloat(r.import)||0}));
-    // Carregar tancaments
-    const tancRows=await readTab('tancaments');
-    DB.tancaments={};
-    tancRows.forEach(r=>{DB.tancaments[r.eventId]={...r,efectiu:parseFloat(r.efectiu)||0,tpv:parseFloat(r.tpv)||0};});
-    // Carregar config
-    const arees=await readTab('arees');
-    const delegacions=await readTab('delegacions');
-    const events=await readTab('events');
-    const bancs=await readTab('bancs');
-    const usuaris=await readTab('usuaris');
-    const assignacions=await readTab('usuaris_assignacions');
-    if(arees.length>0||usuaris.length>0){
-      DB.config=rowsToConfig(arees,delegacions,events,bancs,usuaris,assignacions);
+  // Carregar Sheets en segon pla
+  loadFromSheets().then(()=>{
+    saveCache();
+    setSyncing(false);
+    // Refrescar la pàgina activa silenciosament
+    const activePage=document.querySelector('.page.active');
+    if(activePage){
+      const id=activePage.id.replace('page-','');
+      const renders={dashboard:renderDashboard,historial:filterHist,pressupostos:renderPressupostos,
+        lliurament:renderFons,tancament:renderTancamentList,resultats:renderResultats,flux:renderFlux};
+      if(renders[id])renders[id]();
     }
-    // Si no hi ha bancs al Sheet, usar els per defecte
-    if(!DB.config.bancs||!DB.config.bancs.length){
-      DB.config.bancs=[
-        {id:'b1',codi:'01 Banc',nom:'Caixabank',tipus:'bank'},
-        {id:'b2',codi:'02 Banc',nom:'Caixa Popular',tipus:'bank'},
-        {id:'b3',codi:'Efectiu',nom:'Caixa efectiu',tipus:'cash'},
-        {id:'b4',codi:'TPV',nom:'TPV targetes',tipus:'tpv'}
-      ];
-    }
-  }catch(e){showToast('Error carregant: '+e.message,true);}
-  setSyncing(false);
+  }).catch(e=>{
+    setSyncing(false);
+    if(!hasCache)showToast('Error carregant dades: '+e.message,true);
+  });
+}
+
+async function loadFromSheets(){
+  await initSheets();
+  const movsRows=await readTab('moviments');
+  DB.moviments=movsRows.map(r=>({...r,import:parseFloat(r.import)||0}));
+  const fonsRows=await readTab('fons');
+  DB.fons=fonsRows.map(r=>({...r,import:parseFloat(r.import)||0}));
+  const tancRows=await readTab('tancaments');
+  DB.tancaments={};
+  tancRows.forEach(r=>{DB.tancaments[r.eventId]={...r,efectiu:parseFloat(r.efectiu)||0,tpv:parseFloat(r.tpv)||0};});
+  const arees=await readTab('arees');
+  const delegacions=await readTab('delegacions');
+  const events=await readTab('events');
+  const bancs=await readTab('bancs');
+  const usuaris=await readTab('usuaris');
+  const assignacions=await readTab('usuaris_assignacions');
+  if(arees.length>0||usuaris.length>0){
+    DB.config=rowsToConfig(arees,delegacions,events,bancs,usuaris,assignacions);
+  }
+  if(!DB.config.bancs||!DB.config.bancs.length){
+    DB.config.bancs=[
+      {id:'b1',codi:'01 Banc',nom:'Caixabank',tipus:'bank'},
+      {id:'b2',codi:'02 Banc',nom:'Caixa Popular',tipus:'bank'},
+      {id:'b3',codi:'Efectiu',nom:'Caixa efectiu',tipus:'cash'},
+      {id:'b4',codi:'TPV',nom:'TPV targetes',tipus:'tpv'}
+    ];
+  }
 }
 
 async function save(key){
@@ -965,8 +1002,9 @@ async function registrarMoviment(){
     import:imp,notes:document.getElementById('mov-notes').value
   };
   DB.moviments.push(mov);
-  await saveMoviment(mov);
+  saveCache();
   showToast('Registrat: '+(movType==='ing'?'+':'-')+fmtD(imp));
+  saveMoviment(mov).catch(e=>showToast('Error guardant a Sheets: '+e.message,true));
   ['mov-import','mov-establiment','mov-notes','mov-concept'].forEach(id=>document.getElementById(id).value='');
 }
 
@@ -1079,7 +1117,9 @@ async function saveLliurament(){
   if(!DB.fons)DB.fons=[];
   const fItem={id:'f'+Date.now(),tipus:'lliurament',delegId,delegEmail:u?.email||'',import:imp,data:document.getElementById('ll-data').value,nota:document.getElementById('ll-nota').value,registratPer:currentUser?.email};
   DB.fons.push(fItem);
-  await saveFons(fItem);closeModal('modal-lliurament');showToast('Lliurament registrat');renderFons();
+  saveCache();
+  closeModal('modal-lliurament');showToast('Lliurament registrat');renderFons();
+  saveFons(fItem).catch(e=>showToast('Error guardant: '+e.message,true));
 }
 
 async function saveDevolucio(){
@@ -1090,7 +1130,9 @@ async function saveDevolucio(){
   if(!DB.fons)DB.fons=[];
   const dItem={id:'f'+Date.now(),tipus:'devolucio',delegId,delegEmail:u?.email||'',import:imp,data:document.getElementById('dev-data').value,nota:document.getElementById('dev-nota').value,registratPer:currentUser?.email};
   DB.fons.push(dItem);
-  await saveFons(dItem);closeModal('modal-devolucio');showToast('Devolució registrada');renderFons();
+  saveCache();
+  closeModal('modal-devolucio');showToast('Devolució registrada');renderFons();
+  saveFons(dItem).catch(e=>showToast('Error guardant: '+e.message,true));
 }
 
 // TANCAMENT CAIXA
@@ -1149,7 +1191,9 @@ async function tancarEvent(){
   if(!DB.tancaments)DB.tancaments={};
   const tItem={eventId:tancEventId,eventNom:DB.config.events.find(e=>e.id===tancEventId)?.name||'',efectiu:ef,tpv,data:today(),tancat:true,registratPer:currentUser?.email};
   DB.tancaments[tancEventId]=tItem;
-  await save('tancaments');showToast('Event tancat correctament');renderTancamentList();
+  saveCache();
+  showToast('Event tancat correctament');renderTancamentList();
+  save('tancaments').catch(e=>showToast('Error guardant: '+e.message,true));
 }
 
 // PRESSUPOSTOS
@@ -1330,7 +1374,7 @@ function renderCfgBancs(){
 async function editBanc(id){
   const b=DB.config.bancs.find(x=>x.id===id);if(!b)return;
   const nom=prompt('Nou nom per a '+b.codi+':',b.nom);
-  if(nom&&nom.trim()){b.nom=nom.trim();await save('config');renderCfgBancs();showToast('Banc actualitzat');}
+  if(nom&&nom.trim()){b.nom=nom.trim();saveCache();renderCfgBancs();showToast('Banc actualitzat');save('config').catch(e=>console.warn(e));}
 }
 
 // MESTRE DE ROLS
@@ -1429,9 +1473,10 @@ async function saveUsuari(){
   }else{
     DB.config.usuaris.push({id:'u'+Date.now(),nom,email,rol:rolVal,arees,delegacions});
   }
-  await save('config');closeModal('modal-usuari');renderCfgUsuaris();showToast('Usuari guardat: '+nom);
-  // Recarregar permisos si l'usuari editat és el mateix que ha entrat
+  saveCache();
+  closeModal('modal-usuari');renderCfgUsuaris();showToast('Usuari guardat: '+nom);
   if(email===currentUser?.email){buildNav();}
+  save('config').catch(e=>showToast('Error guardant: '+e.message,true));
 }
 
 async function deleteUsuari(id){
