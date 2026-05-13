@@ -614,6 +614,35 @@ tr:hover td{background:var(--bg2)}
   </div>
 </div>
 
+<div class="modal-overlay" id="modal-copy-pres">
+  <div class="modal" style="max-width:580px">
+    <div class="modal-title"><i class="ti ti-copy" style="font-size:16px;margin-right:6px"></i>Copiar pressupost entre exercicis</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
+      <div class="field"><label>Any fiscal origen</label><select id="cp-origen" onchange="renderCopyPresDeleg()"></select></div>
+      <div class="field"><label>Any fiscal desti</label><select id="cp-desti" onchange="renderCopyPresDeleg()"></select></div>
+    </div>
+    <div class="field" style="margin-bottom:14px">
+      <label>Que vols copiar com a base?</label>
+      <select id="cp-base" onchange="renderCopyPresDeleg()">
+        <option value="pla">Pressupost planificat de l'any origen</option>
+        <option value="real">Actuals reals de l'any origen</option>
+        <option value="buit">Pressupost en blanc</option>
+      </select>
+    </div>
+    <div id="cp-deleg-container" style="max-height:300px;overflow-y:auto;border:0.5px solid var(--border);border-radius:var(--r);margin-bottom:14px">
+      <div style="display:grid;grid-template-columns:1fr 90px 100px;gap:8px;padding:8px 12px;background:var(--bg2);font-size:12px;font-weight:500;color:var(--text2);border-bottom:0.5px solid var(--border)">
+        <span>Delegacio</span><span style="text-align:right">Base (€)</span><span style="text-align:center">% ajust</span>
+      </div>
+      <div id="cp-deleg-rows"></div>
+    </div>
+    <div style="background:var(--bg2);border-radius:var(--r);padding:10px 12px;font-size:12px;color:var(--text2);margin-bottom:14px" id="cp-resum">Selecciona origen i desti per veure el resum.</div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('modal-copy-pres')">Cancel·lar</button>
+      <button class="btn btn-primary" onclick="executarCopyPres()"><i class="ti ti-check"></i> Copiar pressupost</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="modal-event">
   <div class="modal">
     <div class="modal-title" id="mev-title">Nou event</div>
@@ -2141,7 +2170,8 @@ function renderConfig(){
     return '<button class="btn'+(i===0?' btn-primary':'')+'" id="cfg-tab-'+t.id+'" data-tab="'+t.id+'" onclick="showCfgTab(this.dataset.tab)">'+t.label+'</button>';
   }).join('');
   const nouExBtn=perm('canConfig')?'<button class="btn" onclick="obrirNouExercici()" style="margin-left:8px;color:var(--amber)"><i class="ti ti-calendar-plus"></i> Nou exercici</button>':'';
-  document.getElementById('cfg-tabs-bar').innerHTML=tabsBtns+nouExBtn;
+  const copyPresBtn=perm('canConfig')?'<button class="btn" onclick="openModalCopyPres()" style="margin-left:8px;color:var(--blue,#378ADD)"><i class="ti ti-copy"></i> Copiar pressupost</button>':'';
+  document.getElementById('cfg-tabs-bar').innerHTML=tabsBtns+nouExBtn+copyPresBtn;
   showCfgTab('areas');
 }
 
@@ -2554,6 +2584,203 @@ function simularRegla(){
   }else{
     res.innerHTML='<span style="color:var(--amber)"><i class="ti ti-alert-triangle"></i> Cap regla coincideix - el moviment es marcarà com a pendent d&apos;assignar</span>';
   }
+}
+
+function openModalCopyPres(){
+  const exercicis=DB.config.exercicis||['26/27'];
+  const current=getAnyFiscal();
+  const origenSel=document.getElementById('cp-origen');
+  const destiSel=document.getElementById('cp-desti');
+  origenSel.innerHTML=exercicis.map(function(e){
+    return'<option value="'+e+'"'+(e===current?' selected':'')+'>'+e+'</option>';
+  }).join('');
+  // Destí: tots els exercicis menys l'origen per defecte
+  destiSel.innerHTML=exercicis.map(function(e){
+    return'<option value="'+e+'"'+(e!==current?' selected':'')+'>'+e+'</option>';
+  }).join('');
+  // Si sols hi ha un exercici, afegir el seguent
+  if(exercicis.length===1){
+    const parts=current.split('/');
+    const next=(parseInt(parts[0])+1)+'/'+(parseInt(parts[1])+1);
+    destiSel.innerHTML+='<option value="'+next+'" selected>'+next+' (nou)</option>';
+  }
+  document.getElementById('cp-base').value='pla';
+  renderCopyPresDeleg();
+  openModal('modal-copy-pres');
+}
+
+function renderCopyPresDeleg(){
+  const origen=document.getElementById('cp-origen').value;
+  const desti=document.getElementById('cp-desti').value;
+  const base=document.getElementById('cp-base').value;
+  const rows=document.getElementById('cp-deleg-rows');
+  const resum=document.getElementById('cp-resum');
+
+  if(origen===desti){
+    rows.innerHTML='<div style="padding:12px;color:var(--red);font-size:13px">Origen i desti no poden ser el mateix.</div>';
+    return;
+  }
+
+  if(base==='buit'){
+    rows.innerHTML='<div style="padding:12px;color:var(--text3);font-size:13px">Es creara un pressupost en blanc per a '+desti+'.</div>';
+    resum.textContent='Pressupost en blanc per a '+desti+'. No es copiara cap import.';
+    return;
+  }
+
+  // Calcular imports base per delegació
+  const delegData=[];
+  DB.config.delegacions.forEach(function(d){
+    let importBase=0;
+    if(base==='pla'){
+      const plans=(DB.pres_plans||[]).filter(function(p){return p.delegacioId===d.id&&p.any===origen;});
+      importBase=plans.reduce(function(s,p){return s+p.importPla;},0);
+    }else if(base==='real'){
+      importBase=(DB.moviments||[]).filter(function(m){
+        return m.delegacioId===d.id&&m.tipus==='gast'&&(m.anyFiscal===origen||(!m.anyFiscal&&origen===getAnyFiscal()));
+      }).reduce(function(s,m){return s+m.import;},0);
+    }
+    if(importBase>0){
+      delegData.push({id:d.id,nom:d.name,areaId:d.areaId,importBase});
+    }
+  });
+
+  if(!delegData.length){
+    rows.innerHTML='<div style="padding:12px;color:var(--text3);font-size:13px">No hi ha dades de '+(base==='pla'?'pressupost planificat':'actuals reals')+' per a '+origen+'.</div>';
+    resum.textContent='Sense dades per copiar.';
+    return;
+  }
+
+  // Agrupar per àrea
+  const areesList=DB.config.areas;
+  let html='';
+  areesList.forEach(function(a){
+    const delegsArea=delegData.filter(function(d){return d.areaId===a.id;});
+    if(!delegsArea.length)return;
+    const col=({
+      '01':'#1D9E75','02':'#7F77DD','03':'#378ADD','04':'#BA7517',
+      '05':'#D4537E','06':'#D85A30','07':'#888780'
+    })[a.id]||'#888';
+    html+='<div style="padding:6px 12px;background:var(--bg2);font-size:11px;font-weight:600;color:var(--text2);border-bottom:0.5px solid var(--border);display:flex;align-items:center;gap:6px">';
+    html+='<div style="width:8px;height:8px;border-radius:50%;background:'+col+'"></div>'+a.name+'</div>';
+    delegsArea.forEach(function(d){
+      html+='<div style="display:grid;grid-template-columns:1fr 90px 100px;gap:8px;padding:8px 12px;border-bottom:0.5px solid var(--border);align-items:center;font-size:13px">';
+      html+='<span>'+d.nom+'</span>';
+      html+='<span style="text-align:right;font-weight:500">'+fmt(d.importBase)+'</span>';
+      html+='<div style="display:flex;align-items:center;gap:4px;justify-content:center">';
+      html+='<input type="number" value="0" min="-50" max="100" step="1" ';
+      html+='id="cp-pct-'+d.id+'" onchange="updateCopyResum()" ';
+      html+='style="width:55px;text-align:center;font-size:13px;padding:4px 6px">';
+      html+='<span style="font-size:12px;color:var(--text3)">%</span>';
+      html+='</div></div>';
+    });
+  });
+
+  rows.innerHTML=html;
+  updateCopyResum();
+}
+
+function updateCopyResum(){
+  const origen=document.getElementById('cp-origen').value;
+  const desti=document.getElementById('cp-desti').value;
+  const base=document.getElementById('cp-base').value;
+  if(base==='buit')return;
+
+  let totalBase=0,totalDesti=0,nDeleg=0;
+  DB.config.delegacions.forEach(function(d){
+    const pctEl=document.getElementById('cp-pct-'+d.id);
+    if(!pctEl)return;
+    let importBase=0;
+    if(base==='pla'){
+      importBase=(DB.pres_plans||[]).filter(function(p){return p.delegacioId===d.id&&p.any===origen;}).reduce(function(s,p){return s+p.importPla;},0);
+    }else{
+      importBase=(DB.moviments||[]).filter(function(m){
+        return m.delegacioId===d.id&&m.tipus==='gast'&&(m.anyFiscal===origen||(!m.anyFiscal&&origen===getAnyFiscal()));
+      }).reduce(function(s,m){return s+m.import;},0);
+    }
+    if(importBase>0){
+      const pct=parseFloat(pctEl.value)||0;
+      const importDesti=Math.round(importBase*(1+pct/100));
+      totalBase+=importBase;totalDesti+=importDesti;nDeleg++;
+    }
+  });
+
+  const diff=totalDesti-totalBase;
+  document.getElementById('cp-resum').innerHTML=
+    '<div style="display:flex;gap:16px;flex-wrap:wrap">'+
+    '<span><strong>'+nDeleg+'</strong> delegacions</span>'+
+    '<span>Base: <strong>'+fmt(totalBase)+'</strong></span>'+
+    '<span>Desti: <strong style="color:'+(diff>=0?'var(--green)':'var(--red)')+'">'+fmt(totalDesti)+'</strong></span>'+
+    '<span style="color:'+(diff>=0?'var(--green)':'var(--red)')+'">'+(diff>=0?'+':'')+fmt(diff)+' ('+(diff>=0?'+':'')+Math.round(diff/totalBase*100)+'%)</span>'+
+    '</div>';
+}
+
+async function executarCopyPres(){
+  const origen=document.getElementById('cp-origen').value;
+  const desti=document.getElementById('cp-desti').value;
+  const base=document.getElementById('cp-base').value;
+
+  if(origen===desti){showToast('Origen i desti no poden ser iguals',true);return;}
+
+  // Si el desti es un any nou, afegir-lo
+  if(!DB.config.exercicis)DB.config.exercicis=[];
+  if(!DB.config.exercicis.includes(desti)){
+    DB.config.exercicis.push(desti);
+    await save('config');
+    initExerciciSelector();
+  }
+
+  if(base==='buit'){
+    // Eliminar plans existents del desti
+    DB.pres_plans=(DB.pres_plans||[]).filter(function(p){return p.any!==desti;});
+    saveCache();
+    await save('pres_plans');
+    closeModal('modal-copy-pres');
+    showToast('Pressupost en blanc creat per a '+desti);
+    return;
+  }
+
+  // Construir nous plans
+  const nousPlans=[];
+  DB.config.delegacions.forEach(function(d){
+    const pctEl=document.getElementById('cp-pct-'+d.id);
+    if(!pctEl)return;
+    const pct=parseFloat(pctEl.value)||0;
+
+    if(base==='pla'){
+      const plans=(DB.pres_plans||[]).filter(function(p){return p.delegacioId===d.id&&p.any===origen;});
+      plans.forEach(function(p){
+        const importNou=Math.round(p.importPla*(1+pct/100));
+        if(importNou>0){
+          nousPlans.push({
+            any:desti,delegacioId:d.id,delegacioNom:d.name,
+            eventId:p.eventId,eventNom:p.eventNom,
+            concepte:p.concepte,tipus:p.tipus,
+            importPla:importNou,notes:'Copiat de '+origen+(pct!==0?' ('+pct+'%)':'')
+          });
+        }
+      });
+    }else if(base==='real'){
+      const totalReal=(DB.moviments||[]).filter(function(m){
+        return m.delegacioId===d.id&&m.tipus==='gast'&&(m.anyFiscal===origen||(!m.anyFiscal&&origen===getAnyFiscal()));
+      }).reduce(function(s,m){return s+m.import;},0);
+      if(totalReal>0){
+        const importNou=Math.round(totalReal*(1+pct/100));
+        nousPlans.push({
+          any:desti,delegacioId:d.id,delegacioNom:d.name,
+          eventId:'',eventNom:'',concepte:'',tipus:'event',
+          importPla:importNou,notes:'Basat en actuals '+origen+(pct!==0?' ('+pct+'%)':'')
+        });
+      }
+    }
+  });
+
+  // Eliminar plans existents del desti i afegir els nous
+  DB.pres_plans=(DB.pres_plans||[]).filter(function(p){return p.any!==desti;});
+  DB.pres_plans=DB.pres_plans.concat(nousPlans);
+  saveCache();
+  closeModal('modal-copy-pres');
+  showToast('Pressupost copiat a '+desti+' ('+nousPlans.length+' linies)');
+  await save('pres_plans');
 }
 
 function openModalRegla(id,font){
