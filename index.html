@@ -3283,9 +3283,9 @@ function renderCfgRols(){
 let editingUserId=null;
 
 function renderCfgUsuaris(){
-  const ROL_LABELS={'president':'President','treasury':'Tresoreria','area':'Resp. d'Area','delegat':'Resp. de Delegacio','board':'Junta'};
+  const ROL_LABELS={'president':'President','treasury':'Tresoreria','area':'Resp. d\'Area','delegat':'Resp. de Delegacio','board':'Junta'};
   const ROL_COLORS={'president':'p-ok','treasury':'p-info','area':'p-warn','delegat':'p-warn','board':'p-gray'};
-  let html='<div class="info-box">L'email ha de coincidir exactament amb el compte de Google del membre. L'email <strong>it.fallaportal@gmail.com</strong> te automaticament rol de Tresoreria.</div>';
+  let html='<div class="info-box">L\'email ha de coincidir exactament amb el compte de Google del membre. L\'email <strong>it.fallaportal@gmail.com</strong> te automaticament rol de Tresoreria.</div>';
   html+='<button class="btn btn-primary" style="margin-bottom:12px" onclick="openModalUsuari(null)"><i class="ti ti-plus"></i> Afegir usuari</button>';
   html+='<div class="card"><div class="table-wrap"><table>';
   html+='<thead><tr><th>Nom</th><th>Email</th><th>Rol</th><th></th></tr></thead><tbody>';
@@ -3305,3 +3305,7 @@ function renderCfgUsuaris(){
   html+='</tbody></table></div></div>';
   document.getElementById('cfg-usuaris').innerHTML=html;
 }
+
+</script>
+</body>
+</html>
