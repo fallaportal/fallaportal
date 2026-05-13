@@ -575,11 +575,17 @@ async function save(key){
 // PERMISOS
 function getUsuari(){
   if(!currentUser)return null;
-  const u=DB.config.usuaris.find(x=>x.email===currentUser.email);
+  const email=currentUser.email;
+  const u=DB.config.usuaris.find(x=>x.email===email);
   if(u)return u;
-  if(currentUser.email==='it.fallaportal@gmail.com')
-    return{id:'sys',name:currentUser.name,email:currentUser.email,rol:'treasury',arees:[],delegacions:[]};
-  return null;
+  // Email administrador = president/tresoreria sempre
+  if(email==='it.fallaportal@gmail.com')
+    return{id:'sys',nom:currentUser.name,email,rol:'treasury',arees:[],delegacions:[]};
+  // Si no hi ha usuaris configurats, el primer que entra és president
+  if(!DB.config.usuaris||DB.config.usuaris.length===0)
+    return{id:'sys',nom:currentUser.name,email,rol:'president',arees:[],delegacions:[]};
+  // Email no reconegut = lectura
+  return{id:'guest',nom:currentUser.name,email,rol:'board',arees:[],delegacions:[]};
 }
 
 function getRol(){const u=getUsuari();return u?u.rol:'delegat';}
