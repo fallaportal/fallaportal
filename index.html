@@ -882,23 +882,68 @@ async function sheetsReq(method,url,body=null){
   return r.json();
 }
 
+// Mapa de noms antics -> nous per migració
+const TABS_MIGRATION={
+  'moviments':'01 Moviments','fons':'02 Fons','tancaments':'03 Tancaments',
+  'arees':'04 Arees','delegacions':'05 Delegacions','events':'06 Events',
+  'bancs':'07 Bancs','usuaris':'08 Usuaris','usuaris_assignacions':'09 Usuaris Assignacions',
+  'pres_plans':'10 Pressupostos Plans','pres_config':'11 Pressupostos Config',
+  'pres_historial':'12 Pressupostos Historial','regles':'13 Regles CSV'
+};
+
 async function initSheets(){
   try{
-    const info=await sheetsReq('GET',SHEETS_API+'?fields=sheets.properties.title');
-    const existing=(info.sheets||[]).map(s=>s.properties.title);
-    const needed=Object.keys(TABS);
-    const toCreate=needed.filter(n=>!existing.includes(n));
+    const info=await sheetsReq('GET',SHEETS_API+'?fields=sheets.properties(title,sheetId)');
+    const existingSheets=info.sheets||[];
+    const existingNames=existingSheets.map(s=>s.properties.title);
+    const neededNames=Object.values(TABS).map(t=>t.name);
+
+    // 1. Crear pestanyes noves que falten
+    const toCreate=neededNames.filter(n=>!existingNames.includes(n));
     if(toCreate.length>0){
       await sheetsReq('POST',SHEETS_API+':batchUpdate',{
         requests:toCreate.map(title=>({addSheet:{properties:{title}}}))
       });
-      // Afegir capçaleres a les noves pestanyes
-      for(const tabKey of toCreate){
-        const tab=TABS[tabKey];
-        await sheetsReq('PUT',
-          SHEETS_API+'/values/'+encodeURIComponent(tab.name+'!A1')+'?valueInputOption=RAW',
-          {range:tab.name+'!A1',majorDimension:'ROWS',values:[tab.headers]}
-        );
+      // Afegir capçaleres
+      for(const tabName of toCreate){
+        const tabKey=Object.keys(TABS).find(k=>TABS[k].name===tabName);
+        if(tabKey){
+          await sheetsReq('PUT',
+            SHEETS_API+'/values/'+encodeURIComponent(tabName+'!A1')+'?valueInputOption=RAW',
+            {range:tabName+'!A1',majorDimension:'ROWS',values:[TABS[tabKey].headers]}
+          );
+        }
+      }
+    }
+
+    // 2. Migrar dades de pestanyes antigues a les noves
+    for(const [oldName, newName] of Object.entries(TABS_MIGRATION)){
+      if(existingNames.includes(oldName)&&existingNames.includes(newName)){
+        // Llegir dades de la pestanya antiga
+        try{
+          const oldData=await sheetsReq('GET',SHEETS_API+'/values/'+encodeURIComponent(oldName));
+          if(oldData.values&&oldData.values.length>1){
+            // Verificar si la nova pestanya ja té dades (més d'una fila = capçalera + dades)
+            const newData=await sheetsReq('GET',SHEETS_API+'/values/'+encodeURIComponent(newName+'!A1:A2'));
+            const newHasData=newData.values&&newData.values.length>1;
+            if(!newHasData){
+              // Copiar totes les dades a la nova pestanya
+              await sheetsReq('PUT',
+                SHEETS_API+'/values/'+encodeURIComponent(newName+'!A1')+'?valueInputOption=RAW',
+                {range:newName+'!A1',majorDimension:'ROWS',values:oldData.values}
+              );
+              console.log('Migrat: '+oldName+' -> '+newName+' ('+oldData.values.length+' files)');
+            }
+          }
+          // Eliminar pestanya antiga
+          const oldSheet=existingSheets.find(s=>s.properties.title===oldName);
+          if(oldSheet){
+            await sheetsReq('POST',SHEETS_API+':batchUpdate',{
+              requests:[{deleteSheet:{sheetId:oldSheet.properties.sheetId}}]
+            });
+            console.log('Eliminat: '+oldName);
+          }
+        }catch(e){console.warn('Error migrant '+oldName+':',e);}
       }
     }
   }catch(e){showToast('Error inicialitzant Sheets: '+e.message,true);}
