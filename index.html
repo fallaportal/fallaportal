@@ -256,7 +256,7 @@ tr:hover td{background:var(--bg2)}
         <div class="field"><label>Establiment / Proveïdor <span style="color:var(--text3);font-size:11px">(opcional)</span></label><input type="text" id="mov-establiment" placeholder="p.e. Mercadona, Monaco..."></div>
         <div class="field"><label>Data</label><input type="date" id="mov-data"></div>
         <div class="field"><label>Notes <span style="color:var(--text3);font-size:11px">(opcional)</span></label><textarea id="mov-notes" rows="2"></textarea></div>
-        <div class="field"><label>Justificant <span style="color:var(--text3);font-size:11px">(foto tiquet/factura)</span></label><input type="file" id="mov-photo" accept="image/*" capture="environment" style="font-size:12px"></div>
+        <div class="field"><label>Justificant <span style="color:var(--text3);font-size:11px">(foto tiquet/factura)</span></label><input type="file" id="mov-photo" accept="image/*,application/pdf" style="font-size:13px"></div>
         <button class="btn btn-danger" style="width:100%;padding:12px;font-size:14px" id="btn-registrar" onclick="registrarMoviment()"><i class="ti ti-check"></i> Registrar despesa</button>
       </div>
     </div>
@@ -479,6 +479,50 @@ tr:hover td{background:var(--bg2)}
     <div class="modal-footer">
       <button class="btn" onclick="closeModal('modal-pres')">Cancel·lar</button>
       <button class="btn btn-primary" onclick="savePresPla()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-event">
+  <div class="modal">
+    <div class="modal-title" id="mev-title">Nou event</div>
+    <div class="field"><label>Nom de l'event</label><input type="text" id="mev-nom" placeholder="p.e. Festa Cloenda 2027"></div>
+    <div class="field"><label>Delegació responsable</label><select id="mev-deleg"></select></div>
+    <div class="field-row">
+      <div class="field"><label>Any</label><input type="text" id="mev-year" placeholder="2027" style="width:80px"></div>
+      <div class="field"><label>Estat</label>
+        <select id="mev-status">
+          <option value="pendent">Pendent</option>
+          <option value="tancat">Tancat</option>
+        </select>
+      </div>
+    </div>
+    <div class="field"><label>Responsable</label><input type="text" id="mev-resp" placeholder="p.e. Juanjo Felis"></div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('modal-event')">Cancel·lar</button>
+      <button class="btn btn-primary" onclick="saveEvent()">Guardar event</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-banc">
+  <div class="modal">
+    <div class="modal-title" id="mb-title">Nou banc</div>
+    <div class="field">
+      <label>Codi <span style="color:var(--text3);font-size:12px">(p.e. 03 Banc, Bizum...)</span></label>
+      <input type="text" id="mb-codi" placeholder="03 Banc">
+    </div>
+    <div class="field"><label>Nom</label><input type="text" id="mb-nom" placeholder="p.e. Sabadell, Bizum..."></div>
+    <div class="field"><label>Tipus</label>
+      <select id="mb-tipus">
+        <option value="bank">Banc</option>
+        <option value="cash">Efectiu</option>
+        <option value="tpv">TPV / Targeta</option>
+      </select>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('modal-banc')">Cancel·lar</button>
+      <button class="btn btn-primary" onclick="saveBanc()">Guardar</button>
     </div>
   </div>
 </div>
@@ -1900,28 +1944,155 @@ async function deleteDeleg(id){
 }
 
 function renderCfgEvents(){
-  document.getElementById('cfg-events').innerHTML=`<div class="card"><div class="table-wrap"><table>
-    <thead><tr><th>Nom</th><th>Delegació</th><th>Any</th><th>Responsable</th><th>Estat</th></tr></thead>
-    <tbody>${DB.config.events.map(e=>{
-      const d=DB.config.delegacions.find(x=>x.id===e.delegId);
-      return`<tr><td style="font-weight:500">${e.name}</td><td style="color:var(--text2)">${d?.name||e.delegId}</td><td>${e.year}</td><td style="color:var(--text2)">${e.resp}</td><td><span class="pill ${e.status==='tancat'?'p-ok':'p-warn'}">${e.status}</span></td></tr>`;
-    }).join('')}</tbody></table></div></div>`;
+  const canEdit=perm('canConfig');
+  let html='';
+  if(canEdit){
+    html+='<div style="margin-bottom:14px">';
+    html+='<button class="btn btn-primary" onclick="openModalEvent(null)"><i class="ti ti-plus"></i> Nou event</button>';
+    html+='</div>';
+  }
+  html+='<div class="card"><div class="table-wrap"><table>';
+  html+='<thead><tr><th>Nom</th><th>Delegació</th><th>Any</th><th>Responsable</th><th>Estat</th>';
+  if(canEdit)html+='<th></th>';
+  html+='</tr></thead><tbody>';
+  DB.config.events.forEach(function(e){
+    const d=DB.config.delegacions.find(function(x){return x.id===e.delegId;});
+    html+='<tr>';
+    html+='<td style="font-weight:500">'+e.name+'</td>';
+    html+='<td style="color:var(--text2)">'+(d?d.name:e.delegId)+'</td>';
+    html+='<td>'+e.year+'</td>';
+    html+='<td style="color:var(--text2)">'+e.resp+'</td>';
+    html+='<td><span class="pill '+(e.status==='tancat'?'p-ok':'p-warn')+'">'+e.status+'</span></td>';
+    if(canEdit){
+      html+='<td style="white-space:nowrap">';
+      html+='<button class="btn" style="font-size:12px;padding:3px 8px;margin-right:4px" data-eid="'+e.id+'" onclick="openModalEvent(this.dataset.eid)"><i class="ti ti-edit"></i></button>';
+      html+='<button class="btn" style="font-size:12px;padding:3px 8px" data-eid="'+e.id+'" onclick="deleteEvent(this.dataset.eid)"><i class="ti ti-trash"></i></button>';
+      html+='</td>';
+    }
+    html+='</tr>';
+  });
+  html+='</tbody></table></div></div>';
+  document.getElementById('cfg-events').innerHTML=html;
+}
+
+let editEventId=null;
+
+function openModalEvent(id){
+  editEventId=id;
+  const e=id?DB.config.events.find(x=>x.id===id):null;
+  document.getElementById('mev-title').textContent=id?'Editar event':'Nou event';
+  const delegSel=document.getElementById('mev-deleg');
+  delegSel.innerHTML=DB.config.delegacions.map(function(d){
+    return'<option value="'+d.id+'">'+d.id+' - '+d.name+'</option>';
+  }).join('');
+  if(e){
+    document.getElementById('mev-nom').value=e.name||'';
+    delegSel.value=e.delegId||'';
+    document.getElementById('mev-year').value=e.year||'2027';
+    document.getElementById('mev-resp').value=e.resp||'';
+    document.getElementById('mev-status').value=e.status||'pendent';
+  }else{
+    document.getElementById('mev-nom').value='';
+    document.getElementById('mev-year').value='2027';
+    document.getElementById('mev-resp').value='';
+    document.getElementById('mev-status').value='pendent';
+  }
+  openModal('modal-event');
+}
+
+async function saveEvent(){
+  const nom=document.getElementById('mev-nom').value.trim();
+  const delegId=document.getElementById('mev-deleg').value;
+  const year=document.getElementById('mev-year').value.trim();
+  const resp=document.getElementById('mev-resp').value.trim();
+  const status=document.getElementById('mev-status').value;
+  if(!nom||!delegId){showToast('Nom i delegacio son obligatoris',true);return;}
+  if(editEventId){
+    const e=DB.config.events.find(x=>x.id===editEventId);
+    if(e){e.name=nom;e.delegId=delegId;e.year=year;e.resp=resp;e.status=status;}
+  }else{
+    DB.config.events.push({id:'e'+Date.now(),delegId,name:nom,year,resp,status});
+  }
+  saveCache();
+  closeModal('modal-event');
+  renderCfgEvents();
+  showToast('Event guardat');
+  save('config').catch(function(e){showToast('Error: '+e.message,true);});
+}
+
+async function deleteEvent(id){
+  if(!confirm('Eliminar aquest event?'))return;
+  DB.config.events=DB.config.events.filter(function(e){return e.id!==id;});
+  saveCache();renderCfgEvents();
+  showToast('Event eliminat');
+  save('config').catch(function(e){console.warn(e);});
 }
 
 function renderCfgBancs(){
-  document.getElementById('cfg-bancs').innerHTML=DB.config.bancs.map(b=>`
-    <div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:0.5px solid var(--border)">
-      <i class="ti ${b.tipus==='bank'?'ti-building-bank':b.tipus==='cash'?'ti-wallet':'ti-credit-card'}" style="font-size:18px;color:var(--text2)"></i>
-      <div style="flex:1"><div style="font-weight:500">${b.nom}</div><div style="font-size:11px;color:var(--text3)">${b.codi}</div></div>
-      <button class="btn" style="font-size:12px" onclick="editBanc('${b.id}')"><i class="ti ti-edit"></i> Editar</button>
-    </div>`).join('');
+  const canEdit=perm('canConfig');
+  let html='';
+  if(canEdit){
+    html+='<div style="margin-bottom:14px">';
+    html+='<button class="btn btn-primary" onclick="openModalBanc(null)"><i class="ti ti-plus"></i> Nou banc / via de pagament</button>';
+    html+='</div>';
+  }
+  DB.config.bancs.forEach(function(b){
+    const icon=b.tipus==='bank'?'ti-building-bank':b.tipus==='cash'?'ti-wallet':'ti-credit-card';
+    html+='<div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:0.5px solid var(--border)">';
+    html+='<i class="ti '+icon+'" style="font-size:20px;color:var(--text2)"></i>';
+    html+='<div style="flex:1"><div style="font-weight:500">'+b.nom+'</div><div style="font-size:12px;color:var(--text3)">'+b.codi+'</div></div>';
+    if(canEdit){
+      html+='<button class="btn" style="font-size:12px;margin-right:6px" data-bid="'+b.id+'" onclick="openModalBanc(this.dataset.bid)"><i class="ti ti-edit"></i> Editar</button>';
+      html+='<button class="btn" style="font-size:12px" data-bid="'+b.id+'" onclick="deleteBanc(this.dataset.bid)"><i class="ti ti-trash"></i></button>';
+    }
+    html+='</div>';
+  });
+  document.getElementById('cfg-bancs').innerHTML=html;
 }
 
-async function editBanc(id){
-  const b=DB.config.bancs.find(x=>x.id===id);if(!b)return;
-  const nom=prompt('Nou nom per a '+b.codi+':',b.nom);
-  if(nom&&nom.trim()){b.nom=nom.trim();saveCache();renderCfgBancs();showToast('Banc actualitzat');save('config').catch(e=>console.warn(e));}
+let editBancId=null;
+
+function openModalBanc(id){
+  editBancId=id;
+  const b=id?DB.config.bancs.find(x=>x.id===id):null;
+  document.getElementById('mb-title').textContent=id?'Editar banc':'Nou banc';
+  document.getElementById('mb-codi').value=b?.codi||'';
+  document.getElementById('mb-codi').disabled=!!id;
+  document.getElementById('mb-nom').value=b?.nom||'';
+  document.getElementById('mb-tipus').value=b?.tipus||'bank';
+  openModal('modal-banc');
 }
+
+async function saveBanc(){
+  const codi=document.getElementById('mb-codi').value.trim();
+  const nom=document.getElementById('mb-nom').value.trim();
+  const tipus=document.getElementById('mb-tipus').value;
+  if(!codi||!nom){showToast('Codi i nom son obligatoris',true);return;}
+  if(!editBancId&&DB.config.bancs.find(b=>b.codi===codi)){showToast('Ja existeix un banc amb aquest codi',true);return;}
+  if(editBancId){
+    const b=DB.config.bancs.find(x=>x.id===editBancId);
+    if(b){b.nom=nom;b.tipus=tipus;}
+  }else{
+    DB.config.bancs.push({id:'b'+Date.now(),codi,nom,tipus});
+  }
+  saveCache();
+  closeModal('modal-banc');
+  renderCfgBancs();
+  showToast('Banc guardat');
+  save('config').catch(function(e){showToast('Error: '+e.message,true);});
+}
+
+async function deleteBanc(id){
+  const b=DB.config.bancs.find(x=>x.id===id);
+  if(!b)return;
+  if(!confirm('Eliminar '+b.nom+'?'))return;
+  DB.config.bancs=DB.config.bancs.filter(x=>x.id!==id);
+  saveCache();renderCfgBancs();
+  showToast('Banc eliminat');
+  save('config').catch(function(e){console.warn(e);});
+}
+
+
 
 // MESTRE DE ROLS
 function renderCfgRols(){
