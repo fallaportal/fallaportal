@@ -432,7 +432,8 @@ tr:hover td{background:var(--bg2)}
 
     <div id="page-configuracio" class="page">
       <div class="page-title">Configuració</div>
-      <div class="page-sub">Àrees, delegacions, events, bancs, rols i usuaris</div>
+      <div class="page-sub">Manteniment de dades i gestió d'exercicis</div>
+      <div style="font-size:12px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px"><i class="ti ti-settings" style="font-size:14px;margin-right:4px"></i>Manteniment</div>
       <div style="display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap" id="cfg-tabs-bar"></div>
       <div id="cfg-areas" class="hidden"></div>
       <div id="cfg-events" class="hidden"></div>
@@ -440,6 +441,10 @@ tr:hover td{background:var(--bg2)}
       <div id="cfg-rols" class="hidden"></div>
       <div id="cfg-regles" class="hidden"></div>
       <div id="cfg-usuaris" class="hidden"></div>
+      <div style="border-top:1px solid var(--border);margin-top:28px;padding-top:20px">
+        <div style="font-size:12px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:14px"><i class="ti ti-calendar" style="font-size:14px;margin-right:4px"></i>Gestió d'exercicis fiscals</div>
+        <div id="cfg-exercicis-container"></div>
+      </div>
     </div>
   </div>
 </div>
@@ -913,10 +918,15 @@ async function obrirNouExercici(){
   const nextStart=parseInt(parts[0])+1;
   const nextEnd=parseInt(parts[1])+1;
   const nouAny=nextStart+'/'+nextEnd;
-  if(!confirm('Tancar exercici '+current+' i obrir '+nouAny+'? Les dades de '+current+' es conserven i es podran consultar.'))return;
+  if(!confirm('Obrir nou exercici '+nouAny+'? El '+current+' seguira actiu i podras consultar-lo en qualsevol moment des del selector d\'any fiscal.'))return;
   if(!DB.config.exercicis)DB.config.exercicis=['26/27'];
   if(!DB.config.exercicis.includes(nouAny)){
     DB.config.exercicis.push(nouAny);
+    if(!DB.config.estats_exercicis)DB.config.estats_exercicis={};
+    DB.config.estats_exercicis[nouAny]={tancat:false,dataObertura:today(),dataTancament:''};
+    if(!DB.config.estats_exercicis[current]){
+      DB.config.estats_exercicis[current]={tancat:false,dataObertura:'01/04/2026',dataTancament:''};
+    }
   }
   DB.config.anyFiscal=nouAny;
   // Actualitzar selector
@@ -2169,10 +2179,9 @@ function renderConfig(){
   const tabsBtns=tabs.map(function(t,i){
     return '<button class="btn'+(i===0?' btn-primary':'')+'" id="cfg-tab-'+t.id+'" data-tab="'+t.id+'" onclick="showCfgTab(this.dataset.tab)">'+t.label+'</button>';
   }).join('');
-  const nouExBtn=perm('canConfig')?'<button class="btn" onclick="obrirNouExercici()" style="margin-left:8px;color:var(--amber)"><i class="ti ti-calendar-plus"></i> Nou exercici</button>':'';
-  const copyPresBtn=perm('canConfig')?'<button class="btn" onclick="openModalCopyPres()" style="margin-left:8px;color:var(--blue,#378ADD)"><i class="ti ti-copy"></i> Copiar pressupost</button>':'';
-  document.getElementById('cfg-tabs-bar').innerHTML=tabsBtns+nouExBtn+copyPresBtn;
+  document.getElementById('cfg-tabs-bar').innerHTML=tabsBtns;
   showCfgTab('areas');
+  renderCfgExercicis();
 }
 
 function showCfgTab(tab){
@@ -2860,6 +2869,68 @@ async function deleteRegla(id){
   saveCache();renderCfgRegles();
   showToast('Regla eliminada');
   save('regles').catch(function(e){console.warn(e);});
+}
+
+function renderCfgExercicis(){
+  const container=document.getElementById('cfg-exercicis-container');
+  if(!container)return;
+  const canDo=perm('canConfig');
+  const exercicis=DB.config.exercicis||['26/27'];
+  const anyActiu=getAnyFiscal();
+  const estats=DB.config.estats_exercicis||{};
+  let html='';
+  if(canDo){
+    html+='<div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">';
+    html+='<button class="btn btn-primary" onclick="obrirNouExercici()"><i class="ti ti-calendar-plus"></i> Nou exercici</button>';
+    html+='<button class="btn" onclick="openModalTancarExercici()" style="color:var(--amber)"><i class="ti ti-lock"></i> Tancar exercici actual</button>';
+    html+='<button class="btn" onclick="openModalCopyPres()" style="color:var(--blue,#378ADD)"><i class="ti ti-copy"></i> Copiar pressupost</button>';
+    html+='</div>';
+  }
+  html+='<div class="card" style="padding:0;overflow:hidden"><div class="table-wrap"><table>';
+  html+='<thead><tr><th>Exercici</th><th>Estat</th><th>Data obertura</th><th>Data tancament</th><th>Moviments</th><th>Pressupost</th>';
+  if(canDo)html+='<th></th>';
+  html+='</tr></thead><tbody>';
+  exercicis.slice().reverse().forEach(function(e){
+    const estat=estats[e]||{};
+    const tancat=estat.tancat||false;
+    const isActiu=e===anyActiu;
+    const nMovs=(DB.moviments||[]).filter(function(m){return m.anyFiscal===e||(!m.anyFiscal&&e==='26/27');}).length;
+    const nPres=(DB.pres_plans||[]).filter(function(p){return p.any===e;}).length;
+    html+='<tr>';
+    html+='<td style="font-weight:600;font-size:15px">'+e+(isActiu?' <span class="pill p-info" style="font-size:10px">Actiu</span>':'')+'</td>';
+    html+='<td><span class="pill '+(tancat?'p-warn':'p-ok')+'">'+(tancat?'Tancat':'Obert')+'</span></td>';
+    html+='<td style="color:var(--text2)">'+(estat.dataObertura||'—')+'</td>';
+    html+='<td style="color:var(--text2)">'+(estat.dataTancament||'—')+'</td>';
+    html+='<td style="text-align:center">'+nMovs+'</td>';
+    html+='<td style="text-align:center">'+nPres+' linies</td>';
+    if(canDo){
+      html+='<td style="white-space:nowrap">';
+      if(!isActiu){
+        html+='<button class="btn" style="font-size:12px;padding:3px 8px" data-any="'+e+'" onclick="canviarExercici(this.dataset.any)"><i class="ti ti-player-play"></i> Activar</button>';
+      }
+      if(isActiu&&!tancat){
+        html+='<button class="btn" style="font-size:12px;padding:3px 8px;color:var(--amber)" onclick="openModalTancarExercici()"><i class="ti ti-lock"></i> Tancar</button>';
+      }
+      html+='</td>';
+    }
+    html+='</tr>';
+  });
+  html+='</tbody></table></div></div>';
+  container.innerHTML=html;
+}
+
+function openModalTancarExercici(){
+  const any=getAnyFiscal();
+  const estats=DB.config.estats_exercicis||{};
+  if(estats[any]&&estats[any].tancat){showToast('Aquest exercici ja esta tancat',true);return;}
+  const nMovs=(DB.moviments||[]).filter(function(m){return m.anyFiscal===any||(!m.anyFiscal&&any==='26/27');}).length;
+  const nPres=(DB.pres_plans||[]).filter(function(p){return p.any===any;}).length;
+  if(!confirm('Tancar definitivament el '+any+'?\n\n'+nMovs+' moviments i '+nPres+' linies de pressupost.\n\nUn cop tancat no es podran afegir ni modificar moviments.\nPodras seguir consultant-lo en qualsevol moment.'))return;
+  if(!DB.config.estats_exercicis)DB.config.estats_exercicis={};
+  DB.config.estats_exercicis[any]={tancat:true,dataObertura:DB.config.estats_exercicis[any]?.dataObertura||'—',dataTancament:today()};
+  saveCache();renderCfgExercicis();
+  showToast('Exercici '+any+' tancat correctament');
+  save('config').catch(function(e){showToast('Error: '+e.message,true);});
 }
 
 function renderCfgRols(){
