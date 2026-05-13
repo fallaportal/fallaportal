@@ -126,9 +126,10 @@ input:focus,select:focus,textarea:focus{border-color:var(--blue)}
 .field-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:200;align-items:center;justify-content:center}
 .modal-overlay.open{display:flex}
-.modal{background:var(--bg);border-radius:var(--rl);padding:22px;width:90%;max-width:500px;border:0.5px solid var(--border2);max-height:90vh;overflow-y:auto}
+.modal{background:var(--bg);border-radius:var(--rl);padding:22px;width:90%;max-width:500px;border:0.5px solid var(--border2);max-height:85vh;overflow-y:auto;position:relative}
 .modal-title{font-size:17px;font-weight:500;margin-bottom:18px}
-.modal-footer{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}
+.modal-footer{display:flex;justify-content:flex-end;gap:8px;margin-top:20px;padding-top:14px;border-top:0.5px solid var(--border);position:sticky;bottom:-22px;background:var(--bg);margin-left:-22px;margin-right:-22px;padding-left:22px;padding-right:22px}
+.modal-title{font-size:17px;font-weight:500;margin-bottom:18px}
 .toast{position:fixed;bottom:24px;right:24px;padding:10px 16px;background:var(--green);color:#fff;border-radius:var(--r);font-size:13px;z-index:300;display:none;align-items:center;gap:8px;max-width:340px}
 .toast.show{display:flex}.toast.error{background:var(--red)}
 .pill{font-size:11px;padding:3px 9px;border-radius:10px}
