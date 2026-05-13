@@ -960,6 +960,49 @@ async function obrirNouExercici(){
   showToast('Exercici '+nouAny+' obert correctament');
 }
 
+function openModalUsuari(id){
+  editUserId=id||null;
+  const u=id?(DB.config.usuaris||[]).find(function(x){return x.id===id;}):null;
+  document.getElementById('mu-title').textContent=id?'Editar usuari':'Nou usuari';
+  document.getElementById('mu-nom').value=u?u.nom:'';
+  document.getElementById('mu-email').value=u?u.email:'';
+  document.getElementById('mu-email').disabled=!!id;
+  document.getElementById('mu-rol').value=u?(u.rol||'delegat'):'delegat';
+  openModal('modal-usuari');
+}
+
+async function saveUsuari(){
+  const nom=document.getElementById('mu-nom').value.trim();
+  const email=document.getElementById('mu-email').value.trim().toLowerCase();
+  const rol=document.getElementById('mu-rol').value;
+  if(!nom||!email){showToast('Nom i email son obligatoris',true);return;}
+  if(!editUserId&&(DB.config.usuaris||[]).find(function(u){return u.email.toLowerCase()===email;})){
+    showToast('Ja existeix un usuari amb aquest email',true);return;
+  }
+  if(editUserId){
+    const u=(DB.config.usuaris||[]).find(function(x){return x.id===editUserId;});
+    if(u){u.nom=nom;u.rol=rol;}
+  }else{
+    if(!DB.config.usuaris)DB.config.usuaris=[];
+    DB.config.usuaris.push({id:'u'+Date.now(),nom,email,rol,arees:[],delegacions:[]});
+  }
+  saveCache();
+  closeModal('modal-usuari');
+  renderCfgUsuaris();
+  showToast('Usuari guardat');
+  save('config').catch(function(e){showToast('Error: '+e.message,true);});
+}
+
+async function deleteUsuari(id){
+  const u=(DB.config.usuaris||[]).find(function(x){return x.id===id;});
+  if(!u)return;
+  if(!confirm('Eliminar usuari '+u.nom+'?'))return;
+  DB.config.usuaris=DB.config.usuaris.filter(function(x){return x.id!==id;});
+  saveCache();renderCfgUsuaris();
+  showToast('Usuari eliminat');
+  save('config').catch(function(e){showToast('Error: '+e.message,true);});
+}
+
 function signOut(){
   if(accessToken)google.accounts.oauth2.revoke(accessToken,()=>{});
   accessToken=null;currentUser=null;
@@ -2318,7 +2361,7 @@ function cfgDelArea(e,id){e.stopPropagation();deleteArea(id);}
 function cfgEditDeleg(e,id){e.stopPropagation();openModalDeleg(id);}
 function cfgDelDeleg(e,id){e.stopPropagation();deleteDeleg(id);}
 
-let editAreaId=null,editDelegId=null;
+let editAreaId=null,editDelegId=null,editUserId=null;
 
 function openModalArea(id){
   editAreaId=id;
@@ -3240,120 +3283,25 @@ function renderCfgRols(){
 let editingUserId=null;
 
 function renderCfgUsuaris(){
-  document.getElementById('cfg-usuaris').innerHTML=`
-    <div class="info-box">L'email ha de coincidir exactament amb el compte de Google del membre. L'email <strong>it.fallaportal@gmail.com</strong> té automàticament rol de Tresoreria.</div>
-    <button class="btn btn-primary" style="margin-bottom:12px" onclick="openModalUsuari(null)"><i class="ti ti-plus"></i> Afegir usuari</button>
-    <div class="card"><div class="table-wrap"><table>
-      <thead><tr><th>Nom</th><th>Email</th><th>Rol</th><th>Àrees assignades</th><th>Delegacions assignades</th><th></th></tr></thead>
-      <tbody>${DB.config.usuaris.map(u=>`<tr>
-        <td style="font-weight:500">${u.nom}</td>
-        <td style="color:var(--text2);font-size:12px">${u.email}</td>
-        <td><span class="pill ${ROLES[u.rol]?.color||'p-info'}">${ROLES[u.rol]?.label||u.rol}</span></td>
-        <td style="font-size:11px;color:var(--text2)">${(u.arees||[]).map(id=>id+' '+DB.config.areas.find(a=>a.id===id)?.name?.split(' ')[0]).join(', ')||'—'}</td>
-        <td style="font-size:11px;color:var(--text2)">${(u.delegacions||[]).map(id=>id).join(', ')||'—'}</td>
-        <td style="white-space:nowrap">
-          <button class="btn" style="font-size:11px;padding:3px 8px;margin-right:4px" onclick="openModalUsuari('${u.id}')"><i class="ti ti-edit"></i></button>
-          <button class="btn" style="font-size:11px;padding:3px 8px" onclick="deleteUsuari('${u.id}')"><i class="ti ti-trash"></i></button>
-        </td>
-      </tr>`).join('')||'<tr><td colspan="6" style="color:var(--text3);text-align:center;padding:16px">Sense usuaris configurats</td></tr>'}
-      </tbody>
-    </table></div></div>`;
+  const ROL_LABELS={'president':'President','treasury':'Tresoreria','area':'Resp. d'Area','delegat':'Resp. de Delegacio','board':'Junta'};
+  const ROL_COLORS={'president':'p-ok','treasury':'p-info','area':'p-warn','delegat':'p-warn','board':'p-gray'};
+  let html='<div class="info-box">L'email ha de coincidir exactament amb el compte de Google del membre. L'email <strong>it.fallaportal@gmail.com</strong> te automaticament rol de Tresoreria.</div>';
+  html+='<button class="btn btn-primary" style="margin-bottom:12px" onclick="openModalUsuari(null)"><i class="ti ti-plus"></i> Afegir usuari</button>';
+  html+='<div class="card"><div class="table-wrap"><table>';
+  html+='<thead><tr><th>Nom</th><th>Email</th><th>Rol</th><th></th></tr></thead><tbody>';
+  (DB.config.usuaris||[]).forEach(function(u){
+    const rolLabel=ROL_LABELS[u.rol]||u.rol;
+    const rolColor=ROL_COLORS[u.rol]||'p-gray';
+    html+='<tr>'+
+      '<td style="font-weight:500">'+u.nom+'</td>'+
+      '<td style="color:var(--text2)">'+u.email+'</td>'+
+      '<td><span class="pill p-'+rolColor+'">'+rolLabel+'</span></td>'+
+      '<td style="white-space:nowrap">'+
+        '<button class="btn" style="font-size:12px;padding:3px 8px;margin-right:4px" data-uid="'+u.id+'" onclick="openModalUsuari(this.dataset.uid)"><i class="ti ti-edit"></i></button>'+
+        '<button class="btn" style="font-size:12px;padding:3px 8px" data-uid="'+u.id+'" onclick="deleteUsuari(this.dataset.uid)"><i class="ti ti-trash"></i></button>'+
+      '</td>'+
+    '</tr>';
+  });
+  html+='</tbody></table></div></div>';
+  document.getElementById('cfg-usuaris').innerHTML=html;
 }
-
-function openModalUsuari(id){
-  editingUserId=id;
-  const u=id?DB.config.usuaris.find(x=>x.id===id):null;
-  document.getElementById('mu-title').textContent=id?'Editar usuari':'Nou usuari';
-  document.getElementById('mu-nom').value=u?.nom||'';
-  document.getElementById('mu-email').value=u?.email||'';
-  document.getElementById('mu-rol').value=u?.rol||'delegat';
-  // checkboxes àrees
-  document.getElementById('mu-arees-checks').innerHTML=DB.config.areas.map(a=>`
-    <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer">
-      <input type="checkbox" value="${a.id}" ${(u?.arees||[]).includes(a.id)?'checked':''} style="width:auto;margin:0">
-      <span>${a.id} · ${a.name}</span>
-    </label>`).join('');
-  // checkboxes delegacions
-  document.getElementById('mu-delegs-checks').innerHTML=DB.config.delegacions.map(d=>{
-    const area=DB.config.areas.find(a=>a.id===d.areaId);
-    return`<label style="display:flex;align-items:center;gap:8px;font-size:12px;cursor:pointer">
-      <input type="checkbox" value="${d.id}" ${(u?.delegacions||[]).includes(d.id)?'checked':''} style="width:auto;margin:0">
-      <span style="color:var(--text3)">${area?.id}</span> <span>${d.name}</span>
-    </label>`;
-  }).join('');
-  updateMuFields();
-  document.getElementById('mu-rol').onchange=updateMuFields;
-  openModal('modal-usuari');
-}
-
-function updateMuFields(){
-  const rol=document.getElementById('mu-rol').value;
-  const needsAssignment=['area','delegat'].includes(rol);
-  document.getElementById('mu-arees-field').style.display=needsAssignment?'block':'none';
-  document.getElementById('mu-delegs-field').style.display=needsAssignment?'block':'none';
-}
-
-async function saveUsuari(){
-  const nom=document.getElementById('mu-nom').value.trim();
-  const email=document.getElementById('mu-email').value.trim().toLowerCase();
-  const rolVal=document.getElementById('mu-rol').value;
-  if(!nom||!email){showToast('Nom i email són obligatoris',true);return;}
-  const arees=Array.from(document.querySelectorAll('#mu-arees-checks input:checked')).map(x=>x.value);
-  const delegacions=Array.from(document.querySelectorAll('#mu-delegs-checks input:checked')).map(x=>x.value);
-  if(!DB.config.usuaris)DB.config.usuaris=[];
-  if(editingUserId){
-    const u=DB.config.usuaris.find(x=>x.id===editingUserId);
-    if(u){u.nom=nom;u.email=email;u.rol=rolVal;u.arees=arees;u.delegacions=delegacions;}
-  }else{
-    DB.config.usuaris.push({id:'u'+Date.now(),nom,email,rol:rolVal,arees,delegacions});
-  }
-  saveCache();
-  closeModal('modal-usuari');renderCfgUsuaris();showToast('Usuari guardat: '+nom);
-  if(email===currentUser?.email){buildNav();}
-  save('config').catch(e=>showToast('Error guardant: '+e.message,true));
-}
-
-async function deleteUsuari(id){
-  if(!confirm('Eliminar aquest usuari?'))return;
-  DB.config.usuaris=DB.config.usuaris.filter(u=>u.id!==id);
-  await save('config');renderCfgUsuaris();showToast('Usuari eliminat');
-}
-
-function showPageMob(id,mobId){
-  showPage(id);
-  document.querySelectorAll('.mob-item').forEach(m=>m.classList.remove('active'));
-  if(mobId)document.getElementById(mobId)?.classList.add('active');
-}
-function showMobMenu(){
-  document.getElementById('mob-menu').classList.remove('hidden');
-  document.getElementById('mob-menu-overlay').classList.remove('hidden');
-}
-function closeMobMenu(){
-  document.getElementById('mob-menu').classList.add('hidden');
-  document.getElementById('mob-menu-overlay').classList.add('hidden');
-}
-function toggleDeleg(bid){
-  const b=document.getElementById(bid);
-  if(b){
-    b.classList.toggle('open');
-    const head=b.previousElementSibling;
-    if(head){const ch=head.querySelector('.chevron');if(ch)ch.classList.toggle('open');}
-  }
-}
-function toggleMovExtra(){
-  const el=document.getElementById('mov-extra');
-  const ch=document.getElementById('mov-extra-ch');
-  if(!el)return;
-  const open=el.style.display==='none'||el.style.display==='';
-  el.style.display=open?'block':'none';
-  if(ch)ch.className='ti ti-chevron-right'+(open?' open':'');
-}
-function toggleDelegClick(el){
-  const bid=el.getAttribute('data-bid');
-  if(bid)toggleDeleg(bid);
-}
-function openModal(id){document.getElementById(id).classList.add('open');}
-function closeModal(id){document.getElementById(id).classList.remove('open');}
-</script>
-</body>
-</html>
