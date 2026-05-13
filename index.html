@@ -1251,6 +1251,16 @@ async function loadAllFromDrive(){
 async function save(key){
   setSyncing(true);
   try{
+    if(key==='config'){
+      const rows=configToRows();
+      await writeTab(TABS.arees.name,TABS.arees.headers,rows.arees);
+      await writeTab(TABS.delegacions.name,TABS.delegacions.headers,rows.delegacions);
+      await writeTab(TABS.events.name,TABS.events.headers,rows.events);
+      await writeTab(TABS.bancs.name,TABS.bancs.headers,rows.bancs);
+      await writeTab(TABS.usuaris.name,TABS.usuaris.headers,rows.usuaris);
+      await writeTab(TABS.usuaris_assignacions.name,TABS.usuaris_assignacions.headers,rows.assignacions);
+      setSyncing(false);return;
+    }
     const t=TABS[key];
     if(!t){throw new Error('Tab desconegut: '+key);}
     if(key==='moviments'){
@@ -1267,14 +1277,6 @@ async function save(key){
       await writeTab(t.name,t.headers,[DB.pres_config]);
     }else if(key==='pres_historial'){
       await writeTab(t.name,t.headers,DB.pres_historial);
-    }else if(key==='config'){
-      const {arees,delegacions,events,bancs,usuaris,assignacions}=configToRows();
-      await writeTab(TABS.arees.name,TABS.arees.headers,arees);
-      await writeTab(TABS.delegacions.name,TABS.delegacions.headers,delegacions);
-      await writeTab(TABS.events.name,TABS.events.headers,events);
-      await writeTab(TABS.bancs.name,TABS.bancs.headers,bancs);
-      await writeTab(TABS.usuaris.name,TABS.usuaris.headers,usuaris);
-      await writeTab(TABS.usuaris_assignacions.name,TABS.usuaris_assignacions.headers,assignacions);
     }
   }catch(e){showToast('Error guardant: '+e.message,true);}
   setSyncing(false);
@@ -1334,9 +1336,9 @@ function getDirectivaAny(anyF){
 // Obtenir el responsable d'una àrea o delegació per l'any actiu
 function getResponsable(tipus,id,anyF){
   const assigns=getDirectivaAny(anyF||getAnyFiscal());
-  const a=assigns.find(function(x){return x.tipus===tipus&&x.id===id;});
-  if(!a)return'—';
-  return a.userNom;
+  const resps=assigns.filter(function(x){return x.tipus===tipus&&x.id===id;});
+  if(!resps.length)return'—';
+  return resps.map(function(x){return x.userNom;}).join(', ');
 }
 
 // Guardar canvi de directiva
@@ -3013,7 +3015,6 @@ function updateDataObertura(any,valor){
 }
 
 function renderDirectiva(){
-  // Inicialitzar selector d'any
   const sel=document.getElementById('dir-any');
   if(sel){
     const exercicis=DB.config.exercicis||['26/27'];
@@ -3027,53 +3028,97 @@ function renderDirectiva(){
   const isTreasury=getRol()==='treasury';
   const myArees=getMyArees();
   const usuaris=DB.config.usuaris||[];
-  const areas=DB.config.areas;
+
+  // Usuaris filtrats per rol, ordenats alfabèticament
+  const usuarisArea=usuaris.filter(function(u){
+    return u.rol==='president'||u.rol==='treasury'||u.rol==='area';
+  }).sort(function(a,b){return a.nom.localeCompare(b.nom,'ca');});
+
+  const usuarisDeleg=usuaris.filter(function(u){
+    return u.rol==='president'||u.rol==='treasury'||u.rol==='delegat';
+  }).sort(function(a,b){return a.nom.localeCompare(b.nom,'ca');});
+
+  const canEditArea=isPresident||isTreasury;
 
   let html='';
-  areas.forEach(function(a){
+  DB.config.areas.forEach(function(a){
     const col=({'01':'#1D9E75','02':'#7F77DD','03':'#378ADD','04':'#BA7517','05':'#D4537E','06':'#D85A30','07':'#888780'})[a.id]||'#888';
     const delegs=DB.config.delegacions.filter(function(d){return d.areaId===a.id;});
-    const canEditArea=isPresident;
-    const canEditDeleg=isPresident||(getRol()==='area'&&myArees.includes(a.id));
-    const respArea=getResponsable('area',a.id,anyF);
+    const canEditDeleg=canEditArea||(getRol()==='area'&&myArees.includes(a.id));
+
+    // Responsables actuals d'àrea
+    const respsArea=getDirectivaAny(anyF).filter(function(x){return x.tipus==='area'&&x.id===a.id;});
+    const respsAreaNoms=respsArea.map(function(x){return x.userNom;}).join(', ')||'—';
 
     html+='<div class="deleg-block" style="margin-bottom:10px">';
-    html+='<div class="deleg-head" style="cursor:default">';
+    html+='<div class="deleg-head" style="cursor:default;min-height:48px">';
     html+='<div style="width:10px;height:10px;border-radius:50%;background:'+col+'"></div>';
     html+='<div style="font-weight:600;flex:1;font-size:14px">'+a.name+'</div>';
 
     if(canEditArea){
-      html+='<select style="font-size:13px;padding:4px 8px;border-radius:var(--r);border:0.5px solid var(--border2);background:var(--bg);color:var(--text);max-width:180px" '+
-        'data-tipus="area" data-id="'+a.id+'" data-nom="'+a.name+'" data-anyf="'+anyF+'" onchange="onDirChange(this,this.dataset.anyf)">';
-      html+='<option value="">— Sense responsable —</option>';
-      usuaris.forEach(function(u){
-        const sel=getDirectivaAny(anyF).find(function(x){return x.tipus==='area'&&x.id===a.id&&x.userId===u.id;});
-        html+='<option value="'+u.id+'"'+(sel?' selected':'')+'>'+u.nom+'</option>';
+      // Select múltiple per àrea
+      html+='<div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end">';
+      html+='<div style="font-size:11px;color:var(--text3)">'+respsAreaNoms+'</div>';
+      html+='<div style="display:flex;gap:6px;align-items:center">';
+      html+='<select style="font-size:13px;padding:4px 8px;border-radius:var(--r);border:0.5px solid var(--border2);background:var(--bg);color:var(--text);max-width:200px" ';
+      html+='data-tipus="area" data-id="'+a.id+'" data-nom="'+a.name+'" data-anyf="'+anyF+'" onchange="addDirResp(this)">';
+      html+='<option value="">+ Afegir responsable</option>';
+      usuarisArea.forEach(function(u){
+        const jaAssignat=respsArea.find(function(x){return x.userId===u.id;});
+        if(!jaAssignat)html+='<option value="'+u.id+'">'+u.nom+'</option>';
       });
-      html+='</select>';
+      html+='</select></div>';
+      // Pills amb X per eliminar
+      if(respsArea.length){
+        html+='<div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end;margin-top:4px">';
+        respsArea.forEach(function(r){
+          html+='<span style="display:flex;align-items:center;gap:4px;background:var(--bg2);border:0.5px solid var(--border);border-radius:12px;padding:2px 8px;font-size:12px">'+
+            r.userNom+
+            '<button data-anyf="'+anyF+'" data-tipus="area" data-id="'+a.id+'" data-uid="'+r.userId+'" onclick="removeDirResp(this.dataset.anyf,this.dataset.tipus,this.dataset.id,this.dataset.uid)" style="background:none;border:none;cursor:pointer;color:var(--text3);padding:0;font-size:14px;line-height:1">&times;</button>'+
+          '</span>';
+        });
+        html+='</div>';
+      }
+      html+='</div>';
     }else{
-      html+='<span style="font-size:13px;color:var(--text2)">'+respArea+'</span>';
+      html+='<span style="font-size:13px;color:var(--text2)">'+respsAreaNoms+'</span>';
     }
     html+='</div>';
 
     // Delegacions
-    html+='<div style="padding:0">';
+    html+='<div>';
     delegs.forEach(function(d){
-      const respDeleg=getResponsable('delegacio',d.id,anyF);
-      html+='<div style="display:flex;align-items:center;gap:10px;padding:8px 14px 8px 28px;border-top:0.5px solid var(--border);font-size:13px">';
-      html+='<div style="width:6px;height:6px;border-radius:50%;background:'+col+'"></div>';
-      html+='<div style="flex:1">'+d.name+'</div>';
+      const respsDeleg=getDirectivaAny(anyF).filter(function(x){return x.tipus==='delegacio'&&x.id===d.id;});
+      const respsDelegNoms=respsDeleg.map(function(x){return x.userNom;}).join(', ')||'—';
+
+      html+='<div style="display:flex;align-items:flex-start;gap:10px;padding:8px 14px 8px 28px;border-top:0.5px solid var(--border);font-size:13px">';
+      html+='<div style="width:6px;height:6px;border-radius:50%;background:'+col+';margin-top:6px;flex-shrink:0"></div>';
+      html+='<div style="flex:1;padding-top:2px">'+d.name+'</div>';
+
       if(canEditDeleg){
-        html+='<select style="font-size:13px;padding:4px 8px;border-radius:var(--r);border:0.5px solid var(--border2);background:var(--bg);color:var(--text);max-width:180px" '+
-          'data-tipus="delegacio" data-id="'+d.id+'" data-nom="'+d.name+'" data-anyf="'+anyF+'" onchange="onDirChange(this,this.dataset.anyf)">';
-        html+='<option value="">— Sense responsable —</option>';
-        usuaris.forEach(function(u){
-          const sel2=getDirectivaAny(anyF).find(function(x){return x.tipus==='delegacio'&&x.id===d.id&&x.userId===u.id;});
-          html+='<option value="'+u.id+'"'+(sel2?' selected':'')+'>'+u.nom+'</option>';
+        html+='<div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end">';
+        html+='<div style="display:flex;gap:6px;align-items:center">';
+        html+='<select style="font-size:13px;padding:4px 8px;border-radius:var(--r);border:0.5px solid var(--border2);background:var(--bg);color:var(--text);max-width:200px" ';
+        html+='data-tipus="delegacio" data-id="'+d.id+'" data-nom="'+d.name+'" data-anyf="'+anyF+'" onchange="addDirResp(this)">';
+        html+='<option value="">+ Afegir responsable</option>';
+        usuarisDeleg.forEach(function(u){
+          const jaAssignat=respsDeleg.find(function(x){return x.userId===u.id;});
+          if(!jaAssignat)html+='<option value="'+u.id+'">'+u.nom+'</option>';
         });
-        html+='</select>';
+        html+='</select></div>';
+        if(respsDeleg.length){
+          html+='<div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end;margin-top:4px">';
+          respsDeleg.forEach(function(r){
+            html+='<span style="display:flex;align-items:center;gap:4px;background:var(--bg2);border:0.5px solid var(--border);border-radius:12px;padding:2px 8px;font-size:12px">'+
+              r.userNom+
+              '<button data-anyf="'+anyF+'" data-tipus="delegacio" data-id="'+d.id+'" data-uid="'+r.userId+'" onclick="removeDirResp(this.dataset.anyf,this.dataset.tipus,this.dataset.id,this.dataset.uid)" style="background:none;border:none;cursor:pointer;color:var(--text3);padding:0;font-size:14px;line-height:1">&times;</button>'+
+            '</span>';
+          });
+          html+='</div>';
+        }
+        html+='</div>';
       }else{
-        html+='<span style="color:var(--text2)">'+respDeleg+'</span>';
+        html+='<span style="color:var(--text2)">'+respsDelegNoms+'</span>';
       }
       html+='</div>';
     });
@@ -3082,15 +3127,37 @@ function renderDirectiva(){
 
   document.getElementById('directiva-container').innerHTML=html||'<div style="color:var(--text3)">Cap area configurada.</div>';
 }
-
-async function onDirChange(sel,anyF){
-  const tipus=sel.getAttribute('data-tipus');
-  const id=sel.getAttribute('data-id');
-  const nom=sel.getAttribute('data-nom');
+async function addDirResp(sel){
+  const anyF=sel.dataset.anyf;
+  const tipus=sel.dataset.tipus;
+  const id=sel.dataset.id;
+  const nom=sel.dataset.nom;
   const userId=sel.value;
+  if(!userId)return;
   const u=DB.config.usuaris.find(function(x){return x.id===userId;});
-  await saveDirectiva(anyF,tipus,id,nom,userId,u?u.nom:'');
-  showToast((userId?u.nom:'Sense responsable')+' assignat a '+nom);
+  if(!u)return;
+  if(!DB.config.directiva)DB.config.directiva={};
+  if(!DB.config.directiva[anyF])DB.config.directiva[anyF]=[];
+  // Afegir sols si no existeix ja
+  const exists=DB.config.directiva[anyF].find(function(x){return x.tipus===tipus&&x.id===id&&x.userId===userId;});
+  if(!exists){
+    DB.config.directiva[anyF].push({userId:u.id,userNom:u.nom,tipus,id,nom});
+    saveCache();
+    showToast(u.nom+' afegit a '+nom);
+    save('config').catch(function(e){showToast('Error: '+e.message,true);});
+  }
+  renderDirectiva();
+}
+
+async function removeDirResp(anyF,tipus,id,userId){
+  if(!DB.config.directiva||!DB.config.directiva[anyF])return;
+  DB.config.directiva[anyF]=DB.config.directiva[anyF].filter(function(x){
+    return!(x.tipus===tipus&&x.id===id&&x.userId===userId);
+  });
+  saveCache();
+  renderDirectiva();
+  showToast('Responsable eliminat');
+  save('config').catch(function(e){showToast('Error: '+e.message,true);});
 }
 
 function openModalCopyDirectiva(){
