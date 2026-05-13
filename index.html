@@ -938,7 +938,7 @@ function buildNav(){
   if(can.canFons)html+='<div class="nav-item" onclick="showPage(\'lliurament\')"><i class="ti ti-arrow-down-left"></i> Fons delegats</div>';
   html+='<div class="nav-item" onclick="showPage(\'tancament\')"><i class="ti ti-lock"></i> Tancament caixa</div>';
   html+='<div class="nav-sec">Gestió</div>';
-  html+='<div class="nav-item" onclick="showPage(\'pressupostos\')"><i class="ti ti-chart-bar"></i> Pressupostos</div>';
+  html+='<div class="nav-item" onclick="showPage(\'pressupostos-edit\')"><i class="ti ti-chart-bar"></i> Pressupostos</div>';
   html+='<div class="nav-item" onclick="showPage(\'historial\')"><i class="ti ti-list"></i> Historial</div>';
   if(can.canImport)html+='<div class="nav-item" onclick="showPage(\'importacio\')"><i class="ti ti-upload"></i> Importar CSV</div>';
   html+='<div class="nav-sec">Reportes</div>';
@@ -977,9 +977,12 @@ function initApp(){
 }
 
 function showPage(id){
+  if(id==='pressupostos')id='pressupostos-edit';
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
-  document.getElementById('page-'+id).classList.add('active');
+  const pageEl=document.getElementById('page-'+id);
+  if(!pageEl){console.warn('Pàgina no trobada: page-'+id);return;}
+  pageEl.classList.add('active');
   document.querySelectorAll('.nav-item').forEach(n=>{
     if(n.getAttribute('onclick')&&n.getAttribute('onclick').includes("'"+id+"'"))n.classList.add('active');
   });
@@ -1523,16 +1526,19 @@ function renderManual(){
   document.getElementById('manual-container').innerHTML=`
   <div class="card">
     <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px" id="man-tabs">
-      <button class="btn btn-primary" onclick="showManTab('intro')">Introducció</button>
-      <button class="btn" onclick="showManTab('moviments')">Moviments</button>
-      <button class="btn" onclick="showManTab('fons')">Fons delegats</button>
-      <button class="btn" onclick="showManTab('tancament')">Tancament caixa</button>
-      <button class="btn" onclick="showManTab('pressupostos')">Pressupostos</button>
-      <button class="btn" onclick="showManTab('rols')">Rols i permisos</button>
+      <button class="btn btn-primary" onclick="showManTab('intro',this)">Introducció</button>
+      <button class="btn" onclick="showManTab('moviments',this)">Moviments</button>
+      <button class="btn" onclick="showManTab('fons',this)">Fons delegats</button>
+      <button class="btn" onclick="showManTab('tancament',this)">Tancament caixa</button>
+      <button class="btn" onclick="showManTab('pressupostos',this)">Pressupostos</button>
+      <button class="btn" onclick="showManTab('rols',this)">Rols i permisos</button>
     </div>
     <div id="man-content"></div>
   </div>`;
-  showManTab('intro');
+  setTimeout(()=>{
+    const firstBtn=document.querySelector('#man-tabs .btn');
+    showManTab('intro',firstBtn);
+  },0);
 }
 
 const MANUAL={
@@ -1642,9 +1648,10 @@ const MANUAL={
     </div>`
 };
 
-function showManTab(tab){
+function showManTab(tab,el){
   document.querySelectorAll('#man-tabs .btn').forEach(b=>b.classList.remove('btn-primary'));
-  event.currentTarget?.classList.add('btn-primary');
+  if(el)el.classList.add('btn-primary');
+  else document.querySelectorAll('#man-tabs .btn')[0]?.classList.add('btn-primary');
   document.getElementById('man-content').innerHTML=MANUAL[tab]||'';
 }
 
