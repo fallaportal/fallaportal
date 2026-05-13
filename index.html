@@ -161,35 +161,37 @@ tr:hover td{background:var(--bg2)}
 .saldo-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;font-size:13px;border-bottom:0.5px solid var(--border)}
 .saldo-row:last-child{border-bottom:none;padding-top:10px;font-size:15px;font-weight:500}
 .fons-av{width:36px;height:36px;border-radius:50%;background:var(--blue-bg);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:var(--blue-text);flex-shrink:0}
-.mov-header{background:var(--bg2);padding:14px 16px 12px;border-bottom:0.5px solid var(--border)}
-.mov-tipus-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
-.mov-tipus-btn{padding:14px 8px;border-radius:var(--r);border:0.5px solid var(--border2);background:transparent;font-size:17px;font-weight:800;font-family:inherit;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;text-transform:uppercase;letter-spacing:.03em}
-.mov-tipus-btn.gast.active{background:var(--red);border-color:var(--red);color:#fff}
+.mov-header{background:var(--bg2);padding:12px 12px 10px;border-bottom:0.5px solid var(--border);display:flex;flex-direction:column;gap:8px}
+.mov-g2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.mov-g4{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.mov-tipus-btn{height:56px;border-radius:var(--r);border:0.5px solid var(--border2);background:transparent;font-size:15px;font-weight:800;font-family:inherit;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;text-transform:uppercase;letter-spacing:.03em;color:var(--text3)}
+.mov-tipus-btn.gast.active{background:#C0392B;border-color:#C0392B;color:#fff}
 .mov-tipus-btn.ing.active{background:var(--green);border-color:var(--green);color:#fff}
-.mov-tipus-btn:not(.active){color:var(--text3)}
-.mov-import-input{width:100%;font-size:42px;font-weight:700;text-align:right;padding:4px 2px;border:none;background:transparent;color:var(--text);outline:none;margin-bottom:12px;font-family:inherit;display:block}
-.mov-via-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
-.mov-via-btn{display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 4px;border-radius:var(--r);border:0.5px solid var(--border);background:transparent;cursor:pointer;font-size:11px;font-family:inherit;color:var(--text2)}
+.mov-data-box{height:56px;border:0.5px solid var(--border2);border-radius:var(--r);background:var(--bg);display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative}
+.mov-data-box input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.mov-data-box span{font-size:14px;font-weight:600;color:var(--text);pointer-events:none}
+.mov-import-box{height:56px;border:0.5px solid var(--border2);border-radius:var(--r);background:var(--bg);display:flex;align-items:center;justify-content:flex-end;padding:0 12px}
+.mov-import-box input{width:100%;font-size:26px;font-weight:700;text-align:right;border:none;background:transparent;color:var(--text);outline:none;font-family:inherit;height:100%}
+.mov-via-btn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:10px 4px;border-radius:var(--r);border:0.5px solid var(--border);background:transparent;cursor:pointer;font-size:10px;font-weight:500;font-family:inherit;color:var(--text2)}
 .mov-via-btn i{font-size:20px}
 .mov-via-btn.active{background:var(--blue-bg);border-color:var(--blue);color:var(--blue-text)}
-.mov-body{padding:14px 16px;display:flex;flex-direction:column;gap:14px;padding-bottom:110px;overflow-y:auto}
+.mov-body{padding:14px 16px;display:flex;flex-direction:column;gap:12px;padding-bottom:110px}
 .mov-row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.mov-field{display:flex;flex-direction:column;gap:5px;width:100%}
-.mov-field label{font-size:13px;color:var(--text2);font-weight:500}
+.mov-field{display:flex;flex-direction:column;gap:4px;width:100%}
+.mov-field label{font-size:12px;color:var(--text2);font-weight:500;text-transform:uppercase;letter-spacing:.04em}
 .mov-field input,.mov-field select,.mov-field textarea{font-size:15px;padding:11px 12px;border:0.5px solid var(--border2);border-radius:var(--r);background:var(--bg);color:var(--text);outline:none;font-family:inherit;width:100%;box-sizing:border-box}
 .mov-field input:focus,.mov-field select:focus,.mov-field textarea:focus{border-color:var(--blue)}
 .mov-extra-toggle{display:flex;align-items:center;gap:6px;padding:8px 0;cursor:pointer;color:var(--text3);font-size:13px;border-top:0.5px solid var(--border)}
 .mov-extra-toggle i{font-size:14px;transition:transform .2s}
 .mov-extra-toggle i.open{transform:rotate(90deg)}
 .mov-footer-btn{position:fixed;bottom:56px;left:0;right:0;padding:10px 16px;background:var(--bg);border-top:0.5px solid var(--border);z-index:99}
-.mov-footer-btn button{width:100%;padding:16px;font-size:17px;font-weight:700;border-radius:var(--r);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;font-family:inherit;text-transform:uppercase;letter-spacing:.03em}
-.opt-label{font-size:11px;color:var(--text3);font-weight:400}
+.mov-footer-btn button{width:100%;padding:15px;font-size:16px;font-weight:800;border-radius:var(--r);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;font-family:inherit;text-transform:uppercase;letter-spacing:.03em;background:#C0392B;color:#fff}
+.opt-label{font-size:11px;color:var(--text3);font-weight:400;text-transform:none;letter-spacing:0}
 @media(min-width:769px){
   .mov-header{background:transparent;border:none;padding:0;max-width:500px}
   .mov-body{padding:14px 0;max-width:500px;padding-bottom:20px}
   .mov-footer-btn{display:none}
   #btn-registrar{display:flex!important}
-  .mov-import-input{font-size:32px;border:0.5px solid var(--border2);border-radius:var(--r);padding:10px 14px;background:var(--bg)}
 }
 .tag-multi{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
 .info-box{padding:10px 12px;background:var(--blue-bg);border-radius:var(--r);font-size:12px;color:var(--blue-text);margin-bottom:12px}
@@ -263,20 +265,31 @@ tr:hover td{background:var(--bg2)}
 
     <div id="page-moviments" class="page" style="padding:0">
       <div class="mov-header">
-        <div class="mov-tipus-row">
+        <!-- FILA 1: DESPESA | INGRÉS -->
+        <div class="mov-g2">
           <button class="mov-tipus-btn gast active" id="btn-gast" onclick="setMovType('gast')">
-            <i class="ti ti-arrow-up-right"></i> Despesa
+            <i class="ti ti-arrow-up-right"></i> DESPESA
           </button>
           <button class="mov-tipus-btn ing" id="btn-ing" onclick="setMovType('ing')">
-            <i class="ti ti-arrow-down-left"></i> Ingrés
+            <i class="ti ti-arrow-down-left"></i> INGRÉS
           </button>
         </div>
-        <input type="number" id="mov-import" placeholder="0,00" min="0" step="0.01" inputmode="decimal" class="mov-import-input">
-        <div class="mov-via-grid">
+        <!-- FILA 2: DATA | IMPORT -->
+        <div class="mov-g2">
+          <div class="mov-data-box">
+            <input type="date" id="mov-data">
+            <span id="mov-data-label">Data</span>
+          </div>
+          <div class="mov-import-box">
+            <input type="number" id="mov-import" placeholder="0,00" min="0" step="0.01" inputmode="decimal">
+          </div>
+        </div>
+        <!-- FILA 3: Efectiu | TPV | Caixabank | Caixa Popular -->
+        <div class="mov-g4">
           <button class="mov-via-btn active" id="via-efectiu" onclick="setVia('Efectiu')"><i class="ti ti-wallet"></i><span>Efectiu</span></button>
-          <button class="mov-via-btn" id="via-b1" onclick="setVia('01 Banc')"><i class="ti ti-building-bank"></i><span id="via-b1-name">Banc 1</span></button>
-          <button class="mov-via-btn" id="via-b2" onclick="setVia('02 Banc')"><i class="ti ti-building-bank"></i><span id="via-b2-name">Banc 2</span></button>
           <button class="mov-via-btn" id="via-tpv" onclick="setVia('TPV')"><i class="ti ti-credit-card"></i><span>TPV</span></button>
+          <button class="mov-via-btn" id="via-b1" onclick="setVia('01 Banc')"><i class="ti ti-building-bank"></i><span id="via-b1-name">Caixabank</span></button>
+          <button class="mov-via-btn" id="via-b2" onclick="setVia('02 Banc')"><i class="ti ti-building-bank"></i><span id="via-b2-name">Caixa Pop.</span></button>
         </div>
       </div>
       <div class="mov-body">
@@ -1257,6 +1270,21 @@ function initApp(){
   const btnDesk=document.getElementById('btn-registrar');
   if(footer)footer.style.display=isMob?'block':'none';
   if(btnDesk)btnDesk.style.display=isMob?'none':'flex';
+  // Actualitzar etiqueta data
+  const dataInput=document.getElementById('mov-data');
+  const dataLabel=document.getElementById('mov-data-label');
+  if(dataInput&&dataLabel){
+    dataInput.addEventListener('change',function(){
+      const d=new Date(this.value);
+      if(!isNaN(d)){
+        dataLabel.textContent=d.toLocaleDateString('ca-ES',{day:'numeric',month:'short',year:'numeric'});
+      }
+    });
+    if(dataInput.value){
+      const d=new Date(dataInput.value);
+      if(!isNaN(d))dataLabel.textContent=d.toLocaleDateString('ca-ES',{day:'numeric',month:'short',year:'numeric'});
+    }
+  }
 }
 
 function showPage(id){
@@ -1327,21 +1355,20 @@ function setMovType(t){
   document.getElementById('btn-ing').className='mov-tipus-btn ing'+(t==='ing'?' active':'');
   const isDespesa=t==='gast';
   const label='<i class="ti ti-check"></i> '+(isDespesa?'REGISTRAR DESPESA':'REGISTRAR INGRÉS');
-  const bg=isDespesa?'var(--red)':'var(--green)';
-  const color='#fff';
+  const bg=isDespesa?'#C0392B':'var(--green)';
   ['btn-registrar','btn-registrar-mob'].forEach(function(id){
     const btn=document.getElementById(id);
-    if(btn){btn.innerHTML=label;btn.style.background=bg;btn.style.color=color;}
+    if(btn){btn.innerHTML=label;btn.style.background=bg;btn.style.color='#fff';}
   });
 }
 
 function setVia(v){
   movVia=v;
-  ['efectiu','b1','b2','tpv'].forEach(function(k){
+  ['efectiu','tpv','b1','b2'].forEach(function(k){
     const el=document.getElementById('via-'+k);
     if(el)el.classList.remove('active');
   });
-  const map={'Efectiu':'efectiu','01 Banc':'b1','02 Banc':'b2','TPV':'tpv'};
+  const map={'Efectiu':'efectiu','TPV':'tpv','01 Banc':'b1','02 Banc':'b2'};
   if(map[v]){const el=document.getElementById('via-'+map[v]);if(el)el.classList.add('active');}
 }
 
@@ -1355,8 +1382,8 @@ function populateMovimentSelects(){
   onMovAreaChange();
   const b1=DB.config.bancs.find(b=>b.id==='b1');
   const b2=DB.config.bancs.find(b=>b.id==='b2');
-  if(b1)document.getElementById('via-b1-name').textContent=b1.nom.length>8?b1.nom.split(' ')[0]:b1.nom;
-  if(b2)document.getElementById('via-b2-name').textContent=b2.nom.length>8?b2.nom.split(' ')[0]:b2.nom;
+  if(b1){const n=b1.nom;document.getElementById('via-b1-name').textContent=n.length>9?n.substring(0,8)+'…':n;}
+  if(b2){const n=b2.nom;document.getElementById('via-b2-name').textContent=n.length>9?n.substring(0,8)+'…':n;}
 }
 
 function onMovAreaChange(){
