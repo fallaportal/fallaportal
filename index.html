@@ -399,6 +399,16 @@ tr:hover td{background:var(--bg2)}
       <div id="pres-container-edit"></div>
     </div>
 
+    <div id="page-directiva" class="page">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:4px">
+        <button class="btn" onclick="showPage('configuracio')" style="padding:6px 10px"><i class="ti ti-arrow-left"></i></button>
+        <div class="page-title" style="margin:0">Directiva</div>
+        <select id="dir-any" onchange="renderDirectiva()" style="font-size:14px;padding:5px 10px;border-radius:var(--r);border:0.5px solid var(--border2);background:var(--bg);color:var(--text)"></select>
+      </div>
+      <div class="page-sub">Assignació de responsables per any fiscal</div>
+      <div id="directiva-container"></div>
+    </div>
+
     <div id="page-manual" class="page">
       <div class="page-title">Manual d'usuari</div>
       <div class="page-sub">Guia completa de la Falla Portal · Gestió financera 26/27</div>
@@ -615,6 +625,23 @@ tr:hover td{background:var(--bg2)}
     <div class="modal-footer">
       <button class="btn" onclick="closeModal('modal-regla')">Cancel·lar</button>
       <button class="btn btn-primary" onclick="saveRegla()">Guardar regla</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-copy-dir">
+  <div class="modal" style="max-width:400px">
+    <div class="modal-title"><i class="ti ti-users" style="font-size:16px;margin-right:6px"></i>Copiar directiva entre exercicis</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
+      <div class="field"><label>Any fiscal origen</label><select id="cd-origen"></select></div>
+      <div class="field"><label>Any fiscal desti</label><select id="cd-desti"></select></div>
+    </div>
+    <div style="background:var(--bg2);border-radius:var(--r);padding:10px 12px;font-size:12px;color:var(--text2);margin-bottom:14px">
+      Es copiaran totes les assignacions de responsables de l'any origen al desti. Les assignacions existents al desti seran sobreescrites.
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('modal-copy-dir')">Cancel·lar</button>
+      <button class="btn btn-primary" onclick="executarCopyDirectiva()"><i class="ti ti-check"></i> Copiar directiva</button>
     </div>
   </div>
 </div>
@@ -845,7 +872,7 @@ let DB={
       {id:'b3',codi:'Efectiu',nom:'Caixa efectiu',tipus:'cash'},
       {id:'b4',codi:'TPV',nom:'TPV targetes',tipus:'tpv'}
     ],
-    usuaris:[],anyFiscal:'26/27',exercicis:['26/27']
+    usuaris:[],anyFiscal:'26/27',exercicis:['26/27'],directiva:{},estats_exercicis:{}
   },
   moviments:[],fons:[],tancaments:{},pres_plans:[],pres_config:{any:'26/27',estat:'obert',bloquejatPer:'',bloquejatEmail:'',data:''},pres_historial:[],regles:[]
 };
@@ -923,9 +950,9 @@ async function obrirNouExercici(){
   if(!DB.config.exercicis.includes(nouAny)){
     DB.config.exercicis.push(nouAny);
     if(!DB.config.estats_exercicis)DB.config.estats_exercicis={};
-    DB.config.estats_exercicis[nouAny]={tancat:false,dataObertura:today(),dataTancament:''};
+    DB.config.estats_exercicis[nouAny]={tancat:false,dataObertura:calcDataObertura(nouAny),dataTancament:''};
     if(!DB.config.estats_exercicis[current]){
-      DB.config.estats_exercicis[current]={tancat:false,dataObertura:'01/04/2026',dataTancament:''};
+      DB.config.estats_exercicis[current]={tancat:false,dataObertura:calcDataObertura(current),dataTancament:''};
     }
   }
   DB.config.anyFiscal=nouAny;
@@ -976,7 +1003,7 @@ const TABS={
   events:{name:'06 Events',headers:['id','delegId','nom','year','responsable','status']},
   bancs:{name:'07 Bancs',headers:['id','codi','nom','tipus']},
   usuaris:{name:'08 Usuaris',headers:['id','nom','email','rol']},
-  usuaris_assignacions:{name:'09 Usuaris Assignacions',headers:['userId','userNom','tipus','id','nom']},
+  usuaris_assignacions:{name:'09 Usuaris Assignacions',headers:['userId','userNom','tipus','id','nom','anyFiscal']},
   pres_plans:{name:'10 Pressupostos Plans',headers:['any','delegacioId','delegacioNom','eventId','eventNom','concepte','tipus','importPla','notes']},
   pres_config:{name:'11 Pressupostos Config',headers:['any','estat','bloquejatPer','bloquejatEmail','data']},
   pres_historial:{name:'12 Pressupostos Historial',headers:['data','accio','any','usuari','email','motiu']},
@@ -1112,14 +1139,8 @@ function rowsToConfig(arees,delegacions,events,bancs,usuaris,assignacions){
     delegacions:delegacions.map(r=>({id:r.id,areaId:r.areaId,name:r.nom,resp:r.responsable})),
     events:events.map(r=>({id:r.id,delegId:r.delegId,name:r.nom,year:r.year,resp:r.responsable,status:r.status})),
     bancs:bancs.map(r=>({id:r.id,codi:r.codi,nom:r.nom,tipus:r.tipus})),
-    usuaris:usuaris.map(u=>{
-      const myAssig=assignacions.filter(a=>a.userId===u.id);
-      return{
-        id:u.id,nom:u.nom,email:u.email,rol:u.rol,
-        arees:myAssig.filter(a=>a.tipus==='area').map(a=>a.id),
-        delegacions:myAssig.filter(a=>a.tipus==='delegacio').map(a=>a.id)
-      };
-    })
+    usuaris:usuaris.map(u=>({id:u.id,nom:u.nom,email:u.email,rol:u.rol,arees:[],delegacions:[]})),
+    directiva:buildDirectivaFromRows(assignacions)
   };
 }
 
@@ -1131,15 +1152,15 @@ function configToRows(){
   const events=cfg.events.map(e=>({id:e.id,delegId:e.delegId,nom:e.name,year:e.year,responsable:e.resp,status:e.status}));
   const bancs=cfg.bancs.map(b=>({id:b.id,codi:b.codi,nom:b.nom,tipus:b.tipus}));
   const usuaris=cfg.usuaris.map(u=>({id:u.id,nom:u.nom,email:u.email,rol:u.rol}));
+  // Assignacions: combinar les de l'usuari (per compatibilitat) amb les del mestre de directiva
   const assignacions=[];
-  cfg.usuaris.forEach(u=>{
-    (u.arees||[]).forEach(aId=>{
-      const area=cfg.areas.find(a=>a.id===aId);
-      assignacions.push({userId:u.id,userNom:u.nom,tipus:'area',id:aId,nom:area?.name||aId});
-    });
-    (u.delegacions||[]).forEach(dId=>{
-      const deleg=cfg.delegacions.find(d=>d.id===dId);
-      assignacions.push({userId:u.id,userNom:u.nom,tipus:'delegacio',id:dId,nom:deleg?.name||dId});
+  const directiva=cfg.directiva||{};
+  // Guardar totes les assignacions de la directiva per tots els anys fiscals
+  Object.entries(directiva).forEach(function(entry){
+    const anyF=entry[0];
+    const assigns=entry[1];
+    (assigns||[]).forEach(function(a){
+      assignacions.push({userId:a.userId,userNom:a.userNom,tipus:a.tipus,id:a.id,nom:a.nom,anyFiscal:anyF});
     });
   });
   return{arees,delegacions,events,bancs,usuaris,assignacions};
@@ -1293,6 +1314,55 @@ function getUsuari(){
 
 function getRol(){const u=getUsuari();return u?u.rol:'delegat';}
 function getAnyFiscal(){return DB.config.anyFiscal||'26/27';}
+
+// Construir mapa de directiva des de les files de Sheets
+function buildDirectivaFromRows(assignacions){
+  const dir={};
+  (assignacions||[]).forEach(function(a){
+    const af=a.anyFiscal||'26/27';
+    if(!dir[af])dir[af]=[];
+    dir[af].push({userId:a.userId,userNom:a.userNom,tipus:a.tipus,id:a.id,nom:a.nom});
+  });
+  return dir;
+}
+
+// Obtenir assignacions de la directiva per un any fiscal
+function getDirectivaAny(anyF){
+  return(DB.config.directiva||{})[anyF||getAnyFiscal()]||[];
+}
+
+// Obtenir el responsable d'una àrea o delegació per l'any actiu
+function getResponsable(tipus,id,anyF){
+  const assigns=getDirectivaAny(anyF||getAnyFiscal());
+  const a=assigns.find(function(x){return x.tipus===tipus&&x.id===id;});
+  if(!a)return'—';
+  return a.userNom;
+}
+
+// Guardar canvi de directiva
+async function saveDirectiva(anyF,tipus,id,nomItem,userId,userNom){
+  if(!DB.config.directiva)DB.config.directiva={};
+  if(!DB.config.directiva[anyF])DB.config.directiva[anyF]=[];
+  // Eliminar assignació anterior per aquest item
+  DB.config.directiva[anyF]=DB.config.directiva[anyF].filter(function(a){
+    return!(a.tipus===tipus&&a.id===id);
+  });
+  if(userId){
+    DB.config.directiva[anyF].push({userId,userNom,tipus,id,nom:nomItem});
+  }
+  saveCache();
+  save('config').catch(function(e){console.warn(e);});
+}
+
+function calcDataObertura(anyFiscal){
+  // Format: 'XX/YY' -> 01/04/20XX
+  const parts=anyFiscal.split('/');
+  if(parts.length===2){
+    const any=parseInt(parts[0]);
+    if(!isNaN(any))return'01/04/20'+String(any).padStart(2,'0');
+  }
+  return today();
+}
 function perm(p){return ROLES[getRol()]?.[p]||false;}
 
 function getMyArees(){
@@ -1358,6 +1428,15 @@ function initApp(){
   buildNav();
   populateMovimentSelects();
   initExerciciSelector();
+  // Assegurar que tots els exercicis tenen data d'obertura
+  if(!DB.config.estats_exercicis)DB.config.estats_exercicis={};
+  (DB.config.exercicis||['26/27']).forEach(function(e){
+    if(!DB.config.estats_exercicis[e]){
+      DB.config.estats_exercicis[e]={tancat:false,dataObertura:calcDataObertura(e),dataTancament:''};
+    }else if(!DB.config.estats_exercicis[e].dataObertura){
+      DB.config.estats_exercicis[e].dataObertura=calcDataObertura(e);
+    }
+  });
   renderDashboard();
   // Mostrar footer btn sols al mobil
   const isMob=window.innerWidth<=768;
@@ -1392,7 +1471,7 @@ function showPage(id){
   document.querySelectorAll('.nav-item').forEach(n=>{
     if(n.getAttribute('onclick')&&n.getAttribute('onclick').includes("'"+id+"'"))n.classList.add('active');
   });
-  ({'pressupostos':renderPressupostosEdit,'dashboard':renderDashboard,'historial':renderHistorial,
+  ({'pressupostos':renderPressupostosEdit,'dashboard':renderDashboard,'historial':renderHistorial,'directiva':renderDirectiva,
     'pressupostos-edit':renderPressupostosEdit,
     'lliurament':renderFons,'tancament':renderTancamentList,'resultats':renderResultats,
     'flux':renderFlux,'configuracio':renderConfig,'manual':renderManual}[id]||function(){})();
@@ -2212,7 +2291,7 @@ function renderCfgAreas(){
     html+='<i class="ti ti-chevron-right chevron"></i>';
     html+='<div style="width:8px;height:8px;border-radius:50%;background:'+col+'"></div>';
     html+='<div style="font-weight:500;flex:1">'+a.id+' - '+a.name+'</div>';
-    html+='<div style="font-size:11px;color:var(--text2);margin-right:8px">'+a.resp+'</div>';
+    html+='<div style="font-size:11px;color:var(--text2);margin-right:8px">'+getResponsable('area',a.id)+'</div>';
     if(canEdit){
       html+='<button class="btn" style="font-size:11px;padding:3px 8px;margin-right:4px" data-id="'+a.id+'" onclick="cfgEditArea(event,this.dataset.id)"><i class="ti ti-edit"></i></button>';
       html+='<button class="btn" style="font-size:11px;padding:3px 8px" data-id="'+a.id+'" onclick="cfgDelArea(event,this.dataset.id)"><i class="ti ti-trash"></i></button>';
@@ -2223,7 +2302,7 @@ function renderCfgAreas(){
       html+='<div style="display:flex;align-items:center;gap:8px;padding:7px 14px;border-top:0.5px solid var(--border);font-size:12px">';
       html+='<div style="width:4px;height:4px;border-radius:50%;background:'+col+'"></div>';
       html+='<div style="flex:1;font-weight:500">'+d.id+' - '+d.name+'</div>';
-      html+='<div style="color:var(--text2);margin-right:8px">'+d.resp+'</div>';
+      html+='<div style="font-size:12px;color:var(--text2);margin-right:8px">'+getResponsable('delegacio',d.id)+'</div>';
       if(canEdit){
         html+='<button class="btn" style="font-size:11px;padding:3px 8px;margin-right:4px" data-id="'+d.id+'" onclick="cfgEditDeleg(event,this.dataset.id)"><i class="ti ti-edit"></i></button>';
         html+='<button class="btn" style="font-size:11px;padding:3px 8px" data-id="'+d.id+'" onclick="cfgDelDeleg(event,this.dataset.id)"><i class="ti ti-trash"></i></button>';
@@ -2884,6 +2963,8 @@ function renderCfgExercicis(){
     html+='<button class="btn btn-primary" onclick="obrirNouExercici()"><i class="ti ti-calendar-plus"></i> Nou exercici</button>';
     html+='<button class="btn" onclick="openModalTancarExercici()" style="color:var(--amber)"><i class="ti ti-lock"></i> Tancar exercici actual</button>';
     html+='<button class="btn" onclick="openModalCopyPres()" style="color:var(--blue,#378ADD)"><i class="ti ti-copy"></i> Copiar pressupost</button>';
+    html+='<button class="btn" onclick="showPage(\"directiva\")" style="color:var(--purple,#7F77DD)"><i class="ti ti-users"></i> Gestionar directiva</button>';
+    html+='<button class="btn" onclick="openModalCopyDirectiva()" style="color:var(--pink,#D4537E)"><i class="ti ti-copy"></i> Copiar directiva</button>';
     html+='</div>';
   }
   html+='<div class="card" style="padding:0;overflow:hidden"><div class="table-wrap"><table>';
@@ -2899,7 +2980,10 @@ function renderCfgExercicis(){
     html+='<tr>';
     html+='<td style="font-weight:600;font-size:15px">'+e+(isActiu?' <span class="pill p-info" style="font-size:10px">Actiu</span>':'')+'</td>';
     html+='<td><span class="pill '+(tancat?'p-warn':'p-ok')+'">'+(tancat?'Tancat':'Obert')+'</span></td>';
-    html+='<td style="color:var(--text2)">'+(estat.dataObertura||'—')+'</td>';
+    const doLabel=estat.dataObertura||calcDataObertura(e);
+    html+='<td><input type="text" value="'+doLabel+'" placeholder="dd/mm/aaaa" '+
+      'style="width:100px;font-size:13px;padding:3px 6px;border:0.5px solid var(--border2);border-radius:4px;background:var(--bg);color:var(--text);font-family:inherit" '+
+      'data-any="'+e+'" onchange="updateDataObertura(this.dataset.any,this.value)"></td>';
     html+='<td style="color:var(--text2)">'+(estat.dataTancament||'—')+'</td>';
     html+='<td style="text-align:center">'+nMovs+'</td>';
     html+='<td style="text-align:center">'+nPres+' linies</td>';
@@ -2917,6 +3001,137 @@ function renderCfgExercicis(){
   });
   html+='</tbody></table></div></div>';
   container.innerHTML=html;
+}
+
+function updateDataObertura(any,valor){
+  if(!DB.config.estats_exercicis)DB.config.estats_exercicis={};
+  if(!DB.config.estats_exercicis[any])DB.config.estats_exercicis[any]={tancat:false,dataTancament:''};
+  DB.config.estats_exercicis[any].dataObertura=valor;
+  saveCache();
+  save('config').catch(function(e){showToast('Error guardant: '+e.message,true);});
+  showToast('Data obertura actualitzada');
+}
+
+function renderDirectiva(){
+  // Inicialitzar selector d'any
+  const sel=document.getElementById('dir-any');
+  if(sel){
+    const exercicis=DB.config.exercicis||['26/27'];
+    const current=sel.value||getAnyFiscal();
+    sel.innerHTML=exercicis.map(function(e){
+      return'<option value="'+e+'"'+(e===current?' selected':'')+'>'+e+'</option>';
+    }).join('');
+  }
+  const anyF=sel?sel.value:getAnyFiscal();
+  const isPresident=getRol()==='president';
+  const isTreasury=getRol()==='treasury';
+  const myArees=getMyArees();
+  const usuaris=DB.config.usuaris||[];
+  const areas=DB.config.areas;
+
+  let html='';
+  areas.forEach(function(a){
+    const col=({'01':'#1D9E75','02':'#7F77DD','03':'#378ADD','04':'#BA7517','05':'#D4537E','06':'#D85A30','07':'#888780'})[a.id]||'#888';
+    const delegs=DB.config.delegacions.filter(function(d){return d.areaId===a.id;});
+    const canEditArea=isPresident;
+    const canEditDeleg=isPresident||(getRol()==='area'&&myArees.includes(a.id));
+    const respArea=getResponsable('area',a.id,anyF);
+
+    html+='<div class="deleg-block" style="margin-bottom:10px">';
+    html+='<div class="deleg-head" style="cursor:default">';
+    html+='<div style="width:10px;height:10px;border-radius:50%;background:'+col+'"></div>';
+    html+='<div style="font-weight:600;flex:1;font-size:14px">'+a.name+'</div>';
+
+    if(canEditArea){
+      html+='<select style="font-size:13px;padding:4px 8px;border-radius:var(--r);border:0.5px solid var(--border2);background:var(--bg);color:var(--text);max-width:180px" '+
+        'data-tipus="area" data-id="'+a.id+'" data-nom="'+a.name+'" data-anyf="'+anyF+'" onchange="onDirChange(this,this.dataset.anyf)">';
+      html+='<option value="">— Sense responsable —</option>';
+      usuaris.forEach(function(u){
+        const sel=getDirectivaAny(anyF).find(function(x){return x.tipus==='area'&&x.id===a.id&&x.userId===u.id;});
+        html+='<option value="'+u.id+'"'+(sel?' selected':'')+'>'+u.nom+'</option>';
+      });
+      html+='</select>';
+    }else{
+      html+='<span style="font-size:13px;color:var(--text2)">'+respArea+'</span>';
+    }
+    html+='</div>';
+
+    // Delegacions
+    html+='<div style="padding:0">';
+    delegs.forEach(function(d){
+      const respDeleg=getResponsable('delegacio',d.id,anyF);
+      html+='<div style="display:flex;align-items:center;gap:10px;padding:8px 14px 8px 28px;border-top:0.5px solid var(--border);font-size:13px">';
+      html+='<div style="width:6px;height:6px;border-radius:50%;background:'+col+'"></div>';
+      html+='<div style="flex:1">'+d.name+'</div>';
+      if(canEditDeleg){
+        html+='<select style="font-size:13px;padding:4px 8px;border-radius:var(--r);border:0.5px solid var(--border2);background:var(--bg);color:var(--text);max-width:180px" '+
+          'data-tipus="delegacio" data-id="'+d.id+'" data-nom="'+d.name+'" data-anyf="'+anyF+'" onchange="onDirChange(this,this.dataset.anyf)">';
+        html+='<option value="">— Sense responsable —</option>';
+        usuaris.forEach(function(u){
+          const sel2=getDirectivaAny(anyF).find(function(x){return x.tipus==='delegacio'&&x.id===d.id&&x.userId===u.id;});
+          html+='<option value="'+u.id+'"'+(sel2?' selected':'')+'>'+u.nom+'</option>';
+        });
+        html+='</select>';
+      }else{
+        html+='<span style="color:var(--text2)">'+respDeleg+'</span>';
+      }
+      html+='</div>';
+    });
+    html+='</div></div>';
+  });
+
+  document.getElementById('directiva-container').innerHTML=html||'<div style="color:var(--text3)">Cap area configurada.</div>';
+}
+
+async function onDirChange(sel,anyF){
+  const tipus=sel.getAttribute('data-tipus');
+  const id=sel.getAttribute('data-id');
+  const nom=sel.getAttribute('data-nom');
+  const userId=sel.value;
+  const u=DB.config.usuaris.find(function(x){return x.id===userId;});
+  await saveDirectiva(anyF,tipus,id,nom,userId,u?u.nom:'');
+  showToast((userId?u.nom:'Sense responsable')+' assignat a '+nom);
+}
+
+function openModalCopyDirectiva(){
+  const exercicis=DB.config.exercicis||['26/27'];
+  const current=getAnyFiscal();
+  const origenSel=document.getElementById('cd-origen');
+  const destiSel=document.getElementById('cd-desti');
+  if(!origenSel)return;
+  origenSel.innerHTML=exercicis.map(function(e){
+    return'<option value="'+e+'"'+(e===current?' selected':'')+'>'+e+'</option>';
+  }).join('');
+  destiSel.innerHTML=exercicis.map(function(e){
+    return'<option value="'+e+'"'+(e!==current?' selected':'')+'>'+e+'</option>';
+  }).join('');
+  if(exercicis.length===1){
+    const parts=current.split('/');
+    const next=(parseInt(parts[0])+1)+'/'+(parseInt(parts[1])+1);
+    destiSel.innerHTML+='<option value="'+next+'" selected>'+next+' (nou)</option>';
+  }
+  openModal('modal-copy-dir');
+}
+
+async function executarCopyDirectiva(){
+  const origen=document.getElementById('cd-origen').value;
+  const desti=document.getElementById('cd-desti').value;
+  if(origen===desti){showToast('Origen i desti no poden ser iguals',true);return;}
+  const assignsOrigen=getDirectivaAny(origen);
+  if(!assignsOrigen.length){showToast('No hi ha directiva per a '+origen,true);return;}
+  if(!DB.config.directiva)DB.config.directiva={};
+  // Copiar assignacions a l'any destí
+  DB.config.directiva[desti]=[...assignsOrigen];
+  // Afegir any destí si no existeix
+  if(!DB.config.exercicis)DB.config.exercicis=[];
+  if(!DB.config.exercicis.includes(desti)){
+    DB.config.exercicis.push(desti);
+    initExerciciSelector();
+  }
+  saveCache();
+  closeModal('modal-copy-dir');
+  showToast('Directiva copiada de '+origen+' a '+desti+' ('+assignsOrigen.length+' assignacions)');
+  save('config').catch(function(e){showToast('Error: '+e.message,true);});
 }
 
 function openModalTancarExercici(){
