@@ -909,8 +909,8 @@ async function initSheets(){
         const tabKey=Object.keys(TABS).find(k=>TABS[k].name===tabName);
         if(tabKey){
           await sheetsReq('PUT',
-            SHEETS_API+'/values/'+encodeURIComponent(tabName+'!A1')+'?valueInputOption=RAW',
-            {range:tabName+'!A1',majorDimension:'ROWS',values:[TABS[tabKey].headers]}
+            SHEETS_API+'/values/'+sheetRangeUrl(tabName,'A1')+'?valueInputOption=RAW',
+            {range:sheetRange(tabName,'A1'),majorDimension:'ROWS',values:[TABS[tabKey].headers]}
           );
         }
       }
@@ -921,16 +921,16 @@ async function initSheets(){
       if(existingNames.includes(oldName)&&existingNames.includes(newName)){
         // Llegir dades de la pestanya antiga
         try{
-          const oldData=await sheetsReq('GET',SHEETS_API+'/values/'+encodeURIComponent(oldName));
+          const oldData=await sheetsReq('GET',SHEETS_API+'/values/'+sheetRangeUrl(oldName,'A1:ZZ'));
           if(oldData.values&&oldData.values.length>1){
             // Verificar si la nova pestanya ja té dades (més d'una fila = capçalera + dades)
-            const newData=await sheetsReq('GET',SHEETS_API+'/values/'+encodeURIComponent(newName+'!A1:A2'));
+            const newData=await sheetsReq('GET',SHEETS_API+'/values/'+sheetRangeUrl(newName,'A1:A2'));
             const newHasData=newData.values&&newData.values.length>1;
             if(!newHasData){
               // Copiar totes les dades a la nova pestanya
               await sheetsReq('PUT',
-                SHEETS_API+'/values/'+encodeURIComponent(newName+'!A1')+'?valueInputOption=RAW',
-                {range:newName+'!A1',majorDimension:'ROWS',values:oldData.values}
+                SHEETS_API+'/values/'+sheetRangeUrl(newName,'A1')+'?valueInputOption=RAW',
+                {range:sheetRange(newName,'A1'),majorDimension:'ROWS',values:oldData.values}
               );
               console.log('Migrat: '+oldName+' -> '+newName+' ('+oldData.values.length+' files)');
             }
@@ -950,9 +950,19 @@ async function initSheets(){
 }
 
 // Llegir totes les files d'una pestanya com array d'objectes
+// Helper: construir range correcta per a noms amb espais
+function sheetRange(tabName,cell){
+  // La Sheets API necessita cometes simples al voltant del nom si té espais
+  const name=tabName.includes(' ')?("'"+tabName+"'"):tabName;
+  return cell?name+'!'+cell:name;
+}
+function sheetRangeUrl(tabName,cell){
+  return encodeURIComponent(sheetRange(tabName,cell));
+}
+
 async function readTab(tabName){
   try{
-    const r=await sheetsReq('GET',SHEETS_API+'/values/'+encodeURIComponent(tabName));
+    const r=await sheetsReq('GET',SHEETS_API+'/values/'+sheetRangeUrl(tabName,'A1:ZZ'));
     if(!r.values||r.values.length<2)return[];
     const headers=r.values[0];
     return r.values.slice(1).filter(row=>row.some(c=>c)).map(row=>{
@@ -960,34 +970,23 @@ async function readTab(tabName){
       headers.forEach((h,i)=>obj[h]=row[i]||'');
       return obj;
     });
-  }catch(e){return[];}
+  }catch(e){console.warn('readTab error '+tabName,e);return[];}
 }
 
-// Escriure totes les files d'una pestanya
 async function writeTab(tabName,headers,rows){
-  // Esborrar contingut existent
-  await sheetsReq('POST',SHEETS_API+'/values/'+encodeURIComponent(tabName)+':clear',{});
-  if(!rows.length){
-    // Només capçaleres
-    await sheetsReq('PUT',
-      SHEETS_API+'/values/'+encodeURIComponent(tabName+'!A1')+'?valueInputOption=RAW',
-      {range:tabName+'!A1',majorDimension:'ROWS',values:[headers]}
-    );
-    return;
-  }
-  const data=[headers,...rows.map(r=>headers.map(h=>r[h]!==undefined?String(r[h]):''))];
+  await sheetsReq('POST',SHEETS_API+'/values/'+sheetRangeUrl(tabName)+':clear',{});
+  const data=[headers,...(rows||[]).map(r=>headers.map(h=>r[h]!==undefined?String(r[h]):''))];
   await sheetsReq('PUT',
-    SHEETS_API+'/values/'+encodeURIComponent(tabName+'!A1')+'?valueInputOption=RAW',
-    {range:tabName+'!A1',majorDimension:'ROWS',values:data}
+    SHEETS_API+'/values/'+sheetRangeUrl(tabName,'A1')+'?valueInputOption=RAW',
+    {range:sheetRange(tabName,'A1'),majorDimension:'ROWS',values:data}
   );
 }
 
-// Afegir una sola fila a una pestanya
 async function appendRow(tabName,headers,row){
   const values=[headers.map(h=>row[h]!==undefined?String(row[h]):'')];
   await sheetsReq('POST',
-    SHEETS_API+'/values/'+encodeURIComponent(tabName+'!A1')+':append?valueInputOption=RAW&insertDataOption=INSERT_ROWS',
-    {range:tabName+'!A1',majorDimension:'ROWS',values}
+    SHEETS_API+'/values/'+sheetRangeUrl(tabName,'A1')+':append?valueInputOption=RAW&insertDataOption=INSERT_ROWS',
+    {range:sheetRange(tabName,'A1'),majorDimension:'ROWS',values}
   );
 }
 
@@ -1055,6 +1054,65 @@ async function loadAllFromDrive(){
 
 async function loadFromSheets(){
   await initSheets();
+  // Usar sempre TABS[key].name per als noms de pestanya
+  const movsRows=await readTab(TABS.moviments.name);
+  DB.moviments=movsRows.map(r=>({...r,import:parseFloat(r.import)||0}));
+  const fonsRows=await readTab(TABS.fons.name);
+  DB.fons=fonsRows.map(r=>({...r,import:parseFloat(r.import)||0}));
+  const tancRows=await readTab(TABS.tancaments.name);
+  DB.tancaments={};
+  tancRows.forEach(r=>{DB.tancaments[r.eventId]={...r,efectiu:parseFloat(r.efectiu)||0,tpv:parseFloat(r.tpv)||0};});
+  const arees=await readTab(TABS.arees.name);
+  const delegacions=await readTab(TABS.delegacions.name);
+  const events=await readTab(TABS.events.name);
+  const bancs=await readTab(TABS.bancs.name);
+  const usuaris=await readTab(TABS.usuaris.name);
+  const assignacions=await readTab(TABS.usuaris_assignacions.name);
+  if(arees.length>0||usuaris.length>0){
+    DB.config=rowsToConfig(arees,delegacions,events,bancs,usuaris,assignacions);
+  }
+  if(!DB.config.bancs||!DB.config.bancs.length){
+    DB.config.bancs=[
+      {id:'b1',codi:'01 Banc',nom:'Caixabank',tipus:'bank'},
+      {id:'b2',codi:'02 Banc',nom:'Caixa Popular',tipus:'bank'},
+      {id:'b3',codi:'Efectiu',nom:'Caixa efectiu',tipus:'cash'},
+      {id:'b4',codi:'TPV',nom:'TPV targetes',tipus:'tpv'}
+    ];
+  }
+  const presRows=await readTab(TABS.pres_plans.name);
+  DB.pres_plans=presRows.map(r=>({...r,importPla:parseFloat(r.importPla)||0}));
+  const presHistRows=await readTab(TABS.pres_historial.name);
+  DB.pres_historial=presHistRows;
+  const presConfigRows=await readTab(TABS.pres_config.name);
+  if(presConfigRows.length>0)DB.pres_config=presConfigRows[presConfigRows.length-1];
+  const reglesRows=await readTab(TABS.regles.name);
+  DB.regles=reglesRows.map(r=>({...r,prioritat:parseInt(r.prioritat)||10,activa:r.activa!=='false'}));
+  if(!DB.regles.length)DB.regles=getDefaultRegles();
+}
+async function loadAllFromDrive(){
+  // Carregar cache immediatament per mostrar dades ràpid
+  const hasCache=loadCache();
+  setSyncing(true);
+  // Carregar Sheets en segon pla
+  loadFromSheets().then(()=>{
+    saveCache();
+    setSyncing(false);
+    // Refrescar la pàgina activa silenciosament
+    const activePage=document.querySelector('.page.active');
+    if(activePage){
+      const id=activePage.id.replace('page-','');
+      const renders={dashboard:renderDashboard,historial:filterHist,pressupostos:renderPressupostos,
+        lliurament:renderFons,tancament:renderTancamentList,resultats:renderResultats,flux:renderFlux};
+      if(renders[id])renders[id]();
+    }
+  }).catch(e=>{
+    setSyncing(false);
+    if(!hasCache)showToast('Error carregant dades: '+e.message,true);
+  });
+}
+
+async function loadFromSheets(){
+  await initSheets();
   const movsRows=await readTab('moviments');
   DB.moviments=movsRows.map(r=>({...r,import:parseFloat(r.import)||0}));
   const fonsRows=await readTab('fons');
@@ -1094,39 +1152,39 @@ async function loadFromSheets(){
 async function save(key){
   setSyncing(true);
   try{
+    const t=TABS[key];
+    if(!t){throw new Error('Tab desconegut: '+key);}
     if(key==='moviments'){
-      await writeTab('moviments',TABS.moviments.headers,DB.moviments);
+      await writeTab(t.name,t.headers,DB.moviments);
     }else if(key==='fons'){
-      await writeTab('fons',TABS.fons.headers,DB.fons);
+      await writeTab(t.name,t.headers,DB.fons);
     }else if(key==='tancaments'){
-      const rows=Object.values(DB.tancaments);
-      await writeTab('tancaments',TABS.tancaments.headers,rows);
+      await writeTab(t.name,t.headers,Object.values(DB.tancaments));
+    }else if(key==='regles'){
+      await writeTab(t.name,t.headers,DB.regles);
+    }else if(key==='pres_plans'){
+      await writeTab(t.name,t.headers,DB.pres_plans);
+    }else if(key==='pres_config'){
+      await writeTab(t.name,t.headers,[DB.pres_config]);
+    }else if(key==='pres_historial'){
+      await writeTab(t.name,t.headers,DB.pres_historial);
     }else if(key==='config'){
       const {arees,delegacions,events,bancs,usuaris,assignacions}=configToRows();
-      await writeTab('arees',TABS.arees.headers,arees);
-      await writeTab('delegacions',TABS.delegacions.headers,delegacions);
-      await writeTab('events',TABS.events.headers,events);
-      await writeTab('bancs',TABS.bancs.headers,bancs);
-      await writeTab('usuaris',TABS.usuaris.headers,usuaris);
-      await writeTab('usuaris_assignacions',TABS.usuaris_assignacions.headers,assignacions);
-    }else if(key==='regles'){
-      await writeTab('regles',TABS.regles.headers,DB.regles);
-    }else if(key==='pres_plans'){
-      await writeTab('pres_plans',TABS.pres_plans.headers,DB.pres_plans);
-    }else if(key==='pres_config'){
-      await writeTab('pres_config',TABS.pres_config.headers,[DB.pres_config]);
-    }else if(key==='pres_historial'){
-      await writeTab('pres_historial',TABS.pres_historial.headers,DB.pres_historial);
+      await writeTab(TABS.arees.name,TABS.arees.headers,arees);
+      await writeTab(TABS.delegacions.name,TABS.delegacions.headers,delegacions);
+      await writeTab(TABS.events.name,TABS.events.headers,events);
+      await writeTab(TABS.bancs.name,TABS.bancs.headers,bancs);
+      await writeTab(TABS.usuaris.name,TABS.usuaris.headers,usuaris);
+      await writeTab(TABS.usuaris_assignacions.name,TABS.usuaris_assignacions.headers,assignacions);
     }
   }catch(e){showToast('Error guardant: '+e.message,true);}
   setSyncing(false);
 }
-
 // Per a moviments, usar append en lloc de reescriure tot
 async function saveMoviment(mov){
   setSyncing(true);
   try{
-    await appendRow('moviments',TABS.moviments.headers,mov);
+    await appendRow(TABS.moviments.name,TABS.moviments.headers,mov);
   }catch(e){showToast('Error guardant moviment: '+e.message,true);}
   setSyncing(false);
 }
@@ -1134,7 +1192,7 @@ async function saveMoviment(mov){
 async function saveFons(fonsItem){
   setSyncing(true);
   try{
-    await appendRow('fons',TABS.fons.headers,fonsItem);
+    await appendRow(TABS.fons.name,TABS.fons.headers,fonsItem);
   }catch(e){showToast('Error guardant fons: '+e.message,true);}
   setSyncing(false);
 }
