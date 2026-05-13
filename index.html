@@ -161,6 +161,24 @@ tr:hover td{background:var(--bg2)}
 .saldo-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;font-size:13px;border-bottom:0.5px solid var(--border)}
 .saldo-row:last-child{border-bottom:none;padding-top:10px;font-size:15px;font-weight:500}
 .fons-av{width:36px;height:36px;border-radius:50%;background:var(--blue-bg);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:var(--blue-text);flex-shrink:0}
+.mov-form{max-width:500px;display:flex;flex-direction:column;gap:8px;padding-bottom:16px}
+.mov-top{display:flex;align-items:center;gap:10px;margin-bottom:2px}
+.mov-top .type-toggle{display:grid;grid-template-columns:1fr 1fr;gap:5px;width:180px}
+.mov-import-big{flex:1;font-size:28px;font-weight:600;text-align:right;padding:8px 12px;border:0.5px solid var(--border2);border-radius:var(--r);background:var(--bg);color:var(--text);outline:none}
+.mov-import-big:focus{border-color:var(--blue)}
+.mov-via-row{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:5px}
+.mov-via-row .via-btn{padding:7px 4px;font-size:12px;justify-content:center;flex-direction:column;gap:2px;text-align:center}
+.mov-via-row .via-btn i{font-size:18px}
+.mov-row2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.mov-field{display:flex;flex-direction:column;gap:3px}
+.mov-field label{font-size:12px;color:var(--text2);font-weight:500}
+.mov-field input,.mov-field select,.mov-field textarea{font-size:14px;padding:7px 10px;border:0.5px solid var(--border2);border-radius:var(--r);background:var(--bg);color:var(--text);outline:none;font-family:inherit}
+.mov-field input:focus,.mov-field select:focus,.mov-field textarea:focus{border-color:var(--blue)}
+.opt-label{font-size:11px;color:var(--text3);font-weight:400}
+@media(max-width:768px){
+  .mov-top .type-toggle{width:160px}
+  .mov-top .type-btn{font-size:13px;padding:8px 6px}
+}
 .tag-multi{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
 .info-box{padding:10px 12px;background:var(--blue-bg);border-radius:var(--r);font-size:12px;color:var(--blue-text);margin-bottom:12px}
 </style>
@@ -232,32 +250,62 @@ tr:hover td{background:var(--bg2)}
     </div>
 
     <div id="page-moviments" class="page">
-      <div class="page-title">Registrar moviment</div>
-      <div class="page-sub">Ingrés o despesa en efectiu, TPV o banc</div>
-      <div class="card" style="max-width:500px">
-        <div class="type-toggle">
-          <button class="type-btn gast active" id="btn-gast" onclick="setMovType('gast')"><i class="ti ti-arrow-up-right"></i> Despesa</button>
-          <button class="type-btn ing" id="btn-ing" onclick="setMovType('ing')"><i class="ti ti-arrow-down-left"></i> Ingrés</button>
-        </div>
-        <div class="field"><label>Import (€)</label><input type="number" id="mov-import" placeholder="0.00" min="0" step="0.01" inputmode="decimal" style="font-size:22px;font-weight:500;text-align:right"></div>
-        <div class="field">
-          <label>Via de pagament</label>
-          <div class="via-grid">
-            <button class="via-btn active" id="via-efectiu" onclick="setVia('Efectiu')"><i class="ti ti-wallet"></i> Efectiu</button>
-            <button class="via-btn" id="via-b1" onclick="setVia('01 Banc')"><i class="ti ti-building-bank"></i> <span id="via-b1-name">Caixabank</span></button>
-            <button class="via-btn" id="via-b2" onclick="setVia('02 Banc')"><i class="ti ti-building-bank"></i> <span id="via-b2-name">Caixa Popular</span></button>
-            <button class="via-btn" id="via-tpv" onclick="setVia('TPV')"><i class="ti ti-credit-card"></i> TPV</button>
+      <div class="mov-form">
+
+        <!-- Tipus + Import -->
+        <div class="mov-top">
+          <div class="type-toggle" style="margin-bottom:0;flex:0 0 auto">
+            <button class="type-btn gast active" id="btn-gast" onclick="setMovType('gast')"><i class="ti ti-arrow-up-right"></i> Despesa</button>
+            <button class="type-btn ing" id="btn-ing" onclick="setMovType('ing')"><i class="ti ti-arrow-down-left"></i> Ingrés</button>
           </div>
+          <input type="number" id="mov-import" placeholder="0,00" min="0" step="0.01" inputmode="decimal" class="mov-import-big">
         </div>
-        <div class="field"><label>Àrea</label><select id="mov-area" onchange="onMovAreaChange()"></select></div>
-        <div class="field"><label>Delegació</label><select id="mov-deleg" onchange="onMovDelegChange()"></select></div>
-        <div class="field" id="mov-event-field"><label>Event <span style="color:var(--text3);font-size:11px">(opcional)</span></label><select id="mov-event"></select></div>
-        <div class="field"><label>Concepte</label><input type="text" id="mov-concept" placeholder="Descriu el concepte..."></div>
-        <div class="field"><label>Establiment / Proveïdor <span style="color:var(--text3);font-size:11px">(opcional)</span></label><input type="text" id="mov-establiment" placeholder="p.e. Mercadona, Monaco..."></div>
-        <div class="field"><label>Data</label><input type="date" id="mov-data"></div>
-        <div class="field"><label>Notes <span style="color:var(--text3);font-size:11px">(opcional)</span></label><textarea id="mov-notes" rows="2"></textarea></div>
-        <div class="field"><label>Justificant <span style="color:var(--text3);font-size:11px">(foto tiquet/factura)</span></label><input type="file" id="mov-photo" accept="image/*,application/pdf" style="font-size:13px"></div>
-        <button class="btn btn-danger" style="width:100%;padding:12px;font-size:14px" id="btn-registrar" onclick="registrarMoviment()"><i class="ti ti-check"></i> Registrar despesa</button>
+
+        <!-- Via -->
+        <div class="mov-via-row">
+          <button class="via-btn active" id="via-efectiu" onclick="setVia('Efectiu')"><i class="ti ti-wallet"></i> Efectiu</button>
+          <button class="via-btn" id="via-b1" onclick="setVia('01 Banc')"><i class="ti ti-building-bank"></i> <span id="via-b1-name">Caixabank</span></button>
+          <button class="via-btn" id="via-b2" onclick="setVia('02 Banc')"><i class="ti ti-building-bank"></i> <span id="via-b2-name">Caixa Popular</span></button>
+          <button class="via-btn" id="via-tpv" onclick="setVia('TPV')"><i class="ti ti-credit-card"></i> TPV</button>
+        </div>
+
+        <!-- Àrea + Delegació -->
+        <div class="mov-row2">
+          <div class="mov-field"><label>Àrea</label><select id="mov-area" onchange="onMovAreaChange()"></select></div>
+          <div class="mov-field"><label>Delegació</label><select id="mov-deleg" onchange="onMovDelegChange()"></select></div>
+        </div>
+
+        <!-- Event (opcional) -->
+        <div class="mov-field" id="mov-event-field">
+          <label>Event <span class="opt-label">(opcional)</span></label>
+          <select id="mov-event"></select>
+        </div>
+
+        <!-- Concepte -->
+        <div class="mov-field">
+          <label>Concepte</label>
+          <input type="text" id="mov-concept" placeholder="Descriu el concepte...">
+        </div>
+
+        <!-- Data + Establiment -->
+        <div class="mov-row2">
+          <div class="mov-field"><label>Data</label><input type="date" id="mov-data"></div>
+          <div class="mov-field"><label>Establiment <span class="opt-label">(opc.)</span></label><input type="text" id="mov-establiment" placeholder="p.e. Monaco..."></div>
+        </div>
+
+        <!-- Més opcions -->
+        <div id="mov-extra-toggle" onclick="toggleMovExtra()" style="display:flex;align-items:center;gap:6px;padding:6px 0;cursor:pointer;color:var(--text3);font-size:13px;border-top:0.5px solid var(--border);margin-top:4px">
+          <i class="ti ti-chevron-right" id="mov-extra-ch" style="font-size:14px;transition:transform .2s"></i>
+          Notes i justificant
+        </div>
+        <div id="mov-extra" style="display:none">
+          <div class="mov-field"><label>Notes</label><textarea id="mov-notes" rows="2" style="resize:none"></textarea></div>
+          <div class="mov-field"><label>Justificant <span class="opt-label">(foto/PDF)</span></label><input type="file" id="mov-photo" accept="image/*,application/pdf" style="font-size:13px"></div>
+        </div>
+
+        <button class="btn btn-danger" style="width:100%;padding:13px;font-size:15px;margin-top:8px;border-radius:var(--r)" id="btn-registrar" onclick="registrarMoviment()">
+          <i class="ti ti-check"></i> Registrar despesa
+        </button>
       </div>
     </div>
 
@@ -2221,6 +2269,17 @@ function toggleDeleg(bid){
     b.classList.toggle('open');
     const head=b.previousElementSibling;
     if(head){const ch=head.querySelector('.chevron');if(ch)ch.classList.toggle('open');}
+  }
+}
+function toggleMovExtra(){
+  const el=document.getElementById('mov-extra');
+  const ch=document.getElementById('mov-extra-ch');
+  if(el.style.display==='none'){
+    el.style.display='block';
+    ch.style.transform='rotate(90deg)';
+  }else{
+    el.style.display='none';
+    ch.style.transform='rotate(0deg)';
   }
 }
 function toggleDelegClick(el){
