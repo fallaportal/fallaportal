@@ -209,7 +209,7 @@ tr:hover td{background:var(--bg2)}
     <div class="login-logo">Falla <span>Portal</span></div>
     <div class="login-sub">Sistema de gestió financera</div>
     <div class="login-fiscal">Any fiscal 26/27 · Abr 2026 – Mar 2027</div>
-    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v1.0.2</div>
+    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v1.0.6</div>
     <button class="btn-google" onclick="signIn()">
       <svg viewBox="0 0 24 24" width="20" height="20"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
       Entrar amb Google
@@ -251,7 +251,7 @@ tr:hover td{background:var(--bg2)}
     <div class="sb-bottom">
       <div class="sync-ind"><div class="sync-dot" id="sync-dot"></div><span id="sync-text">Sincronitzat</span></div>
       <button class="btn-logout" onclick="signOut()"><i class="ti ti-logout" style="font-size:14px"></i> Tancar sessió</button>
-      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v1.0.2</div>
+      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v1.0.6</div>
     </div>
   </div>
 
@@ -544,7 +544,7 @@ tr:hover td{background:var(--bg2)}
 
     <    <div id="page-manual" class="page">
       <div class="page-title">Manual d'usuari</div>
-      <div class="page-sub">Guia completa de l'app de gestió financera · v1.0.2</div>
+      <div class="page-sub">Guia completa de l'app de gestió financera · v1.0.6</div>
 
       <div style="display:flex;gap:6px;margin-bottom:20px;flex-wrap:wrap" id="man-tabs">
         <button class="btn btn-primary" onclick="showManTab('intro')">Introducció</button>
@@ -992,27 +992,37 @@ tr:hover td{background:var(--bg2)}
 
 <div class="modal-overlay" id="modal-event">
   <div class="modal">
-  <div class="modal-inner">
-    <div class="modal-title" id="mev-title">Nou event</div>
-    <div class="field"><label>Nom de l'event</label><input type="text" id="mev-nom" placeholder="p.e. Festa Cloenda 2027"></div>
-    <div class="field"><label>Delegació responsable</label><select id="mev-deleg"></select></div>
-    <div class="field-row">
-      <div class="field"><label>Any</label><input type="text" id="mev-year" placeholder="2027" style="width:80px"></div>
-      <div class="field"><label>Estat</label>
-        <select id="mev-status">
-          <option value="pendent">Pendent</option>
-          <option value="tancat">Tancat</option>
-        </select>
+    <div class="modal-inner">
+      <div class="modal-title" id="mev-title">Nou event</div>
+      <div class="field"><label>Nom de l'event</label><input type="text" id="mev-nom" placeholder="p.e. Festa Cloenda 2027"></div>
+      <div class="field"><label>Delegació responsable</label><select id="mev-deleg"></select></div>
+      <div class="field-row">
+        <div class="field"><label>Any fiscal</label><input type="text" id="mev-year" placeholder="26/27" style="width:90px"></div>
+        <div class="field"><label>Estat</label>
+          <select id="mev-status">
+            <option value="pendent">Pendent</option>
+            <option value="tancat">Tancat</option>
+          </select>
+        </div>
       </div>
+      <div class="field-row">
+        <div class="field"><label>Data inici</label><input type="date" id="mev-data-inici"></div>
+        <div class="field"><label>Hora inici</label><input type="time" id="mev-hora-inici" value="20:00"></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Data fi</label><input type="date" id="mev-data-fi"></div>
+        <div class="field"><label>Hora fi</label><input type="time" id="mev-hora-fi" value="02:00"></div>
+      </div>
+      <div class="field"><label>Responsable</label><select id="mev-resp"></select></div>
     </div>
-    <div class="field"><label>Responsable</label><input type="text" id="mev-resp" placeholder="p.e. Juanjo Felis"></div>
-    </div>
-  <div class="modal-footer">
+    <div class="modal-footer">
       <button class="btn" onclick="closeModal('modal-event')">Cancel·lar</button>
       <button class="btn btn-primary" onclick="saveEvent()">Guardar event</button>
     </div>
   </div>
-</d<div class="modal-overlay" id="modal-banc">
+</div>
+
+<div class="modal-overlay" id="modal-banc">
   <div class="modal">
     <div class="modal-inner">
       <div class="modal-title" id="mb-title">Nou banc</div>
@@ -1099,6 +1109,22 @@ tr:hover td{background:var(--bg2)}
 const CLIENT_ID='762692298201-gnhlho2ob1fb77s6uoevocji8r6afssm.apps.googleusercontent.com';
 const SCOPES='https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile';
 const SHEET_ID='1SUeIZbZN1kUxt5nNRkEVLZI__eHecYv4JZE5QNuGaQ0';
+const TABS={
+  moviments:{name:'01 Moviments',headers:['id','data','tipus','via','areaId','areaNom','delegacioId','delegacioNom','eventId','eventNom','concepte','establiment','responsable','responsableEmail','import','notes','anyFiscal','origenFons','fontImport']},
+  fons:{name:'02 Fons',headers:['id','data','tipus','delegId','delegEmail','import','nota','registratPer','anyFiscal','movimentId']},
+  tancaments:{name:'03 Tancaments',headers:['eventId','eventNom','data','efectiu','tpv','tancat','registratPer','anyFiscal']},
+  arees:{name:'04 Arees',headers:['id','nom','responsable']},
+  delegacions:{name:'05 Delegacions',headers:['id','areaId','nom','responsable']},
+  events:{name:'06 Events',headers:['id','delegId','nom','year','responsable','status','dataInici','horaInici','dataFi','horaFi','anyFiscal']},
+  bancs:{name:'07 Bancs',headers:['id','codi','nom','tipus','saldoInicial','saldoData']},
+  usuaris:{name:'08 Usuaris',headers:['id','nom','email','rol']},
+  usuaris_assignacions:{name:'09 Usuaris Assignacions',headers:['userId','userNom','tipus','id','nom','anyFiscal']},
+  pres_plans:{name:'10 Pressupostos Plans',headers:['any','delegacioId','delegacioNom','eventId','eventNom','concepte','tipus','importPla','notes']},
+  pres_config:{name:'11 Pressupostos Config',headers:['any','estat','bloquejatPer','bloquejatEmail','data']},
+  pres_historial:{name:'12 Pressupostos Historial',headers:['data','accio','any','usuari','email','motiu']},
+  regles:{name:'13 Regles CSV',headers:['id','font','patrons','areaId','areaNom','delegacioId','delegacioNom','concepte','tipus','movtype','prioritat','activa']},
+  rols:{name:'14 Rols',headers:['id','label','color','canRegister','canFons','canImport','canConfig','canUsers','viewAll','custom']}
+};
 const CACHE_KEY='fallaportal_cache';
 
 function saveCache(){
@@ -1612,6 +1638,7 @@ async function loadUserInfo(){
   if(emailLow==='it.fallaportal@gmail.com'){currentUser.rol='treasury';currentUser.id='it';}
   else{const u=(DB.config.usuaris||[]).find(function(x){return(x.email||'').toLowerCase()===emailLow;});currentUser.rol=u?u.rol:'noauth';currentUser.id=u?u.id:'';}
 }
+
 
 // TABS MIGRATION MAP
 const TABS_MIGRATION={
@@ -2825,7 +2852,7 @@ function renderCfgEvents(){
     html+='</div>';
   }
   html+='<div class="card"><div class="table-wrap"><table>';
-  html+='<thead><tr><th>Nom</th><th>Delegació</th><th>Any</th><th>Responsable</th><th>Estat</th>';
+  html+='<thead><tr><th>Nom</th><th>Delegació</th><th>Any fiscal</th><th>Inici</th><th>Fi</th><th>Responsable</th><th>Estat</th>';
   if(canEdit)html+='<th></th>';
   html+='</tr></thead><tbody>';
   DB.config.events.forEach(function(e){
@@ -2852,23 +2879,41 @@ var editEventId=null;
 
 function openModalEvent(id){
   editEventId=id;
-  const e=id?DB.config.events.find(x=>x.id===id):null;
+  const e=id?DB.config.events.find(function(x){return x.id===id;}):null;
   document.getElementById('mev-title').textContent=id?'Editar event':'Nou event';
+  // Delegacions
   const delegSel=document.getElementById('mev-deleg');
   delegSel.innerHTML=DB.config.delegacions.map(function(d){
     return'<option value="'+d.id+'">'+d.id+' - '+d.name+'</option>';
   }).join('');
+  // Responsable - dropdown d'usuaris (president, treasury, area)
+  const respSel=document.getElementById('mev-resp');
+  respSel.innerHTML='<option value="">— Selecciona responsable —</option>'+
+    (DB.config.usuaris||[])
+    .filter(function(u){return u.rol==='president'||u.rol==='treasury'||u.rol==='area';})
+    .sort(function(a,b){return a.nom.localeCompare(b.nom,'ca');})
+    .map(function(u){return'<option value="'+u.nom+'">'+u.nom+'</option>';})
+    .join('');
+  const af=getAnyFiscal();
   if(e){
     document.getElementById('mev-nom').value=e.name||'';
     delegSel.value=e.delegId||'';
-    document.getElementById('mev-year').value=e.year||'2027';
-    document.getElementById('mev-resp').value=e.resp||'';
+    document.getElementById('mev-year').value=e.anyFiscal||e.year||af;
+    respSel.value=e.resp||'';
     document.getElementById('mev-status').value=e.status||'pendent';
+    document.getElementById('mev-data-inici').value=e.dataInici||'';
+    document.getElementById('mev-hora-inici').value=e.horaInici||'20:00';
+    document.getElementById('mev-data-fi').value=e.dataFi||'';
+    document.getElementById('mev-hora-fi').value=e.horaFi||'02:00';
   }else{
     document.getElementById('mev-nom').value='';
-    document.getElementById('mev-year').value='2027';
-    document.getElementById('mev-resp').value='';
+    document.getElementById('mev-year').value=af;
+    respSel.value='';
     document.getElementById('mev-status').value='pendent';
+    document.getElementById('mev-data-inici').value='';
+    document.getElementById('mev-hora-inici').value='20:00';
+    document.getElementById('mev-data-fi').value='';
+    document.getElementById('mev-hora-fi').value='02:00';
   }
   openModal('modal-event');
 }
@@ -2876,15 +2921,22 @@ function openModalEvent(id){
 async function saveEvent(){
   const nom=document.getElementById('mev-nom').value.trim();
   const delegId=document.getElementById('mev-deleg').value;
-  const year=document.getElementById('mev-year').value.trim();
-  const resp=document.getElementById('mev-resp').value.trim();
+  const anyFiscal=document.getElementById('mev-year').value.trim();
+  const resp=document.getElementById('mev-resp').value;
   const status=document.getElementById('mev-status').value;
+  const dataInici=document.getElementById('mev-data-inici').value;
+  const horaInici=document.getElementById('mev-hora-inici').value;
+  const dataFi=document.getElementById('mev-data-fi').value;
+  const horaFi=document.getElementById('mev-hora-fi').value;
   if(!nom||!delegId){showToast('Nom i delegacio son obligatoris',true);return;}
   if(editEventId){
-    const e=DB.config.events.find(x=>x.id===editEventId);
-    if(e){e.name=nom;e.delegId=delegId;e.year=year;e.resp=resp;e.status=status;}
+    const e=DB.config.events.find(function(x){return x.id===editEventId;});
+    if(e){e.name=nom;e.delegId=delegId;e.year=anyFiscal;e.anyFiscal=anyFiscal;
+      e.resp=resp;e.status=status;e.dataInici=dataInici;e.horaInici=horaInici;
+      e.dataFi=dataFi;e.horaFi=horaFi;}
   }else{
-    DB.config.events.push({id:'e'+Date.now(),delegId,name:nom,year,resp,status});
+    DB.config.events.push({id:'e'+Date.now(),delegId,name:nom,year:anyFiscal,
+      anyFiscal,resp,status,dataInici,horaInici,dataFi,horaFi});
   }
   saveCache();
   closeModal('modal-event');
@@ -3812,58 +3864,6 @@ function initGoogleAuth(){
   });
 }
 
-async function loadFromSheets(){
-  await initSheets();
-  const movsRows=await readTab(TABS.moviments.name);
-  DB.moviments=movsRows.map(function(r){return{...r,import:parseFloat(r.import)||0};});
-  const fonsRows=await readTab(TABS.fons.name);
-  DB.fons=fonsRows.map(function(r){return{...r,import:parseFloat(r.import)||0};});
-  const tancRows=await readTab(TABS.tancaments.name);
-  DB.tancaments={};
-  tancRows.forEach(function(r){DB.tancaments[r.eventId]={...r,efectiu:parseFloat(r.efectiu)||0,tpv:parseFloat(r.tpv)||0};});
-  const arees=await readTab(TABS.arees.name);
-  const delegacions=await readTab(TABS.delegacions.name);
-  const events=await readTab(TABS.events.name);
-  const bancs=await readTab(TABS.bancs.name);
-  const usuaris=await readTab(TABS.usuaris.name);
-  const assignacions=await readTab(TABS.usuaris_assignacions.name);
-  if(arees.length>0||usuaris.length>0){
-    const cfg=rowsToConfig(arees,delegacions,events,bancs,usuaris,assignacions);
-    DB.config.areas=cfg.areas;
-    DB.config.delegacions=cfg.delegacions;
-    DB.config.events=cfg.events;
-    DB.config.bancs=cfg.bancs;
-    DB.config.usuaris=cfg.usuaris;
-    if(cfg.directiva&&Object.keys(cfg.directiva).length>0)DB.config.directiva=cfg.directiva;
-  }
-  if(!DB.config.bancs||!DB.config.bancs.length){
-    DB.config.bancs=[
-      {id:'b1',codi:'01 Banc',nom:'Caixabank',tipus:'bank',saldoInicial:0,saldoData:''},
-      {id:'b2',codi:'02 Banc',nom:'Caixa Popular',tipus:'bank',saldoInicial:0,saldoData:''},
-      {id:'b3',codi:'Efectiu',nom:'Caixa efectiu',tipus:'cash',saldoInicial:0,saldoData:''},
-      {id:'b4',codi:'TPV',nom:'TPV targetes',tipus:'tpv',saldoInicial:0,saldoData:''}
-    ];
-  }
-  const presRows=await readTab(TABS.pres_plans.name);
-  DB.pres_plans=presRows.map(function(r){return{...r,importPla:parseFloat(r.importPla)||0};});
-  const presHistRows=await readTab(TABS.pres_historial.name);
-  DB.pres_historial=presHistRows;
-  const presConfigRows=await readTab(TABS.pres_config.name);
-  if(presConfigRows.length>0)DB.pres_config=presConfigRows[presConfigRows.length-1];
-  const reglesRows=await readTab(TABS.regles.name);
-  DB.regles=reglesRows.map(function(r){return{...r,prioritat:parseInt(r.prioritat)||10,activa:r.activa!=='false'};});
-  if(!DB.regles.length)DB.regles=getDefaultRegles();
-  const rolsRows=await readTab(TABS.rols.name);
-  if(rolsRows.length>0){
-    DB.config.rols={};
-    rolsRows.forEach(function(r){
-      DB.config.rols[r.id]={id:r.id,label:r.label,color:r.color||'p-gray',
-        canRegister:r.canRegister==='true',canFons:r.canFons==='true',
-        canImport:r.canImport==='true',canConfig:r.canConfig==='true',
-        canUsers:r.canUsers==='true',viewAll:r.viewAll==='true',custom:r.custom==='true'};
-    });
-  }
-}
 
 async function loadAllFromDrive(){
   const hasCache=loadCache();
