@@ -209,7 +209,7 @@ tr:hover td{background:var(--bg2)}
     <div class="login-logo">Falla <span>Portal</span></div>
     <div class="login-sub">Sistema de gestió financera</div>
     <div class="login-fiscal">Any fiscal 26/27 · Abr 2026 – Mar 2027</div>
-    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v0.9.7</div>
+    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v0.9.8</div>
     <button class="btn-google" onclick="signIn()">
       <svg viewBox="0 0 24 24" width="20" height="20"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
       Entrar amb Google
@@ -251,7 +251,7 @@ tr:hover td{background:var(--bg2)}
     <div class="sb-bottom">
       <div class="sync-ind"><div class="sync-dot" id="sync-dot"></div><span id="sync-text">Sincronitzat</span></div>
       <button class="btn-logout" onclick="signOut()"><i class="ti ti-logout" style="font-size:14px"></i> Tancar sessió</button>
-      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v0.9.7</div>
+      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v0.9.8</div>
     </div>
   </div>
 
@@ -544,7 +544,7 @@ tr:hover td{background:var(--bg2)}
 
     <    <div id="page-manual" class="page">
       <div class="page-title">Manual d'usuari</div>
-      <div class="page-sub">Guia completa de l'app de gestió financera · v0.9.7</div>
+      <div class="page-sub">Guia completa de l'app de gestió financera · v0.9.8</div>
 
       <div style="display:flex;gap:6px;margin-bottom:20px;flex-wrap:wrap" id="man-tabs">
         <button class="btn btn-primary" onclick="showManTab('intro')">Introducció</button>
@@ -909,6 +909,37 @@ tr:hover td{background:var(--bg2)}
   </div>
 </div>
 
+<div class="modal-overlay" id="modal-nou-exercici">
+  <div class="modal">
+    <div class="modal-inner">
+      <div class="modal-title">Nou exercici fiscal</div>
+      <div class="field">
+        <label>Any fiscal <span style="color:var(--text3);font-size:11px">(format XX/YY, p.e. 25/26)</span></label>
+        <input type="text" id="nex-any" placeholder="25/26" maxlength="5" style="width:120px">
+      </div>
+      <div class="field">
+        <label>Data d'obertura</label>
+        <input type="date" id="nex-data">
+      </div>
+      <div class="field" style="display:flex;align-items:center;gap:10px">
+        <input type="checkbox" id="nex-test" style="width:auto;margin:0">
+        <label for="nex-test" style="margin:0;cursor:pointer">
+          Exercici de <strong>prova / test</strong>
+          <span style="color:var(--text3);font-size:12px;font-weight:400"> — els moviments no afecten la comptabilitat real</span>
+        </label>
+      </div>
+      <div class="info-box" style="font-size:12px">
+        <i class="ti ti-info-circle" style="flex-shrink:0"></i>
+        Pots crear exercicis de qualsevol any, incloent el passat. L'exercici actual seguira actiu.
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('modal-nou-exercici')">Cancel·lar</button>
+      <button class="btn btn-primary" onclick="saveNouExercici()"><i class="ti ti-check"></i> Crear exercici</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="modal-copy-dir">
   <div class="modal" style="max-width:400px">
   <div class="modal-inner">
@@ -1243,905 +1274,44 @@ function canviarExercici(any){
   showToast('Exercici '+any+' seleccionat');
 }
 
-async function obrirNouExercici(){
+function obrirNouExercici(){
   const canDo=getRol()==='president'||getRol()==='treasury';
-  if(!canDo){showToast('Sols President o Tresoreria poden canviar exercici',true);return;}
-  // Calcular nou any fiscal
+  if(!canDo){showToast('Sols President o Tresoreria poden fer aquesta accio',true);return;}
   const current=getAnyFiscal();
   const parts=current.split('/');
   const nextStart=parseInt(parts[0])+1;
   const nextEnd=parseInt(parts[1])+1;
-  const nouAny=nextStart+'/'+nextEnd;
-  if(!confirm('Obrir nou exercici '+nouAny+'? El '+current+' seguira actiu i podras consultar-lo en qualsevol moment des del selector d\'any fiscal.'))return;
-  if(!DB.config.exercicis)DB.config.exercicis=['26/27'];
+  document.getElementById('nex-any').value=nextStart+'/'+nextEnd;
+  const sugData=calcDataObertura(nextStart+'/'+nextEnd);
+  const sugDataISO=sugData.split('/').reverse().join('-');
+  document.getElementById('nex-data').value=sugDataISO;
+  document.getElementById('nex-test').checked=false;
+  openModal('modal-nou-exercici');
+}
+
+async function saveNouExercici(){
+  const nouAny=document.getElementById('nex-any').value.trim();
+  const dataObertura=document.getElementById('nex-data').value;
+  const isTest=document.getElementById('nex-test').checked;
+  if(!nouAny||nouAny.length<5){showToast('Format invalid. Usa XX/YY (p.e. 25/26)',true);return;}
+  if(!DB.config.exercicis)DB.config.exercicis=[];
   if(!DB.config.exercicis.includes(nouAny)){
     DB.config.exercicis.push(nouAny);
-    if(!DB.config.estats_exercicis)DB.config.estats_exercicis={};
-    DB.config.estats_exercicis[nouAny]={tancat:false,dataObertura:calcDataObertura(nouAny),dataTancament:''};
-    if(!DB.config.estats_exercicis[current]){
-      DB.config.estats_exercicis[current]={tancat:false,dataObertura:calcDataObertura(current),dataTancament:''};
-    }
   }
+  if(!DB.config.estats_exercicis)DB.config.estats_exercicis={};
+  const dataOb=dataObertura?dataObertura.split('-').reverse().join('/'):calcDataObertura(nouAny);
+  DB.config.estats_exercicis[nouAny]={tancat:false,dataObertura:dataOb,dataTancament:'',test:isTest};
   DB.config.anyFiscal=nouAny;
-  // Actualitzar selector
+  saveCache();
   initExerciciSelector();
   canviarExercici(nouAny);
-  await save('config');
-  showToast('Exercici '+nouAny+' obert correctament');
-}
-
-function openModal(id){
-  const el=document.getElementById(id);
-  if(el)el.classList.add('open');
-}
-function closeModal(id){
-  const el=document.getElementById(id);
-  if(el)el.classList.remove('open');
-}
-function toggleDeleg(bid){
-  const b=document.getElementById(bid);
-  if(b){
-    b.classList.toggle('open');
-    const head=b.previousElementSibling;
-    if(head){const ch=head.querySelector('.chevron');if(ch)ch.classList.toggle('open');}
-  }
-}
-function toggleDelegClick(el){
-  const bid=el.getAttribute('data-bid');
-  if(bid)toggleDeleg(bid);
-}
-
-function openModalUsuari(id){
-  editUserId=id||null;
-  const u=id?(DB.config.usuaris||[]).find(function(x){return x.id===id;}):null;
-  document.getElementById('mu-title').textContent=id?'Editar usuari':'Nou usuari';
-  document.getElementById('mu-nom').value=u?u.nom:'';
-  document.getElementById('mu-email').value=u?u.email:'';
-  document.getElementById('mu-email').disabled=!!id;
-  document.getElementById('mu-rol').value=u?(u.rol||'delegat'):'delegat';
-  openModal('modal-usuari');
-}
-
-async function saveUsuari(){
-  const nom=document.getElementById('mu-nom').value.trim();
-  const email=document.getElementById('mu-email').value.trim().toLowerCase();
-  const rol=document.getElementById('mu-rol').value;
-  if(!nom||!email){showToast('Nom i email son obligatoris',true);return;}
-  if(!editUserId&&(DB.config.usuaris||[]).find(function(u){return u.email.toLowerCase()===email;})){
-    showToast('Ja existeix un usuari amb aquest email',true);return;
-  }
-  if(editUserId){
-    const u=(DB.config.usuaris||[]).find(function(x){return x.id===editUserId;});
-    if(u){u.nom=nom;u.rol=rol;}
-  }else{
-    if(!DB.config.usuaris)DB.config.usuaris=[];
-    DB.config.usuaris.push({id:'u'+Date.now(),nom,email,rol,arees:[],delegacions:[]});
-  }
-  saveCache();
-  closeModal('modal-usuari');
-  renderCfgUsuaris();
-  showToast('Usuari guardat');
+  closeModal('modal-nou-exercici');
+  renderCfgExercicis();
+  showToast('Exercici '+nouAny+(isTest?' (TEST)':'')+' creat correctament');
   save('config').catch(function(e){showToast('Error: '+e.message,true);});
 }
 
-async function deleteUsuari(id){
-  const u=(DB.config.usuaris||[]).find(function(x){return x.id===id;});
-  if(!u)return;
-  if(!confirm('Eliminar usuari '+u.nom+'?'))return;
-  DB.config.usuaris=DB.config.usuaris.filter(function(x){return x.id!==id;});
-  saveCache();renderCfgUsuaris();
-  showToast('Usuari eliminat');
-  save('config').catch(function(e){showToast('Error: '+e.message,true);});
-}
 
-function showPageMob(id,mobId){
-  showPage(id);
-  document.querySelectorAll('.mob-item').forEach(function(el){el.classList.remove('active');});
-  if(mobId){const el=document.getElementById(mobId);if(el)el.classList.add('active');}
-}
-
-function showMobMenu(){
-  const menu=document.getElementById('mob-menu');
-  if(menu)menu.classList.add('open');
-}
-
-function closeMobMenu(){
-  const menu=document.getElementById('mob-menu');
-  if(menu)menu.classList.remove('open');
-}
-
-function initFappDates(){
-  const af=getAnyFiscal()||'26/27';
-  const parts=af.split('/');
-  const anyInici='20'+parts[0];
-  const anyFi='20'+parts[1];
-  const dataInici='01/04/'+anyInici;
-  const dataFi='31/03/'+anyFi;
-  const el1=document.getElementById('fapp-data-inici');
-  const el2=document.getElementById('fapp-data-fi');
-  if(el1)el1.textContent=dataInici;
-  if(el2)el2.textContent=dataFi;
-  const dates=anyInici+'-04-01 - '+anyFi+'-03-31';
-  const d1=document.getElementById('fapp-instruccio-dates-1');
-  const d3=document.getElementById('fapp-instruccio-dates-3');
-  if(d1)d1.textContent=dates;
-  if(d3)d3.textContent=dates;
-}
-
-function handleFappDrop(event,zona){
-  event.preventDefault();
-  document.getElementById('fapp-drop-'+zona).classList.remove('drag-over');
-  const file=event.dataTransfer.files[0];
-  if(file)processFappFile(file,zona);
-}
-
-function loadFappFile(event,zona){
-  const file=event.target.files[0];
-  if(file)processFappFile(file,zona);
-}
-
-function processFappFile(file,zona){
-  const reader=new FileReader();
-  reader.onload=function(e){
-    try{
-      const data=new Uint8Array(e.target.result);
-      const wb=XLSX.read(data,{type:'array'});
-      const ws=wb.Sheets[wb.SheetNames[0]];
-      const rows=XLSX.utils.sheet_to_json(ws);
-      document.getElementById('fapp-drop-'+zona).classList.add('loaded');
-      if(zona===1)renderFappPreview1(rows);
-      else if(zona===2)renderFappPreview2(rows);
-      else if(zona===3)renderFappPreview3(rows);
-    }catch(err){
-      document.getElementById('fapp-preview-'+zona).innerHTML='<div class="info-box" style="margin-top:10px;color:var(--red)"><i class="ti ti-x"></i> Error llegint el fitxer: '+err.message+'</div>';
-    }
-  };
-  reader.readAsArrayBuffer(file);
-}
-
-function renderFappPreview1(rows){
-  window._fappTransRows=rows;
-  const valid=rows.filter(function(r){return r['Estado']==='Autorizado'&&r['Cantidad'];});
-  const efectiu=valid.filter(function(r){return r['Tipo']==='Recarga de efectivo';});
-  const tpv=valid.filter(function(r){return r['Tipo']==='Recarga de TPV';});
-  const devol=valid.filter(function(r){return(r['Tipo']||'').includes('Devoluci');});
-  const totEf=efectiu.reduce(function(s,r){return s+(parseFloat(r['Cantidad'])||0);},0);
-  const totTpv=tpv.reduce(function(s,r){return s+(parseFloat(r['Cantidad'])||0);},0);
-  const totDev=devol.reduce(function(s,r){return s+(parseFloat(r['Cantidad'])||0);},0);
-
-  let html='<div class="card" style="margin-top:12px">';
-  html+='<div class="card-title"><i class="ti ti-check" style="color:var(--green)"></i> Fitxer llegit correctament — '+valid.length+' transaccions</div>';
-  html+='<div class="flow-row"><span>Recarregues efectiu → Caixa falla</span><span style="color:var(--green);font-weight:500">+'+fmtD(totEf)+'</span></div>';
-  html+='<div class="flow-row"><span>Recarregues TPV → Banc</span><span style="color:var(--green);font-weight:500">+'+fmtD(totTpv)+'</span></div>';
-  html+='<div class="flow-row"><span>Devolucions efectiu</span><span style="color:var(--red);font-weight:500">'+fmtD(totDev)+'</span></div>';
-  html+='<div class="flow-row" style="font-weight:600;border-top:1px solid var(--border);margin-top:6px;padding-top:8px"><span>TOTAL NET</span><span style="color:var(--green)">+'+fmtD(totEf+totTpv+totDev)+'</span></div>';
-  html+='<div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap">';
-  html+='<div class="field" style="min-width:160px"><label>Via efectiu</label><select id="fapp-via-ef">';
-  (DB.config.bancs||[]).filter(function(b){return b.tipus==='cash';}).forEach(function(b){html+='<option value="'+b.codi+'">'+b.nom+'</option>';});
-  html+='</select></div>';
-  html+='<div class="field" style="min-width:160px"><label>Via TPV/Banc</label><select id="fapp-via-tpv">';
-  (DB.config.bancs||[]).filter(function(b){return b.tipus==='bank';}).forEach(function(b){html+='<option value="'+b.codi+'">'+b.nom+'</option>';});
-  html+='</select></div>';
-  html+='<div class="field" style="min-width:160px"><label>Area destí</label><select id="fapp-area-dest">';
-  DB.config.areas.forEach(function(a){html+='<option value="'+a.id+'">'+a.id+' '+a.name+'</option>';});
-  html+='</select></div>';
-  html+='<div class="field" style="min-width:160px"><label>Delegació destí</label><select id="fapp-deleg-dest">';
-  DB.config.delegacions.forEach(function(d){html+='<option value="'+d.id+'">'+d.id+' '+d.name+'</option>';});
-  html+='</select></div>';
-  html+='</div>';
-  html+='<button class="btn btn-primary" style="margin-top:12px" onclick="importarFappTrans()"><i class="ti ti-check"></i> Importar '+valid.length+' transaccions</button>';
-  html+='</div>';
-  document.getElementById('fapp-preview-1').innerHTML=html;
-}
-
-function renderFappPreview2(rows){
-  const valid=rows.filter(function(r){return parseFloat(r['Balance'])>0;});
-  const total=valid.reduce(function(s,r){return s+(parseFloat(r['Balance'])||0);},0);
-  DB.config.fappPassiu={total,data:today(),fallers:valid.length};
-  saveCache();
-
-  let html='<div class="card" style="margin-top:12px">';
-  html+='<div class="card-title"><i class="ti ti-check" style="color:var(--green)"></i> Fitxer llegit correctament — '+rows.length+' fallers</div>';
-  html+='<div class="flow-row"><span>Fallers amb saldo pendent</span><span style="font-weight:500">'+valid.length+'</span></div>';
-  html+='<div class="flow-row" style="font-weight:600"><span>PASSIU TOTAL (deute amb fallers)</span><span style="color:var(--amber)">'+fmtD(total)+'</span></div>';
-  html+='<div style="max-height:250px;overflow-y:auto;margin-top:10px"><table style="width:100%"><thead><tr><th>Faller</th><th style="text-align:right">Saldo</th></tr></thead><tbody>';
-  valid.sort(function(a,b){return b['Balance']-a['Balance'];}).slice(0,30).forEach(function(r){
-    html+='<tr><td style="font-size:12px">'+r['Usuario']+'</td><td style="text-align:right;font-weight:500;color:var(--amber);font-size:12px">'+fmtD(parseFloat(r['Balance']))+'</td></tr>';
-  });
-  if(valid.length>30)html+='<tr><td colspan="2" style="color:var(--text3);text-align:center;font-size:12px">... i '+(valid.length-30)+' fallers més</td></tr>';
-  html+='</tbody></table></div></div>';
-  document.getElementById('fapp-preview-2').innerHTML=html;
-}
-
-function renderFappPreview3(rows){
-  window._fappTicketRows=rows.filter(function(r){
-    return r['Ticket']&&r['Cantidad']&&!isNaN(parseFloat(r['Cantidad']))&&parseFloat(r['Cantidad'])>0&&r['¿Es devolución?']!=='Si'&&r['¿Es devolución?']!=='Sí';
-  });
-
-  function extractPreu(nom){const m=(nom||'').match(/(\d+(?:[.,]\d+)?)\s*€/);return m?parseFloat(m[1].replace(',','.')):0;}
-
-  const resum={};
-  window._fappTicketRows.forEach(function(r){
-    const d=new Date(r['Fecha']);
-    const mes=isNaN(d)?'?':d.toISOString().substring(0,7);
-    if(!resum[mes])resum[mes]=0;
-    resum[mes]+=(parseFloat(r['Cantidad'])||0)*extractPreu(r['Ticket']||'');
-  });
-  const totalGen=Object.values(resum).reduce(function(s,v){return s+v;},0);
-
-  let html='<div class="card" style="margin-top:12px">';
-  html+='<div class="card-title"><i class="ti ti-check" style="color:var(--green)"></i> Fitxer llegit — '+window._fappTicketRows.length+' transaccions</div>';
-  Object.entries(resum).sort().forEach(function(e){html+='<div class="flow-row"><span>'+e[0]+'</span><span style="color:var(--green)">'+fmtD(e[1])+'</span></div>';});
-  html+='<div class="flow-row" style="font-weight:700;border-top:1px solid var(--border);margin-top:6px;padding-top:8px"><span>TOTAL</span><span style="color:var(--green)">'+fmtD(totalGen)+'</span></div>';
-  html+='<div style="margin-top:14px"><div style="font-weight:500;margin-bottom:8px">Assignar consums a events:</div>';
-  DB.config.events.filter(function(e){return e.status!=='tancat';}).forEach(function(ev){
-    html+='<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-top:0.5px solid var(--border);flex-wrap:wrap">';
-    html+='<div style="font-weight:500;font-size:13px;min-width:180px">'+ev.name+'</div>';
-    html+='<input type="date" id="ev-from-'+ev.id+'" style="font-size:12px;padding:4px 8px">';
-    html+='<span style="color:var(--text3);font-size:12px">fins</span>';
-    html+='<input type="date" id="ev-to-'+ev.id+'" style="font-size:12px;padding:4px 8px">';
-    html+='<button class="btn" style="font-size:12px" data-evid="'+ev.id+'" data-evnom="'+ev.name+'" onclick="calcConsumEvent(this)">Calcular</button>';
-    html+='<div id="ev-result-'+ev.id+'" style="width:100%;font-size:12px;color:var(--text2)"></div>';
-    html+='</div>';
-  });
-  html+='</div></div>';
-  document.getElementById('fapp-preview-3').innerHTML=html;
-}
-
-function showManTab(tab){
-  const tabs=['intro','moviments','fons','tancament','pressupostos','exercicis','directiva','fallesapp','rols'];
-  tabs.forEach(function(t){
-    const el=document.getElementById('man-'+t);
-    if(el)el.style.display=t===tab?'block':'none';
-  });
-  document.querySelectorAll('#man-tabs .btn').forEach(function(btn,i){
-    btn.className=tabs[i]===tab?'btn btn-primary':'btn';
-  });
-}
-
-function showFappTab(tab){
-  ['trans','saldos','tickets','bonif'].forEach(function(t){
-    const el=document.getElementById('fapp-'+t);
-    const btn=document.getElementById('fapp-tab-'+t);
-    if(el)el.style.display=t===tab?'block':'none';
-    if(btn){btn.className=t===tab?'btn btn-primary':'btn';}
-  });
-}
-
-function previewFappTrans(){
-  const file=document.getElementById('fapp-trans-file').files[0];
-  if(!file)return;
-  const reader=new FileReader();
-  reader.onload=function(e){
-    try{
-      const data=new Uint8Array(e.target.result);
-      const wb=XLSX.read(data,{type:'array'});
-      const ws=wb.Sheets[wb.SheetNames[0]];
-      const rows=XLSX.utils.sheet_to_json(ws);
-      const valid=rows.filter(function(r){return r['Estado']==='Autorizado'&&r['Cantidad'];});
-      const efectiu=valid.filter(function(r){return r['Tipo']==='Recarga de efectivo';});
-      const tpv=valid.filter(function(r){return r['Tipo']==='Recarga de TPV';});
-      const devol=valid.filter(function(r){return r['Tipo']==='Devolucion en efectivo'||r['Tipo']==='Devolución en efectivo';});
-      const totEf=efectiu.reduce(function(s,r){return s+(parseFloat(r['Cantidad'])||0);},0);
-      const totTpv=tpv.reduce(function(s,r){return s+(parseFloat(r['Cantidad'])||0);},0);
-      const totDev=devol.reduce(function(s,r){return s+(parseFloat(r['Cantidad'])||0);},0);
-
-      let html='<div class="card" style="margin-bottom:14px">';
-      html+='<div class="card-title">Resum de la importació</div>';
-      html+='<div class="flow-row"><span>Recarregues efectiu (→ Caixa falla)</span><span style="color:var(--green);font-weight:500">+'+fmtD(totEf)+'</span></div>';
-      html+='<div class="flow-row"><span>Recarregues TPV (→ Banc)</span><span style="color:var(--green);font-weight:500">+'+fmtD(totTpv)+'</span></div>';
-      html+='<div class="flow-row"><span>Devolucions efectiu</span><span style="color:var(--red);font-weight:500">'+fmtD(totDev)+'</span></div>';
-      html+='<div class="flow-row" style="font-weight:600;border-top:1px solid var(--border);margin-top:8px;padding-top:8px"><span>TOTAL NET</span><span style="color:var(--green)">+'+fmtD(totEf+totTpv+totDev)+'</span></div>';
-      html+='</div>';
-
-      // Selector de via per a efectiu i TPV
-      html+='<div class="card" style="margin-bottom:14px;max-width:500px">';
-      html+='<div class="card-title">Assignació de vies</div>';
-      html+='<div class="field"><label>Via per a recarregues en efectiu</label><select id="fapp-via-ef">';
-      (DB.config.bancs||[]).filter(function(b){return b.tipus==='cash';}).forEach(function(b){
-        html+='<option value="'+b.codi+'">'+b.nom+'</option>';
-      });
-      html+='</select></div>';
-      html+='<div class="field"><label>Via per a recarregues TPV/targeta</label><select id="fapp-via-tpv">';
-      (DB.config.bancs||[]).filter(function(b){return b.tipus==='bank'||b.tipus==='tpv';}).forEach(function(b){
-        html+='<option value="'+b.codi+'">'+b.nom+'</option>';
-      });
-      html+='</select></div>';
-      html+='<div class="field"><label>Area destí</label><select id="fapp-area-dest">';
-      DB.config.areas.forEach(function(a){html+='<option value="'+a.id+'">'+a.id+' - '+a.name+'</option>';});
-      html+='</select></div>';
-      html+='<div class="field"><label>Delegació destí</label><select id="fapp-deleg-dest">';
-      DB.config.delegacions.forEach(function(d){html+='<option value="'+d.id+'">'+d.id+' - '+d.name+'</option>';});
-      html+='</select></div>';
-      html+='</div>';
-
-      html+='<button class="btn btn-primary" onclick="importarFappTrans()"><i class="ti ti-check"></i> Importar '+valid.length+' transaccions</button>';
-      document.getElementById('fapp-trans-preview').innerHTML=html;
-      window._fappTransRows=rows;
-    }catch(err){
-      document.getElementById('fapp-trans-preview').innerHTML='<div style="color:var(--red)">Error llegint el fitxer: '+err.message+'</div>';
-    }
-  };
-  reader.readAsArrayBuffer(file);
-}
-
-async function importarFappTrans(){
-  const rows=window._fappTransRows;
-  if(!rows)return;
-  const viaEf=document.getElementById('fapp-via-ef')?.value||'Efectiu';
-  const viaTpv=document.getElementById('fapp-via-tpv')?.value||'01 Banc';
-  const areaId=document.getElementById('fapp-area-dest')?.value||'01';
-  const delegId=document.getElementById('fapp-deleg-dest')?.value||'0102';
-  const area=DB.config.areas.find(function(a){return a.id===areaId;});
-  const deleg=DB.config.delegacions.find(function(d){return d.id===delegId;});
-  const af=getAnyFiscal();
-  let importats=0,saltats=0;
-
-  rows.forEach(function(r){
-    if(r['Estado']!=='Autorizado'||!r['Cantidad'])return;
-    const tipus=r['Tipo']||'';
-    const imp=parseFloat(r['Cantidad'])||0;
-    if(imp===0)return;
-    let via,tipusMov;
-    if(tipus==='Recarga de efectivo'){via=viaEf;tipusMov='ing';}
-    else if(tipus==='Recarga de TPV'){via=viaTpv;tipusMov='ing';}
-    else if(tipus.includes('Devoluci')){via=viaEf;tipusMov='gast';}
-    else{saltats++;return;}
-
-    const data=r['Fecha']?new Date(r['Fecha']).toISOString().split('T')[0]:today();
-    DB.moviments.push({
-      id:'m'+Date.now()+Math.random(),anyFiscal:af,tipus:tipusMov,via,
-      areaId,areaNom:area?.name||'',delegacioId:delegId,delegacioNom:deleg?.name||'',
-      eventId:'',eventNom:'',concepte:tipus+' - '+(r['Usuario']||''),
-      establiment:'falles.app',data,responsable:currentUser?.name||'',
-      responsableEmail:currentUser?.email||'',import:Math.abs(imp),
-      notes:'Importat de falles.app',origenFons:'',fontImport:'fallesapp'
-    });
-    importats++;
-  });
-
-  saveCache();
-  showToast('Importats '+importats+' moviments ('+saltats+' saltats)');
-  save('moviments').catch(function(e){showToast('Error: '+e.message,true);});
-  document.getElementById('fapp-trans-preview').innerHTML+='<div class="info-box" style="margin-top:12px;color:var(--green)"><i class="ti ti-check"></i> '+importats+' moviments importats correctament.</div>';
-}
-
-function previewFappSaldos(){
-  const file=document.getElementById('fapp-saldos-file').files[0];
-  if(!file)return;
-  const reader=new FileReader();
-  reader.onload=function(e){
-    try{
-      const data=new Uint8Array(e.target.result);
-      const wb=XLSX.read(data,{type:'array'});
-      const ws=wb.Sheets[wb.SheetNames[0]];
-      const rows=XLSX.utils.sheet_to_json(ws);
-      const valid=rows.filter(function(r){return r['Balance']>0;});
-      const total=valid.reduce(function(s,r){return s+(parseFloat(r['Balance'])||0);},0);
-
-      let html='<div class="card" style="margin-bottom:14px">';
-      html+='<div class="card-title">Saldos moneders falles.app</div>';
-      html+='<div class="flow-row"><span>Fallers amb saldo pendent</span><span style="font-weight:500">'+valid.length+'</span></div>';
-      html+='<div class="flow-row" style="font-weight:600"><span>PASSIU TOTAL (deute amb fallers)</span><span style="color:var(--amber)">'+fmtD(total)+'</span></div>';
-      html+='</div>';
-
-      html+='<div class="card" style="max-height:400px;overflow-y:auto;padding:0"><div class="table-wrap"><table>';
-      html+='<thead><tr><th>Faller</th><th style="text-align:right">Saldo</th></tr></thead><tbody>';
-      valid.sort(function(a,b){return b['Balance']-a['Balance'];}).slice(0,50).forEach(function(r){
-        html+='<tr><td>'+r['Usuario']+'</td><td style="text-align:right;font-weight:500;color:var(--amber)">'+fmtD(r['Balance'])+'</td></tr>';
-      });
-      if(valid.length>50)html+='<tr><td colspan="2" style="color:var(--text3);text-align:center">... i '+(valid.length-50)+' fallers més</td></tr>';
-      html+='</tbody></table></div></div>';
-      document.getElementById('fapp-saldos-preview').innerHTML=html;
-      // Guardar passiu a DB
-      DB.config.fappPassiu={total,data:today(),fallers:valid.length};
-      saveCache();
-    }catch(err){
-      document.getElementById('fapp-saldos-preview').innerHTML='<div style="color:var(--red)">Error: '+err.message+'</div>';
-    }
-  };
-  reader.readAsArrayBuffer(file);
-}
-
-function previewFappTickets(){
-  const file=document.getElementById('fapp-tickets-file').files[0];
-  if(!file)return;
-  const reader=new FileReader();
-  reader.onload=function(e){
-    try{
-      const data=new Uint8Array(e.target.result);
-      const wb=XLSX.read(data,{type:'array'});
-      const ws=wb.Sheets[wb.SheetNames[0]];
-      const rows=XLSX.utils.sheet_to_json(ws);
-      // Filtrar files vàlides
-      const valid=rows.filter(function(r){
-        return r['Ticket']&&r['Cantidad']&&!isNaN(parseFloat(r['Cantidad']))&&parseFloat(r['Cantidad'])>0&&r['¿Es devolución?']!=='Si'&&r['¿Es devolución?']!=='Sí';
-      });
-
-      // Extreure preu del nom del ticket
-      function extractPreu(nom){
-        const m=nom.match(/\((\d+(?:[.,]\d+)?)\s*€\)/);
-        return m?parseFloat(m[1].replace(',','.')):0;
-      }
-
-      // Agrupar per mes i ticket
-      const resum={};
-      valid.forEach(function(r){
-        const data=new Date(r['Fecha']);
-        const mes=isNaN(data)?'?':data.toISOString().substring(0,7);
-        const ticket=r['Ticket'];
-        const qty=parseFloat(r['Cantidad'])||0;
-        const preu=extractPreu(ticket);
-        const import_=qty*preu;
-        if(!resum[mes])resum[mes]={tickets:{},total:0};
-        if(!resum[mes].tickets[ticket])resum[mes].tickets[ticket]={qty:0,import:0,preu};
-        resum[mes].tickets[ticket].qty+=qty;
-        resum[mes].tickets[ticket].import+=import_;
-        resum[mes].total+=import_;
-      });
-
-      const totalGeneral=Object.values(resum).reduce(function(s,m){return s+m.total;},0);
-      let html='<div class="card" style="margin-bottom:14px">';
-      html+='<div class="card-title">Resum consums per mes</div>';
-      Object.entries(resum).sort().forEach(function(entry){
-        const mes=entry[0],data=entry[1];
-        html+='<div class="flow-row" style="font-weight:500"><span>'+mes+'</span><span style="color:var(--green)">'+fmtD(data.total)+'</span></div>';
-      });
-      html+='<div class="flow-row" style="font-weight:700;border-top:1px solid var(--border);margin-top:8px;padding-top:8px"><span>TOTAL CONSUMS</span><span style="color:var(--green)">'+fmtD(totalGeneral)+'</span></div>';
-      html+='</div>';
-
-      // Mostrar per events de l'app
-      html+='<div class="card" style="margin-bottom:14px">';
-      html+='<div class="card-title">Assignar consums a events de l\'app</div>';
-      html+='<div style="font-size:13px;color:var(--text2);margin-bottom:10px">Selecciona un rang de dates per assignar els consums a un event específic.</div>';
-      DB.config.events.filter(function(e){return e.status!=='tancat';}).forEach(function(ev){
-        html+='<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:0.5px solid var(--border)">';
-        html+='<div style="flex:1;font-weight:500;font-size:13px">'+ev.name+'</div>';
-        html+='<input type="date" id="ev-from-'+ev.id+'" style="width:130px;font-size:12px">';
-        html+='<span style="color:var(--text3)">fins</span>';
-        html+='<input type="date" id="ev-to-'+ev.id+'" style="width:130px;font-size:12px">';
-        html+='<button class="btn" style="font-size:12px" data-evid="'+ev.id+'" data-evnom="'+ev.name+'" onclick="calcConsumEvent(this)">Calcular</button>';
-        html+='</div>';
-        html+='<div id="ev-result-'+ev.id+'" style="font-size:12px;color:var(--text2);padding:4px 0 8px"></div>';
-      });
-      html+='</div>';
-
-      document.getElementById('fapp-tickets-preview').innerHTML=html;
-      window._fappTicketRows=valid;
-    }catch(err){
-      document.getElementById('fapp-tickets-preview').innerHTML='<div style="color:var(--red)">Error: '+err.message+'</div>';
-    }
-  };
-  reader.readAsArrayBuffer(file);
-}
-
-function calcConsumEvent(btn){
-  const evId=btn.getAttribute('data-evid');
-  const evNom=btn.getAttribute('data-evnom');
-  const from=document.getElementById('ev-from-'+evId)?.value;
-  const to=document.getElementById('ev-to-'+evId)?.value;
-  const rows=window._fappTicketRows||[];
-  if(!from||!to){showToast('Selecciona les dues dates',true);return;}
-
-  function extractPreu(nom){
-    const m=nom.match(/\((\d+(?:[.,]\d+)?)\s*€\)/);
-    return m?parseFloat(m[1].replace(',','.')):0;
-  }
-
-  const filtered=rows.filter(function(r){
-    const d=new Date(r['Fecha']);
-    return d>=new Date(from)&&d<=new Date(to+'T23:59:59');
-  });
-
-  const total=filtered.reduce(function(s,r){
-    return s+(parseFloat(r['Cantidad'])||0)*extractPreu(r['Ticket']||'');
-  },0);
-
-  const res=document.getElementById('ev-result-'+evId);
-  if(res){
-    res.innerHTML='<span style="color:var(--green)">'+filtered.length+' transaccions · Total: <strong>'+fmtD(total)+'</strong></span> '+
-      '<button class="btn btn-primary" style="font-size:11px;margin-left:8px" data-evid="'+evId+'" data-evnom="'+evNom+'" data-total="'+total+'" data-from="'+from+'" data-to="'+to+'" onclick="registrarConsumEventBtn(this)">Registrar ingres</button>'
-  }
-}
-
-function registrarConsumEventBtn(btn){
-  registrarConsumEvent(btn.dataset.evid,btn.dataset.evnom,parseFloat(btn.dataset.total),btn.dataset.from,btn.dataset.to);
-}
-async function registrarConsumEvent(evId,evNom,total,from,to){
-  if(!confirm('Registrar '+fmtD(total)+' com a ingrés de "'+evNom+'" ('+from+' - '+to+')?'))return;
-  const ev=DB.config.events.find(function(e){return e.id===evId;});
-  const deleg=DB.config.delegacions.find(function(d){return d.id===(ev?.delegId||'');});
-  const area=deleg?DB.config.areas.find(function(a){return a.id===deleg.areaId;}):null;
-  const af=getAnyFiscal();
-  DB.moviments.push({
-    id:'m'+Date.now(),anyFiscal:af,tipus:'ing',via:'app',
-    areaId:area?.id||'',areaNom:area?.name||'',
-    delegacioId:deleg?.id||'',delegacioNom:deleg?.name||'',
-    eventId:evId,eventNom:evNom,
-    concepte:'Consums falles.app '+from+' a '+to,
-    establiment:'falles.app',data:to,
-    responsable:currentUser?.name||'',responsableEmail:currentUser?.email||'',
-    import:total,notes:'Consums app '+evNom,fontImport:'fallesapp_tickets'
-  });
-  saveCache();
-  showToast('Ingrés de '+fmtD(total)+' registrat per a '+evNom);
-  save('moviments').catch(function(e){showToast('Error: '+e.message,true);});
-}
-
-async function registrarBonificacio(){
-  const imp=parseFloat(document.getElementById('fapp-bonif-import').value)||0;
-  const data=document.getElementById('fapp-bonif-data').value;
-  const notes=document.getElementById('fapp-bonif-notes').value||'Bonificacio moneders falles.app';
-  if(!imp||!data){showToast('Import i data son obligatoris',true);return;}
-  if(!confirm('Registrar '+fmtD(imp)+' com a despesa de bonificacions?'))return;
-  const af=getAnyFiscal();
-  DB.moviments.push({
-    id:'m'+Date.now(),anyFiscal:af,tipus:'gast',via:'app',
-    areaId:'01',areaNom:'Administracio i Secretaria',
-    delegacioId:'0102',delegacioNom:'Tresoreria',
-    eventId:'',eventNom:'',concepte:notes,
-    establiment:'falles.app',data,
-    responsable:currentUser?.name||'',responsableEmail:currentUser?.email||'',
-    import:imp,notes:'Bonificacio falles.app',fontImport:'fallesapp_bonif'
-  });
-  saveCache();
-  showToast('Bonificacio registrada: '+fmtD(imp));
-  save('moviments').catch(function(e){showToast('Error: '+e.message,true);});
-  document.getElementById('fapp-bonif-import').value='';
-  document.getElementById('fapp-bonif-data').value='';
-}
-
-function signOut(){
-  if(accessToken)google.accounts.oauth2.revoke(accessToken,()=>{});
-  accessToken=null;currentUser=null;
-  document.getElementById('app').classList.add('hidden');
-  document.getElementById('login-screen').classList.remove('hidden');
-}
-
-async function loadUserInfo(){
-  try{
-    // Usar tokeninfo per obtenir email sense scope addicional
-    const r=await fetch('https://www.googleapis.com/oauth2/v1/tokeninfo?access_token='+accessToken);
-    const u=await r.json();
-    const email=u.email||'';
-    // Intentar obtenir el nom complet
-    let name=email.split('@')[0];
-    try{
-      const r2=await fetch('https://www.googleapis.com/oauth2/v2/userinfo',{headers:{Authorization:'Bearer '+accessToken}});
-      if(r2.ok){const u2=await r2.json();if(u2.name)name=u2.name;}
-    }catch(e2){}
-    currentUser={name,email:email.toLowerCase(),initials:name.split(/[\s.]+/).slice(0,2).map(w=>w[0]||'').join('').toUpperCase()||'?'};
-  }catch(e){
-    // Fallback: demanar email manualment
-    const email=prompt('Introdueix el teu email de Google:')||'';
-    const name=email.split('@')[0];
-    currentUser={name,email,initials:name.slice(0,2).toUpperCase()};
-  }
-}
-
-// GOOGLE SHEETS - Base de dades central
-const SHEETS_API='https://sheets.googleapis.com/v4/spreadsheets/'+SHEET_ID;
-
-const TABS={
-  moviments:{name:'01 Moviments',headers:['id','data','tipus','via','areaId','areaNom','delegacioId','delegacioNom','eventId','eventNom','concepte','establiment','responsable','responsableEmail','import','notes']},
-  fons:{name:'02 Fons',headers:['id','data','tipus','delegId','delegEmail','import','nota','registratPer']},
-  tancaments:{name:'03 Tancaments',headers:['eventId','eventNom','data','efectiu','tpv','tancat','registratPer']},
-  arees:{name:'04 Arees',headers:['id','nom','responsable']},
-  delegacions:{name:'05 Delegacions',headers:['id','areaId','nom','responsable']},
-  events:{name:'06 Events',headers:['id','delegId','nom','year','responsable','status']},
-  bancs:{name:'07 Bancs',headers:['id','codi','nom','tipus','saldoInicial','saldoData']},
-  usuaris:{name:'08 Usuaris',headers:['id','nom','email','rol']},
-  usuaris_assignacions:{name:'09 Usuaris Assignacions',headers:['userId','userNom','tipus','id','nom','anyFiscal']},
-  pres_plans:{name:'10 Pressupostos Plans',headers:['any','delegacioId','delegacioNom','eventId','eventNom','concepte','tipus','importPla','notes']},
-  pres_config:{name:'11 Pressupostos Config',headers:['any','estat','bloquejatPer','bloquejatEmail','data']},
-  pres_historial:{name:'12 Pressupostos Historial',headers:['data','accio','any','usuari','email','motiu']},
-  regles:{name:'13 Regles CSV',headers:['id','font','patrons','areaId','areaNom','delegacioId','delegacioNom','concepte','tipus','movtype','prioritat','activa']},
-  rols:{name:'14 Rols',headers:['id','label','color','canRegister','canFons','canImport','canConfig','canUsers','viewAll','custom']}
-};
-
-async function sheetsReq(method,url,body=null){
-  const opts={method,headers:{Authorization:'Bearer '+accessToken}};
-  if(body){opts.headers['Content-Type']='application/json';opts.body=JSON.stringify(body);}
-  const r=await fetch(url,opts);
-  if(!r.ok){const e=await r.text();throw new Error(e);}
-  return r.json();
-}
-
-// Mapa de noms antics -> nous per migració
-const TABS_MIGRATION={
-  'moviments':'01 Moviments','fons':'02 Fons','tancaments':'03 Tancaments',
-  'arees':'04 Arees','delegacions':'05 Delegacions','events':'06 Events',
-  'bancs':'07 Bancs','usuaris':'08 Usuaris','usuaris_assignacions':'09 Usuaris Assignacions',
-  'pres_plans':'10 Pressupostos Plans','pres_config':'11 Pressupostos Config',
-  'pres_historial':'12 Pressupostos Historial','regles':'13 Regles CSV'
-};
-
-async function initSheets(){
-  try{
-    const info=await sheetsReq('GET',SHEETS_API+'?fields=sheets.properties(title,sheetId)');
-    const existingSheets=info.sheets||[];
-    const existingNames=existingSheets.map(s=>s.properties.title);
-    const neededNames=Object.values(TABS).map(t=>t.name);
-
-    // 1. Crear pestanyes noves que falten
-    const toCreate=neededNames.filter(n=>!existingNames.includes(n));
-    if(toCreate.length>0){
-      await sheetsReq('POST',SHEETS_API+':batchUpdate',{
-        requests:toCreate.map(title=>({addSheet:{properties:{title}}}))
-      });
-      // Afegir capçaleres
-      for(const tabName of toCreate){
-        const tabKey=Object.keys(TABS).find(k=>TABS[k].name===tabName);
-        if(tabKey){
-          await sheetsReq('PUT',
-            SHEETS_API+'/values/'+sheetRangeUrl(tabName,'A1')+'?valueInputOption=RAW',
-            {range:sheetRange(tabName,'A1'),majorDimension:'ROWS',values:[TABS[tabKey].headers]}
-          );
-        }
-      }
-    }
-
-    // 2. Migrar dades de pestanyes antigues a les noves
-    for(const [oldName, newName] of Object.entries(TABS_MIGRATION)){
-      if(existingNames.includes(oldName)&&existingNames.includes(newName)){
-        // Llegir dades de la pestanya antiga
-        try{
-          const oldData=await sheetsReq('GET',SHEETS_API+'/values/'+sheetTabUrl(oldName));
-          if(oldData.values&&oldData.values.length>1){
-            // Verificar si la nova pestanya ja té dades (més d'una fila = capçalera + dades)
-            const newData=await sheetsReq('GET',SHEETS_API+'/values/'+encodeURIComponent("'"+newName+"'!A1:A2"));
-            const newHasData=newData.values&&newData.values.length>1;
-            if(!newHasData){
-              // Copiar totes les dades a la nova pestanya
-              await sheetsReq('PUT',
-                SHEETS_API+'/values/'+sheetRangeUrl(newName,'A1')+'?valueInputOption=RAW',
-                {range:sheetRange(newName,'A1'),majorDimension:'ROWS',values:oldData.values}
-              );
-              console.log('Migrat: '+oldName+' -> '+newName+' ('+oldData.values.length+' files)');
-            }
-          }
-          // Eliminar pestanya antiga
-          const oldSheet=existingSheets.find(s=>s.properties.title===oldName);
-          if(oldSheet){
-            await sheetsReq('POST',SHEETS_API+':batchUpdate',{
-              requests:[{deleteSheet:{sheetId:oldSheet.properties.sheetId}}]
-            });
-            console.log('Eliminat: '+oldName);
-          }
-        }catch(e){console.warn('Error migrant '+oldName+':',e);}
-      }
-    }
-  }catch(e){showToast('Error inicialitzant Sheets: '+e.message,true);}
-}
-
-// Llegir totes les files d'una pestanya com array d'objectes
-// Helper: construir range correcta per a noms amb espais
-function sheetRange(tabName,cell){
-  // La Sheets API necessita cometes simples al voltant del nom si té espais
-  const name=tabName.includes(' ')?("'"+tabName+"'"):tabName;
-  return cell?name+'!'+cell:name;
-}
-function sheetRangeUrl(tabName,cell){
-  return encodeURIComponent(sheetRange(tabName,cell));
-}
-function sheetTabUrl(tabName){
-  // Per llegir tota la pestanya sense rang
-  const name=tabName.includes(' ')?("'"+tabName+"'"):tabName;
-  return encodeURIComponent(name);
-}
-
-async function readTab(tabName){
-  try{
-    // Llegir tota la pestanya sense especificar rang (Sheets API retorna tot)
-    const r=await sheetsReq('GET',SHEETS_API+'/values/'+sheetTabUrl(tabName));
-    if(!r.values||r.values.length<2)return[];
-    const headers=r.values[0];
-    return r.values.slice(1).filter(row=>row.some(c=>c)).map(row=>{
-      const obj={};
-      headers.forEach((h,i)=>obj[h]=row[i]||'');
-      return obj;
-    });
-  }catch(e){console.warn('readTab error '+tabName,e);return[];}
-}
-
-async function writeTab(tabName,headers,rows){
-  await sheetsReq('POST',SHEETS_API+'/values/'+sheetTabUrl(tabName)+':clear',{});
-  const data=[headers,...(rows||[]).map(r=>headers.map(h=>r[h]!==undefined?String(r[h]):''))];
-  await sheetsReq('PUT',
-    SHEETS_API+'/values/'+sheetRangeUrl(tabName,'A1')+'?valueInputOption=RAW',
-    {range:sheetRange(tabName,'A1'),majorDimension:'ROWS',values:data}
-  );
-}
-
-async function appendRow(tabName,headers,row){
-  const values=[headers.map(h=>row[h]!==undefined?String(row[h]):'')];
-  await sheetsReq('POST',
-    SHEETS_API+'/values/'+sheetRangeUrl(tabName,'A1')+':append?valueInputOption=RAW&insertDataOption=INSERT_ROWS',
-    {range:sheetRange(tabName,'A1'),majorDimension:'ROWS',values}
-  );
-}
-
-// Convertir files de Sheets a estructura DB
-function rowsToConfig(arees,delegacions,events,bancs,usuaris,assignacions){
-  return{
-    areas:arees.map(r=>({id:r.id,name:r.nom,resp:r.responsable})),
-    delegacions:delegacions.map(r=>({id:r.id,areaId:r.areaId,name:r.nom,resp:r.responsable})),
-    events:events.map(r=>({id:r.id,delegId:r.delegId,name:r.nom,year:r.year,resp:r.responsable,status:r.status})),
-    bancs:bancs.map(r=>({id:r.id,codi:r.codi,nom:r.nom,tipus:r.tipus,saldoInicial:parseFloat(r.saldoInicial)||0,saldoData:r.saldoData||''})),
-    usuaris:usuaris.map(u=>({id:u.id,nom:u.nom,email:u.email,rol:u.rol,arees:[],delegacions:[]})),
-    directiva:buildDirectivaFromRows(assignacions)
-  };
-}
-
-// Convertir DB.config a files per Sheets
-function configToRows(){
-  const cfg=DB.config;
-  const arees=cfg.areas.map(a=>({id:a.id,nom:a.name,responsable:a.resp}));
-  const delegacions=cfg.delegacions.map(d=>({id:d.id,areaId:d.areaId,nom:d.name,responsable:d.resp}));
-  const events=cfg.events.map(e=>({id:e.id,delegId:e.delegId,nom:e.name,year:e.year,responsable:e.resp,status:e.status}));
-  const bancs=cfg.bancs.map(b=>({id:b.id,codi:b.codi,nom:b.nom,tipus:b.tipus}));
-  const usuaris=cfg.usuaris.map(u=>({id:u.id,nom:u.nom,email:u.email,rol:u.rol}));
-  // Assignacions: combinar les de l'usuari (per compatibilitat) amb les del mestre de directiva
-  const assignacions=[];
-  const directiva=cfg.directiva||{};
-  // Guardar totes les assignacions de la directiva per tots els anys fiscals
-  Object.entries(directiva).forEach(function(entry){
-    const anyF=entry[0];
-    const assigns=entry[1];
-    (assigns||[]).forEach(function(a){
-      assignacions.push({userId:a.userId,userNom:a.userNom,tipus:a.tipus,id:a.id,nom:a.nom,anyFiscal:anyF});
-    });
-  });
-  return{arees,delegacions,events,bancs,usuaris,assignacions};
-}
-
-async function loadAllFromDrive(){
-  // Carregar cache immediatament per mostrar dades ràpid
-  const hasCache=loadCache();
-  setSyncing(true);
-  // Carregar Sheets en segon pla
-  loadFromSheets().then(()=>{
-    saveCache();
-    setSyncing(false);
-    // Refrescar la pàgina activa silenciosament
-    const activePage=document.querySelector('.page.active');
-    if(activePage){
-      const id=activePage.id.replace('page-','');
-      const renders={dashboard:renderDashboard,historial:filterHist,pressupostos:renderPressupostos,
-        lliurament:renderFons,tancament:renderTancamentList,resultats:renderResultats,flux:renderFlux};
-      if(renders[id])renders[id]();
-    }
-  }).catch(e=>{
-    setSyncing(false);
-    if(!hasCache)showToast('Error carregant dades: '+e.message,true);
-  });
-}
-
-async function loadFromSheets(){
-  await initSheets();
-  // Usar sempre TABS[key].name per als noms de pestanya
-  const movsRows=await readTab(TABS.moviments.name);
-  DB.moviments=movsRows.map(r=>({...r,import:parseFloat(r.import)||0}));
-  const fonsRows=await readTab(TABS.fons.name);
-  DB.fons=fonsRows.map(r=>({...r,import:parseFloat(r.import)||0}));
-  const tancRows=await readTab(TABS.tancaments.name);
-  DB.tancaments={};
-  tancRows.forEach(r=>{DB.tancaments[r.eventId]={...r,efectiu:parseFloat(r.efectiu)||0,tpv:parseFloat(r.tpv)||0};});
-  const arees=await readTab(TABS.arees.name);
-  const delegacions=await readTab(TABS.delegacions.name);
-  const events=await readTab(TABS.events.name);
-  const bancs=await readTab(TABS.bancs.name);
-  const usuaris=await readTab(TABS.usuaris.name);
-  const assignacions=await readTab(TABS.usuaris_assignacions.name);
-  if(arees.length>0||usuaris.length>0){
-    const cfgFromSheets=rowsToConfig(arees,delegacions,events,bancs,usuaris,assignacions);
-    // Merge: actualitzar sols les dades que vénen del Sheet, preservar la resta
-    DB.config.areas=cfgFromSheets.areas;
-    DB.config.delegacions=cfgFromSheets.delegacions;
-    DB.config.events=cfgFromSheets.events;
-    DB.config.bancs=cfgFromSheets.bancs;
-    DB.config.usuaris=cfgFromSheets.usuaris;
-    if(cfgFromSheets.directiva&&Object.keys(cfgFromSheets.directiva).length>0){
-      DB.config.directiva=cfgFromSheets.directiva;
-    }
-  }
-  if(!DB.config.bancs||!DB.config.bancs.length){
-    DB.config.bancs=[
-      {id:'b1',codi:'01 Banc',nom:'Caixabank',tipus:'bank'},
-      {id:'b2',codi:'02 Banc',nom:'Caixa Popular',tipus:'bank'},
-      {id:'b3',codi:'Efectiu',nom:'Caixa efectiu',tipus:'cash'},
-      {id:'b4',codi:'TPV',nom:'TPV targetes',tipus:'tpv'}
-    ];
-  }
-  const presRows=await readTab(TABS.pres_plans.name);
-  DB.pres_plans=presRows.map(r=>({...r,importPla:parseFloat(r.importPla)||0}));
-  const presHistRows=await readTab(TABS.pres_historial.name);
-  DB.pres_historial=presHistRows;
-  const presConfigRows=await readTab(TABS.pres_config.name);
-  if(presConfigRows.length>0)DB.pres_config=presConfigRows[presConfigRows.length-1];
-  const reglesRows=await readTab(TABS.regles.name);
-  DB.regles=reglesRows.map(r=>({...r,prioritat:parseInt(r.prioritat)||10,activa:r.activa!=='false'}));
-  if(!DB.regles.length)DB.regles=getDefaultRegles();
-  // Carregar rols configurables
-  const rolsRows=await readTab(TABS.rols.name);
-  if(rolsRows.length>0){
-    DB.config.rols={};
-    rolsRows.forEach(function(r){
-      DB.config.rols[r.id]={
-        id:r.id,label:r.label,color:r.color||'p-gray',
-        canRegister:r.canRegister==='true',canFons:r.canFons==='true',
-        canImport:r.canImport==='true',canConfig:r.canConfig==='true',
-        canUsers:r.canUsers==='true',viewAll:r.viewAll==='true',
-        custom:r.custom==='true'
-      };
-    });
-  }
-}
-async function loadAllFromDrive(){
-  // Carregar cache immediatament per mostrar dades ràpid
-  const hasCache=loadCache();
-  setSyncing(true);
-  // Carregar Sheets en segon pla
-  loadFromSheets().then(()=>{
-    saveCache();
-    setSyncing(false);
-    // Refrescar la pàgina activa silenciosament
-    const activePage=document.querySelector('.page.active');
-    if(activePage){
-      const id=activePage.id.replace('page-','');
-      const renders={dashboard:renderDashboard,historial:filterHist,pressupostos:renderPressupostos,
-        lliurament:renderFons,tancament:renderTancamentList,resultats:renderResultats,flux:renderFlux};
-      if(renders[id])renders[id]();
-    }
-  }).catch(e=>{
-    setSyncing(false);
-    if(!hasCache)showToast('Error carregant dades: '+e.message,true);
-  });
-}
-
-
-async function save(key){
-  setSyncing(true);
-  try{
-    if(key==='config'){
-      const rows=configToRows();
-      await writeTab(TABS.arees.name,TABS.arees.headers,rows.arees);
-      await writeTab(TABS.delegacions.name,TABS.delegacions.headers,rows.delegacions);
-      await writeTab(TABS.events.name,TABS.events.headers,rows.events);
-      await writeTab(TABS.bancs.name,TABS.bancs.headers,rows.bancs);
-      await writeTab(TABS.usuaris.name,TABS.usuaris.headers,rows.usuaris);
-      await writeTab(TABS.usuaris_assignacions.name,TABS.usuaris_assignacions.headers,rows.assignacions);
-      setSyncing(false);return;
-    }
-    const t=TABS[key];
-    if(!t){throw new Error('Tab desconegut: '+key);}
-    if(key==='moviments'){
-      await writeTab(t.name,t.headers,DB.moviments);
-    }else if(key==='fons'){
-      await writeTab(t.name,t.headers,DB.fons);
-    }else if(key==='tancaments'){
-      await writeTab(t.name,t.headers,Object.values(DB.tancaments));
-    }else if(key==='regles'){
-      await writeTab(t.name,t.headers,DB.regles);
-    }else if(key==='rols'){
-      const rolsArr=Object.values(getRoles()).map(function(r){
-        return{id:r.id,label:r.label,color:r.color||'p-gray',
-          canRegister:String(r.canRegister),canFons:String(r.canFons),
-          canImport:String(r.canImport),canConfig:String(r.canConfig),
-          canUsers:String(r.canUsers),viewAll:String(r.viewAll),custom:String(r.custom||false)};
-      });
-      await writeTab(TABS.rols.name,TABS.rols.headers,rolsArr);
-    }else if(key==='pres_plans'){
-      await writeTab(t.name,t.headers,DB.pres_plans);
-    }else if(key==='pres_config'){
-      await writeTab(t.name,t.headers,[DB.pres_config]);
-    }else if(key==='pres_historial'){
-      await writeTab(t.name,t.headers,DB.pres_historial);
-    }
-  }catch(e){showToast('Error guardant: '+e.message,true);}
-  setSyncing(false);
-}
-// Per a moviments, usar append en lloc de reescriure tot
 async function saveMoviment(mov){
   setSyncing(true);
   try{
@@ -3955,7 +3125,7 @@ function renderCfgExercicis(){
     const nPres=(DB.pres_plans||[]).filter(function(p){return p.any===e;}).length;
     html+='<tr>';
     html+='<td style="font-weight:600;font-size:15px">'+e+(isActiu?' <span class="pill p-info" style="font-size:10px">Actiu</span>':'')+'</td>';
-    html+='<td><span class="pill '+(tancat?'p-warn':'p-ok')+'">'+(tancat?'Tancat':'Obert')+'</span></td>';
+    html+='<td>'+(tancat?'<span class="pill p-warn">Tancat</span>':'<span class="pill p-ok">Obert</span>')+(estat.test?' <span class="pill p-info" style="font-size:10px">TEST</span>':'')+'</td>';
     const doLabel=estat.dataObertura||calcDataObertura(e);
     html+='<td><input type="text" value="'+doLabel+'" placeholder="dd/mm/aaaa" '+
       'style="width:100px;font-size:13px;padding:3px 6px;border:0.5px solid var(--border2);border-radius:4px;background:var(--bg);color:var(--text);font-family:inherit" '+
@@ -4322,6 +3492,22 @@ async function deleteRol(id){
   showToast('Rol eliminat');
   save('rols').catch(function(e){showToast('Error: '+e.message,true);});
 }
+function showFappTab(t){['trans','saldos','tickets','bonif'].forEach(function(x){const el=document.getElementById('fapp-'+x);const btn=document.getElementById('fapp-tab-'+x);if(el)el.style.display=x===t?'block':'none';if(btn)btn.className=x===t?'btn btn-primary':'btn';});}
+function loadFappFile(e,z){const f=e.target.files[0];if(f)processFappFile(f,z);}
+function handleFappDrop(e,z){e.preventDefault();const dz=document.getElementById('fapp-drop-'+z);if(dz)dz.classList.remove('drag-over');const f=e.dataTransfer.files[0];if(f)processFappFile(f,z);}
+function processFappFile(file,zona){const reader=new FileReader();reader.onload=function(e){try{const data=new Uint8Array(e.target.result);const wb=XLSX.read(data,{type:'array'});const ws=wb.Sheets[wb.SheetNames[0]];const rows=XLSX.utils.sheet_to_json(ws);const dz=document.getElementById('fapp-drop-'+zona);if(dz)dz.classList.add('loaded');if(zona===1)renderFappPreview1(rows);else if(zona===2)renderFappPreview2(rows);else if(zona===3)renderFappPreview3(rows);}catch(err){const p=document.getElementById('fapp-preview-'+zona);if(p)p.innerHTML='<div class="info-box" style="color:var(--red)">Error: '+err.message+'</div>';}};reader.readAsArrayBuffer(file);}
+function extrPreu(nom){const m=(nom||'').match(/(\d+(?:[.,]\d+)?)\s*€/);return m?parseFloat(m[1].replace(',','.')):0;}
+function renderFappPreview1(rows){window._fappTransRows=rows;const valid=rows.filter(function(r){return r['Estado']==='Autorizado'&&r['Cantidad'];});const totEf=valid.filter(function(r){return r['Tipo']==='Recarga de efectivo';}).reduce(function(s,r){return s+(parseFloat(r['Cantidad'])||0);},0);const totTpv=valid.filter(function(r){return r['Tipo']==='Recarga de TPV';}).reduce(function(s,r){return s+(parseFloat(r['Cantidad'])||0);},0);const totDev=valid.filter(function(r){return(r['Tipo']||'').includes('Devoluci');}).reduce(function(s,r){return s+(parseFloat(r['Cantidad'])||0);},0);let html='<div class="card" style="margin-top:12px"><div class="card-title"><i class="ti ti-check" style="color:var(--green)"></i> '+valid.length+' transaccions</div>';html+='<div class="flow-row"><span>Efectiu (agrupat per dia)</span><span style="color:var(--green);font-weight:500">+'+fmtD(totEf)+'</span></div>';html+='<div class="flow-row"><span>TPV (individual)</span><span style="color:var(--green);font-weight:500">+'+fmtD(totTpv)+'</span></div>';html+='<div class="flow-row"><span>Devolucions</span><span style="color:var(--red);font-weight:500">'+fmtD(totDev)+'</span></div>';html+='<div class="flow-row" style="font-weight:600;border-top:1px solid var(--border);margin-top:6px;padding-top:8px"><span>TOTAL NET</span><span style="color:var(--green)">+'+fmtD(totEf+totTpv+totDev)+'</span></div>';html+='<div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">';html+='<div class="field"><label>Via efectiu</label><select id="fapp-via-ef">'+(DB.config.bancs||[]).filter(function(b){return b.tipus==="cash";}).map(function(b){return'<option value="'+b.codi+'">'+b.nom+'</option>';}).join('')+'</select></div>';html+='<div class="field"><label>Via TPV</label><select id="fapp-via-tpv">'+(DB.config.bancs||[]).filter(function(b){return b.tipus==="bank";}).map(function(b){return'<option value="'+b.codi+'">'+b.nom+'</option>';}).join('')+'</select></div>';html+='<div class="field"><label>Area</label><select id="fapp-area-dest">'+DB.config.areas.map(function(a){return'<option value="'+a.id+'">'+a.id+' '+a.name+'</option>';}).join('')+'</select></div>';html+='<div class="field"><label>Delegacio</label><select id="fapp-deleg-dest">'+DB.config.delegacions.map(function(d){return'<option value="'+d.id+'">'+d.id+' '+d.name+'</option>';}).join('')+'</select></div></div>';html+='<button class="btn btn-primary" style="margin-top:10px" onclick="importarFappTrans()"><i class="ti ti-check"></i> Importar</button></div>';document.getElementById('fapp-preview-1').innerHTML=html;}
+async function importarFappTrans(){const rows=window._fappTransRows;if(!rows)return;const viaEf=document.getElementById('fapp-via-ef')?.value||'Efectiu';const viaTpv=document.getElementById('fapp-via-tpv')?.value||'01 Banc';const areaId=document.getElementById('fapp-area-dest')?.value||'01';const delegId=document.getElementById('fapp-deleg-dest')?.value||'0102';const area=DB.config.areas.find(function(a){return a.id===areaId;});const deleg=DB.config.delegacions.find(function(d){return d.id===delegId;});const af=getAnyFiscal();const base={anyFiscal:af,areaId,areaNom:area?.name||'',delegacioId:delegId,delegacioNom:deleg?.name||'',eventId:'',eventNom:'',establiment:'falles.app',responsable:currentUser?.name||'',responsableEmail:currentUser?.email||'',origenFons:'',fontImport:'fallesapp'};const gEf={};const gDev={};const tpvR=[];rows.forEach(function(r){if(r['Estado']!=='Autorizado'||!r['Cantidad'])return;const t=r['Tipo']||'';const imp=parseFloat(r['Cantidad'])||0;if(!imp)return;const d=r['Fecha']?new Date(r['Fecha']).toISOString().split('T')[0]:today();if(t==='Recarga de efectivo'){gEf[d]=(gEf[d]||0)+imp;}else if(t==='Recarga de TPV'){tpvR.push({d,imp,rs:r['Pedido Redsys']||''});}else if(t.includes('Devoluci')){gDev[d]=(gDev[d]||0)+imp;}});Object.entries(gEf).forEach(function(e){DB.moviments.push({...base,id:'m'+Date.now()+Math.random(),tipus:'ing',via:viaEf,data:e[0],import:e[1],concepte:'Recarregues efectiu falles.app',notes:'Agrupat '+e[0]});});tpvR.forEach(function(r){DB.moviments.push({...base,id:'m'+Date.now()+Math.random(),tipus:'ing',via:viaTpv,data:r.d,import:r.imp,concepte:'Recàrrega TPV #'+r.rs,notes:'Pedido Redsys: '+r.rs});});Object.entries(gDev).forEach(function(e){DB.moviments.push({...base,id:'m'+Date.now()+Math.random(),tipus:'gast',via:viaEf,data:e[0],import:e[1],concepte:'Devolucions efectiu falles.app',notes:'Agrupat '+e[0]});});saveCache();showToast(Object.keys(gEf).length+' dies ef + '+tpvR.length+' TPV + '+Object.keys(gDev).length+' dev importats');save('moviments').catch(function(e){showToast('Error: '+e.message,true);});}
+function renderFappPreview2(rows){const valid=rows.filter(function(r){return parseFloat(r['Balance'])>0;});const total=valid.reduce(function(s,r){return s+(parseFloat(r['Balance'])||0);},0);let html='<div class="card" style="margin-top:12px"><div class="card-title"><i class="ti ti-check" style="color:var(--green)"></i> '+rows.length+' fallers</div><div class="flow-row"><span>Fallers amb saldo</span><span>'+valid.length+'</span></div><div class="flow-row" style="font-weight:700;font-size:16px"><span>PASSIU TOTAL</span><span style="color:var(--amber)">'+fmtD(total)+'</span></div><div style="margin-top:10px"><button class="btn btn-primary" onclick="registrarPassiuFapp('+total+','+valid.length+')"><i class="ti ti-check"></i> Registrar passiu de '+fmtD(total)+'</button></div></div>';document.getElementById('fapp-preview-2').innerHTML=html;}
+function registrarPassiuFapp(total,fallers){DB.config.fappPassiu={total,data:today(),fallers};saveCache();showToast('Passiu de '+fmtD(total)+' registrat');save('config').catch(function(e){showToast('Error: '+e.message,true);});}
+function renderFappPreview3(rows){const valid=rows.filter(function(r){return r['Ticket']&&r['Cantidad']&&!isNaN(parseFloat(r['Cantidad']))&&parseFloat(r['Cantidad'])>0&&r['¿Es devolución?']!=='Si'&&r['¿Es devolución?']!=='Sí';});window._fappTicketRows=valid;const resum={};valid.forEach(function(r){const d=new Date(r['Fecha']);const mes=isNaN(d)?'?':d.toISOString().substring(0,7);if(!resum[mes])resum[mes]=0;resum[mes]+=(parseFloat(r['Cantidad'])||0)*extrPreu(r['Ticket']||'');});const tot=Object.values(resum).reduce(function(s,v){return s+v;},0);let html='<div class="card" style="margin-top:12px"><div class="card-title"><i class="ti ti-check" style="color:var(--green)"></i> '+valid.length+' consums</div>';Object.entries(resum).sort().forEach(function(e){html+='<div class="flow-row"><span>'+e[0]+'</span><span style="color:var(--green)">'+fmtD(e[1])+'</span></div>';});html+='<div class="flow-row" style="font-weight:700;border-top:1px solid var(--border);margin-top:6px;padding-top:8px"><span>TOTAL</span><span style="color:var(--green)">'+fmtD(tot)+'</span></div><div style="margin-top:12px"><div style="font-weight:500;margin-bottom:8px">Assignar a events (data+hora per festes nocturnes):</div><div class="info-box" style="font-size:12px;margin-bottom:8px"><i class="ti ti-info-circle" style="flex-shrink:0"></i>Usa hora per festes que creuen la mitjanit.</div>';DB.config.events.filter(function(e){return e.status!=="tancat";}).forEach(function(ev){html+='<div style="padding:8px 0;border-top:0.5px solid var(--border)"><div style="font-weight:500;font-size:13px;margin-bottom:4px">'+ev.name+'</div><div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center"><span style="font-size:12px;color:var(--text3)">Des de:</span><input type="datetime-local" id="ev-from-'+ev.id+'"><span style="font-size:12px;color:var(--text3)">fins:</span><input type="datetime-local" id="ev-to-'+ev.id+'"><button class="btn" style="font-size:12px" data-evid="'+ev.id+'" data-evnom="'+ev.name+'" onclick="calcConsumEvent(this)">Calcular</button></div><div id="ev-result-'+ev.id+'" style="font-size:12px;margin-top:4px"></div></div>';});html+='</div></div>';document.getElementById('fapp-preview-3').innerHTML=html;}
+function calcConsumEvent(btn){const evId=btn.getAttribute('data-evid');const evNom=btn.getAttribute('data-evnom');const from=document.getElementById('ev-from-'+evId)?.value;const to=document.getElementById('ev-to-'+evId)?.value;const rows=window._fappTicketRows||[];if(!from||!to){showToast("Selecciona data i hora d'inici i fi",true);return;}const fD=new Date(from);const tD=new Date(to);const filtered=rows.filter(function(r){const d=new Date(r['Fecha']);return d>=fD&&d<=tD;});const total=filtered.reduce(function(s,r){return s+(parseFloat(r['Cantidad'])||0)*extrPreu(r['Ticket']||'');},0);const res=document.getElementById('ev-result-'+evId);if(res){res.innerHTML='<span style="color:var(--green)">'+filtered.length+' consums · <strong>'+fmtD(total)+'</strong></span> <button class="btn btn-primary" style="font-size:11px;margin-left:6px" data-evid="'+evId+'" data-evnom="'+evNom+'" data-total="'+total+'" data-from="'+from+'" data-to="'+to+'" onclick="registrarConsumEventBtn(this)">Registrar ingres</button>';}}
+function registrarConsumEventBtn(btn){registrarConsumEvent(btn.dataset.evid,btn.dataset.evnom,parseFloat(btn.dataset.total),btn.dataset.from,btn.dataset.to);}
+async function registrarConsumEvent(evId,evNom,total,from,to){if(!confirm('Registrar '+fmtD(total)+' com a ingres de "'+evNom+'"?'))return;const ev=DB.config.events.find(function(e){return e.id===evId;});const deleg=DB.config.delegacions.find(function(d){return d.id===(ev?.delegId||'');});const area=deleg?DB.config.areas.find(function(a){return a.id===deleg.areaId;}):null;const af=getAnyFiscal();DB.moviments.push({id:'m'+Date.now(),anyFiscal:af,tipus:'ing',via:'app',areaId:area?.id||'',areaNom:area?.name||'',delegacioId:deleg?.id||'',delegacioNom:deleg?.name||'',eventId:evId,eventNom:evNom,concepte:'Consums falles.app - '+evNom,establiment:'falles.app',data:to?to.split('T')[0]:today(),responsable:currentUser?.name||'',responsableEmail:currentUser?.email||'',import:total,notes:'Consums '+from+' fins '+to,fontImport:'fallesapp_tickets'});saveCache();showToast('Ingres de '+fmtD(total)+' registrat per a '+evNom);save('moviments').catch(function(e){showToast('Error: '+e.message,true);});}
+async function registrarBonificacio(){const imp=parseFloat(document.getElementById('fapp-bonif-import').value)||0;const data=document.getElementById('fapp-bonif-data').value;const notes=document.getElementById('fapp-bonif-notes').value||'Bonificacio moneders falles.app';if(!imp||!data){showToast('Import i data son obligatoris',true);return;}if(!confirm('Registrar '+fmtD(imp)+' com a despesa?'))return;const af=getAnyFiscal();DB.moviments.push({id:'m'+Date.now(),anyFiscal:af,tipus:'gast',via:'app',areaId:'01',areaNom:'Administracio i Secretaria',delegacioId:'0102',delegacioNom:'Tresoreria',eventId:'',eventNom:'',concepte:notes,establiment:'falles.app',data,responsable:currentUser?.name||'',responsableEmail:currentUser?.email||'',import:imp,notes:'Bonificacio falles.app',fontImport:'fallesapp_bonif'});saveCache();showToast('Bonificacio registrada: '+fmtD(imp));save('moviments').catch(function(e){showToast('Error: '+e.message,true);});document.getElementById('fapp-bonif-import').value='';document.getElementById('fapp-bonif-data').value='';}
+function signOut(){if(accessToken)google.accounts.oauth2.revoke(accessToken,function(){});accessToken=null;currentUser=null;document.getElementById('app').style.display='none';document.getElementById('login').style.display='flex';document.getElementById('sb-name').textContent='—';document.getElementById('sb-role').textContent='—';}
+
 </script>
 </body>
 </html>
