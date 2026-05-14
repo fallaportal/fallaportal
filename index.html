@@ -205,7 +205,7 @@ tr:hover td{background:var(--bg2)}
     <div class="login-logo">Falla <span>Portal</span></div>
     <div class="login-sub">Sistema de gestió financera</div>
     <div class="login-fiscal">Any fiscal 26/27 · Abr 2026 – Mar 2027</div>
-    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v0.8.3</div>
+    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v0.8.5</div>
     <button class="btn-google" onclick="signIn()">
       <svg viewBox="0 0 24 24" width="20" height="20"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
       Entrar amb Google
@@ -247,7 +247,7 @@ tr:hover td{background:var(--bg2)}
     <div class="sb-bottom">
       <div class="sync-ind"><div class="sync-dot" id="sync-dot"></div><span id="sync-text">Sincronitzat</span></div>
       <button class="btn-logout" onclick="signOut()"><i class="ti ti-logout" style="font-size:14px"></i> Tancar sessió</button>
-      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v0.8.3</div>
+      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v0.8.5</div>
     </div>
   </div>
 
@@ -479,6 +479,27 @@ tr:hover td{background:var(--bg2)}
   <div onclick="showPageMob('manual','');closeMobMenu()" style="padding:12px 20px;font-size:14px;display:flex;align-items:center;gap:12px;cursor:pointer"><i class="ti ti-help-circle" style="font-size:18px;color:var(--text2)"></i> Manual d'usuari</div>
   <div onclick="showPageMob('configuracio','');closeMobMenu()" style="padding:12px 20px;font-size:14px;display:flex;align-items:center;gap:12px;cursor:pointer"><i class="ti ti-settings" style="font-size:18px;color:var(--text2)"></i> Configuració</div>
   <div onclick="signOut();closeMobMenu()" style="padding:12px 20px;font-size:14px;display:flex;align-items:center;gap:12px;cursor:pointer;color:var(--red)"><i class="ti ti-logout" style="font-size:18px"></i> Tancar sessió</div>
+</div>
+
+<div class="modal-overlay" id="modal-fons-confirm">
+  <div class="modal">
+    <div class="modal-inner">
+      <div class="modal-title"><i class="ti ti-alert-circle" style="color:var(--amber);margin-right:6px"></i>Origen del pagament</div>
+      <p style="margin-bottom:12px;color:var(--text2);font-size:14px">
+        Tens <strong id="dlg-fons-saldo"></strong> de fons lliurats disponibles.<br>
+        Vols pagar <strong id="dlg-fons-import"></strong> amb els fons lliurats o amb la caixa de la Falla?
+      </p>
+      <div style="background:var(--bg2);border-radius:var(--r);padding:12px;font-size:13px;color:var(--text2)">
+        <div style="margin-bottom:6px"><i class="ti ti-arrow-down-left" style="color:var(--green)"></i> <strong>Fons lliurats</strong> — Es descompta del teu saldo de fons</div>
+        <div><i class="ti ti-building-bank" style="color:var(--blue,#378ADD)"></i> <strong>Caixa de la Falla</strong> — Moviment normal de caixa</div>
+      </div>
+    </div>
+    <div class="modal-footer" style="gap:8px">
+      <button class="btn" onclick="closeModal('modal-fons-confirm')">Cancel·lar</button>
+      <button class="btn" onclick="confirmarMovimentFons(false)" style="color:var(--blue,#378ADD)"><i class="ti ti-building-bank"></i> Caixa de la Falla</button>
+      <button class="btn btn-primary" onclick="confirmarMovimentFons(true)"><i class="ti ti-arrow-down-left"></i> Fons lliurats</button>
+    </div>
+  </div>
 </div>
 
 <div class="modal-overlay" id="modal-lliurament">
@@ -1046,6 +1067,22 @@ async function deleteUsuari(id){
   saveCache();renderCfgUsuaris();
   showToast('Usuari eliminat');
   save('config').catch(function(e){showToast('Error: '+e.message,true);});
+}
+
+function showPageMob(id,mobId){
+  showPage(id);
+  document.querySelectorAll('.mob-item').forEach(function(el){el.classList.remove('active');});
+  if(mobId){const el=document.getElementById(mobId);if(el)el.classList.add('active');}
+}
+
+function showMobMenu(){
+  const menu=document.getElementById('mob-menu');
+  if(menu)menu.classList.add('open');
+}
+
+function closeMobMenu(){
+  const menu=document.getElementById('mob-menu');
+  if(menu)menu.classList.remove('open');
 }
 
 function signOut(){
@@ -1670,29 +1707,83 @@ function onMovDelegChange(){
 
 async function registrarMoviment(){
   const imp=parseFloat(document.getElementById('mov-import').value);
-  if(!imp||imp<=0){showToast('Introdueix un import vàlid',true);return;}
+  if(!imp||imp<=0){showToast('Introdueix un import valid',true);return;}
   const areaId=document.getElementById('mov-area').value;
   const delegId=document.getElementById('mov-deleg').value;
   const eventId=document.getElementById('mov-event').value;
-  const area=DB.config.areas.find(a=>a.id===areaId);
-  const deleg=DB.config.delegacions.find(d=>d.id===delegId);
-  const event=DB.config.events.find(e=>e.id===eventId);
+  const area=DB.config.areas.find(function(a){return a.id===areaId;});
+  const deleg=DB.config.delegacions.find(function(d){return d.id===delegId;});
+  const event=DB.config.events.find(function(e){return e.id===eventId;});
   const u=getUsuari();
+  const myEmail=(currentUser?.email||'').toLowerCase();
+  const af=getAnyFiscal();
+
+  // Si es pagament en efectiu i despesa, comprovar si te fons lliurats
+  if(movType==='gast'&&movVia==='Efectiu'){
+    const fonsArr=(DB.fons||[]).filter(function(f){
+      return(f.anyFiscal===af||!f.anyFiscal)&&(f.delegEmail||'').toLowerCase()===myEmail;
+    });
+    const rebuts=fonsArr.filter(function(f){return f.tipus==='lliurament';}).reduce(function(s,f){return s+f.import;},0);
+    const gastFons=fonsArr.filter(function(f){return f.tipus==='gast_fons';}).reduce(function(s,f){return s+f.import;},0);
+    const devol=fonsArr.filter(function(f){return f.tipus==='devolucio';}).reduce(function(s,f){return s+f.import;},0);
+    const saldoFons=rebuts-gastFons-devol;
+
+    if(saldoFons>0){
+      // Mostrar diàleg de confirmació
+      pendingMov={imp,areaId,area,delegId,deleg,event,eventId,u,af};
+      document.getElementById('dlg-fons-saldo').textContent=fmtD(saldoFons);
+      document.getElementById('dlg-fons-import').textContent=fmtD(imp);
+      openModal('modal-fons-confirm');
+      return;
+    }
+  }
+  await doRegistrarMoviment(imp,areaId,area,delegId,deleg,event,eventId,u,af,false);
+}
+
+let pendingMov=null;
+
+async function confirmarMovimentFons(usaFons){
+  closeModal('modal-fons-confirm');
+  if(!pendingMov)return;
+  const {imp,areaId,area,delegId,deleg,event,eventId,u,af}=pendingMov;
+  pendingMov=null;
+  await doRegistrarMoviment(imp,areaId,area,delegId,deleg,event,eventId,u,af,usaFons);
+}
+
+async function doRegistrarMoviment(imp,areaId,area,delegId,deleg,event,eventId,u,af,usaFons){
   const mov={
-    id:'m'+Date.now(),anyFiscal:getAnyFiscal(),tipus:movType,via:movVia,
+    id:'m'+Date.now(),anyFiscal:af,tipus:movType,via:movVia,
     areaId,areaNom:area?.name||'',delegacioId:delegId,delegacioNom:deleg?.name||'',
     eventId:eventId||'',eventNom:event?.name||'',
     concepte:document.getElementById('mov-concept').value,
     establiment:document.getElementById('mov-establiment').value,
     data:document.getElementById('mov-data').value||today(),
     responsable:u?.nom||currentUser?.name||'',responsableEmail:currentUser?.email||'',
-    import:imp,notes:document.getElementById('mov-notes').value
+    import:imp,notes:document.getElementById('mov-notes').value,
+    origenFons:usaFons?'fons_lliurats':'caixa'
   };
   DB.moviments.push(mov);
+
+  // Si paga amb fons lliurats, registrar també com a despesa de fons
+  if(usaFons){
+    const fItem={
+      id:'f'+Date.now(),anyFiscal:af,tipus:'gast_fons',
+      delegId:getUsuari()?.id||'',delegEmail:currentUser?.email||'',
+      import:imp,data:mov.data,
+      nota:mov.concepte||'Despesa amb fons lliurats',
+      registratPer:currentUser?.name||currentUser?.email||'',
+      movimentId:mov.id
+    };
+    DB.fons.push(fItem);
+    saveFons(fItem).catch(function(e){console.warn(e);});
+  }
+
   saveCache();
-  showToast('Registrat: '+(movType==='ing'?'+':'-')+fmtD(imp));
-  saveMoviment(mov).catch(e=>showToast('Error guardant a Sheets: '+e.message,true));
-  ['mov-import','mov-establiment','mov-notes','mov-concept'].forEach(id=>document.getElementById(id).value='');
+  showToast('Registrat: '+(movType==='ing'?'+':'-')+fmtD(imp)+(usaFons?' (fons lliurats)':''));
+  saveMoviment(mov).catch(function(e){showToast('Error guardant a Sheets: '+e.message,true);});
+  ['mov-import','mov-establiment','mov-notes','mov-concept'].forEach(function(id){
+    document.getElementById(id).value='';
+  });
 }
 
 // HISTORIAL
@@ -1764,7 +1855,7 @@ function renderFons(){
     const rebuts=(DB.fons||[]).filter(f=>f.delegEmail===email&&f.tipus==='lliurament').reduce((s,f)=>s+f.import,0);
     const gastat=(DB.moviments||[]).filter(m=>m.responsableEmail===email&&m.tipus==='gast').reduce((s,m)=>s+m.import,0);
     const devol=(DB.fons||[]).filter(f=>f.delegEmail===email&&f.tipus==='devolucio').reduce((s,f)=>s+f.import,0);
-    const saldo=rebuts-gastat-devol;
+    const saldo=rebuts-gastFonsCard-devol;
     const pct=rebuts>0?Math.min(100,Math.round(gastat/rebuts*100)):0;
     c.innerHTML=`<div class="saldo-banner">
       <div class="saldo-row"><span style="color:var(--text2)">Fons rebuts de Tresoreria</span><span style="color:var(--green);font-weight:500">+${fmtD(rebuts)}</span></div>
@@ -1778,9 +1869,12 @@ function renderFons(){
 
 function renderFonsCard(u){
   const af=getAnyFiscal();
-  const fonsArr=(DB.fons||[]).filter(f=>(f.anyFiscal===af||!f.anyFiscal)&&f.delegId===u.id);
-  const rebuts=fonsArr.filter(f=>f.tipus==='lliurament').reduce((s,f)=>s+f.import,0);
-  const gastat=(DB.moviments||[]).filter(m=>(m.anyFiscal===af||!m.anyFiscal)&&m.responsableEmail===u.email&&m.tipus==='gast').reduce((s,m)=>s+m.import,0);
+  const fonsArr=(DB.fons||[]).filter(function(f){
+    return(f.anyFiscal===af||!f.anyFiscal)&&(f.delegId===u.id||(f.delegEmail||'').toLowerCase()===(u.email||'').toLowerCase());
+  });
+  const rebuts=fonsArr.filter(function(f){return f.tipus==='lliurament';}).reduce(function(s,f){return s+f.import;},0);
+  const gastFonsCard=fonsArr.filter(function(f){return f.tipus==='gast_fons';}).reduce(function(s,f){return s+f.import;},0);
+  const gastat=(DB.moviments||[]).filter(function(m){return(m.anyFiscal===af||!m.anyFiscal)&&(m.responsableEmail||'').toLowerCase()===(u.email||'').toLowerCase()&&m.tipus==='gast'&&m.origenFons!=='fons_lliurats';}).reduce(function(s,m){return s+m.import;},0);
   const devol=fonsArr.filter(f=>f.tipus==='devolucio').reduce((s,f)=>s+f.import,0);
   const saldo=rebuts-gastat-devol;
   const pct=rebuts>0?Math.min(100,Math.round(gastat/rebuts*100)):0;
@@ -1793,8 +1887,9 @@ function renderFonsCard(u){
     fonsArr.sort((a,b)=>b.data.localeCompare(a.data)).map(function(f){
       const canDel=rol==='president'||rol==='treasury'||((f.registratPer||'').toLowerCase()===myEmail);
       const isLl=f.tipus==='lliurament';
+      const isGastF=f.tipus==='gast_fons';
       return'<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:0.5px solid var(--border);font-size:12px">'+
-        '<i class="ti '+(isLl?'ti-arrow-down-left':'ti-corner-down-left')+'" style="color:'+(isLl?'var(--green)':'var(--blue,#378ADD)')+'"></i>'+
+        '<i class="ti '+(isLl?'ti-arrow-down-left':isGastF?'ti-shopping-cart':'ti-corner-down-left')+'" style="color:'+(isLl?'var(--green)':'var(--blue,#378ADD)')+'"></i>'+
         '<div style="flex:1">'+
           '<div style="font-weight:500">'+(f.nota||f.tipus)+'</div>'+
           '<div style="font-size:11px;color:var(--text3)">'+f.data+(f.registratPer?' · '+f.registratPer:'')+'</div>'+
