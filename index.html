@@ -188,6 +188,9 @@ tr:hover td{background:var(--bg2)}
 .mov-footer-btn{position:fixed;bottom:56px;left:0;right:0;padding:10px 16px;background:var(--bg);border-top:0.5px solid var(--border);z-index:99}
 .mov-footer-btn button{width:100%;padding:15px;font-size:16px;font-weight:800;border-radius:var(--r);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;font-family:inherit;text-transform:uppercase;letter-spacing:.03em;background:#C0392B;color:#fff}
 .opt-label{font-size:11px;color:var(--text3);font-weight:400;text-transform:none;letter-spacing:0}
+.fapp-dropzone{border:2px dashed var(--border2);border-radius:var(--r);padding:24px 16px;text-align:center;transition:all .2s;background:var(--bg)}
+.fapp-dropzone.drag-over{border-color:var(--blue);background:var(--blue-bg)}
+.fapp-dropzone.loaded{border-color:var(--green);border-style:solid;background:var(--green-bg)}
 @media(min-width:769px){
   .mov-header{background:transparent;border:none;padding:0;max-width:500px}
   .mov-body{padding:14px 0;max-width:500px;padding-bottom:20px}
@@ -197,6 +200,7 @@ tr:hover td{background:var(--bg2)}
 .tag-multi{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
 .info-box{padding:10px 12px;background:var(--blue-bg);border-radius:var(--r);font-size:12px;color:var(--blue-text);margin-bottom:12px}
 </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body>
 
@@ -205,7 +209,7 @@ tr:hover td{background:var(--bg2)}
     <div class="login-logo">Falla <span>Portal</span></div>
     <div class="login-sub">Sistema de gestió financera</div>
     <div class="login-fiscal">Any fiscal 26/27 · Abr 2026 – Mar 2027</div>
-    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v0.8.6</div>
+    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v0.9.1</div>
     <button class="btn-google" onclick="signIn()">
       <svg viewBox="0 0 24 24" width="20" height="20"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
       Entrar amb Google
@@ -247,7 +251,7 @@ tr:hover td{background:var(--bg2)}
     <div class="sb-bottom">
       <div class="sync-ind"><div class="sync-dot" id="sync-dot"></div><span id="sync-text">Sincronitzat</span></div>
       <button class="btn-logout" onclick="signOut()"><i class="ti ti-logout" style="font-size:14px"></i> Tancar sessió</button>
-      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v0.8.6</div>
+      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v0.9.1</div>
     </div>
   </div>
 
@@ -381,6 +385,132 @@ tr:hover td{background:var(--bg2)}
       </div>
     </div>
 
+    <div id="page-fallesapp" class="page">
+      <div class="page-title">Falles.app</div>
+      <div class="page-sub">Importació de dades de la plataforma falles.app</div>
+
+      <!-- INFO DATES -->
+      <div class="info-box" style="margin-bottom:20px">
+        <i class="ti ti-calendar" style="flex-shrink:0;font-size:18px"></i>
+        <div>
+          <strong>Dates de selecció a falles.app:</strong> Del <strong id="fapp-data-inici"></strong> al <strong id="fapp-data-fi"></strong>
+          <div style="font-size:12px;color:var(--text2);margin-top:2px">Corresponen a l'exercici fiscal actiu. Selecciona exactament aquest rang quan generes els informes a falles.app.</div>
+        </div>
+      </div>
+
+      <!-- TRES ZONES -->
+      <div style="display:flex;flex-direction:column;gap:16px">
+
+        <!-- ZONA 1: Moviments -->
+        <div class="card">
+          <div style="display:flex;align-items:flex-start;gap:14px">
+            <div style="width:36px;height:36px;border-radius:50%;background:var(--green-bg);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:18px;font-weight:700;color:var(--green)">1</div>
+            <div style="flex:1">
+              <div style="font-weight:600;font-size:15px;margin-bottom:4px">Informe de Movimientos</div>
+              <div style="font-size:13px;color:var(--text2);margin-bottom:10px">Registra les recarregues en efectiu (ingressos a caixa), recarregues TPV (ingressos al banc) i devolucions.</div>
+              <div style="background:var(--bg2);border-radius:var(--r);padding:10px 12px;font-size:12px;color:var(--text2);margin-bottom:12px">
+                <div style="font-weight:500;margin-bottom:4px"><i class="ti ti-info-circle"></i> Com obtenir-lo a falles.app:</div>
+                <ol style="margin-left:16px;line-height:1.8">
+                  <li>Ves a <strong>Informes → Informe de Movimientos</strong></li>
+                  <li>Selecciona les dates: <span id="fapp-instruccio-dates-1" style="font-family:monospace;background:var(--bg);padding:1px 6px;border-radius:4px"></span></li>
+                  <li>Exporta com a <strong>Excel (.xlsx)</strong></li>
+                </ol>
+              </div>
+              <div id="fapp-drop-1" class="fapp-dropzone" ondrop="handleFappDrop(event,1)" ondragover="event.preventDefault()" ondragleave="this.classList.remove('drag-over')" ondragenter="this.classList.add('drag-over')">
+                <i class="ti ti-upload" style="font-size:24px;color:var(--text3);margin-bottom:6px"></i>
+                <div style="font-size:13px;font-weight:500">Arrossega el fitxer aquí</div>
+                <div style="font-size:12px;color:var(--text3);margin:4px 0">o</div>
+                <label style="cursor:pointer">
+                  <span class="btn btn-primary" style="font-size:13px">Seleccionar fitxer</span>
+                  <input type="file" accept=".xlsx,.xls" style="display:none" onchange="loadFappFile(event,1)">
+                </label>
+                <div style="font-size:11px;color:var(--text3);margin-top:6px">transacciones-falla-report-*.xlsx</div>
+              </div>
+              <div id="fapp-preview-1"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ZONA 2: Saldos -->
+        <div class="card">
+          <div style="display:flex;align-items:flex-start;gap:14px">
+            <div style="width:36px;height:36px;border-radius:50%;background:var(--amber-bg);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:18px;font-weight:700;color:var(--amber)">2</div>
+            <div style="flex:1">
+              <div style="font-weight:600;font-size:15px;margin-bottom:4px">Informe de Saldos Individuales por Usuario</div>
+              <div style="font-size:13px;color:var(--text2);margin-bottom:10px">Mostra el passiu total de la falla — diners que els fallers tenen carregats i encara no han gastat.</div>
+              <div style="background:var(--bg2);border-radius:var(--r);padding:10px 12px;font-size:12px;color:var(--text2);margin-bottom:12px">
+                <div style="font-weight:500;margin-bottom:4px"><i class="ti ti-info-circle"></i> Com obtenir-lo a falles.app:</div>
+                <ol style="margin-left:16px;line-height:1.8">
+                  <li>Ves a <strong>Informes → Saldos Individuales por Usuario</strong></li>
+                  <li>No cal seleccionar dates — mostra el saldo actual</li>
+                  <li>Exporta com a <strong>Excel (.xlsx)</strong></li>
+                </ol>
+              </div>
+              <div id="fapp-drop-2" class="fapp-dropzone" ondrop="handleFappDrop(event,2)" ondragover="event.preventDefault()" ondragleave="this.classList.remove('drag-over')" ondragenter="this.classList.add('drag-over')">
+                <i class="ti ti-upload" style="font-size:24px;color:var(--text3);margin-bottom:6px"></i>
+                <div style="font-size:13px;font-weight:500">Arrossega el fitxer aquí</div>
+                <div style="font-size:12px;color:var(--text3);margin:4px 0">o</div>
+                <label style="cursor:pointer">
+                  <span class="btn btn-primary" style="font-size:13px">Seleccionar fitxer</span>
+                  <input type="file" accept=".xlsx,.xls" style="display:none" onchange="loadFappFile(event,2)">
+                </label>
+                <div style="font-size:11px;color:var(--text3);margin-top:6px">balance-monederos-falla-report-*.xlsx</div>
+              </div>
+              <div id="fapp-preview-2"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ZONA 3: Tickets -->
+        <div class="card">
+          <div style="display:flex;align-items:flex-start;gap:14px">
+            <div style="width:36px;height:36px;border-radius:50%;background:var(--blue-bg);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:18px;font-weight:700;color:var(--blue-text,#378ADD)">3</div>
+            <div style="flex:1">
+              <div style="font-weight:600;font-size:15px;margin-bottom:4px">Informe de Transacciones de Tickets</div>
+              <div style="font-size:13px;color:var(--text2);margin-bottom:10px">Permet assignar els ingressos per consum de tickets a events específics de la Falla.</div>
+              <div style="background:var(--bg2);border-radius:var(--r);padding:10px 12px;font-size:12px;color:var(--text2);margin-bottom:12px">
+                <div style="font-weight:500;margin-bottom:4px"><i class="ti ti-info-circle"></i> Com obtenir-lo a falles.app:</div>
+                <ol style="margin-left:16px;line-height:1.8">
+                  <li>Ves a <strong>Informes → Transacciones de Tickets</strong></li>
+                  <li>Selecciona les dates: <span id="fapp-instruccio-dates-3" style="font-family:monospace;background:var(--bg);padding:1px 6px;border-radius:4px"></span></li>
+                  <li>Deixa el camp <strong>Ticket</strong> buit (= tots els tickets)</li>
+                  <li>Exporta com a <strong>Excel (.xlsx)</strong></li>
+                </ol>
+              </div>
+              <div id="fapp-drop-3" class="fapp-dropzone" ondrop="handleFappDrop(event,3)" ondragover="event.preventDefault()" ondragleave="this.classList.remove('drag-over')" ondragenter="this.classList.add('drag-over')">
+                <i class="ti ti-upload" style="font-size:24px;color:var(--text3);margin-bottom:6px"></i>
+                <div style="font-size:13px;font-weight:500">Arrossega el fitxer aquí</div>
+                <div style="font-size:12px;color:var(--text3);margin:4px 0">o</div>
+                <label style="cursor:pointer">
+                  <span class="btn btn-primary" style="font-size:13px">Seleccionar fitxer</span>
+                  <input type="file" accept=".xlsx,.xls" style="display:none" onchange="loadFappFile(event,3)">
+                </label>
+                <div style="font-size:11px;color:var(--text3);margin-top:6px">transacciones_tickets_from_*.xlsx</div>
+              </div>
+              <div id="fapp-preview-3"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ZONA BONIFICACIONS -->
+        <div class="card">
+          <div style="display:flex;align-items:flex-start;gap:14px">
+            <div style="width:36px;height:36px;border-radius:50%;background:var(--red-bg,#FDE8E8);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:18px;font-weight:700;color:var(--red)"><i class="ti ti-gift" style="font-size:18px"></i></div>
+            <div style="flex:1">
+              <div style="font-weight:600;font-size:15px;margin-bottom:4px">Bonificacions concedides</div>
+              <div style="font-size:13px;color:var(--text2);margin-bottom:10px">Registra les bonificacions (% extra en recarregues) com a despesa de l'exercici. Aquests diners mai han entrat físicament a la falla.</div>
+              <div class="field-row" style="margin-bottom:8px">
+                <div class="field"><label>Import total bonificat (€)</label><input type="number" id="fapp-bonif-import" placeholder="31967.20" step="0.01"></div>
+                <div class="field"><label>Data de la bonificació</label><input type="date" id="fapp-bonif-data"></div>
+              </div>
+              <div class="field" style="margin-bottom:10px"><label>Notes</label><input type="text" id="fapp-bonif-notes" placeholder="Bonificacio 40% moneders 26/27"></div>
+              <button class="btn btn-danger" onclick="registrarBonificacio()"><i class="ti ti-check"></i> Registrar com a despesa</button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
     <div id="page-importacio" class="page">
       <div class="page-title">Importar CSV</div>
       <div class="page-sub">Extractes bancaris de Caixabank, Caixa Popular o falles.app</div>
@@ -412,12 +542,131 @@ tr:hover td{background:var(--bg2)}
       <div id="directiva-container"></div>
     </div>
 
-    <div id="page-manual" class="page">
+    <    <div id="page-manual" class="page">
       <div class="page-title">Manual d'usuari</div>
-      <div class="page-sub">Guia completa de la Falla Portal · Gestió financera 26/27</div>
-      <div id="manual-container"></div>
-    </div>
+      <div class="page-sub">Guia completa de l'app de gestió financera · v0.9.1</div>
 
+      <div style="display:flex;gap:6px;margin-bottom:20px;flex-wrap:wrap" id="man-tabs">
+        <button class="btn btn-primary" onclick="showManTab('intro')">Introducció</button>
+        <button class="btn" onclick="showManTab('moviments')">Moviments</button>
+        <button class="btn" onclick="showManTab('fons')">Fons delegats</button>
+        <button class="btn" onclick="showManTab('tancament')">Tancament caixa</button>
+        <button class="btn" onclick="showManTab('pressupostos')">Pressupostos</button>
+        <button class="btn" onclick="showManTab('exercicis')">Exercicis</button>
+        <button class="btn" onclick="showManTab('directiva')">Directiva</button>
+        <button class="btn" onclick="showManTab('fallesapp')">Falles.app</button>
+        <button class="btn" onclick="showManTab('rols')">Rols i permisos</button>
+      </div>
+
+      <div id="man-intro" class="card">
+        <div class="card-title" style="font-size:16px">Introducció</div>
+        <p style="margin-bottom:12px">L'app de gestió financera de la Falla Portal permet registrar i controlar tots els moviments econòmics de la Falla de forma centralitzada i accessible des de qualsevol dispositiu.</p>
+        <p style="margin-bottom:12px"><strong>Accés:</strong> S'accedeix amb el compte de Google assignat. Cada usuari veu sols la informació que li correspon segons el seu rol.</p>
+        <p style="margin-bottom:12px"><strong>Base de dades:</strong> Tota la informació es guarda automàticament al Google Sheet "Falla Portal DB". No cal fer cap còpia de seguretat manual.</p>
+        <p style="margin-bottom:12px"><strong>Any fiscal:</strong> L'any fiscal va de l'1 d'abril al 31 de març. El selector a la barra lateral permet canviar entre exercicis per consultar anys anteriors.</p>
+        <div class="info-box"><i class="ti ti-device-mobile" style="flex-shrink:0"></i><div>L'app funciona en mòbil i desktop. En mòbil apareix un menú inferior amb les opcions més freqüents: Inici, Moviment, Fons, Caixa i Més.</div></div>
+      </div>
+
+      <div id="man-moviments" class="card" style="display:none">
+        <div class="card-title" style="font-size:16px">Registrar moviments</div>
+        <p style="margin-bottom:10px">Un moviment és qualsevol entrada o sortida de diners de la Falla.</p>
+        <p style="margin-bottom:8px"><strong>Com registrar:</strong></p>
+        <ol style="margin-left:20px;margin-bottom:12px;line-height:1.8">
+          <li>Prem el botó <strong>Moviment</strong> al menú</li>
+          <li>Tria <strong>DESPESA</strong> o <strong>INGRÉS</strong></li>
+          <li>Introdueix l'import</li>
+          <li>Selecciona la via: Efectiu, TPV, Caixabank o Caixa Popular</li>
+          <li>Tria l'àrea i la delegació responsable</li>
+          <li>Introdueix el concepte (obligatori)</li>
+          <li>Afegeix la data, establiment i justificant si cal</li>
+          <li>Prem <strong>REGISTRAR</strong></li>
+        </ol>
+        <div class="info-box" style="margin-bottom:10px"><i class="ti ti-alert-circle" style="flex-shrink:0;color:var(--amber)"></i><div><strong>Fons lliurats:</strong> Si tens fons lliurats disponibles i registres una despesa en efectiu, l'app et preguntarà si estàs pagant amb fons de la Falla o amb fons lliurats.</div></div>
+        <p style="margin-bottom:8px"><strong>Eliminar moviments:</strong> Pots eliminar moviments propis des de l'Historial. El President i la Tresoreria poden eliminar qualsevol moviment.</p>
+      </div>
+
+      <div id="man-fons" class="card" style="display:none">
+        <div class="card-title" style="font-size:16px">Fons delegats</div>
+        <p style="margin-bottom:10px">Els fons delegats son diners que la Falla lliura a una persona per a que gestione despeses en nom seu.</p>
+        <p style="margin-bottom:8px"><strong>Lliurar fons:</strong></p>
+        <ol style="margin-left:20px;margin-bottom:12px;line-height:1.8">
+          <li>Ves a <strong>Fons</strong> al menú</li>
+          <li>Cerca la persona a qui vols lliurar fons</li>
+          <li>Prem <strong>Lliurar fons</strong> i introdueix l'import i el concepte</li>
+        </ol>
+        <p style="margin-bottom:8px"><strong>Devolució:</strong> Quan la persona retorna el sobrant, prem <strong>Devolució</strong> i registra l'import retornat.</p>
+        <p style="margin-bottom:8px"><strong>Saldo:</strong> El saldo disponible = Lliuraments rebuts − Despeses fetes amb fons − Devolucions.</p>
+        <div class="info-box"><i class="ti ti-info-circle" style="flex-shrink:0"></i><div>Les despeses fetes amb fons lliurats apareixen tant a l'Historial de moviments com al llistat de fons de la persona. Eliminar un registra elimina automàticament l'altre.</div></div>
+      </div>
+
+      <div id="man-tancament" class="card" style="display:none">
+        <div class="card-title" style="font-size:16px">Tancament de caixa</div>
+        <p style="margin-bottom:10px">Després de cada event amb venda de tiquets o cobros en efectiu, cal tancar la caixa per declarar l'efectiu i el TPV recaptats.</p>
+        <ol style="margin-left:20px;margin-bottom:12px;line-height:1.8">
+          <li>Ves a <strong>Caixa</strong> al menú</li>
+          <li>Selecciona l'event</li>
+          <li>Introdueix l'import en efectiu comptat</li>
+          <li>Introdueix l'import del TPV (del resum del terminal)</li>
+          <li>Prem <strong>Tancar caixa</strong></li>
+        </ol>
+        <p>El tancament queda registrat amb data i hora i no es pot modificar.</p>
+      </div>
+
+      <div id="man-pressupostos" class="card" style="display:none">
+        <div class="card-title" style="font-size:16px">Pressupostos</div>
+        <p style="margin-bottom:10px">El mòdul de pressupostos permet planificar les despeses i ingressos per delegació i event, i comparar-los amb els valors reals.</p>
+        <p style="margin-bottom:8px"><strong>Editar pressupost:</strong> Cada responsable pot introduir els imports planificats per a les seves delegacions. La Tresoreria pot bloquejar el pressupost un cop aprovat.</p>
+        <p style="margin-bottom:8px"><strong>Copiar pressupost:</strong> Des de Configuració → Gestió d'exercicis → <strong>Copiar pressupost</strong>, pots copiar el pressupost d'un any a un altre amb un % d'increment o decrement per delegació.</p>
+        <div class="info-box"><i class="ti ti-lock" style="flex-shrink:0"></i><div>Un cop bloquejat el pressupost, sols la Tresoreria o el President poden desbloquejar-lo per fer modificacions.</div></div>
+      </div>
+
+      <div id="man-exercicis" class="card" style="display:none">
+        <div class="card-title" style="font-size:16px">Gestió d'exercicis fiscals</div>
+        <p style="margin-bottom:10px">L'app pot gestionar múltiples exercicis fiscals simultàniament. Des de Configuració → Gestió d'exercicis pots:</p>
+        <ul style="margin-left:20px;margin-bottom:12px;line-height:1.8">
+          <li><strong>Obrir nou exercici:</strong> Crea un nou any fiscal sense tancar l'actual. Permet treballar en la planificació del proper any mentre el present segueix actiu.</li>
+          <li><strong>Tancar exercici:</strong> Tancament formal de l'exercici actual. Un cop tancat no es poden afegir moviments.</li>
+          <li><strong>Copiar pressupost:</strong> Copia el pressupost d'un any a un altre, amb % d'ajust per delegació.</li>
+          <li><strong>Copiar directiva:</strong> Copia les assignacions de responsables d'un any a un altre.</li>
+        </ul>
+        <p>El selector d'any fiscal a la barra lateral permet canviar de vista entre exercicis en qualsevol moment.</p>
+      </div>
+
+      <div id="man-directiva" class="card" style="display:none">
+        <div class="card-title" style="font-size:16px">Directiva i assignació de responsables</div>
+        <p style="margin-bottom:10px">La directiva defineix qui és responsable de cada àrea i delegació per a cada any fiscal.</p>
+        <p style="margin-bottom:8px"><strong>President:</strong> Assigna els responsables d'àrea.</p>
+        <p style="margin-bottom:8px"><strong>Responsable d'àrea:</strong> Assigna els responsables de les delegacions de la seva àrea.</p>
+        <p style="margin-bottom:12px">Es poden assignar múltiples responsables a una mateixa àrea o delegació.</p>
+        <div class="info-box"><i class="ti ti-info-circle" style="flex-shrink:0"></i><div>Les assignacions son per any fiscal. Pots copiar la directiva d'un any a un altre des de Configuració → Copiar directiva i modificar els canvis necessaris.</div></div>
+      </div>
+
+      <div id="man-fallesapp" class="card" style="display:none">
+        <div class="card-title" style="font-size:16px">Integració amb falles.app</div>
+        <p style="margin-bottom:10px">El mòdul de falles.app permet importar les transaccions de la plataforma de gestió de moneders dels fallers.</p>
+        <p style="margin-bottom:8px"><strong>Transaccions:</strong> Importa el fitxer de transaccions per registrar les recarregues de moneders com a ingressos (efectiu a caixa o TPV al banc) i les devolucions com a despeses.</p>
+        <p style="margin-bottom:8px"><strong>Saldos moneders:</strong> Importa el fitxer de balanços per veure el passiu total (diners que els fallers tenen carregats però no han gastat).</p>
+        <p style="margin-bottom:8px"><strong>Tickets/Consums:</strong> Importa el fitxer de consums per assignar ingressos a events específics per rang de dates.</p>
+        <p style="margin-bottom:8px"><strong>Bonificacions:</strong> Registra les bonificacions concedides (p.e. 40% extra en recarregues) com a despesa de l'exercici.</p>
+        <div class="info-box" style="background:var(--amber-bg);border-color:var(--amber)"><i class="ti ti-alert-triangle" style="flex-shrink:0;color:var(--amber)"></i><div>Les bonificacions mai han entrat físicament a la falla però son un cost real. Registrar-les com a despesa és obligatori pel principi de prudència comptable.</div></div>
+      </div>
+
+      <div id="man-rols" class="card" style="display:none">
+        <div class="card-title" style="font-size:16px">Rols i permisos</div>
+        <p style="margin-bottom:10px">Cada usuari té un rol que determina el que pot veure i fer a l'app.</p>
+        <div class="table-wrap"><table>
+          <thead><tr><th>Rol</th><th>Registra</th><th>Fons</th><th>CSV</th><th>Config</th><th>Usuaris</th><th>Veu tot</th></tr></thead>
+          <tbody>
+            <tr><td><span class="pill p-purple">President</span></td><td style="text-align:center"><i class="ti ti-check" style="color:var(--green)"></i></td><td style="text-align:center"><i class="ti ti-check" style="color:var(--green)"></i></td><td style="text-align:center"><i class="ti ti-check" style="color:var(--green)"></i></td><td style="text-align:center"><i class="ti ti-check" style="color:var(--green)"></i></td><td style="text-align:center"><i class="ti ti-check" style="color:var(--green)"></i></td><td style="text-align:center"><i class="ti ti-check" style="color:var(--green)"></i></td></tr>
+            <tr><td><span class="pill p-info">Tresoreria</span></td><td style="text-align:center"><i class="ti ti-check" style="color:var(--green)"></i></td><td style="text-align:center"><i class="ti ti-check" style="color:var(--green)"></i></td><td style="text-align:center"><i class="ti ti-check" style="color:var(--green)"></i></td><td style="text-align:center"><i class="ti ti-check" style="color:var(--green)"></i></td><td style="text-align:center"><i class="ti ti-x" style="color:var(--text3)"></i></td><td style="text-align:center"><i class="ti ti-check" style="color:var(--green)"></i></td></tr>
+            <tr><td><span class="pill p-ok">Resp. Area</span></td><td style="text-align:center"><i class="ti ti-check" style="color:var(--green)"></i></td><td style="text-align:center"><i class="ti ti-x" style="color:var(--text3)"></i></td><td style="text-align:center"><i class="ti ti-x" style="color:var(--text3)"></i></td><td style="text-align:center"><i class="ti ti-x" style="color:var(--text3)"></i></td><td style="text-align:center"><i class="ti ti-x" style="color:var(--text3)"></i></td><td style="text-align:center"><i class="ti ti-x" style="color:var(--text3)"></i></td></tr>
+            <tr><td><span class="pill p-warn">Resp. Delegacio</span></td><td style="text-align:center"><i class="ti ti-check" style="color:var(--green)"></i></td><td style="text-align:center"><i class="ti ti-x" style="color:var(--text3)"></i></td><td style="text-align:center"><i class="ti ti-x" style="color:var(--text3)"></i></td><td style="text-align:center"><i class="ti ti-x" style="color:var(--text3)"></i></td><td style="text-align:center"><i class="ti ti-x" style="color:var(--text3)"></i></td><td style="text-align:center"><i class="ti ti-x" style="color:var(--text3)"></i></td></tr>
+            <tr><td><span class="pill p-gray">Junta</span></td><td style="text-align:center"><i class="ti ti-x" style="color:var(--text3)"></i></td><td style="text-align:center"><i class="ti ti-x" style="color:var(--text3)"></i></td><td style="text-align:center"><i class="ti ti-x" style="color:var(--text3)"></i></td><td style="text-align:center"><i class="ti ti-x" style="color:var(--text3)"></i></td><td style="text-align:center"><i class="ti ti-x" style="color:var(--text3)"></i></td><td style="text-align:center"><i class="ti ti-check" style="color:var(--green)"></i></td></tr>
+          </tbody>
+        </table></div>
+        <p style="margin-top:12px;color:var(--text2);font-size:13px">Els permisos es poden modificar des de Configuració → Mestre de Rols. Els rols base no es poden eliminar però sí editar. Es poden crear rols personalitzats nous.</p>
+      </div>
+    </div>
     <div id="page-resultats" class="page">
       <div class="page-title">Estat de Resultats</div>
       <div class="page-sub">Any fiscal 26/27 · 1 abril 2026 – 31 març 2027</div>
@@ -477,7 +726,8 @@ tr:hover td{background:var(--bg2)}
   <div onclick="showPageMob('resultats','');closeMobMenu()" style="padding:12px 20px;font-size:14px;display:flex;align-items:center;gap:12px;cursor:pointer"><i class="ti ti-file-text" style="font-size:18px;color:var(--text2)"></i> Estat de Resultats</div>
   <div onclick="showPageMob('flux','');closeMobMenu()" style="padding:12px 20px;font-size:14px;display:flex;align-items:center;gap:12px;cursor:pointer"><i class="ti ti-arrows-exchange" style="font-size:18px;color:var(--text2)"></i> Flux d'Efectiu</div>
   <div onclick="showPageMob('manual','');closeMobMenu()" style="padding:12px 20px;font-size:14px;display:flex;align-items:center;gap:12px;cursor:pointer"><i class="ti ti-help-circle" style="font-size:18px;color:var(--text2)"></i> Manual d'usuari</div>
-  <div onclick="showPageMob('configuracio','');closeMobMenu()" style="padding:12px 20px;font-size:14px;display:flex;align-items:center;gap:12px;cursor:pointer"><i class="ti ti-settings" style="font-size:18px;color:var(--text2)"></i> Configuració</div>
+  <div onclick="showPageMob('fallesapp','');closeMobMenu()" style="padding:12px 20px;font-size:14px;display:flex;align-items:center;gap:12px;cursor:pointer"><i class="ti ti-device-mobile" style="font-size:18px;color:var(--text2)"></i> Falles.app</div>
+  <div onclick="showPageMob('configuracio','');closeMobMenu()"  style="padding:12px 20px;font-size:14px;display:flex;align-items:center;gap:12px;cursor:pointer"><i class="ti ti-settings" style="font-size:18px;color:var(--text2)"></i> Configuració</div>
   <div onclick="signOut();closeMobMenu()" style="padding:12px 20px;font-size:14px;display:flex;align-items:center;gap:12px;cursor:pointer;color:var(--red)"><i class="ti ti-logout" style="font-size:18px"></i> Tancar sessió</div>
 </div>
 
@@ -731,32 +981,39 @@ tr:hover td{background:var(--bg2)}
       <button class="btn btn-primary" onclick="saveEvent()">Guardar event</button>
     </div>
   </div>
-</div>
-
-<div class="modal-overlay" id="modal-banc">
+</d<div class="modal-overlay" id="modal-banc">
   <div class="modal">
-  <div class="modal-inner">
-    <div class="modal-title" id="mb-title">Nou banc</div>
-    <div class="field">
-      <label>Codi <span style="color:var(--text3);font-size:12px">(p.e. 03 Banc, Bizum...)</span></label>
-      <input type="text" id="mb-codi" placeholder="03 Banc">
+    <div class="modal-inner">
+      <div class="modal-title" id="mb-title">Nou banc</div>
+      <div class="field">
+        <label>Codi <span style="color:var(--text3);font-size:12px">(p.e. 03 Banc, Bizum...)</span></label>
+        <input type="text" id="mb-codi" placeholder="03 Banc">
+      </div>
+      <div class="field"><label>Nom</label><input type="text" id="mb-nom" placeholder="p.e. Sabadell, Bizum..."></div>
+      <div class="field"><label>Tipus</label>
+        <select id="mb-tipus">
+          <option value="bank">Banc</option>
+          <option value="cash">Efectiu</option>
+          <option value="tpv">TPV / Targeta</option>
+        </select>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Saldo inicial (€) <span style="color:var(--text3);font-size:11px">(opcional)</span></label>
+          <input type="number" id="mb-saldo" placeholder="0.00" step="0.01">
+        </div>
+        <div class="field">
+          <label>Data saldo inicial</label>
+          <input type="date" id="mb-saldo-data">
+        </div>
+      </div>
     </div>
-    <div class="field"><label>Nom</label><input type="text" id="mb-nom" placeholder="p.e. Sabadell, Bizum..."></div>
-    <div class="field"><label>Tipus</label>
-      <select id="mb-tipus">
-        <option value="bank">Banc</option>
-        <option value="cash">Efectiu</option>
-        <option value="tpv">TPV / Targeta</option>
-      </select>
-    </div>
-    </div>
-  <div class="modal-footer">
+    <div class="modal-footer">
       <button class="btn" onclick="closeModal('modal-banc')">Cancel·lar</button>
       <button class="btn btn-primary" onclick="saveBanc()">Guardar</button>
     </div>
   </div>
 </div>
-
 <div class="modal-overlay" id="modal-area">
   <div class="modal">
   <div class="modal-inner">
@@ -838,14 +1095,21 @@ function saveBackground(key){
 const AREA_COLORS={'01':'#1D9E75','02':'#7F77DD','03':'#378ADD','04':'#BA7517','05':'#D4537E','06':'#D85A30','07':'#888780'};
 
 // MESTRE DE ROLS — defineix els permisos de cada rol
-const ROLES={
-  president:{label:'President',color:'p-purple',canRegister:true,canFons:true,canImport:true,canConfig:true,canUsers:true,viewAll:true},
-  treasury:{label:'Tresoreria',color:'p-info',canRegister:true,canFons:true,canImport:true,canConfig:true,canUsers:false,viewAll:true},
-  area:{label:"Resp. d'Àrea",color:'p-ok',canRegister:true,canFons:false,canImport:false,canConfig:false,canUsers:false,viewAll:false},
-  delegat:{label:'Resp. Delegació',color:'p-warn',canRegister:true,canFons:false,canImport:false,canConfig:false,canUsers:false,viewAll:false},
-  board:{label:'Junta (lectura)',color:'p-danger',canRegister:false,canFons:false,canImport:false,canConfig:false,canUsers:false,viewAll:true},
-  noauth:{label:'No autoritzat',color:'p-danger',canRegister:false,canFons:false,canImport:false,canConfig:false,canUsers:false,viewAll:false}
+// Rols per defecte (fallback si no n'hi ha al Sheet)
+const DEFAULT_ROLES={
+  president:{id:'president',label:'President',color:'p-purple',canRegister:true,canFons:true,canImport:true,canConfig:true,canUsers:true,viewAll:true,custom:false},
+  treasury:{id:'treasury',label:'Tresoreria',color:'p-info',canRegister:true,canFons:true,canImport:true,canConfig:true,canUsers:false,viewAll:true,custom:false},
+  area:{id:'area',label:"Resp. d'Area",color:'p-ok',canRegister:true,canFons:false,canImport:false,canConfig:false,canUsers:false,viewAll:false,custom:false},
+  delegat:{id:'delegat',label:'Resp. Delegacio',color:'p-warn',canRegister:true,canFons:false,canImport:false,canConfig:false,canUsers:false,viewAll:false,custom:false},
+  board:{id:'board',label:'Junta (lectura)',color:'p-gray',canRegister:false,canFons:false,canImport:false,canConfig:false,canUsers:false,viewAll:true,custom:false},
+  noauth:{id:'noauth',label:'No autoritzat',color:'p-danger',canRegister:false,canFons:false,canImport:false,canConfig:false,canUsers:false,viewAll:false,custom:false}
 };
+
+function getRoles(){
+  const dbRols=DB.config.rols||{};
+  if(Object.keys(dbRols).length>0)return dbRols;
+  return DEFAULT_ROLES;
+}
 
 let tokenClient=null,accessToken=null,currentUser=null;
 // Sheets centralitzat - no cal driveIds
@@ -914,7 +1178,7 @@ let DB={
       {id:'b3',codi:'Efectiu',nom:'Caixa efectiu',tipus:'cash'},
       {id:'b4',codi:'TPV',nom:'TPV targetes',tipus:'tpv'}
     ],
-    usuaris:[],anyFiscal:'26/27',exercicis:['26/27'],directiva:{},estats_exercicis:{}
+    usuaris:[],anyFiscal:'26/27',exercicis:['26/27'],directiva:{},estats_exercicis:{},rols:{}
   },
   moviments:[],fons:[],tancaments:{},pres_plans:[],pres_config:{any:'26/27',estat:'obert',bloquejatPer:'',bloquejatEmail:'',data:''},pres_historial:[],regles:[]
 };
@@ -1085,6 +1349,444 @@ function closeMobMenu(){
   if(menu)menu.classList.remove('open');
 }
 
+function initFappDates(){
+  const af=getAnyFiscal()||'26/27';
+  const parts=af.split('/');
+  const anyInici='20'+parts[0];
+  const anyFi='20'+parts[1];
+  const dataInici='01/04/'+anyInici;
+  const dataFi='31/03/'+anyFi;
+  const el1=document.getElementById('fapp-data-inici');
+  const el2=document.getElementById('fapp-data-fi');
+  if(el1)el1.textContent=dataInici;
+  if(el2)el2.textContent=dataFi;
+  const dates=anyInici+'-04-01 - '+anyFi+'-03-31';
+  const d1=document.getElementById('fapp-instruccio-dates-1');
+  const d3=document.getElementById('fapp-instruccio-dates-3');
+  if(d1)d1.textContent=dates;
+  if(d3)d3.textContent=dates;
+}
+
+function handleFappDrop(event,zona){
+  event.preventDefault();
+  document.getElementById('fapp-drop-'+zona).classList.remove('drag-over');
+  const file=event.dataTransfer.files[0];
+  if(file)processFappFile(file,zona);
+}
+
+function loadFappFile(event,zona){
+  const file=event.target.files[0];
+  if(file)processFappFile(file,zona);
+}
+
+function processFappFile(file,zona){
+  const reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      const data=new Uint8Array(e.target.result);
+      const wb=XLSX.read(data,{type:'array'});
+      const ws=wb.Sheets[wb.SheetNames[0]];
+      const rows=XLSX.utils.sheet_to_json(ws);
+      document.getElementById('fapp-drop-'+zona).classList.add('loaded');
+      if(zona===1)renderFappPreview1(rows);
+      else if(zona===2)renderFappPreview2(rows);
+      else if(zona===3)renderFappPreview3(rows);
+    }catch(err){
+      document.getElementById('fapp-preview-'+zona).innerHTML='<div class="info-box" style="margin-top:10px;color:var(--red)"><i class="ti ti-x"></i> Error llegint el fitxer: '+err.message+'</div>';
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function renderFappPreview1(rows){
+  window._fappTransRows=rows;
+  const valid=rows.filter(function(r){return r['Estado']==='Autorizado'&&r['Cantidad'];});
+  const efectiu=valid.filter(function(r){return r['Tipo']==='Recarga de efectivo';});
+  const tpv=valid.filter(function(r){return r['Tipo']==='Recarga de TPV';});
+  const devol=valid.filter(function(r){return(r['Tipo']||'').includes('Devoluci');});
+  const totEf=efectiu.reduce(function(s,r){return s+(parseFloat(r['Cantidad'])||0);},0);
+  const totTpv=tpv.reduce(function(s,r){return s+(parseFloat(r['Cantidad'])||0);},0);
+  const totDev=devol.reduce(function(s,r){return s+(parseFloat(r['Cantidad'])||0);},0);
+
+  let html='<div class="card" style="margin-top:12px">';
+  html+='<div class="card-title"><i class="ti ti-check" style="color:var(--green)"></i> Fitxer llegit correctament — '+valid.length+' transaccions</div>';
+  html+='<div class="flow-row"><span>Recarregues efectiu → Caixa falla</span><span style="color:var(--green);font-weight:500">+'+fmtD(totEf)+'</span></div>';
+  html+='<div class="flow-row"><span>Recarregues TPV → Banc</span><span style="color:var(--green);font-weight:500">+'+fmtD(totTpv)+'</span></div>';
+  html+='<div class="flow-row"><span>Devolucions efectiu</span><span style="color:var(--red);font-weight:500">'+fmtD(totDev)+'</span></div>';
+  html+='<div class="flow-row" style="font-weight:600;border-top:1px solid var(--border);margin-top:6px;padding-top:8px"><span>TOTAL NET</span><span style="color:var(--green)">+'+fmtD(totEf+totTpv+totDev)+'</span></div>';
+  html+='<div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap">';
+  html+='<div class="field" style="min-width:160px"><label>Via efectiu</label><select id="fapp-via-ef">';
+  (DB.config.bancs||[]).filter(function(b){return b.tipus==='cash';}).forEach(function(b){html+='<option value="'+b.codi+'">'+b.nom+'</option>';});
+  html+='</select></div>';
+  html+='<div class="field" style="min-width:160px"><label>Via TPV/Banc</label><select id="fapp-via-tpv">';
+  (DB.config.bancs||[]).filter(function(b){return b.tipus==='bank';}).forEach(function(b){html+='<option value="'+b.codi+'">'+b.nom+'</option>';});
+  html+='</select></div>';
+  html+='<div class="field" style="min-width:160px"><label>Area destí</label><select id="fapp-area-dest">';
+  DB.config.areas.forEach(function(a){html+='<option value="'+a.id+'">'+a.id+' '+a.name+'</option>';});
+  html+='</select></div>';
+  html+='<div class="field" style="min-width:160px"><label>Delegació destí</label><select id="fapp-deleg-dest">';
+  DB.config.delegacions.forEach(function(d){html+='<option value="'+d.id+'">'+d.id+' '+d.name+'</option>';});
+  html+='</select></div>';
+  html+='</div>';
+  html+='<button class="btn btn-primary" style="margin-top:12px" onclick="importarFappTrans()"><i class="ti ti-check"></i> Importar '+valid.length+' transaccions</button>';
+  html+='</div>';
+  document.getElementById('fapp-preview-1').innerHTML=html;
+}
+
+function renderFappPreview2(rows){
+  const valid=rows.filter(function(r){return parseFloat(r['Balance'])>0;});
+  const total=valid.reduce(function(s,r){return s+(parseFloat(r['Balance'])||0);},0);
+  DB.config.fappPassiu={total,data:today(),fallers:valid.length};
+  saveCache();
+
+  let html='<div class="card" style="margin-top:12px">';
+  html+='<div class="card-title"><i class="ti ti-check" style="color:var(--green)"></i> Fitxer llegit correctament — '+rows.length+' fallers</div>';
+  html+='<div class="flow-row"><span>Fallers amb saldo pendent</span><span style="font-weight:500">'+valid.length+'</span></div>';
+  html+='<div class="flow-row" style="font-weight:600"><span>PASSIU TOTAL (deute amb fallers)</span><span style="color:var(--amber)">'+fmtD(total)+'</span></div>';
+  html+='<div style="max-height:250px;overflow-y:auto;margin-top:10px"><table style="width:100%"><thead><tr><th>Faller</th><th style="text-align:right">Saldo</th></tr></thead><tbody>';
+  valid.sort(function(a,b){return b['Balance']-a['Balance'];}).slice(0,30).forEach(function(r){
+    html+='<tr><td style="font-size:12px">'+r['Usuario']+'</td><td style="text-align:right;font-weight:500;color:var(--amber);font-size:12px">'+fmtD(parseFloat(r['Balance']))+'</td></tr>';
+  });
+  if(valid.length>30)html+='<tr><td colspan="2" style="color:var(--text3);text-align:center;font-size:12px">... i '+(valid.length-30)+' fallers més</td></tr>';
+  html+='</tbody></table></div></div>';
+  document.getElementById('fapp-preview-2').innerHTML=html;
+}
+
+function renderFappPreview3(rows){
+  window._fappTicketRows=rows.filter(function(r){
+    return r['Ticket']&&r['Cantidad']&&!isNaN(parseFloat(r['Cantidad']))&&parseFloat(r['Cantidad'])>0&&r['¿Es devolución?']!=='Si'&&r['¿Es devolución?']!=='Sí';
+  });
+
+  function extractPreu(nom){const m=(nom||'').match(/(\d+(?:[.,]\d+)?)\s*€/);return m?parseFloat(m[1].replace(',','.')):0;}
+
+  const resum={};
+  window._fappTicketRows.forEach(function(r){
+    const d=new Date(r['Fecha']);
+    const mes=isNaN(d)?'?':d.toISOString().substring(0,7);
+    if(!resum[mes])resum[mes]=0;
+    resum[mes]+=(parseFloat(r['Cantidad'])||0)*extractPreu(r['Ticket']||'');
+  });
+  const totalGen=Object.values(resum).reduce(function(s,v){return s+v;},0);
+
+  let html='<div class="card" style="margin-top:12px">';
+  html+='<div class="card-title"><i class="ti ti-check" style="color:var(--green)"></i> Fitxer llegit — '+window._fappTicketRows.length+' transaccions</div>';
+  Object.entries(resum).sort().forEach(function(e){html+='<div class="flow-row"><span>'+e[0]+'</span><span style="color:var(--green)">'+fmtD(e[1])+'</span></div>';});
+  html+='<div class="flow-row" style="font-weight:700;border-top:1px solid var(--border);margin-top:6px;padding-top:8px"><span>TOTAL</span><span style="color:var(--green)">'+fmtD(totalGen)+'</span></div>';
+  html+='<div style="margin-top:14px"><div style="font-weight:500;margin-bottom:8px">Assignar consums a events:</div>';
+  DB.config.events.filter(function(e){return e.status!=='tancat';}).forEach(function(ev){
+    html+='<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-top:0.5px solid var(--border);flex-wrap:wrap">';
+    html+='<div style="font-weight:500;font-size:13px;min-width:180px">'+ev.name+'</div>';
+    html+='<input type="date" id="ev-from-'+ev.id+'" style="font-size:12px;padding:4px 8px">';
+    html+='<span style="color:var(--text3);font-size:12px">fins</span>';
+    html+='<input type="date" id="ev-to-'+ev.id+'" style="font-size:12px;padding:4px 8px">';
+    html+='<button class="btn" style="font-size:12px" data-evid="'+ev.id+'" data-evnom="'+ev.name+'" onclick="calcConsumEvent(this)">Calcular</button>';
+    html+='<div id="ev-result-'+ev.id+'" style="width:100%;font-size:12px;color:var(--text2)"></div>';
+    html+='</div>';
+  });
+  html+='</div></div>';
+  document.getElementById('fapp-preview-3').innerHTML=html;
+}
+
+function showManTab(tab){
+  const tabs=['intro','moviments','fons','tancament','pressupostos','exercicis','directiva','fallesapp','rols'];
+  tabs.forEach(function(t){
+    const el=document.getElementById('man-'+t);
+    if(el)el.style.display=t===tab?'block':'none';
+  });
+  document.querySelectorAll('#man-tabs .btn').forEach(function(btn,i){
+    btn.className=tabs[i]===tab?'btn btn-primary':'btn';
+  });
+}
+
+function showFappTab(tab){
+  ['trans','saldos','tickets','bonif'].forEach(function(t){
+    const el=document.getElementById('fapp-'+t);
+    const btn=document.getElementById('fapp-tab-'+t);
+    if(el)el.style.display=t===tab?'block':'none';
+    if(btn){btn.className=t===tab?'btn btn-primary':'btn';}
+  });
+}
+
+function previewFappTrans(){
+  const file=document.getElementById('fapp-trans-file').files[0];
+  if(!file)return;
+  const reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      const data=new Uint8Array(e.target.result);
+      const wb=XLSX.read(data,{type:'array'});
+      const ws=wb.Sheets[wb.SheetNames[0]];
+      const rows=XLSX.utils.sheet_to_json(ws);
+      const valid=rows.filter(function(r){return r['Estado']==='Autorizado'&&r['Cantidad'];});
+      const efectiu=valid.filter(function(r){return r['Tipo']==='Recarga de efectivo';});
+      const tpv=valid.filter(function(r){return r['Tipo']==='Recarga de TPV';});
+      const devol=valid.filter(function(r){return r['Tipo']==='Devolucion en efectivo'||r['Tipo']==='Devolución en efectivo';});
+      const totEf=efectiu.reduce(function(s,r){return s+(parseFloat(r['Cantidad'])||0);},0);
+      const totTpv=tpv.reduce(function(s,r){return s+(parseFloat(r['Cantidad'])||0);},0);
+      const totDev=devol.reduce(function(s,r){return s+(parseFloat(r['Cantidad'])||0);},0);
+
+      let html='<div class="card" style="margin-bottom:14px">';
+      html+='<div class="card-title">Resum de la importació</div>';
+      html+='<div class="flow-row"><span>Recarregues efectiu (→ Caixa falla)</span><span style="color:var(--green);font-weight:500">+'+fmtD(totEf)+'</span></div>';
+      html+='<div class="flow-row"><span>Recarregues TPV (→ Banc)</span><span style="color:var(--green);font-weight:500">+'+fmtD(totTpv)+'</span></div>';
+      html+='<div class="flow-row"><span>Devolucions efectiu</span><span style="color:var(--red);font-weight:500">'+fmtD(totDev)+'</span></div>';
+      html+='<div class="flow-row" style="font-weight:600;border-top:1px solid var(--border);margin-top:8px;padding-top:8px"><span>TOTAL NET</span><span style="color:var(--green)">+'+fmtD(totEf+totTpv+totDev)+'</span></div>';
+      html+='</div>';
+
+      // Selector de via per a efectiu i TPV
+      html+='<div class="card" style="margin-bottom:14px;max-width:500px">';
+      html+='<div class="card-title">Assignació de vies</div>';
+      html+='<div class="field"><label>Via per a recarregues en efectiu</label><select id="fapp-via-ef">';
+      (DB.config.bancs||[]).filter(function(b){return b.tipus==='cash';}).forEach(function(b){
+        html+='<option value="'+b.codi+'">'+b.nom+'</option>';
+      });
+      html+='</select></div>';
+      html+='<div class="field"><label>Via per a recarregues TPV/targeta</label><select id="fapp-via-tpv">';
+      (DB.config.bancs||[]).filter(function(b){return b.tipus==='bank'||b.tipus==='tpv';}).forEach(function(b){
+        html+='<option value="'+b.codi+'">'+b.nom+'</option>';
+      });
+      html+='</select></div>';
+      html+='<div class="field"><label>Area destí</label><select id="fapp-area-dest">';
+      DB.config.areas.forEach(function(a){html+='<option value="'+a.id+'">'+a.id+' - '+a.name+'</option>';});
+      html+='</select></div>';
+      html+='<div class="field"><label>Delegació destí</label><select id="fapp-deleg-dest">';
+      DB.config.delegacions.forEach(function(d){html+='<option value="'+d.id+'">'+d.id+' - '+d.name+'</option>';});
+      html+='</select></div>';
+      html+='</div>';
+
+      html+='<button class="btn btn-primary" onclick="importarFappTrans()" data-rows=''+JSON.stringify(rows).replace(/'/g,"&apos;")+'' id="btn-imp-trans"><i class="ti ti-check"></i> Importar '+valid.length+' transaccions</button>';
+      document.getElementById('fapp-trans-preview').innerHTML=html;
+      window._fappTransRows=rows;
+    }catch(err){
+      document.getElementById('fapp-trans-preview').innerHTML='<div style="color:var(--red)">Error llegint el fitxer: '+err.message+'</div>';
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+async function importarFappTrans(){
+  const rows=window._fappTransRows;
+  if(!rows)return;
+  const viaEf=document.getElementById('fapp-via-ef')?.value||'Efectiu';
+  const viaTpv=document.getElementById('fapp-via-tpv')?.value||'01 Banc';
+  const areaId=document.getElementById('fapp-area-dest')?.value||'01';
+  const delegId=document.getElementById('fapp-deleg-dest')?.value||'0102';
+  const area=DB.config.areas.find(function(a){return a.id===areaId;});
+  const deleg=DB.config.delegacions.find(function(d){return d.id===delegId;});
+  const af=getAnyFiscal();
+  let importats=0,saltats=0;
+
+  rows.forEach(function(r){
+    if(r['Estado']!=='Autorizado'||!r['Cantidad'])return;
+    const tipus=r['Tipo']||'';
+    const imp=parseFloat(r['Cantidad'])||0;
+    if(imp===0)return;
+    let via,tipusMov;
+    if(tipus==='Recarga de efectivo'){via=viaEf;tipusMov='ing';}
+    else if(tipus==='Recarga de TPV'){via=viaTpv;tipusMov='ing';}
+    else if(tipus.includes('Devoluci')){via=viaEf;tipusMov='gast';}
+    else{saltats++;return;}
+
+    const data=r['Fecha']?new Date(r['Fecha']).toISOString().split('T')[0]:today();
+    DB.moviments.push({
+      id:'m'+Date.now()+Math.random(),anyFiscal:af,tipus:tipusMov,via,
+      areaId,areaNom:area?.name||'',delegacioId:delegId,delegacioNom:deleg?.name||'',
+      eventId:'',eventNom:'',concepte:tipus+' - '+(r['Usuario']||''),
+      establiment:'falles.app',data,responsable:currentUser?.name||'',
+      responsableEmail:currentUser?.email||'',import:Math.abs(imp),
+      notes:'Importat de falles.app',origenFons:'',fontImport:'fallesapp'
+    });
+    importats++;
+  });
+
+  saveCache();
+  showToast('Importats '+importats+' moviments ('+saltats+' saltats)');
+  save('moviments').catch(function(e){showToast('Error: '+e.message,true);});
+  document.getElementById('fapp-trans-preview').innerHTML+='<div class="info-box" style="margin-top:12px;color:var(--green)"><i class="ti ti-check"></i> '+importats+' moviments importats correctament.</div>';
+}
+
+function previewFappSaldos(){
+  const file=document.getElementById('fapp-saldos-file').files[0];
+  if(!file)return;
+  const reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      const data=new Uint8Array(e.target.result);
+      const wb=XLSX.read(data,{type:'array'});
+      const ws=wb.Sheets[wb.SheetNames[0]];
+      const rows=XLSX.utils.sheet_to_json(ws);
+      const valid=rows.filter(function(r){return r['Balance']>0;});
+      const total=valid.reduce(function(s,r){return s+(parseFloat(r['Balance'])||0);},0);
+
+      let html='<div class="card" style="margin-bottom:14px">';
+      html+='<div class="card-title">Saldos moneders falles.app</div>';
+      html+='<div class="flow-row"><span>Fallers amb saldo pendent</span><span style="font-weight:500">'+valid.length+'</span></div>';
+      html+='<div class="flow-row" style="font-weight:600"><span>PASSIU TOTAL (deute amb fallers)</span><span style="color:var(--amber)">'+fmtD(total)+'</span></div>';
+      html+='</div>';
+
+      html+='<div class="card" style="max-height:400px;overflow-y:auto;padding:0"><div class="table-wrap"><table>';
+      html+='<thead><tr><th>Faller</th><th style="text-align:right">Saldo</th></tr></thead><tbody>';
+      valid.sort(function(a,b){return b['Balance']-a['Balance'];}).slice(0,50).forEach(function(r){
+        html+='<tr><td>'+r['Usuario']+'</td><td style="text-align:right;font-weight:500;color:var(--amber)">'+fmtD(r['Balance'])+'</td></tr>';
+      });
+      if(valid.length>50)html+='<tr><td colspan="2" style="color:var(--text3);text-align:center">... i '+(valid.length-50)+' fallers més</td></tr>';
+      html+='</tbody></table></div></div>';
+      document.getElementById('fapp-saldos-preview').innerHTML=html;
+      // Guardar passiu a DB
+      DB.config.fappPassiu={total,data:today(),fallers:valid.length};
+      saveCache();
+    }catch(err){
+      document.getElementById('fapp-saldos-preview').innerHTML='<div style="color:var(--red)">Error: '+err.message+'</div>';
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function previewFappTickets(){
+  const file=document.getElementById('fapp-tickets-file').files[0];
+  if(!file)return;
+  const reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      const data=new Uint8Array(e.target.result);
+      const wb=XLSX.read(data,{type:'array'});
+      const ws=wb.Sheets[wb.SheetNames[0]];
+      const rows=XLSX.utils.sheet_to_json(ws);
+      // Filtrar files vàlides
+      const valid=rows.filter(function(r){
+        return r['Ticket']&&r['Cantidad']&&!isNaN(parseFloat(r['Cantidad']))&&parseFloat(r['Cantidad'])>0&&r['¿Es devolución?']!=='Si'&&r['¿Es devolución?']!=='Sí';
+      });
+
+      // Extreure preu del nom del ticket
+      function extractPreu(nom){
+        const m=nom.match(/\((\d+(?:[.,]\d+)?)\s*€\)/);
+        return m?parseFloat(m[1].replace(',','.')):0;
+      }
+
+      // Agrupar per mes i ticket
+      const resum={};
+      valid.forEach(function(r){
+        const data=new Date(r['Fecha']);
+        const mes=isNaN(data)?'?':data.toISOString().substring(0,7);
+        const ticket=r['Ticket'];
+        const qty=parseFloat(r['Cantidad'])||0;
+        const preu=extractPreu(ticket);
+        const import_=qty*preu;
+        if(!resum[mes])resum[mes]={tickets:{},total:0};
+        if(!resum[mes].tickets[ticket])resum[mes].tickets[ticket]={qty:0,import:0,preu};
+        resum[mes].tickets[ticket].qty+=qty;
+        resum[mes].tickets[ticket].import+=import_;
+        resum[mes].total+=import_;
+      });
+
+      const totalGeneral=Object.values(resum).reduce(function(s,m){return s+m.total;},0);
+      let html='<div class="card" style="margin-bottom:14px">';
+      html+='<div class="card-title">Resum consums per mes</div>';
+      Object.entries(resum).sort().forEach(function(entry){
+        const mes=entry[0],data=entry[1];
+        html+='<div class="flow-row" style="font-weight:500"><span>'+mes+'</span><span style="color:var(--green)">'+fmtD(data.total)+'</span></div>';
+      });
+      html+='<div class="flow-row" style="font-weight:700;border-top:1px solid var(--border);margin-top:8px;padding-top:8px"><span>TOTAL CONSUMS</span><span style="color:var(--green)">'+fmtD(totalGeneral)+'</span></div>';
+      html+='</div>';
+
+      // Mostrar per events de l'app
+      html+='<div class="card" style="margin-bottom:14px">';
+      html+='<div class="card-title">Assignar consums a events de l'app</div>';
+      html+='<div style="font-size:13px;color:var(--text2);margin-bottom:10px">Selecciona un rang de dates per assignar els consums a un event específic.</div>';
+      DB.config.events.filter(function(e){return e.status!=='tancat';}).forEach(function(ev){
+        html+='<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:0.5px solid var(--border)">';
+        html+='<div style="flex:1;font-weight:500;font-size:13px">'+ev.name+'</div>';
+        html+='<input type="date" id="ev-from-'+ev.id+'" style="width:130px;font-size:12px">';
+        html+='<span style="color:var(--text3)">fins</span>';
+        html+='<input type="date" id="ev-to-'+ev.id+'" style="width:130px;font-size:12px">';
+        html+='<button class="btn" style="font-size:12px" data-evid="'+ev.id+'" data-evnom="'+ev.name+'" onclick="calcConsumEvent(this)">Calcular</button>';
+        html+='</div>';
+        html+='<div id="ev-result-'+ev.id+'" style="font-size:12px;color:var(--text2);padding:4px 0 8px"></div>';
+      });
+      html+='</div>';
+
+      document.getElementById('fapp-tickets-preview').innerHTML=html;
+      window._fappTicketRows=valid;
+    }catch(err){
+      document.getElementById('fapp-tickets-preview').innerHTML='<div style="color:var(--red)">Error: '+err.message+'</div>';
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function calcConsumEvent(btn){
+  const evId=btn.getAttribute('data-evid');
+  const evNom=btn.getAttribute('data-evnom');
+  const from=document.getElementById('ev-from-'+evId)?.value;
+  const to=document.getElementById('ev-to-'+evId)?.value;
+  const rows=window._fappTicketRows||[];
+  if(!from||!to){showToast('Selecciona les dues dates',true);return;}
+
+  function extractPreu(nom){
+    const m=nom.match(/\((\d+(?:[.,]\d+)?)\s*€\)/);
+    return m?parseFloat(m[1].replace(',','.')):0;
+  }
+
+  const filtered=rows.filter(function(r){
+    const d=new Date(r['Fecha']);
+    return d>=new Date(from)&&d<=new Date(to+'T23:59:59');
+  });
+
+  const total=filtered.reduce(function(s,r){
+    return s+(parseFloat(r['Cantidad'])||0)*extractPreu(r['Ticket']||'');
+  },0);
+
+  const res=document.getElementById('ev-result-'+evId);
+  if(res){
+    res.innerHTML='<span style="color:var(--green)">'+filtered.length+' transaccions · Total: <strong>'+fmtD(total)+'</strong></span> '+
+      '<button class="btn btn-primary" style="font-size:11px;margin-left:8px" onclick="registrarConsumEvent(''+evId+'',''+evNom+'','+total+',''+from+'',''+to+'')">Registrar ingrés</button>';
+  }
+}
+
+async function registrarConsumEvent(evId,evNom,total,from,to){
+  if(!confirm('Registrar '+fmtD(total)+' com a ingrés de "'+evNom+'" ('+from+' - '+to+')?'))return;
+  const ev=DB.config.events.find(function(e){return e.id===evId;});
+  const deleg=DB.config.delegacions.find(function(d){return d.id===(ev?.delegId||'');});
+  const area=deleg?DB.config.areas.find(function(a){return a.id===deleg.areaId;}):null;
+  const af=getAnyFiscal();
+  DB.moviments.push({
+    id:'m'+Date.now(),anyFiscal:af,tipus:'ing',via:'app',
+    areaId:area?.id||'',areaNom:area?.name||'',
+    delegacioId:deleg?.id||'',delegacioNom:deleg?.name||'',
+    eventId:evId,eventNom:evNom,
+    concepte:'Consums falles.app '+from+' a '+to,
+    establiment:'falles.app',data:to,
+    responsable:currentUser?.name||'',responsableEmail:currentUser?.email||'',
+    import:total,notes:'Consums app '+evNom,fontImport:'fallesapp_tickets'
+  });
+  saveCache();
+  showToast('Ingrés de '+fmtD(total)+' registrat per a '+evNom);
+  save('moviments').catch(function(e){showToast('Error: '+e.message,true);});
+}
+
+async function registrarBonificacio(){
+  const imp=parseFloat(document.getElementById('fapp-bonif-import').value)||0;
+  const data=document.getElementById('fapp-bonif-data').value;
+  const notes=document.getElementById('fapp-bonif-notes').value||'Bonificacio moneders falles.app';
+  if(!imp||!data){showToast('Import i data son obligatoris',true);return;}
+  if(!confirm('Registrar '+fmtD(imp)+' com a despesa de bonificacions?'))return;
+  const af=getAnyFiscal();
+  DB.moviments.push({
+    id:'m'+Date.now(),anyFiscal:af,tipus:'gast',via:'app',
+    areaId:'01',areaNom:'Administracio i Secretaria',
+    delegacioId:'0102',delegacioNom:'Tresoreria',
+    eventId:'',eventNom:'',concepte:notes,
+    establiment:'falles.app',data,
+    responsable:currentUser?.name||'',responsableEmail:currentUser?.email||'',
+    import:imp,notes:'Bonificacio falles.app',fontImport:'fallesapp_bonif'
+  });
+  saveCache();
+  showToast('Bonificacio registrada: '+fmtD(imp));
+  save('moviments').catch(function(e){showToast('Error: '+e.message,true);});
+  document.getElementById('fapp-bonif-import').value='';
+  document.getElementById('fapp-bonif-data').value='';
+}
+
 function signOut(){
   if(accessToken)google.accounts.oauth2.revoke(accessToken,()=>{});
   accessToken=null;currentUser=null;
@@ -1123,13 +1825,14 @@ const TABS={
   arees:{name:'04 Arees',headers:['id','nom','responsable']},
   delegacions:{name:'05 Delegacions',headers:['id','areaId','nom','responsable']},
   events:{name:'06 Events',headers:['id','delegId','nom','year','responsable','status']},
-  bancs:{name:'07 Bancs',headers:['id','codi','nom','tipus']},
+  bancs:{name:'07 Bancs',headers:['id','codi','nom','tipus','saldoInicial','saldoData']},
   usuaris:{name:'08 Usuaris',headers:['id','nom','email','rol']},
   usuaris_assignacions:{name:'09 Usuaris Assignacions',headers:['userId','userNom','tipus','id','nom','anyFiscal']},
   pres_plans:{name:'10 Pressupostos Plans',headers:['any','delegacioId','delegacioNom','eventId','eventNom','concepte','tipus','importPla','notes']},
   pres_config:{name:'11 Pressupostos Config',headers:['any','estat','bloquejatPer','bloquejatEmail','data']},
   pres_historial:{name:'12 Pressupostos Historial',headers:['data','accio','any','usuari','email','motiu']},
-  regles:{name:'13 Regles CSV',headers:['id','font','patrons','areaId','areaNom','delegacioId','delegacioNom','concepte','tipus','movtype','prioritat','activa']}
+  regles:{name:'13 Regles CSV',headers:['id','font','patrons','areaId','areaNom','delegacioId','delegacioNom','concepte','tipus','movtype','prioritat','activa']},
+  rols:{name:'14 Rols',headers:['id','label','color','canRegister','canFons','canImport','canConfig','canUsers','viewAll','custom']}
 };
 
 async function sheetsReq(method,url,body=null){
@@ -1346,6 +2049,20 @@ async function loadFromSheets(){
   const reglesRows=await readTab(TABS.regles.name);
   DB.regles=reglesRows.map(r=>({...r,prioritat:parseInt(r.prioritat)||10,activa:r.activa!=='false'}));
   if(!DB.regles.length)DB.regles=getDefaultRegles();
+  // Carregar rols configurables
+  const rolsRows=await readTab(TABS.rols.name);
+  if(rolsRows.length>0){
+    DB.config.rols={};
+    rolsRows.forEach(function(r){
+      DB.config.rols[r.id]={
+        id:r.id,label:r.label,color:r.color||'p-gray',
+        canRegister:r.canRegister==='true',canFons:r.canFons==='true',
+        canImport:r.canImport==='true',canConfig:r.canConfig==='true',
+        canUsers:r.canUsers==='true',viewAll:r.viewAll==='true',
+        custom:r.custom==='true'
+      };
+    });
+  }
 }
 async function loadAllFromDrive(){
   // Carregar cache immediatament per mostrar dades ràpid
@@ -1393,6 +2110,14 @@ async function save(key){
       await writeTab(t.name,t.headers,Object.values(DB.tancaments));
     }else if(key==='regles'){
       await writeTab(t.name,t.headers,DB.regles);
+    }else if(key==='rols'){
+      const rolsArr=Object.values(getRoles()).map(function(r){
+        return{id:r.id,label:r.label,color:r.color||'p-gray',
+          canRegister:String(r.canRegister),canFons:String(r.canFons),
+          canImport:String(r.canImport),canConfig:String(r.canConfig),
+          canUsers:String(r.canUsers),viewAll:String(r.viewAll),custom:String(r.custom||false)};
+      });
+      await writeTab(TABS.rols.name,TABS.rols.headers,rolsArr);
     }else if(key==='pres_plans'){
       await writeTab(t.name,t.headers,DB.pres_plans);
     }else if(key==='pres_config'){
@@ -1487,11 +2212,11 @@ function calcDataObertura(anyFiscal){
   }
   return today();
 }
-function perm(p){return ROLES[getRol()]?.[p]||false;}
+function perm(p){return getRoles()[getRol()]?.[p]||false;}
 
 function getMyArees(){
   const u=getUsuari();if(!u)return[];
-  if(ROLES[u.rol]?.viewAll)return DB.config.areas.map(a=>a.id);
+  if(getRoles()[u.rol]?.viewAll)return DB.config.areas.map(a=>a.id);
   return u.arees||[];
 }
 
@@ -1552,6 +2277,10 @@ function initApp(){
   buildNav();
   populateMovimentSelects();
   initExerciciSelector();
+  // Inicialitzar rols si no n'hi ha al DB
+  if(!DB.config.rols||Object.keys(DB.config.rols).length===0){
+    DB.config.rols={...DEFAULT_ROLES};
+  }
   // Assegurar que tots els exercicis tenen data d'obertura
   if(!DB.config.estats_exercicis)DB.config.estats_exercicis={};
   (DB.config.exercicis||['26/27']).forEach(function(e){
@@ -1595,7 +2324,7 @@ function showPage(id){
   document.querySelectorAll('.nav-item').forEach(n=>{
     if(n.getAttribute('onclick')&&n.getAttribute('onclick').includes("'"+id+"'"))n.classList.add('active');
   });
-  ({'pressupostos':renderPressupostosEdit,'dashboard':renderDashboard,'historial':renderHistorial,'directiva':renderDirectiva,
+  ({'pressupostos':renderPressupostosEdit,'dashboard':renderDashboard,'historial':renderHistorial,'directiva':renderDirectiva,'fallesapp':function(){initFappDates();},
     'pressupostos-edit':renderPressupostosEdit,
     'lliurament':renderFons,'tancament':renderTancamentList,'resultats':renderResultats,
     'flux':renderFlux,'configuracio':renderConfig,'manual':renderManual}[id]||function(){})();
@@ -1872,7 +2601,7 @@ function renderFons(){
     const gastat=(DB.moviments||[]).filter(m=>m.responsableEmail===email&&m.tipus==='gast').reduce((s,m)=>s+m.import,0);
     const devol=(DB.fons||[]).filter(f=>f.delegEmail===email&&f.tipus==='devolucio').reduce((s,f)=>s+f.import,0);
     const saldo=rebuts-gastFonsCard-devol;
-    const pct=rebuts>0?Math.min(100,Math.round(gastat/rebuts*100)):0;
+    const pct=rebuts>0?Math.min(100,Math.round(gastFonsCard/rebuts*100)):0;
     c.innerHTML=`<div class="saldo-banner">
       <div class="saldo-row"><span style="color:var(--text2)">Fons rebuts de Tresoreria</span><span style="color:var(--green);font-weight:500">+${fmtD(rebuts)}</span></div>
       <div class="saldo-row"><span style="color:var(--text2)">Pagaments registrats per tu</span><span style="color:var(--red);font-weight:500">${gastat>0?'-'+fmtD(gastat):'—'}</span></div>
@@ -1892,8 +2621,8 @@ function renderFonsCard(u){
   const gastFonsCard=fonsArr.filter(function(f){return f.tipus==='gast_fons';}).reduce(function(s,f){return s+f.import;},0);
   const gastat=(DB.moviments||[]).filter(function(m){return(m.anyFiscal===af||!m.anyFiscal)&&(m.responsableEmail||'').toLowerCase()===(u.email||'').toLowerCase()&&m.tipus==='gast'&&m.origenFons!=='fons_lliurats';}).reduce(function(s,m){return s+m.import;},0);
   const devol=fonsArr.filter(f=>f.tipus==='devolucio').reduce((s,f)=>s+f.import,0);
-  const saldo=rebuts-gastat-devol;
-  const pct=rebuts>0?Math.min(100,Math.round(gastat/rebuts*100)):0;
+  const saldo=rebuts-gastFonsCard-devol;
+  const pct=rebuts>0?Math.min(100,Math.round(gastFonsCard/rebuts*100)):0;
   const ini=u.nom.split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase();
   const rol=getRol();
   const myEmail=(currentUser?.email||'').toLowerCase();
@@ -2717,7 +3446,21 @@ function renderCfgBancs(){
     const icon=b.tipus==='bank'?'ti-building-bank':b.tipus==='cash'?'ti-wallet':'ti-credit-card';
     html+='<div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:0.5px solid var(--border)">';
     html+='<i class="ti '+icon+'" style="font-size:20px;color:var(--text2)"></i>';
-    html+='<div style="flex:1"><div style="font-weight:500">'+b.nom+'</div><div style="font-size:12px;color:var(--text3)">'+b.codi+'</div></div>';
+    const movsBanc=(DB.moviments||[]).filter(function(m){return m.via===b.codi&&(m.anyFiscal===getAnyFiscal()||!m.anyFiscal);});
+    const ingBanc=movsBanc.filter(function(m){return m.tipus==='ing';}).reduce(function(s,m){return s+m.import;},0);
+    const gastBanc=movsBanc.filter(function(m){return m.tipus==='gast';}).reduce(function(s,m){return s+m.import;},0);
+    const saldoActual=(b.saldoInicial||0)+ingBanc-gastBanc;
+    const hasSaldo=b.saldoInicial!==undefined&&b.saldoInicial!==null&&b.saldoInicial!=='';
+    html+='<div style="flex:1">'+
+      '<div style="font-weight:500">'+b.nom+'</div>'+
+      '<div style="font-size:12px;color:var(--text3)">'+b.codi+(b.saldoData?' · Saldo inicial: '+fmt(b.saldoInicial||0)+' ('+b.saldoData+')':'')+'</div>'+
+    '</div>';
+    if(hasSaldo){
+      html+='<div style="text-align:right;margin-right:12px">'+
+        '<div style="font-weight:600;font-size:16px;color:'+(saldoActual>=0?'var(--green)':'var(--red)')+'">'+fmtD(saldoActual)+'</div>'+
+        '<div style="font-size:11px;color:var(--text3)">saldo actual</div>'+
+      '</div>';
+    }
     if(canEdit){
       html+='<button class="btn" style="font-size:12px;margin-right:6px" data-bid="'+b.id+'" onclick="openModalBanc(this.dataset.bid)"><i class="ti ti-edit"></i> Editar</button>';
       html+='<button class="btn" style="font-size:12px" data-bid="'+b.id+'" onclick="deleteBanc(this.dataset.bid)"><i class="ti ti-trash"></i></button>';
@@ -2737,6 +3480,8 @@ function openModalBanc(id){
   document.getElementById('mb-codi').disabled=!!id;
   document.getElementById('mb-nom').value=b?.nom||'';
   document.getElementById('mb-tipus').value=b?.tipus||'bank';
+  document.getElementById('mb-saldo').value=b?.saldoInicial||'';
+  document.getElementById('mb-saldo-data').value=b?.saldoData||'';
   openModal('modal-banc');
 }
 
@@ -2746,11 +3491,13 @@ async function saveBanc(){
   const tipus=document.getElementById('mb-tipus').value;
   if(!codi||!nom){showToast('Codi i nom son obligatoris',true);return;}
   if(!editBancId&&DB.config.bancs.find(b=>b.codi===codi)){showToast('Ja existeix un banc amb aquest codi',true);return;}
+  const saldoInicial=parseFloat(document.getElementById('mb-saldo').value)||0;
+  const saldoData=document.getElementById('mb-saldo-data').value||'';
   if(editBancId){
     const b=DB.config.bancs.find(x=>x.id===editBancId);
-    if(b){b.nom=nom;b.tipus=tipus;}
+    if(b){b.nom=nom;b.tipus=tipus;b.saldoInicial=saldoInicial;b.saldoData=saldoData;}
   }else{
-    DB.config.bancs.push({id:'b'+Date.now(),codi,nom,tipus});
+    DB.config.bancs.push({id:'b'+Date.now(),codi,nom,tipus,saldoInicial,saldoData});
   }
   saveCache();
   closeModal('modal-banc');
@@ -3427,56 +4174,112 @@ function openModalTancarExercici(){
 }
 
 function renderCfgRols(){
-  document.getElementById('cfg-rols').innerHTML=`
-    <div class="card">
-      <div class="card-title">Mestre de rols — permisos per rol</div>
-      <div class="table-wrap"><table>
-        <thead><tr><th>Rol</th><th>Registra moviments</th><th>Lliura fons</th><th>Importa CSV</th><th>Configuració</th><th>Gestió usuaris</th><th>Visibilitat</th></tr></thead>
-        <tbody>
-          ${Object.entries(ROLES).map(([key,r])=>`<tr>
-            <td><span class="pill ${r.color}">${r.label}</span></td>
-            <td style="text-align:center">${r.canRegister?'<i class="ti ti-check" style="color:var(--green)"></i>':'<i class="ti ti-x" style="color:var(--text3)"></i>'}</td>
-            <td style="text-align:center">${r.canFons?'<i class="ti ti-check" style="color:var(--green)"></i>':'<i class="ti ti-x" style="color:var(--text3)"></i>'}</td>
-            <td style="text-align:center">${r.canImport?'<i class="ti ti-check" style="color:var(--green)"></i>':'<i class="ti ti-x" style="color:var(--text3)"></i>'}</td>
-            <td style="text-align:center">${r.canConfig?'<i class="ti ti-check" style="color:var(--green)"></i>':'<i class="ti ti-x" style="color:var(--text3)"></i>'}</td>
-            <td style="text-align:center">${r.canUsers?'<i class="ti ti-check" style="color:var(--green)"></i>':'<i class="ti ti-x" style="color:var(--text3)"></i>'}</td>
-            <td style="color:var(--text2);font-size:12px">${r.viewAll?'Tota la Falla':'Les seues àrees/delegacions'}</td>
-          </tr>`).join('')}
-        </tbody>
-      </table></div>
-      <div style="font-size:12px;color:var(--text3);margin-top:12px;padding-top:12px;border-top:0.5px solid var(--border)">
-        Els rols defineixen els permisos. Cada usuari té un rol principal i pot tenir múltiples àrees i delegacions assignades.
-      </div>
-    </div>`;
-}
+  const canEdit=perm('canConfig');
+  const rols=getRoles();
+  const permisos=[
+    {key:'canRegister',label:'Registra moviments'},
+    {key:'canFons',label:'Lliura fons'},
+    {key:'canImport',label:'Importa CSV'},
+    {key:'canConfig',label:'Configuració'},
+    {key:'canUsers',label:'Gestió usuaris'},
+    {key:'viewAll',label:'Veu tot'}
+  ];
+  const colors=['p-purple','p-info','p-ok','p-warn','p-gray','p-danger'];
 
-// MESTRE D'USUARIS
-let editingUserId=null;
+  let html='';
+  if(canEdit){
+    html+='<div style="margin-bottom:14px"><button class="btn btn-primary" onclick="openModalRol(null)"><i class="ti ti-plus"></i> Nou rol</button></div>';
+  }
+  html+='<div class="card" style="padding:0;overflow:hidden"><div class="table-wrap"><table>';
+  html+='<thead><tr><th>Rol</th>';
+  permisos.forEach(function(p){html+='<th style="text-align:center;font-size:12px">'+p.label+'</th>';});
+  if(canEdit)html+='<th></th>';
+  html+='</tr></thead><tbody>';
 
-function renderCfgUsuaris(){
-  const ROL_LABELS={'president':'President','treasury':'Tresoreria','area':'Resp. d\'Area','delegat':'Resp. de Delegacio','board':'Junta'};
-  const ROL_COLORS={'president':'p-ok','treasury':'p-info','area':'p-warn','delegat':'p-warn','board':'p-gray'};
-  let html='<div class="info-box">L\'email ha de coincidir exactament amb el compte de Google del membre. L\'email <strong>it.fallaportal@gmail.com</strong> te automaticament rol de Tresoreria.</div>';
-  html+='<button class="btn btn-primary" style="margin-bottom:12px" onclick="openModalUsuari(null)"><i class="ti ti-plus"></i> Afegir usuari</button>';
-  html+='<div class="card"><div class="table-wrap"><table>';
-  html+='<thead><tr><th>Nom</th><th>Email</th><th>Rol</th><th></th></tr></thead><tbody>';
-  (DB.config.usuaris||[]).forEach(function(u){
-    const rolLabel=ROL_LABELS[u.rol]||u.rol;
-    const rolColor=ROL_COLORS[u.rol]||'p-gray';
-    html+='<tr>'+
-      '<td style="font-weight:500">'+u.nom+'</td>'+
-      '<td style="color:var(--text2)">'+u.email+'</td>'+
-      '<td><span class="pill p-'+rolColor+'">'+rolLabel+'</span></td>'+
-      '<td style="white-space:nowrap">'+
-        '<button class="btn" style="font-size:12px;padding:3px 8px;margin-right:4px" data-uid="'+u.id+'" onclick="openModalUsuari(this.dataset.uid)"><i class="ti ti-edit"></i></button>'+
-        '<button class="btn" style="font-size:12px;padding:3px 8px" data-uid="'+u.id+'" onclick="deleteUsuari(this.dataset.uid)"><i class="ti ti-trash"></i></button>'+
-      '</td>'+
-    '</tr>';
+  Object.entries(rols).filter(function(e){return e[0]!=='noauth';}).forEach(function(entry){
+    const key=entry[0],r=entry[1];
+    html+='<tr>';
+    html+='<td><span class="pill '+(r.color||'p-gray')+'">'+r.label+'</span></td>';
+    permisos.forEach(function(p){
+      const val=r[p.key]||false;
+      if(canEdit&&r.custom!==false){
+        html+='<td style="text-align:center"><input type="checkbox"'+(val?' checked':'')+
+          ' data-rol="'+key+'" data-perm="'+p.key+'" onchange="togglePerm(this)"'+
+          ' style="width:16px;height:16px;cursor:pointer"></td>';
+      }else{
+        html+='<td style="text-align:center">'+(val?'<i class="ti ti-check" style="color:var(--green)"></i>':'<i class="ti ti-x" style="color:var(--text3)"></i>')+'</td>';
+      }
+    });
+    if(canEdit){
+      html+='<td style="white-space:nowrap">';
+      html+='<button class="btn" style="font-size:12px;padding:3px 8px;margin-right:4px" data-rid="'+key+'" onclick="openModalRol(this.dataset.rid)"><i class="ti ti-edit"></i></button>';
+      if(r.custom){
+        html+='<button class="btn" style="font-size:12px;padding:3px 8px" data-rid="'+key+'" onclick="deleteRol(this.dataset.rid)"><i class="ti ti-trash"></i></button>';
+      }
+      html+='</td>';
+    }
+    html+='</tr>';
   });
   html+='</tbody></table></div></div>';
-  document.getElementById('cfg-usuaris').innerHTML=html;
+  html+='<div class="info-box" style="margin-top:12px;font-size:12px"><i class="ti ti-info-circle" style="flex-shrink:0"></i>Els rols base (President, Tresoreria, etc.) no es poden eliminar pero si editar. Els rols personalitzats es poden eliminar.</div>';
+  document.getElementById('cfg-rols').innerHTML=html;
 }
 
-</script>
-</body>
-</html>
+async function togglePerm(cb){
+  const rolId=cb.getAttribute('data-rol');
+  const permKey=cb.getAttribute('data-perm');
+  const val=cb.checked;
+  if(!DB.config.rols||!DB.config.rols[rolId]){
+    // Copiar des de defaults
+    if(!DB.config.rols)DB.config.rols={};
+    DB.config.rols[rolId]={...DEFAULT_ROLES[rolId]||{}};
+  }
+  DB.config.rols[rolId][permKey]=val;
+  saveCache();
+  showToast('Permís actualitzat');
+  save('rols').catch(function(e){showToast('Error: '+e.message,true);});
+}
+
+let editRolId=null;
+function openModalRol(id){
+  editRolId=id;
+  const rols=getRoles();
+  const r=id?rols[id]:null;
+  document.getElementById('mrol-title').textContent=id?'Editar rol':'Nou rol';
+  document.getElementById('mrol-id').value=r?r.id:'';
+  document.getElementById('mrol-id').disabled=!!(id&&!r?.custom);
+  document.getElementById('mrol-label').value=r?r.label:'';
+  document.getElementById('mrol-color').value=r?r.color:'p-gray';
+  openModal('modal-rol');
+}
+
+async function saveRol(){
+  const id=document.getElementById('mrol-id').value.trim();
+  const label=document.getElementById('mrol-label').value.trim();
+  const color=document.getElementById('mrol-color').value;
+  if(!id||!label){showToast('ID i etiqueta son obligatoris',true);return;}
+  if(!DB.config.rols)DB.config.rols={};
+  if(editRolId&&DB.config.rols[editRolId]){
+    DB.config.rols[editRolId].label=label;
+    DB.config.rols[editRolId].color=color;
+  }else{
+    // Nou rol personalitzat
+    const defaults={id,label,color,canRegister:false,canFons:false,canImport:false,canConfig:false,canUsers:false,viewAll:false,custom:true};
+    DB.config.rols[id]=defaults;
+  }
+  saveCache();closeModal('modal-rol');renderCfgRols();
+  showToast('Rol guardat');
+  save('rols').catch(function(e){showToast('Error: '+e.message,true);});
+}
+
+async function deleteRol(id){
+  const r=getRoles()[id];
+  if(!r||!r.custom){showToast('No es pot eliminar un rol base',true);return;}
+  if(!confirm('Eliminar el rol '+r.label+'?'))return;
+  if(DB.config.rols)delete DB.config.rols[id];
+  saveCache();renderCfgRols();
+  showToast('Rol eliminat');
+  save('rols').catch(function(e){showToast('Error: '+e.message,true);});
+}
+    {id:'fallesapp',label:'Falles.app',icon:'ti-device-mobile',roles:['president','treasury']},
+>
