@@ -126,9 +126,9 @@ input:focus,select:focus,textarea:focus{border-color:var(--blue)}
 .field-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:200;align-items:center;justify-content:center}
 .modal-overlay.open{display:flex}
-.modal{background:var(--bg);border-radius:var(--rl);padding:22px;width:90%;max-width:500px;border:0.5px solid var(--border2);max-height:85vh;overflow-y:auto;position:relative}
+.modal{background:var(--bg);border-radius:var(--rl);width:90%;max-width:500px;border:0.5px solid var(--border2);max-height:85vh;display:flex;flex-direction:column}
 .modal-title{font-size:17px;font-weight:500;margin-bottom:18px}
-.modal-footer{display:flex;justify-content:flex-end;gap:8px;margin-top:20px;padding-top:14px;border-top:0.5px solid var(--border);position:sticky;bottom:-22px;background:var(--bg);margin-left:-22px;margin-right:-22px;padding-left:22px;padding-right:22px}
+.modal-inner{padding:22px;overflow-y:auto;flex:1}.modal-footer{display:flex;justify-content:flex-end;gap:8px;padding:14px 22px;border-top:0.5px solid var(--border);background:var(--bg);border-radius:0 0 var(--rl) var(--rl);flex-shrink:0}
 .modal-title{font-size:17px;font-weight:500;margin-bottom:18px}
 .toast{position:fixed;bottom:24px;right:24px;padding:10px 16px;background:var(--green);color:#fff;border-radius:var(--r);font-size:13px;z-index:300;display:none;align-items:center;gap:8px;max-width:340px}
 .toast.show{display:flex}.toast.error{background:var(--red)}
@@ -205,6 +205,7 @@ tr:hover td{background:var(--bg2)}
     <div class="login-logo">Falla <span>Portal</span></div>
     <div class="login-sub">Sistema de gestió financera</div>
     <div class="login-fiscal">Any fiscal 26/27 · Abr 2026 – Mar 2027</div>
+    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v0.8.1</div>
     <button class="btn-google" onclick="signIn()">
       <svg viewBox="0 0 24 24" width="20" height="20"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
       Entrar amb Google
@@ -246,6 +247,7 @@ tr:hover td{background:var(--bg2)}
     <div class="sb-bottom">
       <div class="sync-ind"><div class="sync-dot" id="sync-dot"></div><span id="sync-text">Sincronitzat</span></div>
       <button class="btn-logout" onclick="signOut()"><i class="ti ti-logout" style="font-size:14px"></i> Tancar sessió</button>
+      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v0.8.1</div>
     </div>
   </div>
 
@@ -481,6 +483,7 @@ tr:hover td{background:var(--bg2)}
 
 <div class="modal-overlay" id="modal-lliurament">
   <div class="modal">
+  <div class="modal-inner">
     <div class="modal-title">Nou lliurament de fons</div>
     <div class="field"><label>Delegat</label><select id="ll-delegat"></select></div>
     <div class="field-row">
@@ -488,7 +491,8 @@ tr:hover td{background:var(--bg2)}
       <div class="field"><label>Data</label><input type="date" id="ll-data"></div>
     </div>
     <div class="field"><label>Nota</label><input type="text" id="ll-nota" placeholder="p.e. Fons per a la Festa Cloenda"></div>
-    <div class="modal-footer">
+    </div>
+  <div class="modal-footer">
       <button class="btn" onclick="closeModal('modal-lliurament')">Cancel·lar</button>
       <button class="btn btn-primary" onclick="saveLliurament()">Confirmar lliurament</button>
     </div>
@@ -497,6 +501,7 @@ tr:hover td{background:var(--bg2)}
 
 <div class="modal-overlay" id="modal-devolucio">
   <div class="modal">
+  <div class="modal-inner">
     <div class="modal-title">Registrar devolució de fons</div>
     <div class="field"><label>Delegat</label><select id="dev-delegat"></select></div>
     <div class="field-row">
@@ -504,7 +509,8 @@ tr:hover td{background:var(--bg2)}
       <div class="field"><label>Data</label><input type="date" id="dev-data"></div>
     </div>
     <div class="field"><label>Nota</label><input type="text" id="dev-nota"></div>
-    <div class="modal-footer">
+    </div>
+  <div class="modal-footer">
       <button class="btn" onclick="closeModal('modal-devolucio')">Cancel·lar</button>
       <button class="btn btn-primary" onclick="saveDevolucio()">Confirmar devolució</button>
     </div>
@@ -513,6 +519,7 @@ tr:hover td{background:var(--bg2)}
 
 <div class="modal-overlay" id="modal-usuari">
   <div class="modal">
+  <div class="modal-inner">
     <div class="modal-title" id="mu-title">Nou usuari</div>
     <div class="info-box">L'email ha de coincidir exactament amb el compte de Google del membre.</div>
     <div class="field"><label>Nom complet</label><input type="text" id="mu-nom" placeholder="Nom i cognoms"></div>
@@ -532,7 +539,8 @@ tr:hover td{background:var(--bg2)}
       Les assignacions d'arees i delegacions es gestionen des de <strong>Configuracio &rarr; Gestionar directiva</strong>, per any fiscal.
     </div>
     </div>
-    <div class="modal-footer">
+    </div>
+  <div class="modal-footer">
       <button class="btn" onclick="closeModal('modal-usuari')">Cancel·lar</button>
       <button class="btn btn-primary" onclick="saveUsuari()">Guardar usuari</button>
     </div>
@@ -541,6 +549,7 @@ tr:hover td{background:var(--bg2)}
 
 <div class="modal-overlay" id="modal-pres">
   <div class="modal">
+  <div class="modal-inner">
     <div class="modal-title">Afegir línia de pressupost</div>
     <div style="font-size:13px;color:var(--text2);margin-bottom:12px" id="mp-deleg-nom"></div>
     <div class="field">
@@ -562,7 +571,8 @@ tr:hover td{background:var(--bg2)}
       <label>Import planificat (€)</label>
       <input type="number" id="mp-import" min="0" step="0.01" inputmode="decimal" placeholder="0.00">
     </div>
-    <div class="modal-footer">
+    </div>
+  <div class="modal-footer">
       <button class="btn" onclick="closeModal('modal-pres')">Cancel·lar</button>
       <button class="btn btn-primary" onclick="savePresPla()">Guardar</button>
     </div>
@@ -571,6 +581,7 @@ tr:hover td{background:var(--bg2)}
 
 <div class="modal-overlay" id="modal-regla">
   <div class="modal">
+  <div class="modal-inner">
     <div class="modal-title" id="mr-title">Nova regla de mapeig</div>
     <div class="field-row">
       <div class="field">
@@ -620,7 +631,8 @@ tr:hover td{background:var(--bg2)}
       <input type="checkbox" id="mr-activa" checked style="width:auto;margin:0">
       <label for="mr-activa" style="margin:0;cursor:pointer">Regla activa</label>
     </div>
-    <div class="modal-footer">
+    </div>
+  <div class="modal-footer">
       <button class="btn" onclick="closeModal('modal-regla')">Cancel·lar</button>
       <button class="btn btn-primary" onclick="saveRegla()">Guardar regla</button>
     </div>
@@ -629,6 +641,7 @@ tr:hover td{background:var(--bg2)}
 
 <div class="modal-overlay" id="modal-copy-dir">
   <div class="modal" style="max-width:400px">
+  <div class="modal-inner">
     html+='<button class="btn" onclick="openModalCopyDirectiva()" style="color:var(--pink,#D4537E)"><i class="ti ti-copy"></i> Copiar directiva</button>';
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
       <div class="field"><label>Any fiscal origen</label><select id="cd-origen"></select></div>
@@ -637,7 +650,8 @@ tr:hover td{background:var(--bg2)}
     <div style="background:var(--bg2);border-radius:var(--r);padding:10px 12px;font-size:12px;color:var(--text2);margin-bottom:14px">
       Es copiaran totes les assignacions de responsables de l'any origen al desti. Les assignacions existents al desti seran sobreescrites.
     </div>
-    <div class="modal-footer">
+    </div>
+  <div class="modal-footer">
       <button class="btn" onclick="closeModal('modal-copy-dir')">Cancel·lar</button>
       <button class="btn btn-primary" onclick="executarCopyDirectiva()"><i class="ti ti-check"></i> Copiar directiva</button>
     </div>
@@ -646,6 +660,7 @@ tr:hover td{background:var(--bg2)}
 
 <div class="modal-overlay" id="modal-copy-pres">
   <div class="modal" style="max-width:580px">
+  <div class="modal-inner">
     <div class="modal-title"><i class="ti ti-copy" style="font-size:16px;margin-right:6px"></i>Copiar pressupost entre exercicis</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
       <div class="field"><label>Any fiscal origen</label><select id="cp-origen" onchange="renderCopyPresDeleg()"></select></div>
@@ -666,7 +681,8 @@ tr:hover td{background:var(--bg2)}
       <div id="cp-deleg-rows"></div>
     </div>
     <div style="background:var(--bg2);border-radius:var(--r);padding:10px 12px;font-size:12px;color:var(--text2);margin-bottom:14px" id="cp-resum">Selecciona origen i desti per veure el resum.</div>
-    <div class="modal-footer">
+    </div>
+  <div class="modal-footer">
       <button class="btn" onclick="closeModal('modal-copy-pres')">Cancel·lar</button>
       <button class="btn btn-primary" onclick="executarCopyPres()"><i class="ti ti-check"></i> Copiar pressupost</button>
     </div>
@@ -675,6 +691,7 @@ tr:hover td{background:var(--bg2)}
 
 <div class="modal-overlay" id="modal-event">
   <div class="modal">
+  <div class="modal-inner">
     <div class="modal-title" id="mev-title">Nou event</div>
     <div class="field"><label>Nom de l'event</label><input type="text" id="mev-nom" placeholder="p.e. Festa Cloenda 2027"></div>
     <div class="field"><label>Delegació responsable</label><select id="mev-deleg"></select></div>
@@ -688,7 +705,8 @@ tr:hover td{background:var(--bg2)}
       </div>
     </div>
     <div class="field"><label>Responsable</label><input type="text" id="mev-resp" placeholder="p.e. Juanjo Felis"></div>
-    <div class="modal-footer">
+    </div>
+  <div class="modal-footer">
       <button class="btn" onclick="closeModal('modal-event')">Cancel·lar</button>
       <button class="btn btn-primary" onclick="saveEvent()">Guardar event</button>
     </div>
@@ -697,6 +715,7 @@ tr:hover td{background:var(--bg2)}
 
 <div class="modal-overlay" id="modal-banc">
   <div class="modal">
+  <div class="modal-inner">
     <div class="modal-title" id="mb-title">Nou banc</div>
     <div class="field">
       <label>Codi <span style="color:var(--text3);font-size:12px">(p.e. 03 Banc, Bizum...)</span></label>
@@ -710,7 +729,8 @@ tr:hover td{background:var(--bg2)}
         <option value="tpv">TPV / Targeta</option>
       </select>
     </div>
-    <div class="modal-footer">
+    </div>
+  <div class="modal-footer">
       <button class="btn" onclick="closeModal('modal-banc')">Cancel·lar</button>
       <button class="btn btn-primary" onclick="saveBanc()">Guardar</button>
     </div>
@@ -719,6 +739,7 @@ tr:hover td{background:var(--bg2)}
 
 <div class="modal-overlay" id="modal-area">
   <div class="modal">
+  <div class="modal-inner">
     <div class="modal-title" id="ma-title">Nova àrea</div>
     <div class="field-row">
       <div class="field">
@@ -732,7 +753,8 @@ tr:hover td{background:var(--bg2)}
     </div>
     <div class="field"><label>Nom de l'àrea</label><input type="text" id="ma-nom" placeholder="p.e. Esports i Lleure"></div>
     <div class="field"><label>Responsable(s)</label><input type="text" id="ma-resp" placeholder="p.e. Joan Garcia · Maria López"></div>
-    <div class="modal-footer">
+    </div>
+  <div class="modal-footer">
       <button class="btn" onclick="closeModal('modal-area')">Cancel·lar</button>
       <button class="btn btn-primary" onclick="saveArea()">Guardar àrea</button>
     </div>
@@ -741,6 +763,7 @@ tr:hover td{background:var(--bg2)}
 
 <div class="modal-overlay" id="modal-deleg">
   <div class="modal">
+  <div class="modal-inner">
     <div class="modal-title" id="md-title">Nova delegació</div>
     <div class="field-row">
       <div class="field">
@@ -754,7 +777,8 @@ tr:hover td{background:var(--bg2)}
     </div>
     <div class="field"><label>Nom de la delegació</label><input type="text" id="md-nom" placeholder="p.e. Futbol Sala"></div>
     <div class="field"><label>Responsable</label><input type="text" id="md-resp" placeholder="p.e. Joan Garcia"></div>
-    <div class="modal-footer">
+    </div>
+  <div class="modal-footer">
       <button class="btn" onclick="closeModal('modal-deleg')">Cancel·lar</button>
       <button class="btn btn-primary" onclick="saveDeleg()">Guardar delegació</button>
     </div>
