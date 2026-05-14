@@ -209,7 +209,7 @@ tr:hover td{background:var(--bg2)}
     <div class="login-logo">Falla <span>Portal</span></div>
     <div class="login-sub">Sistema de gestió financera</div>
     <div class="login-fiscal">Any fiscal 26/27 · Abr 2026 – Mar 2027</div>
-    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v0.9.9</div>
+    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v1.0.0</div>
     <button class="btn-google" onclick="signIn()">
       <svg viewBox="0 0 24 24" width="20" height="20"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
       Entrar amb Google
@@ -251,7 +251,7 @@ tr:hover td{background:var(--bg2)}
     <div class="sb-bottom">
       <div class="sync-ind"><div class="sync-dot" id="sync-dot"></div><span id="sync-text">Sincronitzat</span></div>
       <button class="btn-logout" onclick="signOut()"><i class="ti ti-logout" style="font-size:14px"></i> Tancar sessió</button>
-      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v0.9.9</div>
+      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v1.0.0</div>
     </div>
   </div>
 
@@ -544,7 +544,7 @@ tr:hover td{background:var(--bg2)}
 
     <    <div id="page-manual" class="page">
       <div class="page-title">Manual d'usuari</div>
-      <div class="page-sub">Guia completa de l'app de gestió financera · v0.9.9</div>
+      <div class="page-sub">Guia completa de l'app de gestió financera · v1.0.0</div>
 
       <div style="display:flex;gap:6px;margin-bottom:20px;flex-wrap:wrap" id="man-tabs">
         <button class="btn btn-primary" onclick="showManTab('intro')">Introducció</button>
@@ -1515,6 +1515,203 @@ function showPage(id){
 }
 
 // DASHBOARD
+// UTILS
+
+// MODAL
+function openModal(id){const el=document.getElementById(id);if(el)el.classList.add('open');}
+function closeModal(id){const el=document.getElementById(id);if(el)el.classList.remove('open');}
+function toggleDeleg(bid){const b=document.getElementById(bid);if(b){b.classList.toggle('open');const h=b.previousElementSibling;if(h){const ch=h.querySelector('.chevron');if(ch)ch.classList.toggle('open');}}}
+function toggleDelegClick(el){const bid=el.getAttribute('data-bid');if(bid)toggleDeleg(bid);}
+
+// MOBILE NAV
+function showPageMob(id,mobId){showPage(id);document.querySelectorAll('.mob-item').forEach(function(el){el.classList.remove('active');});if(mobId){const el=document.getElementById(mobId);if(el)el.classList.add('active');}}
+function showMobMenu(){const m=document.getElementById('mob-menu');if(m)m.classList.add('open');}
+function closeMobMenu(){const m=document.getElementById('mob-menu');if(m)m.classList.remove('open');}
+
+// SHEETS API
+const SHEETS_API='https://sheets.googleapis.com/v4/spreadsheets/'+SPREADSHEET_ID;
+async function sheetsReq(method,url,body){
+  const opts={method,headers:{Authorization:'Bearer '+accessToken,'Content-Type':'application/json'}};
+  if(body)opts.body=JSON.stringify(body);
+  const r=await fetch(url,opts);
+  if(!r.ok){const err=await r.json().catch(()=>({}));throw new Error((err.error?.message)||r.status);}
+  return r.json();
+}
+function sheetRange(n,c){const name=n.includes(' ')?("'"+n+"'"):n;return c?name+'!'+c:name;}
+function sheetRangeUrl(n,c){return encodeURIComponent(sheetRange(n,c));}
+function sheetTabUrl(n){const name=n.includes(' ')?("'"+n+"'"):n;return encodeURIComponent(name);}
+
+async function readTab(tabName){
+  try{
+    const r=await sheetsReq('GET',SHEETS_API+'/values/'+sheetTabUrl(tabName));
+    if(!r.values||r.values.length<2)return[];
+    const headers=r.values[0];
+    return r.values.slice(1).filter(function(row){return row.some(function(c){return c;});}).map(function(row){
+      const obj={};headers.forEach(function(h,i){obj[h]=row[i]||'';});return obj;
+    });
+  }catch(e){console.warn('readTab error '+tabName,e);return[];}
+}
+
+async function writeTab(tabName,headers,rows){
+  await sheetsReq('POST',SHEETS_API+'/values/'+sheetTabUrl(tabName)+':clear',{});
+  const data=[headers,...(rows||[]).map(function(r){return headers.map(function(h){return r[h]!==undefined?String(r[h]):'';});})];
+  await sheetsReq('PUT',SHEETS_API+'/values/'+sheetRangeUrl(tabName,'A1')+'?valueInputOption=RAW',
+    {range:sheetRange(tabName,'A1'),majorDimension:'ROWS',values:data});
+}
+
+async function appendRow(tabName,headers,row){
+  const values=[headers.map(function(h){return row[h]!==undefined?String(row[h]):'';})];
+  await sheetsReq('POST',SHEETS_API+'/values/'+sheetRangeUrl(tabName,'A1')+':append?valueInputOption=RAW&insertDataOption=INSERT_ROWS',
+    {range:sheetRange(tabName,'A1'),majorDimension:'ROWS',values});
+}
+
+async function save(key){
+  setSyncing(true);
+  try{
+    if(key==='config'){
+      const rows=configToRows();
+      await writeTab(TABS.arees.name,TABS.arees.headers,rows.arees);
+      await writeTab(TABS.delegacions.name,TABS.delegacions.headers,rows.delegacions);
+      await writeTab(TABS.events.name,TABS.events.headers,rows.events);
+      await writeTab(TABS.bancs.name,TABS.bancs.headers,rows.bancs);
+      await writeTab(TABS.usuaris.name,TABS.usuaris.headers,rows.usuaris);
+      await writeTab(TABS.usuaris_assignacions.name,TABS.usuaris_assignacions.headers,rows.assignacions);
+      setSyncing(false);return;
+    }
+    const t=TABS[key];
+    if(!t){throw new Error('Tab desconegut: '+key);}
+    if(key==='moviments'){await writeTab(t.name,t.headers,DB.moviments);}
+    else if(key==='fons'){await writeTab(t.name,t.headers,DB.fons);}
+    else if(key==='tancaments'){await writeTab(t.name,t.headers,Object.values(DB.tancaments));}
+    else if(key==='regles'){await writeTab(t.name,t.headers,DB.regles);}
+    else if(key==='rols'){
+      const rolsArr=Object.values(getRoles()).map(function(r){
+        return{id:r.id,label:r.label,color:r.color||'p-gray',
+          canRegister:String(r.canRegister),canFons:String(r.canFons),
+          canImport:String(r.canImport),canConfig:String(r.canConfig),
+          canUsers:String(r.canUsers),viewAll:String(r.viewAll),custom:String(r.custom||false)};
+      });
+      await writeTab(TABS.rols.name,TABS.rols.headers,rolsArr);
+    }
+    else if(key==='pres_plans'){await writeTab(t.name,t.headers,DB.pres_plans);}
+    else if(key==='pres_config'){await writeTab(t.name,t.headers,[DB.pres_config]);}
+    else if(key==='pres_historial'){await writeTab(t.name,t.headers,DB.pres_historial);}
+  }catch(e){showToast('Error guardant: '+e.message,true);}
+  setSyncing(false);
+}
+
+async function saveMoviment(mov){setSyncing(true);try{await appendRow(TABS.moviments.name,TABS.moviments.headers,mov);}catch(e){showToast('Error guardant moviment: '+e.message,true);}setSyncing(false);}
+async function saveFons(f){setSyncing(true);try{await appendRow(TABS.fons.name,TABS.fons.headers,f);}catch(e){showToast('Error guardant fons: '+e.message,true);}setSyncing(false);}
+
+// GOOGLE AUTH
+async function loadUserInfo(){
+  const resp=await fetch('https://www.googleapis.com/oauth2/v3/userinfo',{headers:{Authorization:'Bearer '+accessToken}});
+  const info=await resp.json();
+  currentUser={email:info.email,name:info.name,picture:info.picture};
+  const emailLow=info.email.toLowerCase();
+  if(emailLow==='it.fallaportal@gmail.com'){currentUser.rol='treasury';currentUser.id='it';}
+  else{const u=(DB.config.usuaris||[]).find(function(x){return(x.email||'').toLowerCase()===emailLow;});currentUser.rol=u?u.rol:'noauth';currentUser.id=u?u.id:'';}
+}
+
+async function loadFromSheets(){
+  await initSheets();
+  const movsRows=await readTab(TABS.moviments.name);
+  DB.moviments=movsRows.map(function(r){return{...r,import:parseFloat(r.import)||0};});
+  const fonsRows=await readTab(TABS.fons.name);
+  DB.fons=fonsRows.map(function(r){return{...r,import:parseFloat(r.import)||0};});
+  const tancRows=await readTab(TABS.tancaments.name);
+  DB.tancaments={};
+  tancRows.forEach(function(r){DB.tancaments[r.eventId]={...r,efectiu:parseFloat(r.efectiu)||0,tpv:parseFloat(r.tpv)||0};});
+  const arees=await readTab(TABS.arees.name);
+  const delegacions=await readTab(TABS.delegacions.name);
+  const events=await readTab(TABS.events.name);
+  const bancs=await readTab(TABS.bancs.name);
+  const usuaris=await readTab(TABS.usuaris.name);
+  const assignacions=await readTab(TABS.usuaris_assignacions.name);
+  if(arees.length>0||usuaris.length>0){
+    const cfg=rowsToConfig(arees,delegacions,events,bancs,usuaris,assignacions);
+    DB.config.areas=cfg.areas;
+    DB.config.delegacions=cfg.delegacions;
+    DB.config.events=cfg.events;
+    DB.config.bancs=cfg.bancs;
+    DB.config.usuaris=cfg.usuaris;
+    if(cfg.directiva&&Object.keys(cfg.directiva).length>0)DB.config.directiva=cfg.directiva;
+  }
+  if(!DB.config.bancs||!DB.config.bancs.length){
+    DB.config.bancs=[
+      {id:'b1',codi:'01 Banc',nom:'Caixabank',tipus:'bank',saldoInicial:0,saldoData:''},
+      {id:'b2',codi:'02 Banc',nom:'Caixa Popular',tipus:'bank',saldoInicial:0,saldoData:''},
+      {id:'b3',codi:'Efectiu',nom:'Caixa efectiu',tipus:'cash',saldoInicial:0,saldoData:''},
+      {id:'b4',codi:'TPV',nom:'TPV targetes',tipus:'tpv',saldoInicial:0,saldoData:''}
+    ];
+  }
+  const presRows=await readTab(TABS.pres_plans.name);
+  DB.pres_plans=presRows.map(function(r){return{...r,importPla:parseFloat(r.importPla)||0};});
+  const presHistRows=await readTab(TABS.pres_historial.name);
+  DB.pres_historial=presHistRows;
+  const presConfigRows=await readTab(TABS.pres_config.name);
+  if(presConfigRows.length>0)DB.pres_config=presConfigRows[presConfigRows.length-1];
+  const reglesRows=await readTab(TABS.regles.name);
+  DB.regles=reglesRows.map(function(r){return{...r,prioritat:parseInt(r.prioritat)||10,activa:r.activa!=='false'};});
+  if(!DB.regles.length)DB.regles=getDefaultRegles();
+  const rolsRows=await readTab(TABS.rols.name);
+  if(rolsRows.length>0){
+    DB.config.rols={};
+    rolsRows.forEach(function(r){
+      DB.config.rols[r.id]={id:r.id,label:r.label,color:r.color||'p-gray',
+        canRegister:r.canRegister==='true',canFons:r.canFons==='true',
+        canImport:r.canImport==='true',canConfig:r.canConfig==='true',
+        canUsers:r.canUsers==='true',viewAll:r.viewAll==='true',custom:r.custom==='true'};
+    });
+  }
+}
+
+async function loadAllFromDrive(){
+  const hasCache=loadCache();
+  setSyncing(true);
+  loadFromSheets().then(function(){saveCache();setSyncing(false);
+    const ap=document.querySelector('.page.active');
+    if(ap){const id=ap.id.replace('page-','');
+      const renders={dashboard:renderDashboard,historial:filterHist,pressupostos:renderPressupostosEdit,
+        lliurament:renderFons,tancament:renderTancamentList,resultats:renderResultats,flux:renderFlux};
+      if(renders[id])renders[id]();}
+  }).catch(function(e){setSyncing(false);console.warn('Sheets:',e);});
+}
+
+// TANCAMENT CAIXA
+function tancarCaixa(){
+  const evId=document.getElementById('tanc-event')?.value;
+  const ef=parseFloat(document.getElementById('tanc-efectiu')?.value)||0;
+  const tpv=parseFloat(document.getElementById('tanc-tpv')?.value)||0;
+  if(!evId){showToast('Selecciona un event',true);return;}
+  if(!ef&&!tpv){showToast('Introdueix efectiu o TPV',true);return;}
+  if(!confirm('Tancar caixa per a aquest event?'))return;
+  const ev=DB.config.events.find(function(e){return e.id===evId;});
+  const tItem={eventId:evId,anyFiscal:getAnyFiscal(),eventNom:ev?.name||'',efectiu:ef,tpv,data:today(),tancat:true,registratPer:currentUser?.email};
+  if(!DB.tancaments)DB.tancaments={};
+  DB.tancaments[evId]=tItem;
+  saveCache();
+  renderTancamentList();
+  showToast('Caixa tancada: '+fmtD(ef+tpv));
+  save('tancaments').catch(function(e){showToast('Error: '+e.message,true);});
+}
+
+// FAPP
+function initFappDates(){
+  const af=getAnyFiscal()||'26/27';
+  const parts=af.split('/');
+  const ai='20'+parts[0],af2='20'+parts[1];
+  const d1=document.getElementById('fapp-data-inici');
+  const d2=document.getElementById('fapp-data-fi');
+  if(d1)d1.textContent='01/04/'+ai;
+  if(d2)d2.textContent='31/03/'+af2;
+  const dates=ai+'-04-01 - '+af2+'-03-31';
+  const i1=document.getElementById('fapp-instruccio-dates-1');
+  const i3=document.getElementById('fapp-instruccio-dates-3');
+  if(i1)i1.textContent=dates;
+  if(i3)i3.textContent=dates;
+}
+
 function renderDashboard(){
   const myArees=getMyArees();
   const af=getAnyFiscal();
@@ -3525,6 +3722,59 @@ function initGoogleAuth(){
       }catch(e){showToast('Error carregant dades: '+e.message,true);}
     }
   });
+}
+
+async function loadFromSheets(){
+  await initSheets();
+  const movsRows=await readTab(TABS.moviments.name);
+  DB.moviments=movsRows.map(function(r){return{...r,import:parseFloat(r.import)||0};});
+  const fonsRows=await readTab(TABS.fons.name);
+  DB.fons=fonsRows.map(function(r){return{...r,import:parseFloat(r.import)||0};});
+  const tancRows=await readTab(TABS.tancaments.name);
+  DB.tancaments={};
+  tancRows.forEach(function(r){DB.tancaments[r.eventId]={...r,efectiu:parseFloat(r.efectiu)||0,tpv:parseFloat(r.tpv)||0};});
+  const arees=await readTab(TABS.arees.name);
+  const delegacions=await readTab(TABS.delegacions.name);
+  const events=await readTab(TABS.events.name);
+  const bancs=await readTab(TABS.bancs.name);
+  const usuaris=await readTab(TABS.usuaris.name);
+  const assignacions=await readTab(TABS.usuaris_assignacions.name);
+  if(arees.length>0||usuaris.length>0){
+    const cfg=rowsToConfig(arees,delegacions,events,bancs,usuaris,assignacions);
+    DB.config.areas=cfg.areas;
+    DB.config.delegacions=cfg.delegacions;
+    DB.config.events=cfg.events;
+    DB.config.bancs=cfg.bancs;
+    DB.config.usuaris=cfg.usuaris;
+    if(cfg.directiva&&Object.keys(cfg.directiva).length>0)DB.config.directiva=cfg.directiva;
+  }
+  if(!DB.config.bancs||!DB.config.bancs.length){
+    DB.config.bancs=[
+      {id:'b1',codi:'01 Banc',nom:'Caixabank',tipus:'bank',saldoInicial:0,saldoData:''},
+      {id:'b2',codi:'02 Banc',nom:'Caixa Popular',tipus:'bank',saldoInicial:0,saldoData:''},
+      {id:'b3',codi:'Efectiu',nom:'Caixa efectiu',tipus:'cash',saldoInicial:0,saldoData:''},
+      {id:'b4',codi:'TPV',nom:'TPV targetes',tipus:'tpv',saldoInicial:0,saldoData:''}
+    ];
+  }
+  const presRows=await readTab(TABS.pres_plans.name);
+  DB.pres_plans=presRows.map(function(r){return{...r,importPla:parseFloat(r.importPla)||0};});
+  const presHistRows=await readTab(TABS.pres_historial.name);
+  DB.pres_historial=presHistRows;
+  const presConfigRows=await readTab(TABS.pres_config.name);
+  if(presConfigRows.length>0)DB.pres_config=presConfigRows[presConfigRows.length-1];
+  const reglesRows=await readTab(TABS.regles.name);
+  DB.regles=reglesRows.map(function(r){return{...r,prioritat:parseInt(r.prioritat)||10,activa:r.activa!=='false'};});
+  if(!DB.regles.length)DB.regles=getDefaultRegles();
+  const rolsRows=await readTab(TABS.rols.name);
+  if(rolsRows.length>0){
+    DB.config.rols={};
+    rolsRows.forEach(function(r){
+      DB.config.rols[r.id]={id:r.id,label:r.label,color:r.color||'p-gray',
+        canRegister:r.canRegister==='true',canFons:r.canFons==='true',
+        canImport:r.canImport==='true',canConfig:r.canConfig==='true',
+        canUsers:r.canUsers==='true',viewAll:r.viewAll==='true',custom:r.custom==='true'};
+    });
+  }
 }
 
 async function loadAllFromDrive(){
