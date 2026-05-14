@@ -1554,7 +1554,7 @@ function previewFappTrans(){
       html+='</select></div>';
       html+='</div>';
 
-      html+='<button class="btn btn-primary" onclick="importarFappTrans()" data-rows=''+JSON.stringify(rows).replace(/'/g,"&apos;")+'' id="btn-imp-trans"><i class="ti ti-check"></i> Importar '+valid.length+' transaccions</button>';
+      html+='<button class="btn btn-primary" onclick="importarFappTrans()"><i class="ti ti-check"></i> Importar '+valid.length+' transaccions</button>';
       document.getElementById('fapp-trans-preview').innerHTML=html;
       window._fappTransRows=rows;
     }catch(err){
@@ -1691,7 +1691,7 @@ function previewFappTickets(){
 
       // Mostrar per events de l'app
       html+='<div class="card" style="margin-bottom:14px">';
-      html+='<div class="card-title">Assignar consums a events de l'app</div>';
+      html+='<div class="card-title">Assignar consums a events de l\'app</div>';
       html+='<div style="font-size:13px;color:var(--text2);margin-bottom:10px">Selecciona un rang de dates per assignar els consums a un event específic.</div>';
       DB.config.events.filter(function(e){return e.status!=='tancat';}).forEach(function(ev){
         html+='<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:0.5px solid var(--border)">';
@@ -1739,10 +1739,13 @@ function calcConsumEvent(btn){
   const res=document.getElementById('ev-result-'+evId);
   if(res){
     res.innerHTML='<span style="color:var(--green)">'+filtered.length+' transaccions · Total: <strong>'+fmtD(total)+'</strong></span> '+
-      '<button class="btn btn-primary" style="font-size:11px;margin-left:8px" onclick="registrarConsumEvent(''+evId+'',''+evNom+'','+total+',''+from+'',''+to+'')">Registrar ingrés</button>';
+      '<button class="btn btn-primary" style="font-size:11px;margin-left:8px" data-evid="'+evId+'" data-evnom="'+evNom+'" data-total="'+total+'" data-from="'+from+'" data-to="'+to+'" onclick="registrarConsumEventBtn(this)">Registrar ingres</button>'
   }
 }
 
+function registrarConsumEventBtn(btn){
+  registrarConsumEvent(btn.dataset.evid,btn.dataset.evnom,parseFloat(btn.dataset.total),btn.dataset.from,btn.dataset.to);
+}
 async function registrarConsumEvent(evId,evNom,total,from,to){
   if(!confirm('Registrar '+fmtD(total)+' com a ingrés de "'+evNom+'" ('+from+' - '+to+')?'))return;
   const ev=DB.config.events.find(function(e){return e.id===evId;});
@@ -4281,5 +4284,6 @@ async function deleteRol(id){
   showToast('Rol eliminat');
   save('rols').catch(function(e){showToast('Error: '+e.message,true);});
 }
-    {id:'fallesapp',label:'Falles.app',icon:'ti-device-mobile',roles:['president','treasury']},
->
+</script>
+</body>
+</html>
