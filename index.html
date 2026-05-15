@@ -2313,10 +2313,14 @@ function renderFons(){
     populateDelegatSelects();
   }else{
     const email=currentUser?.email;
-    const rebuts=(DB.fons||[]).filter(f=>f.delegEmail===email&&f.tipus==='lliurament').reduce((s,f)=>s+f.import,0);
-    const gastat=(DB.moviments||[]).filter(m=>m.responsableEmail===email&&m.tipus==='gast').reduce((s,m)=>s+m.import,0);
-    const devol=(DB.fons||[]).filter(f=>f.delegEmail===email&&f.tipus==='devolucio').reduce((s,f)=>s+f.import,0);
-    const reintFons=fonsArr.filter(function(f){return f.tipus==='reintegrament';}).reduce(function(s,f){return s+f.import;},0);
+    const af3=getAnyFiscal();
+    const fonsArr2=(DB.fons||[]).filter(f=>(f.anyFiscal===af3||!f.anyFiscal)&&(f.delegEmail||'').toLowerCase()===(email||'').toLowerCase());
+    const rebuts=fonsArr2.filter(f=>f.tipus==='lliurament').reduce((s,f)=>s+f.import,0);
+    const gastFonsCard=fonsArr2.filter(f=>f.tipus==='gast_fons').reduce((s,f)=>s+f.import,0);
+    const avancFons=fonsArr2.filter(f=>f.tipus==='avanc').reduce((s,f)=>s+f.import,0);
+    const devol=fonsArr2.filter(f=>f.tipus==='devolucio').reduce((s,f)=>s+f.import,0);
+    const reintFons=fonsArr2.filter(f=>f.tipus==='reintegrament').reduce((s,f)=>s+f.import,0);
+    const gastat=(DB.moviments||[]).filter(m=>(!m.anyFiscal||m.anyFiscal===af3)&&(m.responsableEmail||'').toLowerCase()===(email||'').toLowerCase()&&m.tipus==='gast').reduce((s,m)=>s+m.import,0);
   const saldo=rebuts-gastFonsCard-devol-avancFons+reintFons;
     const pct=rebuts>0?Math.min(100,Math.round(gastFonsCard/rebuts*100)):0;
     c.innerHTML=`<div class="saldo-banner">
@@ -2972,19 +2976,7 @@ const MANUAL={
       <div>• <strong>Gestionar directiva</strong> — assigna responsables a àrees i delegacions</div>
       <div>• <strong>Copiar directiva</strong> — copia les assignacions d'un exercici a un altre</div>
     </div>`,
-  rols:`<h3 style="margin-bottom:12px">Rols i permisos</h3>
-    <p style="color:var(--text2);line-height:1.6;margin-bottom:12px">Cada usuari té un rol que defineix el que pot fer a l'app.</p>
-    <div style="font-size:13px">
-      ${Object.entries(getRoles()).filter(([k])=>k!=='noauth').map(([key,r])=>`
-      <div style="padding:10px 0;border-bottom:0.5px solid var(--border)">
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
-          <span class="pill ${r.color}">${r.label}</span>
-        </div>
-        <div style="color:var(--text2);font-size:12px;line-height:1.8">
-          ${r.canRegister?'✓ Registra moviments · ':'✗ No registra · '}${r.canFons?'✓ Lliura fons · ':''}${r.canImport?'✓ Importa fitxers · ':''}${r.canConfig?'✓ Configuració · ':''}${r.canUsers?'✓ Gestiona usuaris · ':''}${r.viewAll?'👁 Veu tota la Falla':'👁 Sols les seues àrees/delegacions'}
-        </div>
-      </div>`).join('')}
-    </div>`
+  rols:'__ROLS_DYNAMIC__'  
 };
 
 function renderManual(){
@@ -3016,7 +3008,30 @@ function renderManual(){
 function showManTab(tab,clickedBtn){
   // Render content
   const mc=document.getElementById('man-content');
-  if(mc&&MANUAL[tab])mc.innerHTML=MANUAL[tab];
+  if(!mc)return;
+  let tabContent=MANUAL[tab]||'';
+  // Rols section generated dynamically
+  if(tab==='rols'){
+    const rols=getRoles();
+    tabContent='<h3 style="margin-bottom:12px">Rols i permisos</h3>'+
+      '<p style="color:var(--text2);line-height:1.6;margin-bottom:12px">Cada usuari té un rol que defineix el que pot fer.</p>'+
+      '<div style="font-size:13px">'+
+      Object.entries(rols).filter(function(e){return e[0]!=='noauth';}).map(function(e){
+        const r=e[1];
+        return'<div style="padding:10px 0;border-bottom:0.5px solid var(--border)">'+
+          '<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">'+
+          '<span class="pill '+(r.color||'p-gray')+'">'+r.label+'</span></div>'+
+          '<div style="color:var(--text2);font-size:12px;line-height:1.8">'+
+          (r.canRegister?'✓ Registra · ':'✗ No registra · ')+
+          (r.canFons?'✓ Lliura fons · ':'')+
+          (r.canImport?'✓ Importa · ':'')+
+          (r.canConfig?'✓ Configuració · ':'')+
+          (r.canUsers?'✓ Usuaris · ':'')+
+          (r.viewAll?'👁 Veu tot':'👁 Sols les seues àrees')+
+          '</div></div>';
+      }).join('')+'</div>';
+  }
+  mc.innerHTML=tabContent;
   // Update button styles
   document.querySelectorAll('#man-tabs button').forEach(function(btn){
     btn.className=btn===clickedBtn?'btn btn-primary':'btn';
