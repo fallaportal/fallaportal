@@ -211,7 +211,7 @@ tr:hover td{background:var(--bg2)}
     <div class="login-logo">Falla <span>Portal</span></div>
     <div class="login-sub">Sistema de gestió financera</div>
     <div class="login-fiscal">Any fiscal 26/27 · Abr 2026 – Mar 2027</div>
-    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v1.2.6</div>
+    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v1.2.7</div>
     <button class="btn-google" onclick="signIn()">
       <svg viewBox="0 0 24 24" width="20" height="20"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
       Entrar amb Google
@@ -253,7 +253,7 @@ tr:hover td{background:var(--bg2)}
     <div class="sb-bottom">
       <div class="sync-ind"><div class="sync-dot" id="sync-dot"></div><span id="sync-text">Sincronitzat</span></div>
       <button class="btn-logout" onclick="signOut()"><i class="ti ti-logout" style="font-size:14px"></i> Tancar sessió</button>
-      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v1.2.6</div>
+      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v1.2.7</div>
     </div>
   </div>
 
@@ -1082,7 +1082,7 @@ tr:hover td{background:var(--bg2)}
       </div>
     </div>
     <div class="field"><label>Nom de l'àrea</label><input type="text" id="ma-nom" placeholder="p.e. Esports i Lleure"></div>
-      <div class="field" style="background:var(--bg2);padding:8px;border-radius:var(--r)"><label>Responsable(s)</label><div style="font-size:13px;color:var(--text2)">Assignat des de Configuració → Directiva</div></div>
+      <div class="field" style="background:var(--bg2);padding:8px;border-radius:var(--r)"><label>Responsable(s)</label><div id="ma-resp-display" style="font-size:13px;color:var(--text2)">Assignat des de Configuració → Directiva</div></div>
     </div>
   <div class="modal-footer">
       <button class="btn" onclick="closeModal('modal-area')">Cancel·lar</button>
@@ -1106,7 +1106,7 @@ tr:hover td{background:var(--bg2)}
       </div>
     </div>
     <div class="field"><label>Nom de la delegació</label><input type="text" id="md-nom" placeholder="p.e. Futbol Sala"></div>
-      <div class="field" style="background:var(--bg2);padding:8px;border-radius:var(--r)"><label>Responsable</label><div style="font-size:13px;color:var(--text2)">Assignat des de Configuració → Directiva</div></div>
+      <div class="field" style="background:var(--bg2);padding:8px;border-radius:var(--r)"><label>Responsable</label><div id="md-resp-display" style="font-size:13px;color:var(--text2)">Assignat des de Configuració → Directiva</div></div>
     </div>
   <div class="modal-footer">
       <button class="btn" onclick="closeModal('modal-deleg')">Cancel·lar</button>
@@ -1518,6 +1518,15 @@ function initApp(){
   buildNav();
   populateMovimentSelects();
   initExerciciSelector();
+  // Normalitzar events: assegurar anyFiscal des de year si manca
+  (DB.config.events||[]).forEach(function(e){
+    if(!e.anyFiscal&&e.year){
+      // Convertir year '2026'/'2027' -> '26/27' (any fiscal que conté aquest any)
+      const y=parseInt(e.year);
+      if(!isNaN(y)){e.anyFiscal=(String(y-2000).padStart(2,'0'))+'/'+(String(y-2000+1).padStart(2,'0'));}
+    }
+    if(!e.anyFiscal)e.anyFiscal=getAnyFiscal();
+  });
   // Inicialitzar rols si no n'hi ha al DB
   if(!DB.config.rols||Object.keys(DB.config.rols).length===0){
     DB.config.rols={...DEFAULT_ROLES};
@@ -1814,6 +1823,14 @@ async function loadFromSheets(){
     const cfg=rowsToConfig(arees,delegacions,events,bancs,usuaris,assignacions);
     DB.config.areas=cfg.areas;
     DB.config.delegacions=cfg.delegacions;
+    // Normalitzar anyFiscal dels events carregats
+    cfg.events.forEach(function(e){
+      if(!e.anyFiscal&&e.year){
+        const y=parseInt(e.year);
+        if(!isNaN(y))e.anyFiscal=(String(y-2000).padStart(2,'0'))+'/'+(String(y-2000+1).padStart(2,'0'));
+      }
+      if(!e.anyFiscal)e.anyFiscal='26/27';
+    });
     DB.config.events=cfg.events;
     DB.config.bancs=cfg.bancs;
     DB.config.usuaris=cfg.usuaris;
@@ -2480,9 +2497,9 @@ function renderPressupostosEdit(){
       </div>`;
     delegs.forEach(d=>{
       const events=DB.config.events.filter(e=>e.delegId===d.id);
-      const dPlans=DB.pres_plans.filter(p=>p.delegacioId===d.id);
+      const dPlans=DB.pres_plans.filter(p=>p.delegacioId===d.id&&p.any===getAnyFiscal());
       const totalPla=dPlans.reduce((s,p)=>s+p.importPla,0);
-      const totalReal=(DB.moviments||[]).filter(m=>m.delegacioId===d.id&&m.tipus==='gast').reduce((s,m)=>s+m.import,0);
+      const af0=getAnyFiscal();const totalReal=(DB.moviments||[]).filter(m=>m.delegacioId===d.id&&m.tipus==='gast'&&(m.anyFiscal===af0||!m.anyFiscal)).reduce((s,m)=>s+m.import,0);
       const pct=totalPla>0?Math.min(100,Math.round(totalReal/totalPla*100)):0;
       const bid='ped'+d.id;
       html+=`<div class="deleg-block" style="margin-bottom:8px;margin-left:16px">
@@ -2667,111 +2684,166 @@ function renderFlux(){
   }).join('');
 }
 
-function renderManual(){
-  document.getElementById('manual-container').innerHTML=`
-  <div class="card">
-    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px" id="man-tabs">
-      <button class="btn btn-primary" onclick="showManTab('intro',this)">Introducció</button>
-      <button class="btn" onclick="showManTab('moviments',this)">Moviments</button>
-      <button class="btn" onclick="showManTab('fons',this)">Fons delegats</button>
-      <button class="btn" onclick="showManTab('tancament',this)">Tancament caixa</button>
-      <button class="btn" onclick="showManTab('pressupostos',this)">Pressupostos</button>
-      <button class="btn" onclick="showManTab('rols',this)">Rols i permisos</button>
-    </div>
-    <div id="man-content"></div>
-  </div>`;
-  setTimeout(function(){
-    const firstBtn=document.querySelector('#man-tabs .btn');
-    if(firstBtn)showManTab('intro',firstBtn);
-  },0);
-}
-
 const MANUAL={
-  intro:`<h3 style="margin-bottom:12px">Benvingut a la Falla Portal</h3>
-    <p style="color:var(--text2);line-height:1.6;margin-bottom:12px">
-      Aquesta app és el sistema de gestió financera de la Falla Portal per a l'any fiscal 26/27 (1 d'abril 2026 – 31 de març 2027).
-      Totes les dades es guarden automàticament a Google Sheets i estan disponibles per a tots els usuaris autoritzats en temps real.
-    </p>
-    <div style="background:var(--blue-bg);border-radius:var(--r);padding:12px;margin-bottom:12px;font-size:13px;color:var(--blue-text)">
-      <strong>Primer pas:</strong> El President o Tresorera han de donar d'alta els usuaris a Configuració → Usuaris, indicant el seu email de Google, rol i delegacions assignades.
-    </div>
-    <div style="font-size:13px;line-height:1.8">
-      <div style="font-weight:500;margin-bottom:8px">Mòduls disponibles:</div>
-      <div>📊 <strong>Dashboard</strong> — resum global de l'any fiscal</div>
-      <div>➕ <strong>Nou moviment</strong> — registrar un ingrés o despesa</div>
-      <div>💰 <strong>Fons delegats</strong> — control de bestretes</div>
-      <div>🔒 <strong>Tancament de caixa</strong> — tancar events</div>
-      <div>📋 <strong>Pressupostos</strong> — pla vs actuals</div>
-      <div>📜 <strong>Historial</strong> — tots els moviments</div>
+  intro:`<h3 style="margin-bottom:12px">Benvingut a Falla Portal</h3>
+    <p style="color:var(--text2);line-height:1.6;margin-bottom:12px">Sistema de gestió financera de la Falla Portal per a l'any fiscal actiu. Totes les dades es guarden automàticament a Google Sheets i estan disponibles en temps real per a tots els usuaris autoritzats.</p>
+    <div style="background:var(--blue-bg);border-radius:var(--r);padding:12px;font-size:13px;color:var(--blue-text);margin-bottom:12px"><strong>Primer pas:</strong> El President o Tresorera han de donar d'alta els usuaris a <strong>Configuració → Usuaris</strong>, indicant el seu email de Google i rol assignat.</div>
+    <div style="font-size:13px;line-height:2">
+      <div>📊 <strong>Dashboard</strong> — resum global de l'exercici actiu</div>
+      <div>➕ <strong>Nou moviment</strong> — registrar ingressos i despeses</div>
+      <div>💰 <strong>Fons delegats</strong> — control de bestretes als responsables</div>
+      <div>🔒 <strong>Tancament de caixa</strong> — tancar events i declarar recaptació</div>
+      <div>📋 <strong>Pressupostos</strong> — pla vs actuals per delegació</div>
+      <div>📜 <strong>Historial</strong> — tots els moviments amb filtres</div>
+      <div>📱 <strong>Falles.app</strong> — importació de dades de la plataforma</div>
+      <div>🏦 <strong>Importar CSV</strong> — extractes bancaris Caixabank / Caixa Popular</div>
       <div>📄 <strong>Estat de Resultats</strong> — ingressos i despeses per àrea</div>
       <div>💸 <strong>Flux d'Efectiu</strong> — moviments per via de pagament</div>
+      <div>⚙️ <strong>Configuració</strong> — àrees, events, bancs, usuaris, rols</div>
     </div>`,
-  moviments:`<h3 style="margin-bottom:12px">Registrar un moviment</h3>
-    <p style="color:var(--text2);line-height:1.6;margin-bottom:12px">
-      Un moviment és qualsevol ingrés o despesa de la Falla. Cada responsable de delegació registra els seus propis moviments.
-    </p>
+  dashboard:`<h3 style="margin-bottom:12px">Dashboard</h3>
+    <p style="color:var(--text2);line-height:1.6;margin-bottom:12px">Pantalla principal amb el resum financer de l'exercici actiu.</p>
     <div style="font-size:13px;line-height:1.8">
-      <div style="font-weight:500;margin-bottom:8px">Passos per registrar una despesa:</div>
-      <div>1. Clica <strong>Nou moviment</strong> al menú lateral</div>
-      <div>2. Selecciona <strong>Despesa</strong> o <strong>Ingrés</strong></div>
-      <div>3. Introdueix l'<strong>import</strong> en euros</div>
-      <div>4. Selecciona la <strong>via</strong>: Efectiu, Banc 1, Banc 2 o TPV</div>
-      <div>5. Selecciona l'<strong>àrea</strong> i la <strong>delegació</strong></div>
-      <div>6. Si és d'un event concret, selecciona'l</div>
-      <div>7. Escriu el <strong>concepte</strong> (p.e. "Honoraris Orquestra Monaco")</div>
-      <div>8. Indica l'<strong>establiment</strong> si escau (p.e. "Monaco S.L.")</div>
-      <div>9. Comprova la <strong>data</strong></div>
-      <div>10. Pots afegir una foto del <strong>justificant</strong></div>
-      <div>11. Clica <strong>Registrar</strong></div>
-    </div>
-    <div style="background:var(--amber-bg);border-radius:var(--r);padding:10px;margin-top:12px;font-size:12px;color:var(--amber-text)">
-      <strong>Important:</strong> Els moviments del TPV NO s'han de registrar manualment — es conciliaran automàticament quan s'importe el CSV del banc.
+      <div style="font-weight:500;margin-bottom:6px">Mètriques principals:</div>
+      <div>• <strong>Ingressos YTD</strong> — total d'ingressos registrats a l'exercici actiu</div>
+      <div>• <strong>Despeses YTD</strong> — total de despeses registrades</div>
+      <div>• <strong>Resultat net</strong> — ingressos menys despeses (verd = positiu, roig = negatiu)</div>
+      <div>• <strong>Moviments</strong> — nombre total de registres</div>
+      <div>• <strong>Passiu falles.app</strong> — diners carregats pels fallers pendents de gastar</div>
+      <div style="font-weight:500;margin:10px 0 6px">Panells:</div>
+      <div>• <strong>Últims moviments</strong> — els 5 darrers registres; clica per anar a Historial</div>
+      <div>• <strong>Alertes</strong> — avisos automàtics de desviacions pressupostàries</div>
+      <div>• <strong>Fons delegats</strong> — saldo disponible de cada responsable</div>
+      <div>• <strong>Canvi d'exercici</strong> — usa el selector a la barra lateral per canviar d'any fiscal</div>
     </div>`,
+  moviments:`<h3 style="margin-bottom:12px">Nou moviment</h3>
+    <p style="color:var(--text2);line-height:1.6;margin-bottom:12px">Registra qualsevol ingrés o despesa de la Falla.</p>
+    <div style="font-size:13px;line-height:1.8">
+      <div style="font-weight:500;margin-bottom:6px">Camps:</div>
+      <div>• <strong>Despesa / Ingrés</strong> — tipus de moviment</div>
+      <div>• <strong>Data</strong> — per defecte avui; modifica si cal</div>
+      <div>• <strong>Import</strong> — en euros; admet coma o punt decimal (p.e. 12,50)</div>
+      <div>• <strong>Via</strong> — Efectiu, TPV, Caixabank o Caixa Popular</div>
+      <div>• <strong>Àrea i Delegació</strong> — assignació organitzativa</div>
+      <div>• <strong>Event</strong> — opcional; apareix si la delegació en té</div>
+      <div>• <strong>Concepte</strong> — descripció clara (p.e. "Honoraris Orquestra Monaco")</div>
+      <div>• <strong>Establiment</strong> — opcional; proveïdor (p.e. "Monaco S.L.")</div>
+      <div>• <strong>Notes i Justificant</strong> — secció col·lapsable per afegir foto del tiquet</div>
+      <div style="font-weight:500;margin:10px 0 6px">Origen del pagament (despeses en efectiu):</div>
+      <div>• <strong>Caixa de la Falla</strong> — moviment normal</div>
+      <div>• <strong>Fons lliurats</strong> — descompta del teu saldo de fons delegats</div>
+      <div>• <strong>Avançament personal</strong> — la falla et deurà l'import</div>
+    </div>
+    <div style="background:var(--amber-bg);border-radius:var(--r);padding:10px;margin-top:12px;font-size:12px;color:var(--amber-text)"><strong>Important:</strong> Els moviments de TPV NO s'han de registrar manualment — es conciliaran amb el CSV bancari.</div>`,
   fons:`<h3 style="margin-bottom:12px">Fons delegats</h3>
-    <p style="color:var(--text2);line-height:1.6;margin-bottom:12px">
-      El sistema de fons delegats controla els diners de la Falla que estan en mans dels responsables.
-    </p>
+    <p style="color:var(--text2);line-height:1.6;margin-bottom:12px">Controla els diners de la Falla en mans dels responsables.</p>
     <div style="font-size:13px;line-height:1.8">
-      <div style="font-weight:500;margin-bottom:8px">Com funciona:</div>
-      <div>1. <strong>Tresoreria lliura fons</strong> a un delegat (p.e. 500€ a Juanjo per la Festa Cloenda)</div>
-      <div>2. El delegat <strong>registra les despeses</strong> amb "Nou moviment" → via Efectiu</div>
-      <div>3. El saldo disponible = fons rebuts − despeses registrades</div>
-      <div>4. Al final de l'event, el delegat <strong>torna el sobrant</strong> a Tresoreria</div>
-      <div>5. Tresoreria registra la <strong>devolució</strong> per tancar el cicle</div>
-    </div>
-    <div style="background:var(--red-bg);border-radius:var(--r);padding:10px;margin-top:12px;font-size:12px;color:var(--red-text)">
-      <strong>Alerta:</strong> Si el saldo surt en roig, el delegat ha gastat més del que ha rebut. Cal que Tresoreria lliure més fons o que el delegat justifique les despeses addicionals.
+      <div style="font-weight:500;margin-bottom:6px">Cicle complet:</div>
+      <div>1. <strong>Tresoreria lliura fons</strong> → botó "Nou lliurament"</div>
+      <div>2. <strong>El delegat gasta</strong> → Nou moviment → Efectiu → "Fons lliurats"</div>
+      <div>3. <strong>Saldo</strong> = fons rebuts − despeses amb fons − devolucions</div>
+      <div>4. <strong>Devolució del sobrant</strong> → botó "Registrar devolució"</div>
+      <div>5. <strong>Avançament personal</strong> → el delegat paga de la seua butxaca; saldo negatiu</div>
+      <div>6. <strong>Reintegrament</strong> → la falla torna els diners avançats</div>
+      <div style="font-weight:500;margin:10px 0 6px">Indicadors visuals:</div>
+      <div>• Barra verda → normal · Barra taronja → >75% gastat · Barra roja → avançament personal</div>
     </div>`,
   tancament:`<h3 style="margin-bottom:12px">Tancament de caixa</h3>
-    <p style="color:var(--text2);line-height:1.6;margin-bottom:12px">
-      El tancament es fa un cop acabat l'event. El responsable declara l'efectiu recaptat i les vendes per TPV.
-    </p>
+    <p style="color:var(--text2);line-height:1.6;margin-bottom:12px">Tanca un event i declara la recaptació d'efectiu i TPV.</p>
     <div style="font-size:13px;line-height:1.8">
-      <div style="font-weight:500;margin-bottom:8px">Passos:</div>
-      <div>1. Ves a <strong>Tancament de caixa</strong></div>
-      <div>2. Selecciona l'event que vols tancar</div>
-      <div>3. Compta l'efectiu físic de la caixa i introdueix l'import</div>
-      <div>4. Mira el tiquet del terminal TPV i introdueix el total de vendes</div>
-      <div>5. Revisa el <strong>resultat net</strong> calculat automàticament</div>
-      <div>6. Clica <strong>Tancar i enviar a Tresoreria</strong></div>
-    </div>
-    <div style="background:var(--blue-bg);border-radius:var(--r);padding:10px;margin-top:12px;font-size:12px;color:var(--blue-text)">
-      <strong>Nota:</strong> El TPV es conciliarà definitivament quan s'importe el CSV bancari. El tancament manual és una declaració provisional.
+      <div style="font-weight:500;margin-bottom:6px">Passos:</div>
+      <div>1. Selecciona l'event de la llista</div>
+      <div>2. Compta l'efectiu físic i introdueix l'import</div>
+      <div>3. Mira el tiquet del terminal TPV i introdueix el total</div>
+      <div>4. Revisa el resultat net (recaptació − despeses registrades)</div>
+      <div>5. Clica "Tancar i enviar a Tresoreria"</div>
+      <div style="font-weight:500;margin:10px 0 6px">Notes:</div>
+      <div>• El TPV es conciliarà definitivament amb el CSV bancari</div>
+      <div>• Un event tancat mostra el badge verd amb la data de tancament</div>
     </div>`,
   pressupostos:`<h3 style="margin-bottom:12px">Pressupostos</h3>
-    <p style="color:var(--text2);line-height:1.6;margin-bottom:12px">
-      Cada responsable introdueix els imports planificats per a les seues delegacions. Un cop aprovats, es bloquegen.
-    </p>
+    <p style="color:var(--text2);line-height:1.6;margin-bottom:12px">Pla vs actuals per delegació. Cada responsable introdueix els imports planificats.</p>
     <div style="font-size:13px;line-height:1.8">
-      <div style="font-weight:500;margin-bottom:8px">Flux d'aprovació:</div>
-      <div>1. <strong>Fase elaboració</strong> — cada responsable introdueix els imports per event o concepte</div>
+      <div style="font-weight:500;margin-bottom:6px">Flux d'aprovació:</div>
+      <div>1. <strong>Elaboració</strong> — cada responsable introdueix imports per event o concepte</div>
       <div>2. <strong>Revisió</strong> — Tresoreria o President revisen tots els pressupostos</div>
-      <div>3. <strong>Bloqueig</strong> — Tresoreria o President cliquen "Bloquejar i aprovar"</div>
+      <div>3. <strong>Bloqueig</strong> — "Bloquejar i aprovar"; a partir d'aquí ningú pot modificar</div>
       <div>4. <strong>Execució</strong> — els moviments reals es comparen automàticament amb el pla</div>
-      <div>5. <strong>Desbloqueig puntual</strong> — si cal fer ajustos, Tresoreria pot desbloquejar amb motiu</div>
-    </div>
-    <div style="background:var(--amber-bg);border-radius:var(--r);padding:10px;margin-top:12px;font-size:12px;color:var(--amber-text)">
-      <strong>Important:</strong> Un cop bloquejat, cap responsable pot modificar els imports planificats. Tots els desbloquejos queden registrats amb data, usuari i motiu.
+      <div>5. <strong>Desbloqueig</strong> — si cal ajustar, Tresoreria pot desbloquejar indicant el motiu</div>
+      <div style="font-weight:500;margin:10px 0 6px">Tipus de línies:</div>
+      <div>• <strong>Import global de l'event</strong> — un import total per tot l'event</div>
+      <div>• <strong>Concepte concret</strong> — partides desglosades (p.e. "Honoraris", "Begudes")</div>
+    </div>`,
+  historial:`<h3 style="margin-bottom:12px">Historial de moviments</h3>
+    <p style="color:var(--text2);line-height:1.6;margin-bottom:12px">Consulta i filtra tots els moviments de l'exercici actiu.</p>
+    <div style="font-size:13px;line-height:1.8">
+      <div style="font-weight:500;margin-bottom:6px">Filtres:</div>
+      <div>• <strong>Cerca lliure</strong> — per concepte o establiment</div>
+      <div>• <strong>Àrea</strong> — sols d'una àrea concreta</div>
+      <div>• <strong>Tipus</strong> — tots / ingressos / despeses</div>
+      <div style="font-weight:500;margin:10px 0 6px">Eliminar moviments:</div>
+      <div>• Pots eliminar els teus propis moviments amb la icona 🗑️</div>
+      <div>• President i Tresoreria poden eliminar qualsevol moviment</div>
+      <div>• Si el moviment estava vinculat a fons lliurats, s'eliminen tots dos</div>
+    </div>`,
+  fallesapp:`<h3 style="margin-bottom:12px">Falles.app</h3>
+    <p style="color:var(--text2);line-height:1.6;margin-bottom:12px">Importa dades de la plataforma falles.app en tres passos.</p>
+    <div style="font-size:13px;line-height:1.8">
+      <div style="font-weight:500;margin-bottom:6px">Fitxer 1 — Informe de Movimientos:</div>
+      <div>• Recarregues efectiu (agrupades per dia), TPV individuals i devolucions</div>
+      <div>• Selecciona via d'efectiu, via TPV, àrea i delegació destí</div>
+      <div style="font-weight:500;margin:10px 0 6px">Fitxer 2 — Saldos Individuales:</div>
+      <div>• Passiu total — diners carregats pels fallers pendents de gastar</div>
+      <div>• Apareix al Dashboard i es guarda per exercici</div>
+      <div style="font-weight:500;margin:10px 0 6px">Fitxer 3 — Transacciones de Tickets:</div>
+      <div>• Assigna consums als events per dates del mestre d'events</div>
+      <div>• Els consums sense event coincident van a Festejos genèric</div>
+      <div style="font-weight:500;margin:10px 0 6px">Bonificacions:</div>
+      <div>• Registra el % de bonificació com a despesa (diners mai entrats físicament)</div>
+    </div>`,
+  importcsv:`<h3 style="margin-bottom:12px">Importar CSV</h3>
+    <p style="color:var(--text2);line-height:1.6;margin-bottom:12px">Importa extractes bancaris de Caixabank o Caixa Popular.</p>
+    <div style="font-size:13px;line-height:1.8">
+      <div style="font-weight:500;margin-bottom:6px">Com obtenir l'extracte:</div>
+      <div>• <strong>Caixabank</strong> → CaixaBankNow → Comptes → Moviments → Exportar CSV</div>
+      <div>• <strong>Caixa Popular</strong> → Banca online → Comptes → Moviments → Exportar CSV</div>
+      <div style="font-weight:500;margin:10px 0 6px">Regles de mapeig (Configuració → Regles CSV):</div>
+      <div>• Defineix patrons de text per assignar moviments automàticament a delegacions</div>
+      <div>• P.e. "HIDRAQUA" → Jurídica i Contractacions → "Aigua"</div>
+      <div>• Usa el simulador per provar les regles abans d'importar</div>
+    </div>`,
+  resultats:`<h3 style="margin-bottom:12px">Estat de Resultats</h3>
+    <p style="color:var(--text2);line-height:1.6;margin-bottom:12px">Informe consolidat d'ingressos i despeses per àrea.</p>
+    <div style="font-size:13px;line-height:1.8">
+      <div>• <strong>Ingressos per àrea</strong> — desglossat per cada àrea</div>
+      <div>• <strong>Despeses per àrea</strong> — ídem per les despeses</div>
+      <div>• <strong>Resultat exercici</strong> — ingressos menys despeses total</div>
+      <div>• <strong>Exportar CSV</strong> — descarrega l'informe complet</div>
+    </div>`,
+  flux:`<h3 style="margin-bottom:12px">Estat de Flux d'Efectiu</h3>
+    <p style="color:var(--text2);line-height:1.6;margin-bottom:12px">Cobraments i pagaments agrupats per via de pagament.</p>
+    <div style="font-size:13px;line-height:1.8">
+      <div>• <strong>Saldo inicial</strong> — obertura de l'exercici</div>
+      <div>• <strong>Cobraments / Pagaments</strong> — totals de l'exercici</div>
+      <div>• <strong>Detall per via</strong> — Efectiu, Caixabank, Caixa Popular, TPV</div>
+      <div>• <strong>Exportar CSV</strong> — per a comptabilitat externa</div>
+    </div>`,
+  configuracio:`<h3 style="margin-bottom:12px">Configuració</h3>
+    <p style="color:var(--text2);line-height:1.6;margin-bottom:12px">Gestió de dades mestres. Accés restringit a President i Tresoreria.</p>
+    <div style="font-size:13px;line-height:1.8">
+      <div style="font-weight:500;margin-bottom:6px">Pestanyes:</div>
+      <div>• <strong>Àrees</strong> — crea, edita o elimina àrees i delegacions</div>
+      <div>• <strong>Events</strong> — gestiona events per exercici; copia entre exercicis</div>
+      <div>• <strong>Bancs</strong> — vies de pagament amb saldo inicial i actual</div>
+      <div>• <strong>Mestre de Rols</strong> — edita els permisos de cada rol</div>
+      <div>• <strong>Regles CSV</strong> — regles de mapeig per importació bancària</div>
+      <div>• <strong>Usuaris</strong> — alta, edició i eliminació d'usuaris autoritzats</div>
+      <div style="font-weight:500;margin:10px 0 6px">Gestió d'exercicis fiscals:</div>
+      <div>• <strong>Nou exercici</strong> — crea un nou any fiscal (pot ser de prova/test)</div>
+      <div>• <strong>Tancar exercici</strong> — tanca definitivament l'exercici actiu</div>
+      <div>• <strong>Copiar pressupost</strong> — copia el pla o actuals d'un exercici a un altre amb % d'ajust</div>
+      <div>• <strong>Gestionar directiva</strong> — assigna responsables a àrees i delegacions</div>
+      <div>• <strong>Copiar directiva</strong> — copia les assignacions d'un exercici a un altre</div>
     </div>`,
   rols:`<h3 style="margin-bottom:12px">Rols i permisos</h3>
     <p style="color:var(--text2);line-height:1.6;margin-bottom:12px">Cada usuari té un rol que defineix el que pot fer a l'app.</p>
@@ -2781,17 +2853,38 @@ const MANUAL={
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
           <span class="pill ${r.color}">${r.label}</span>
         </div>
-        <div style="color:var(--text2);font-size:12px">
-          ${r.canRegister?'✓ Pot registrar moviments · ':'✗ No pot registrar moviments · '}
-          ${r.canFons?'✓ Pot lliurar fons · ':''}
-          ${r.canImport?'✓ Pot importar CSV · ':''}
-          ${r.canConfig?'✓ Accés a Configuració · ':''}
-          ${r.canUsers?'✓ Gestiona usuaris · ':''}
-          ${r.viewAll?'Veu tota la Falla':'Veu sols les seues àrees/delegacions'}
+        <div style="color:var(--text2);font-size:12px;line-height:1.8">
+          ${r.canRegister?'✓ Registra moviments · ':'✗ No registra · '}${r.canFons?'✓ Lliura fons · ':''}${r.canImport?'✓ Importa fitxers · ':''}${r.canConfig?'✓ Configuració · ':''}${r.canUsers?'✓ Gestiona usuaris · ':''}${r.viewAll?'👁 Veu tota la Falla':'👁 Sols les seues àrees/delegacions'}
         </div>
       </div>`).join('')}
     </div>`
 };
+
+function renderManual(){
+  document.getElementById('manual-container').innerHTML=`
+  <div class="card">
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px" id="man-tabs">
+      <button class="btn btn-primary" onclick="showManTab('intro',this)">Introducció</button>
+      <button class="btn" onclick="showManTab('dashboard',this)">Dashboard</button>
+      <button class="btn" onclick="showManTab('moviments',this)">Moviments</button>
+      <button class="btn" onclick="showManTab('fons',this)">Fons delegats</button>
+      <button class="btn" onclick="showManTab('tancament',this)">Tancament caixa</button>
+      <button class="btn" onclick="showManTab('pressupostos',this)">Pressupostos</button>
+      <button class="btn" onclick="showManTab('historial',this)">Historial</button>
+      <button class="btn" onclick="showManTab('fallesapp',this)">Falles.app</button>
+      <button class="btn" onclick="showManTab('importcsv',this)">Importar CSV</button>
+      <button class="btn" onclick="showManTab('resultats',this)">Resultats</button>
+      <button class="btn" onclick="showManTab('flux',this)">Flux d'Efectiu</button>
+      <button class="btn" onclick="showManTab('configuracio',this)">Configuració</button>
+      <button class="btn" onclick="showManTab('rols',this)">Rols i permisos</button>
+    </div>
+    <div id="man-content"></div>
+  </div>`;
+  setTimeout(function(){
+    const firstBtn=document.querySelector('#man-tabs .btn');
+    if(firstBtn)showManTab('intro',firstBtn);
+  },0);
+}
 
 function showManTab(tab,clickedBtn){
   // Render content
@@ -2918,18 +3011,15 @@ var editAreaId=null,editDelegId=null,editUserId=null;
 function openModalArea(id){
   editAreaId=id;
   const a=id?DB.config.areas.find(function(x){return x.id===id;}):null;
-  document.getElementById('ma-title').textContent=id?'Editar area':'Nova area';
+  document.getElementById('ma-title').textContent=id?'Editar àrea':'Nova àrea';
   document.getElementById('ma-id').value=a?.id||'';
   document.getElementById('ma-id').disabled=!!id;
   document.getElementById('ma-nom').value=a?.name||'';
   document.getElementById('ma-color').value=id?(AREA_COLORS[id]||'#888780'):'#888780';
-  // Mostrar responsables des de Directiva (sols lectura)
   const respEl=document.getElementById('ma-resp-display');
-  if(respEl&&id){
-    const resps=getResponsable('area',id);
-    respEl.textContent=resps||'— Sense responsable assignat —';
-  }else if(respEl){
-    respEl.textContent='— Assignat des de Configuracio → Directiva —';
+  if(respEl){
+    const resps=id?getResponsable('area',id):'—';
+    respEl.textContent=resps&&resps!=='—'?resps:'— Sense responsable assignat (gestiona des de Directiva) —';
   }
   openModal('modal-area');
 }
@@ -2976,7 +3066,11 @@ function openModalDeleg(id){
   areaSel.innerHTML=DB.config.areas.map(a=>'<option value="'+a.id+'">'+a.id+' · '+a.name+'</option>').join('');
   if(d)areaSel.value=d.areaId;
   document.getElementById('md-nom').value=d?.name||'';
-  // resp ve de Directiva - no editable
+  const respEl=document.getElementById('md-resp-display');
+  if(respEl){
+    const resps=id?getResponsable('delegacio',id):'—';
+    respEl.textContent=resps&&resps!=='—'?resps:'— Sense responsable assignat (gestiona des de Directiva) —';
+  }
   openModal('modal-deleg');
 }
 
