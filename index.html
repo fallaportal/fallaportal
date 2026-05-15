@@ -209,7 +209,7 @@ tr:hover td{background:var(--bg2)}
     <div class="login-logo">Falla <span>Portal</span></div>
     <div class="login-sub">Sistema de gestió financera</div>
     <div class="login-fiscal">Any fiscal 26/27 · Abr 2026 – Mar 2027</div>
-    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v1.1.9</div>
+    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v1.2.2</div>
     <button class="btn-google" onclick="signIn()">
       <svg viewBox="0 0 24 24" width="20" height="20"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
       Entrar amb Google
@@ -251,7 +251,7 @@ tr:hover td{background:var(--bg2)}
     <div class="sb-bottom">
       <div class="sync-ind"><div class="sync-dot" id="sync-dot"></div><span id="sync-text">Sincronitzat</span></div>
       <button class="btn-logout" onclick="signOut()"><i class="ti ti-logout" style="font-size:14px"></i> Tancar sessió</button>
-      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v1.1.9</div>
+      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v1.2.2</div>
     </div>
   </div>
 
@@ -515,186 +515,81 @@ tr:hover td{background:var(--bg2)}
     </div>
     <div id="page-importacio" class="page">
       <div class="page-title">Importar CSV</div>
-      <div class="page-sub">Extractes bancaris de Caixabank, Caixa Popular o falles.app</div>
-      <div class="card" style="max-width:500px">
-        <div class="field"><label>Font</label><select id="imp-font"><option value="b1">01 Banc — Caixabank</option><option value="b2">02 Banc — Caixa Popular</option></select></div>
-        <div class="field"><label>Arxiu CSV</label><input type="file" id="imp-file" accept=".csv,.txt" style="font-size:12px" onchange="previewCSV()"></div>
-        <div id="imp-preview" class="hidden">
-          <div style="font-size:12px;color:var(--text2);margin-bottom:8px" id="imp-info"></div>
-          <div class="table-wrap" style="max-height:200px;overflow-y:auto"><table id="imp-table"></table></div>
-          <button class="btn btn-primary" style="width:100%;margin-top:12px" onclick="importarCSV()"><i class="ti ti-database-import"></i> Processar i importar</button>
+      <div class="page-sub">Extractes bancaris de Caixabank o Caixa Popular</div>
+
+      <!-- INFO DATES -->
+      <div class="info-box" style="margin-bottom:20px">
+        <i class="ti ti-calendar" style="flex-shrink:0;font-size:18px"></i>
+        <div>
+          <strong>Extractes de l'exercici actiu:</strong> Del <strong id="csv-data-inici"></strong> al <strong id="csv-data-fi"></strong>
+          <div style="font-size:12px;color:var(--text2);margin-top:2px">Exporta l'extracte del teu banc per aquest rang de dates.</div>
         </div>
       </div>
-    </div>
 
-    <div id="page-pressupostos-edit" class="page">
-      <div class="page-title">Pressupostos 26/27</div>
-      <div class="page-sub" id="pres-estat-sub">Any fiscal 26/27</div>
-      <div id="pres-estat-bar" style="margin-bottom:16px"></div>
-      <div id="pres-container-edit"></div>
-    </div>
+      <div style="display:flex;flex-direction:column;gap:16px">
 
-    <div id="page-directiva" class="page">
-      <div style="display:flex;align-items:center;gap:12px;margin-bottom:4px">
-        <button class="btn" onclick="showPage('configuracio')" style="padding:6px 10px"><i class="ti ti-arrow-left"></i></button>
-        <div class="page-title" style="margin:0">Directiva</div>
-        <select id="dir-any" onchange="renderDirectiva()" style="font-size:14px;padding:5px 10px;border-radius:var(--r);border:0.5px solid var(--border2);background:var(--bg);color:var(--text)"></select>
-      </div>
-      <div class="page-sub">Assignació de responsables per any fiscal</div>
-      <div id="directiva-container"></div>
-    </div>
+        <!-- ZONA 1: Caixabank -->
+        <div class="card">
+          <div style="display:flex;align-items:flex-start;gap:14px">
+            <div style="width:36px;height:36px;border-radius:50%;background:var(--green-bg);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:18px;font-weight:700;color:var(--green)">1</div>
+            <div style="flex:1">
+              <div style="font-weight:600;font-size:15px;margin-bottom:4px">Caixabank</div>
+              <div style="font-size:13px;color:var(--text2);margin-bottom:10px">Extracte bancari de Caixabank en format CSV.</div>
+              <div style="background:var(--bg2);border-radius:var(--r);padding:10px 12px;font-size:12px;color:var(--text2);margin-bottom:12px">
+                <div style="font-weight:500;margin-bottom:4px"><i class="ti ti-info-circle"></i> Com obtenir l'extracte:</div>
+                <ol style="margin-left:16px;line-height:1.8">
+                  <li>Accedeix a <strong>CaixaBankNow</strong></li>
+                  <li>Ves a <strong>Comptes → Moviments</strong></li>
+                  <li>Filtra per dates: <span id="csv-instruccio-dates-1" style="font-family:monospace;background:var(--bg);padding:1px 6px;border-radius:4px"></span></li>
+                  <li>Exporta com a <strong>CSV</strong></li>
+                </ol>
+              </div>
+              <div id="csv-drop-1" class="fapp-dropzone" ondrop="handleCSVDrop(event,1)" ondragover="event.preventDefault()" ondragleave="this.classList.remove('drag-over')" ondragenter="this.classList.add('drag-over')">
+                <i class="ti ti-upload" style="font-size:24px;color:var(--text3);margin-bottom:6px"></i>
+                <div style="font-size:13px;font-weight:500">Arrossega el fitxer aquí</div>
+                <div style="font-size:12px;color:var(--text3);margin:4px 0">o</div>
+                <label style="cursor:pointer">
+                  <span class="btn btn-primary" style="font-size:13px">Seleccionar fitxer</span>
+                  <input type="file" accept=".csv,.txt" style="display:none" onchange="loadCSVFile(event,1)">
+                </label>
+                <div style="font-size:11px;color:var(--text3);margin-top:6px">extracte_caixabank_*.csv</div>
+              </div>
+              <div id="csv-preview-1"></div>
+            </div>
+          </div>
+        </div>
 
-    <    <div id="page-manual" class="page">
-      <div class="page-title">Manual d'usuari</div>
-      <div class="page-sub">Guia completa de l'app de gestió financera · v1.1.9</div>
+        <!-- ZONA 2: Caixa Popular -->
+        <div class="card">
+          <div style="display:flex;align-items:flex-start;gap:14px">
+            <div style="width:36px;height:36px;border-radius:50%;background:var(--amber-bg);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:18px;font-weight:700;color:var(--amber)">2</div>
+            <div style="flex:1">
+              <div style="font-weight:600;font-size:15px;margin-bottom:4px">Caixa Popular</div>
+              <div style="font-size:13px;color:var(--text2);margin-bottom:10px">Extracte bancari de Caixa Popular en format CSV.</div>
+              <div style="background:var(--bg2);border-radius:var(--r);padding:10px 12px;font-size:12px;color:var(--text2);margin-bottom:12px">
+                <div style="font-weight:500;margin-bottom:4px"><i class="ti ti-info-circle"></i> Com obtenir l'extracte:</div>
+                <ol style="margin-left:16px;line-height:1.8">
+                  <li>Accedeix a la <strong>banca online de Caixa Popular</strong></li>
+                  <li>Ves a <strong>Comptes → Moviments</strong></li>
+                  <li>Filtra per dates: <span id="csv-instruccio-dates-2" style="font-family:monospace;background:var(--bg);padding:1px 6px;border-radius:4px"></span></li>
+                  <li>Exporta com a <strong>CSV</strong></li>
+                </ol>
+              </div>
+              <div id="csv-drop-2" class="fapp-dropzone" ondrop="handleCSVDrop(event,2)" ondragover="event.preventDefault()" ondragleave="this.classList.remove('drag-over')" ondragenter="this.classList.add('drag-over')">
+                <i class="ti ti-upload" style="font-size:24px;color:var(--text3);margin-bottom:6px"></i>
+                <div style="font-size:13px;font-weight:500">Arrossega el fitxer aquí</div>
+                <div style="font-size:12px;color:var(--text3);margin:4px 0">o</div>
+                <label style="cursor:pointer">
+                  <span class="btn btn-primary" style="font-size:13px">Seleccionar fitxer</span>
+                  <input type="file" accept=".csv,.txt" style="display:none" onchange="loadCSVFile(event,2)">
+                </label>
+                <div style="font-size:11px;color:var(--text3);margin-top:6px">extracte_caixapopular_*.csv</div>
+              </div>
+              <div id="csv-preview-2"></div>
+            </div>
+          </div>
+        </div>
 
-      <div style="display:flex;gap:6px;margin-bottom:20px;flex-wrap:wrap" id="man-tabs">
-        <button class="btn btn-primary" data-tab="intro" onclick="showManTab('intro')">Introducció</button>
-        <button class="btn" data-tab="moviments" onclick="showManTab('moviments')">Moviments</button>
-        <button class="btn" data-tab="fons" onclick="showManTab('fons')">Fons delegats</button>
-        <button class="btn" data-tab="tancament" onclick="showManTab('tancament')">Tancament event</button>
-        <button class="btn" data-tab="pressupostos" onclick="showManTab('pressupostos')">Pressupostos</button>
-        <button class="btn" data-tab="exercicis" onclick="showManTab('exercicis')">Exercicis</button>
-        <button class="btn" data-tab="directiva" onclick="showManTab('directiva')">Directiva</button>
-        <button class="btn" data-tab="fallesapp" onclick="showManTab('fallesapp')">Falles.app</button>
-        <button class="btn" data-tab="rols" onclick="showManTab('rols')">Rols</button>
-        <button class="btn" data-tab="config" onclick="showManTab('config')">Configuració</button>
-        <button class="btn" data-tab="informes" onclick="showManTab('informes')">Informes</button>
-      </div>
-
-      <div id="man-intro" class="card">
-        <div class="card-title" style="font-size:16px">Introducció</div>
-        <p style="margin-bottom:12px">L'app de gestió financera de la Falla Portal permet registrar i controlar tots els moviments econòmics de la Falla de forma centralitzada i accessible des de qualsevol dispositiu.</p>
-        <p style="margin-bottom:12px"><strong>Accés:</strong> S'accedeix amb el compte de Google assignat. Cada usuari veu sols la informació que li correspon segons el seu rol.</p>
-        <p style="margin-bottom:12px"><strong>Base de dades:</strong> Tota la informació es guarda automàticament al Google Sheet "Falla Portal DB". No cal fer cap còpia de seguretat manual.</p>
-        <p style="margin-bottom:12px"><strong>Any fiscal:</strong> L'any fiscal va de l'1 d'abril al 31 de març. El selector a la barra lateral permet canviar entre exercicis per consultar anys anteriors.</p>
-        <div class="info-box"><i class="ti ti-device-mobile" style="flex-shrink:0"></i><div>L'app funciona en mòbil i desktop. En mòbil apareix un menú inferior amb les opcions més freqüents: Inici, Moviment, Fons, Caixa i Més.</div></div>
-      </div>
-
-      <div id="man-moviments" class="card" style="display:none">
-        <div class="card-title" style="font-size:16px">Registrar moviments</div>
-        <p style="margin-bottom:10px">Un moviment és qualsevol entrada o sortida de diners de la Falla.</p>
-        <p style="margin-bottom:8px"><strong>Com registrar:</strong></p>
-        <ol style="margin-left:20px;margin-bottom:12px;line-height:1.8">
-          <li>Prem el botó <strong>Moviment</strong> al menú</li>
-          <li>Tria <strong>DESPESA</strong> o <strong>INGRÉS</strong></li>
-          <li>Introdueix l'import</li>
-          <li>Selecciona la via: Efectiu, TPV, Caixabank o Caixa Popular</li>
-          <li>Tria l'àrea i la delegació responsable</li>
-          <li>Introdueix el concepte (obligatori)</li>
-          <li>Afegeix la data, establiment i justificant si cal</li>
-          <li>Prem <strong>REGISTRAR</strong></li>
-        </ol>
-        <div class="info-box" style="margin-bottom:10px"><i class="ti ti-alert-circle" style="flex-shrink:0;color:var(--amber)"></i><div><strong>Fons lliurats:</strong> Si tens fons lliurats disponibles i registres una despesa en efectiu, l'app et preguntarà si estàs pagant amb fons de la Falla o amb fons lliurats.</div></div>
-        <p style="margin-bottom:8px"><strong>Eliminar moviments:</strong> Pots eliminar moviments propis des de l'Historial. El President i la Tresoreria poden eliminar qualsevol moviment.</p>
-      </div>
-
-      <div id="man-fons" class="card" style="display:none">
-        <div class="card-title" style="font-size:16px">Fons delegats</div>
-        <p style="margin-bottom:10px">Els fons delegats son diners que la Falla lliura a una persona per a que gestione despeses en nom seu.</p>
-        <p style="margin-bottom:8px"><strong>Lliurar fons:</strong></p>
-        <ol style="margin-left:20px;margin-bottom:12px;line-height:1.8">
-          <li>Ves a <strong>Fons</strong> al menú</li>
-          <li>Cerca la persona a qui vols lliurar fons</li>
-          <li>Prem <strong>Lliurar fons</strong> i introdueix l'import i el concepte</li>
-        </ol>
-        <p style="margin-bottom:8px"><strong>Devolució:</strong> Quan la persona retorna el sobrant, prem <strong>Devolució</strong> i registra l'import retornat.</p>
-        <p style="margin-bottom:8px"><strong>Saldo:</strong> El saldo disponible = Lliuraments rebuts − Despeses fetes amb fons − Devolucions.</p>
-        <div class="info-box"><i class="ti ti-info-circle" style="flex-shrink:0"></i><div>Les despeses fetes amb fons lliurats apareixen tant a l'Historial de moviments com al llistat de fons de la persona. Eliminar un registra elimina automàticament l'altre.</div></div>
-      </div>
-
-      <div id="man-tancament" class="card" style="display:none">
-        <div class="card-title" style="font-size:16px">Tancament de caixa</div>
-        <p style="margin-bottom:10px">Després de cada event amb venda de tiquets o cobros en efectiu, cal tancar la caixa per declarar l'efectiu i el TPV recaptats.</p>
-        <ol style="margin-left:20px;margin-bottom:12px;line-height:1.8">
-          <li>Ves a <strong>Caixa</strong> al menú</li>
-          <li>Selecciona l'event</li>
-          <li>Introdueix l'import en efectiu comptat</li>
-          <li>Introdueix l'import del TPV (del resum del terminal)</li>
-          <li>Prem <strong>Tancar caixa</strong></li>
-        </ol>
-        <p>El tancament queda registrat amb data i hora i no es pot modificar.</p>
-      </div>
-
-      <div id="man-pressupostos" class="card" style="display:none">
-        <div class="card-title" style="font-size:16px">Pressupostos</div>
-        <p style="margin-bottom:10px">El mòdul de pressupostos permet planificar les despeses i ingressos per delegació i event, i comparar-los amb els valors reals.</p>
-        <p style="margin-bottom:8px"><strong>Editar pressupost:</strong> Cada responsable pot introduir els imports planificats per a les seves delegacions. La Tresoreria pot bloquejar el pressupost un cop aprovat.</p>
-        <p style="margin-bottom:8px"><strong>Copiar pressupost:</strong> Des de Configuració → Gestió d'exercicis → <strong>Copiar pressupost</strong>, pots copiar el pressupost d'un any a un altre amb un % d'increment o decrement per delegació.</p>
-        <div class="info-box"><i class="ti ti-lock" style="flex-shrink:0"></i><div>Un cop bloquejat el pressupost, sols la Tresoreria o el President poden desbloquejar-lo per fer modificacions.</div></div>
-      </div>
-
-      <div id="man-exercicis" class="card" style="display:none">
-        <div class="card-title" style="font-size:16px">Gestió d'exercicis fiscals</div>
-        <p style="margin-bottom:10px">L'app pot gestionar múltiples exercicis fiscals simultàniament. Des de Configuració → Gestió d'exercicis pots:</p>
-        <ul style="margin-left:20px;margin-bottom:12px;line-height:1.8">
-          <li><strong>Obrir nou exercici:</strong> Crea un nou any fiscal sense tancar l'actual. Permet treballar en la planificació del proper any mentre el present segueix actiu.</li>
-          <li><strong>Tancar exercici:</strong> Tancament formal de l'exercici actual. Un cop tancat no es poden afegir moviments.</li>
-          <li><strong>Copiar pressupost:</strong> Copia el pressupost d'un any a un altre, amb % d'ajust per delegació.</li>
-          <li><strong>Copiar directiva:</strong> Copia les assignacions de responsables d'un any a un altre.</li>
-        </ul>
-        <p>El selector d'any fiscal a la barra lateral permet canviar de vista entre exercicis en qualsevol moment.</p>
-      </div>
-
-      <div id="man-directiva" class="card" style="display:none">
-        <div class="card-title" style="font-size:16px">Directiva i assignació de responsables</div>
-        <p style="margin-bottom:10px">La directiva defineix qui és responsable de cada àrea i delegació per a cada any fiscal.</p>
-        <p style="margin-bottom:8px"><strong>President:</strong> Assigna els responsables d'àrea.</p>
-        <p style="margin-bottom:8px"><strong>Responsable d'àrea:</strong> Assigna els responsables de les delegacions de la seva àrea.</p>
-        <p style="margin-bottom:12px">Es poden assignar múltiples responsables a una mateixa àrea o delegació.</p>
-        <div class="info-box"><i class="ti ti-info-circle" style="flex-shrink:0"></i><div>Les assignacions son per any fiscal. Pots copiar la directiva d'un any a un altre des de Configuració → Copiar directiva i modificar els canvis necessaris.</div></div>
-      </div>
-
-      <div id="man-fallesapp" class="card" style="display:none">
-        <div class="card-title" style="font-size:16px">Integració amb falles.app</div>
-        <p style="margin-bottom:10px">El mòdul de falles.app permet importar les transaccions de la plataforma de gestió de moneders dels fallers.</p>
-        <p style="margin-bottom:8px"><strong>Transaccions:</strong> Importa el fitxer de transaccions per registrar les recarregues de moneders com a ingressos (efectiu a caixa o TPV al banc) i les devolucions com a despeses.</p>
-        <p style="margin-bottom:8px"><strong>Saldos moneders:</strong> Importa el fitxer de balanços per veure el passiu total (diners que els fallers tenen carregats però no han gastat).</p>
-        <p style="margin-bottom:8px"><strong>Tickets/Consums:</strong> Importa el fitxer de consums per assignar ingressos a events específics per rang de dates.</p>
-        <p style="margin-bottom:8px"><strong>Bonificacions:</strong> Registra les bonificacions concedides (p.e. 40% extra en recarregues) com a despesa de l'exercici.</p>
-        <div class="info-box" style="background:var(--amber-bg);border-color:var(--amber)"><i class="ti ti-alert-triangle" style="flex-shrink:0;color:var(--amber)"></i><div>Les bonificacions mai han entrat físicament a la falla però son un cost real. Registrar-les com a despesa és obligatori pel principi de prudència comptable.</div></div>
-      </div>
-
-      <div id="man-rols" class="card" style="display:none">
-        <div class="card-title" style="font-size:16px">Rols i permisos</div>
-        <p style="margin-bottom:10px">Cada usuari té un rol que determina el que pot veure i fer a l'app.</p>
-        <div class="table-wrap"><table>
-          <thead><tr><th>Rol</th><th>Registra</th><th>Fons</th><th>CSV</th><th>Config</th><th>Usuaris</th><th>Veu tot</th></tr></thead>
-          <tbody>
-            <tr><td><span class="pill p-purple">President</span></td><td style="text-align:center"><i class="ti ti-check" style="color:var(--green)"></i></td><td style="text-align:center"><i class="ti ti-check" style="color:var(--green)"></i></td><td style="text-align:center"><i class="ti ti-check" style="color:var(--green)"></i></td><td style="text-align:center"><i class="ti ti-check" style="color:var(--green)"></i></td><td style="text-align:center"><i class="ti ti-check" style="color:var(--green)"></i></td><td style="text-align:center"><i class="ti ti-check" style="color:var(--green)"></i></td></tr>
-            <tr><td><span class="pill p-info">Tresoreria</span></td><td style="text-align:center"><i class="ti ti-check" style="color:var(--green)"></i></td><td style="text-align:center"><i class="ti ti-check" style="color:var(--green)"></i></td><td style="text-align:center"><i class="ti ti-check" style="color:var(--green)"></i></td><td style="text-align:center"><i class="ti ti-check" style="color:var(--green)"></i></td><td style="text-align:center"><i class="ti ti-x" style="color:var(--text3)"></i></td><td style="text-align:center"><i class="ti ti-check" style="color:var(--green)"></i></td></tr>
-            <tr><td><span class="pill p-ok">Resp. Area</span></td><td style="text-align:center"><i class="ti ti-check" style="color:var(--green)"></i></td><td style="text-align:center"><i class="ti ti-x" style="color:var(--text3)"></i></td><td style="text-align:center"><i class="ti ti-x" style="color:var(--text3)"></i></td><td style="text-align:center"><i class="ti ti-x" style="color:var(--text3)"></i></td><td style="text-align:center"><i class="ti ti-x" style="color:var(--text3)"></i></td><td style="text-align:center"><i class="ti ti-x" style="color:var(--text3)"></i></td></tr>
-            <tr><td><span class="pill p-warn">Resp. Delegacio</span></td><td style="text-align:center"><i class="ti ti-check" style="color:var(--green)"></i></td><td style="text-align:center"><i class="ti ti-x" style="color:var(--text3)"></i></td><td style="text-align:center"><i class="ti ti-x" style="color:var(--text3)"></i></td><td style="text-align:center"><i class="ti ti-x" style="color:var(--text3)"></i></td><td style="text-align:center"><i class="ti ti-x" style="color:var(--text3)"></i></td><td style="text-align:center"><i class="ti ti-x" style="color:var(--text3)"></i></td></tr>
-            <tr><td><span class="pill p-gray">Junta</span></td><td style="text-align:center"><i class="ti ti-x" style="color:var(--text3)"></i></td><td style="text-align:center"><i class="ti ti-x" style="color:var(--text3)"></i></td><td style="text-align:center"><i class="ti ti-x" style="color:var(--text3)"></i></td><td style="text-align:center"><i class="ti ti-x" style="color:var(--text3)"></i></td><td style="text-align:center"><i class="ti ti-x" style="color:var(--text3)"></i></td><td style="text-align:center"><i class="ti ti-check" style="color:var(--green)"></i></td></tr>
-          </tbody>
-        </table></div>
-        <p style="margin-top:12px;color:var(--text2);font-size:13px">Els permisos es poden modificar des de Configuració → Mestre de Rols. Tots els rols (base i personalitzats) es poden editar. Els personalitzats es poden eliminar.</p>
-      </div>
-
-      <div id="man-config" class="card" style="display:none">
-        <div class="card-title" style="font-size:16px">Configuració</div>
-        <p style="margin-bottom:10px">Accessible sols per a President i Tresoreria. Conté:</p>
-        <ul style="margin-left:20px;line-height:1.8;margin-bottom:12px">
-          <li><strong>Àrees</strong> — Unitats organitzatives de la Falla (01 Administració, 02 Comunicació, etc.)</li>
-          <li><strong>Events</strong> — Festes i actes de l'exercici actiu. Cada event té data/hora inici i fi per a la integració amb falles.app. Es poden copiar entre exercicis.</li>
-          <li><strong>Bancs</strong> — Comptes bancaris i caixa efectiu amb saldo inicial per calcular el saldo actual.</li>
-          <li><strong>Mestre de Rols</strong> — Defineix els permisos de cada rol. Tots els permisos son editables.</li>
-          <li><strong>Regles CSV</strong> — Regles automàtiques per classificar moviments en importar extractes bancaris.</li>
-          <li><strong>Usuaris</strong> — Gestió d'usuaris autoritzats. L'email ha de coincidir exactament amb el compte de Google.</li>
-          <li><strong>Gestió d'exercicis</strong> — Crear, editar i eliminar exercicis fiscals. Copiar pressupost i directiva entre exercicis.</li>
-        </ul>
-        <div class="info-box"><i class="ti ti-info-circle" style="flex-shrink:0"></i>Els responsables d'àrea i delegació s'assignen des de Configuració → Gestionar directiva, no des del formulari d'àrea o delegació.</div>
-      </div>
-
-      <div id="man-informes" class="card" style="display:none">
-        <div class="card-title" style="font-size:16px">Informes</div>
-        <p style="margin-bottom:10px">La secció d'informes inclou:</p>
-        <ul style="margin-left:20px;line-height:1.8;margin-bottom:12px">
-          <li><strong>Historial de moviments</strong> — Tots els moviments de l'exercici actiu. Filtrable per àrea, tipus i text lliure. Clica un moviment per veure el detall o eliminar-lo.</li>
-          <li><strong>Estat de Resultats</strong> — Resum d'ingressos i despeses per àrea i delegació, comparat amb el pressupost.</li>
-          <li><strong>Flux d'Efectiu</strong> — Evolució del saldo per via de pagament (efectiu, bancs, TPV) al llarg del temps.</li>
-        </ul>
-        <p style="color:var(--text2);font-size:13px">Tots els informes es filtren automàticament per l'exercici fiscal actiu. Canvia d'exercici al selector de la barra lateral per consultar anys anteriors.</p>
       </div>
     </div>
     <div id="page-resultats" class="page">
@@ -1661,7 +1556,7 @@ function showPage(id){
   document.querySelectorAll('.nav-item').forEach(n=>{
     if(n.getAttribute('onclick')&&n.getAttribute('onclick').includes("'"+id+"'"))n.classList.add('active');
   });
-  ({'pressupostos':renderPressupostosEdit,'dashboard':renderDashboard,'historial':renderHistorial,'directiva':renderDirectiva,'fallesapp':function(){initFappDates();},
+  ({'pressupostos':renderPressupostosEdit,'dashboard':renderDashboard,'historial':renderHistorial,'directiva':renderDirectiva,'fallesapp':function(){initFappDates();},'importacio':function(){initCSVDates();},
     'pressupostos-edit':renderPressupostosEdit,
     'lliurament':renderFons,'tancament':renderTancamentList,'resultats':renderResultats,
     'flux':renderFlux,'configuracio':renderConfig,'manual':renderManual}[id]||function(){})();
@@ -1880,7 +1775,16 @@ function rowsToConfig(arees,delegacions,events,bancs,usuaris,assignacions){
 async function loadFromSheets(){
   await initSheets();
   const movsRows=await readTab(TABS.moviments.name);
-  DB.moviments=movsRows.map(function(r){return{...r,import:parseFloat(r.import)||0};});
+  DB.moviments=movsRows.map(function(r){
+    // Normalitzar dates: si és format ISO (AAAA-MM-DD), convertir a DD/MM/AAAA
+    const rawData=r.data||'';
+    let dataFmt=rawData;
+    if(rawData.match(/^\d{4}-\d{2}-\d{2}/)){
+      const p=rawData.split('T')[0].split('-');
+      dataFmt=p[2]+'/'+p[1]+'/'+p[0];
+    }
+    return{...r,import:parseFloat(r.import)||0,data:dataFmt};
+  });
   const fonsRows=await readTab(TABS.fons.name);
   DB.fons=fonsRows.map(function(r){return{...r,import:parseFloat(r.import)||0};});
   const tancRows=await readTab(TABS.tancaments.name);
@@ -2886,11 +2790,15 @@ const MANUAL={
     </div>`
 };
 
-function showManTab(tab,el){
-  document.querySelectorAll('#man-tabs .btn').forEach(b=>b.classList.remove('btn-primary'));
-  if(el)el.classList.add('btn-primary');
-  else document.querySelectorAll('#man-tabs .btn')[0]?.classList.add('btn-primary');
-  document.getElementById('man-content').innerHTML=MANUAL[tab]||'';
+function showManTab(tab){
+  const tabs=['dashboard','moviments','fons','tancament','pressupostos','historial','fallesapp','importcsv','informes','directiva','configuracio'];
+  tabs.forEach(function(t){
+    const el=document.getElementById('man-'+t);
+    if(el)el.style.display=t===tab?'block':'none';
+  });
+  document.querySelectorAll('#man-tabs button').forEach(function(btn){
+    btn.className=btn.getAttribute('data-tab')===tab?'btn btn-primary':'btn';
+  });
 }
 
 function exportCSV(tipus){
@@ -3006,13 +2914,20 @@ var editAreaId=null,editDelegId=null,editUserId=null;
 
 function openModalArea(id){
   editAreaId=id;
-  const a=id?DB.config.areas.find(x=>x.id===id):null;
-  document.getElementById('ma-title').textContent=id?'Editar àrea':'Nova àrea';
+  const a=id?DB.config.areas.find(function(x){return x.id===id;}):null;
+  document.getElementById('ma-title').textContent=id?'Editar area':'Nova area';
   document.getElementById('ma-id').value=a?.id||'';
   document.getElementById('ma-id').disabled=!!id;
   document.getElementById('ma-nom').value=a?.name||'';
-  document.getElementById('ma-resp').value=a?.resp||'';
   document.getElementById('ma-color').value=id?(AREA_COLORS[id]||'#888780'):'#888780';
+  // Mostrar responsables des de Directiva (sols lectura)
+  const respEl=document.getElementById('ma-resp-display');
+  if(respEl&&id){
+    const resps=getResponsable('area',id);
+    respEl.textContent=resps||'— Sense responsable assignat —';
+  }else if(respEl){
+    respEl.textContent='— Assignat des de Configuracio → Directiva —';
+  }
   openModal('modal-area');
 }
 
@@ -4087,13 +4002,25 @@ function renderFappPreview1(rows){window._fappTransRows=rows;const valid=rows.fi
 async function importarFappTrans(){
   const rows=window._fappTransRows;
   if(!rows)return;
+  const af=getAnyFiscal();
+  // Eliminar moviments anteriors de falles.app per aquest exercici
+  // per evitar duplicats i dates incorrectes
+  const prevCount=DB.moviments.filter(function(m){
+    return m.fontImport==='fallesapp'&&(m.anyFiscal===af||!m.anyFiscal);
+  }).length;
+  if(prevCount>0){
+    if(!confirm('Ja existeixen '+prevCount+' moviments de falles.app per a l\'exercici '+af+'. Es substituiran pels nous. Continuar?')){return;}
+    DB.moviments=DB.moviments.filter(function(m){
+      return!(m.fontImport==='fallesapp'&&(m.anyFiscal===af||!m.anyFiscal));
+    });
+  }
   const viaEf=document.getElementById('fapp-via-ef')?.value||'Efectiu';
   const viaTpv=document.getElementById('fapp-via-tpv')?.value||'01 Banc';
   const areaId=document.getElementById('fapp-area-dest')?.value||'01';
   const delegId=document.getElementById('fapp-deleg-dest')?.value||'0102';
   const area=DB.config.areas.find(function(a){return a.id===areaId;});
   const deleg=DB.config.delegacions.find(function(d){return d.id===delegId;});
-  const af=getAnyFiscal();
+  // af ja declarat adalt
   const base={anyFiscal:af,areaId,areaNom:area?.name||'',delegacioId:delegId,
     delegacioNom:deleg?.name||'',eventId:'',eventNom:'',establiment:'falles.app',
     responsable:currentUser?.name||'',responsableEmail:currentUser?.email||'',
@@ -4621,6 +4548,139 @@ async function executarCopyEvents(){
   renderCfgEvents();
   showToast(copiats+' events copiats a '+dest);
   save('config').catch(function(e){showToast('Error: '+e.message,true);});
+}
+
+function initCSVDates(){
+  const af=getAnyFiscal()||'26/27';
+  const parts=af.split('/');
+  const ai='20'+parts[0],af2='20'+parts[1];
+  const inici='01/04/'+ai;
+  const fi='31/03/'+af2;
+  const dates=ai+'-04-01 - '+af2+'-03-31';
+  ['csv-data-inici','csv-data-fi'].forEach(function(id,i){
+    const el=document.getElementById(id);
+    if(el)el.textContent=i===0?inici:fi;
+  });
+  ['csv-instruccio-dates-1','csv-instruccio-dates-2'].forEach(function(id){
+    const el=document.getElementById(id);
+    if(el)el.textContent=dates;
+  });
+}
+
+function handleCSVDrop(event,zona){
+  event.preventDefault();
+  const dz=document.getElementById('csv-drop-'+zona);
+  if(dz)dz.classList.remove('drag-over');
+  const file=event.dataTransfer.files[0];
+  if(file)processCSVFile(file,zona);
+}
+
+function loadCSVFile(event,zona){
+  const file=event.target.files[0];
+  if(file)processCSVFile(file,zona);
+}
+
+function processCSVFile(file,zona){
+  const reader=new FileReader();
+  reader.onload=function(e){
+    const text=e.target.result;
+    const dz=document.getElementById('csv-drop-'+zona);
+    if(dz)dz.classList.add('loaded');
+    renderCSVPreview(text,zona);
+  };
+  reader.readAsText(file,'UTF-8');
+}
+
+function renderCSVPreview(text,zona){
+  const banc=zona===1?'b1':'b2';
+  const bancNom=zona===1?'Caixabank':'Caixa Popular';
+  // Usar la funció previewCSV existent però adaptada per zona
+  const lines=text.split('\n').filter(function(l){return l.trim();});
+  const total=Math.max(0,lines.length-1); // resta capçalera
+
+  let html='<div class="card" style="margin-top:12px">';
+  html+='<div class="card-title"><i class="ti ti-check" style="color:var(--green)"></i> Fitxer llegit — '+total+' línies</div>';
+  html+='<div style="font-size:13px;color:var(--text2);margin-bottom:10px">Primeres línies del fitxer:</div>';
+  html+='<div style="font-size:11px;font-family:monospace;background:var(--bg2);padding:8px;border-radius:var(--r);max-height:100px;overflow-y:auto">';
+  lines.slice(0,4).forEach(function(l){html+='<div>'+l.substring(0,120)+'</div>';});
+  html+='</div>';
+  html+='<div style="margin-top:12px;display:flex;gap:8px">';
+  html+='<button class="btn btn-primary" data-zona="'+zona+'" data-banc="'+banc+'" onclick="importarCSVZonaBtn(this)"><i class="ti ti-check"></i> Importar a '+bancNom+'</button>';
+  html+='<button class="btn" onclick="cancelCSVImport('+zona+')"><i class="ti ti-x"></i> Cancel·lar</button>';
+  html+='</div></div>';
+
+  window['_csvText'+zona]=text;
+  document.getElementById('csv-preview-'+zona).innerHTML=html;
+}
+
+function cancelCSVImport(zona){
+  const prev=document.getElementById('csv-preview-'+zona);
+  const drop=document.getElementById('csv-drop-'+zona);
+  if(prev)prev.innerHTML='';
+  if(drop){
+    drop.classList.remove('loaded');
+    const inp=drop.querySelector('input[type=file]');
+    if(inp)inp.value='';
+  }
+  window['_csvText'+zona]=null;
+}
+
+async function importarCSVZona(zona,bancId,text){
+  if(!text){showToast('Cap fitxer carregat',true);return;}
+  // Usar la funció importarCSV existent adaptada
+  const banc=DB.config.bancs.find(function(b){return b.id===bancId;});
+  const bancCodi=banc?banc.codi:(zona===1?'01 Banc':'02 Banc');
+  // Parsear CSV i crear moviments
+  const af=getAnyFiscal();
+  const lines=text.split('\n').filter(function(l){return l.trim();});
+  if(lines.length<2){showToast('Fitxer buit o sense dades',true);return;}
+  let importats=0;
+  // Detecció automàtica de format per les columnes
+  const header=lines[0].toLowerCase();
+  lines.slice(1).forEach(function(line){
+    if(!line.trim())return;
+    const cols=line.split(';').map(function(c){return c.replace(/"/g,'').trim();});
+    if(cols.length<3)return;
+    // Format genèric: Data;Concepte;Import
+    let data=cols[0]||'';
+    let concepte=cols[1]||'';
+    let importRaw=cols[cols.length-1]||'0';
+    const imp=parseFloat(importRaw.replace(',','.'))||0;
+    if(!imp)return;
+    // Normalitzar data
+    if(data.match(/^\d{4}-\d{2}-\d{2}/)){
+      const p=data.split('-');data=p[2]+'/'+p[1]+'/'+p[0];
+    }
+    const tipusMov=imp>0?'ing':'gast';
+    DB.moviments.push({
+      id:'m'+Date.now()+Math.random(),anyFiscal:af,
+      tipus:tipusMov,via:bancCodi,
+      areaId:'',areaNom:'',delegacioId:'',delegacioNom:'',
+      eventId:'',eventNom:'',
+      concepte:concepte,establiment:'',data,
+      responsable:currentUser?.name||'',
+      responsableEmail:currentUser?.email||'',
+      import:Math.abs(imp),notes:'Importat CSV '+bancNom,
+      fontImport:'csv'
+    });
+    importats++;
+  });
+  if(!importats){showToast('No s\'han trobat moviments vàlids al fitxer',true);return;}
+  saveCache();
+  showToast(importats+' moviments importats de '+bancNom);
+  save('moviments').catch(function(e){showToast('Error: '+e.message,true);});
+  document.getElementById('csv-preview-'+zona).innerHTML+=
+    '<div class="info-box" style="margin-top:10px"><i class="ti ti-check" style="color:var(--green)"></i> '+importats+' moviments importats.</div>';
+  window['_csvText'+zona]=null;
+  const dz=document.getElementById('csv-drop-'+zona);
+  if(dz){const inp=dz.querySelector('input[type=file]');if(inp)inp.value='';}
+}
+
+function importarCSVZonaBtn(btn){
+  const zona=parseInt(btn.dataset.zona);
+  const banc=btn.dataset.banc;
+  const text=window['_csvText'+zona];
+  importarCSVZona(zona,banc,text);
 }
 
 </script>
