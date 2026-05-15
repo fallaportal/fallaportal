@@ -209,7 +209,7 @@ tr:hover td{background:var(--bg2)}
     <div class="login-logo">Falla <span>Portal</span></div>
     <div class="login-sub">Sistema de gestió financera</div>
     <div class="login-fiscal">Any fiscal 26/27 · Abr 2026 – Mar 2027</div>
-    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v1.1.3</div>
+    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v1.1.4</div>
     <button class="btn-google" onclick="signIn()">
       <svg viewBox="0 0 24 24" width="20" height="20"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
       Entrar amb Google
@@ -251,7 +251,7 @@ tr:hover td{background:var(--bg2)}
     <div class="sb-bottom">
       <div class="sync-ind"><div class="sync-dot" id="sync-dot"></div><span id="sync-text">Sincronitzat</span></div>
       <button class="btn-logout" onclick="signOut()"><i class="ti ti-logout" style="font-size:14px"></i> Tancar sessió</button>
-      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v1.1.3</div>
+      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v1.1.4</div>
     </div>
   </div>
 
@@ -296,7 +296,7 @@ tr:hover td{background:var(--bg2)}
             <span id="mov-data-label">Data</span>
           </div>
           <div class="mov-import-box">
-            <input type="number" id="mov-import" placeholder="0,00" min="0" step="0.01" inputmode="decimal">
+            <input type="number" id="mov-import" placeholder="0,00" inputmode="decimal" pattern="[0-9]*[.,]?[0-9]*">
             <span style="font-size:26px;font-weight:700;color:var(--text3);margin-left:4px;pointer-events:none">€</span>
           </div>
         </div>
@@ -546,7 +546,7 @@ tr:hover td{background:var(--bg2)}
 
     <    <div id="page-manual" class="page">
       <div class="page-title">Manual d'usuari</div>
-      <div class="page-sub">Guia completa de l'app de gestió financera · v1.1.3</div>
+      <div class="page-sub">Guia completa de l'app de gestió financera · v1.1.4</div>
 
       <div style="display:flex;gap:6px;margin-bottom:20px;flex-wrap:wrap" id="man-tabs">
         <button class="btn btn-primary" onclick="showManTab('intro')">Introducció</button>
@@ -1118,7 +1118,8 @@ const TABS={
   pres_historial:{name:'12 Pressupostos Historial',headers:['data','accio','any','usuari','email','motiu']},
   regles:{name:'13 Regles CSV',headers:['id','font','patrons','areaId','areaNom','delegacioId','delegacioNom','concepte','tipus','movtype','prioritat','activa']},
   rols:{name:'14 Rols',headers:['id','label','color','canRegister','canFons','canImport','canConfig','canUsers','viewAll','custom']},
-  fapp_passiu:{name:'15 Fapp Passiu',headers:['data','total','fallers','anyFiscal']}
+  fapp_passiu:{name:'15 Fapp Passiu',headers:['data','total','fallers','anyFiscal']},
+  config_ext:{name:'00 Config',headers:['clau','valor']}
 };
 const CACHE_KEY='fallaportal_cache';
 
@@ -1330,6 +1331,7 @@ async function saveNouExercici(){
   renderCfgExercicis();
   showToast('Exercici '+nouAny+(isTest?' (TEST)':'')+' creat correctament');
   save('config').catch(function(e){showToast('Error: '+e.message,true);});
+  save('config_ext').catch(function(e){console.warn(e);});
 }
 
 
@@ -1630,6 +1632,15 @@ async function save(key){
       });
       await writeTab(TABS.rols.name,TABS.rols.headers,rolsArr);
     }
+    else if(key==='config_ext'){
+      const cfgRows=[
+        {clau:'anyFiscal',valor:DB.config.anyFiscal||'26/27'},
+        {clau:'exercicis',valor:JSON.stringify(DB.config.exercicis||[])},
+        {clau:'estats_exercicis',valor:JSON.stringify(DB.config.estats_exercicis||{})},
+        {clau:'fappPassiu',valor:JSON.stringify(DB.config.fappPassiu||{})}
+      ];
+      await writeTab(TABS.config_ext.name,TABS.config_ext.headers,cfgRows);
+    }
     else if(key==='pres_plans'){await writeTab(t.name,t.headers,DB.pres_plans);}
     else if(key==='pres_config'){await writeTab(t.name,t.headers,[DB.pres_config]);}
     else if(key==='pres_historial'){await writeTab(t.name,t.headers,DB.pres_historial);}
@@ -1796,9 +1807,19 @@ async function loadFromSheets(){
   const passRows=await readTab(TABS.fapp_passiu.name);
   if(passRows.length>0){
     DB.fapp_passius=passRows.map(function(r){return{data:r.data,total:parseFloat(r.total)||0,fallers:parseInt(r.fallers)||0,anyFiscal:r.anyFiscal};});
-    const af=getAnyFiscal();
-    const last=DB.fapp_passius.filter(function(p){return p.anyFiscal===af;}).pop();
+    const af2=getAnyFiscal();
+    const last=DB.fapp_passius.filter(function(p){return p.anyFiscal===af2;}).pop();
     if(last)DB.config.fappPassiu=last;
+  }
+  // Carregar config extesa (exercicis, anyFiscal, estats)
+  const cfgExtRows=await readTab(TABS.config_ext.name);
+  if(cfgExtRows.length>0){
+    const cfgMap={};
+    cfgExtRows.forEach(function(r){cfgMap[r.clau]=r.valor;});
+    if(cfgMap.anyFiscal)DB.config.anyFiscal=cfgMap.anyFiscal;
+    if(cfgMap.exercicis){try{DB.config.exercicis=JSON.parse(cfgMap.exercicis);}catch(e){}}
+    if(cfgMap.estats_exercicis){try{DB.config.estats_exercicis=JSON.parse(cfgMap.estats_exercicis);}catch(e){}}
+    if(cfgMap.fappPassiu){try{const fp=JSON.parse(cfgMap.fappPassiu);if(fp&&fp.total)DB.config.fappPassiu=fp;}catch(e){}}
   }
 }
 
@@ -1976,7 +1997,8 @@ function onMovDelegChange(){
 }
 
 async function registrarMoviment(){
-  const imp=parseFloat(document.getElementById('mov-import').value);
+  const rawImp=document.getElementById('mov-import').value.replace(',','.');
+  const imp=parseFloat(rawImp);
   if(!imp||imp<=0){showToast('Introdueix un import valid',true);return;}
   const areaId=document.getElementById('mov-area').value;
   const delegId=document.getElementById('mov-deleg').value;
@@ -4333,6 +4355,15 @@ async function saveReintegrament(){
   renderFons();
   saveFons(fItem).catch(function(e){console.warn(e);});
   saveMoviment(mov).catch(function(e){console.warn(e);});
+}
+
+function toggleMovExtra(){
+  const el=document.getElementById('mov-extra');
+  const ch=document.getElementById('mov-extra-ch');
+  if(!el)return;
+  const open=el.style.display==='block';
+  el.style.display=open?'none':'block';
+  if(ch)ch.style.transform=open?'rotate(0deg)':'rotate(90deg)';
 }
 
 </script>
