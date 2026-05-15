@@ -209,7 +209,7 @@ tr:hover td{background:var(--bg2)}
     <div class="login-logo">Falla <span>Portal</span></div>
     <div class="login-sub">Sistema de gestió financera</div>
     <div class="login-fiscal">Any fiscal 26/27 · Abr 2026 – Mar 2027</div>
-    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v1.1.2</div>
+    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v1.1.3</div>
     <button class="btn-google" onclick="signIn()">
       <svg viewBox="0 0 24 24" width="20" height="20"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
       Entrar amb Google
@@ -251,7 +251,7 @@ tr:hover td{background:var(--bg2)}
     <div class="sb-bottom">
       <div class="sync-ind"><div class="sync-dot" id="sync-dot"></div><span id="sync-text">Sincronitzat</span></div>
       <button class="btn-logout" onclick="signOut()"><i class="ti ti-logout" style="font-size:14px"></i> Tancar sessió</button>
-      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v1.1.2</div>
+      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v1.1.3</div>
     </div>
   </div>
 
@@ -546,7 +546,7 @@ tr:hover td{background:var(--bg2)}
 
     <    <div id="page-manual" class="page">
       <div class="page-title">Manual d'usuari</div>
-      <div class="page-sub">Guia completa de l'app de gestió financera · v1.1.2</div>
+      <div class="page-sub">Guia completa de l'app de gestió financera · v1.1.3</div>
 
       <div style="display:flex;gap:6px;margin-bottom:20px;flex-wrap:wrap" id="man-tabs">
         <button class="btn btn-primary" onclick="showManTab('intro')">Introducció</button>
@@ -737,19 +737,11 @@ tr:hover td{background:var(--bg2)}
   <div class="modal">
     <div class="modal-inner">
       <div class="modal-title"><i class="ti ti-alert-circle" style="color:var(--amber);margin-right:6px"></i>Origen del pagament</div>
-      <p style="margin-bottom:12px;color:var(--text2);font-size:14px">
-        Tens <strong id="dlg-fons-saldo"></strong> de fons lliurats disponibles.<br>
-        Vols pagar <strong id="dlg-fons-import"></strong> amb els fons lliurats o amb la caixa de la Falla?
-      </p>
-      <div style="background:var(--bg2);border-radius:var(--r);padding:12px;font-size:13px;color:var(--text2)">
-        <div style="margin-bottom:6px"><i class="ti ti-arrow-down-left" style="color:var(--green)"></i> <strong>Fons lliurats</strong> — Es descompta del teu saldo de fons</div>
-        <div><i class="ti ti-building-bank" style="color:var(--blue,#378ADD)"></i> <strong>Caixa de la Falla</strong> — Moviment normal de caixa</div>
-      </div>
+      <p id="dlg-fons-desc" style="margin-bottom:12px;color:var(--text2);font-size:14px"></p>
+      <div id="dlg-fons-options" style="display:flex;flex-direction:column;gap:8px;font-size:13px"></div>
     </div>
-    <div class="modal-footer" style="gap:8px">
+    <div class="modal-footer">
       <button class="btn" onclick="closeModal('modal-fons-confirm')">Cancel·lar</button>
-      <button class="btn" onclick="confirmarMovimentFons(false)" style="color:var(--blue,#378ADD)"><i class="ti ti-building-bank"></i> Caixa de la Falla</button>
-      <button class="btn btn-primary" onclick="confirmarMovimentFons(true)"><i class="ti ti-arrow-down-left"></i> Fons lliurats</button>
     </div>
   </div>
 </div>
@@ -1996,7 +1988,7 @@ async function registrarMoviment(){
   const myEmail=(currentUser?.email||'').toLowerCase();
   const af=getAnyFiscal();
 
-  // Si es pagament en efectiu i despesa, comprovar si te fons lliurats
+  // Si es pagament en efectiu i despesa, preguntar origen
   if(movType==='gast'&&movVia==='Efectiu'){
     const fonsArr=(DB.fons||[]).filter(function(f){
       return(f.anyFiscal===af||!f.anyFiscal)&&(f.delegEmail||'').toLowerCase()===myEmail;
@@ -2006,14 +1998,33 @@ async function registrarMoviment(){
     const devol=fonsArr.filter(function(f){return f.tipus==='devolucio';}).reduce(function(s,f){return s+f.import;},0);
     const saldoFons=rebuts-gastFons-devol;
 
+    pendingMov={imp,areaId,area,delegId,deleg,event,eventId,u,af};
+    const desc=document.getElementById('dlg-fons-desc');
+    const opts=document.getElementById('dlg-fons-options');
+
     if(saldoFons>0){
-      // Mostrar diàleg de confirmació
-      pendingMov={imp,areaId,area,delegId,deleg,event,eventId,u,af};
-      document.getElementById('dlg-fons-saldo').textContent=fmtD(saldoFons);
-      document.getElementById('dlg-fons-import').textContent=fmtD(imp);
-      openModal('modal-fons-confirm');
-      return;
+      // Té fons positius
+      if(desc)desc.innerHTML='Tens <strong>'+fmtD(saldoFons)+'</strong> de fons lliurats disponibles.<br>Com vols pagar <strong>'+fmtD(imp)+'</strong>?';
+      if(opts)opts.innerHTML=
+        '<button class="btn" style="justify-content:flex-start;padding:12px;text-align:left" onclick="confirmarMovimentFons(false)">'
+        +'<i class="ti ti-building-bank" style="color:var(--blue,#378ADD);margin-right:8px"></i>'
+        +'<div><div style="font-weight:500">Caixa de la Falla</div><div style="font-size:12px;color:var(--text3)">Moviment normal de caixa</div></div></button>'
+        +'<button class="btn btn-primary" style="justify-content:flex-start;padding:12px;text-align:left" onclick="confirmarMovimentFons(true)">'
+        +'<i class="ti ti-arrow-down-left" style="margin-right:8px"></i>'
+        +'<div><div style="font-weight:500">Fons lliurats ('+fmtD(saldoFons)+' disponibles)</div><div style="font-size:12px;opacity:.8">Es descompta del teu saldo de fons</div></div></button>';
+    }else{
+      // No té fons o saldo 0 - pot avançar
+      if(desc)desc.innerHTML='Com vols pagar <strong>'+fmtD(imp)+'</strong>?';
+      if(opts)opts.innerHTML=
+        '<button class="btn" style="justify-content:flex-start;padding:12px;text-align:left" onclick="confirmarMovimentFons(false)">'
+        +'<i class="ti ti-building-bank" style="color:var(--blue,#378ADD);margin-right:8px"></i>'
+        +'<div><div style="font-weight:500">Caixa de la Falla</div><div style="font-size:12px;color:var(--text3)">Moviment normal de caixa</div></div></button>'
+        +'<button class="btn" style="justify-content:flex-start;padding:12px;text-align:left;border-color:var(--amber)" onclick="confirmarMovimentFons(\'avanc\')">'
+        +'<i class="ti ti-coin" style="color:var(--amber);margin-right:8px"></i>'
+        +'<div><div style="font-weight:500">Avançament personal</div><div style="font-size:12px;color:var(--text3)">La falla us deurà '+fmtD(imp)+'</div></div></button>';
     }
+    openModal('modal-fons-confirm');
+    return;
   }
   await doRegistrarMoviment(imp,areaId,area,delegId,deleg,event,eventId,u,af,false);
 }
@@ -2038,26 +2049,30 @@ async function doRegistrarMoviment(imp,areaId,area,delegId,deleg,event,eventId,u
     data:document.getElementById('mov-data').value||today(),
     responsable:u?.nom||currentUser?.name||'',responsableEmail:currentUser?.email||'',
     import:imp,notes:document.getElementById('mov-notes').value,
-    origenFons:usaFons?'fons_lliurats':'caixa'
+    origenFons:usaFons===true?'fons_lliurats':usaFons==='avanc'?'avanc':'caixa'
   };
   DB.moviments.push(mov);
 
-  // Si paga amb fons lliurats, registrar també com a despesa de fons
-  if(usaFons){
+  // Si paga amb fons lliurats o avança diners
+  if(usaFons===true||usaFons==='avanc'){
+    const tipus_fons=usaFons===true?'gast_fons':'avanc';
     const fItem={
-      id:'f'+Date.now(),anyFiscal:af,tipus:'gast_fons',
+      id:'f'+Date.now(),anyFiscal:af,
+      tipus:tipus_fons,
       delegId:getUsuari()?.id||'',delegEmail:currentUser?.email||'',
       import:imp,data:mov.data,
-      nota:mov.concepte||'Despesa amb fons lliurats',
+      nota:mov.concepte||'Despesa amb '+(usaFons===true?'fons lliurats':'avançament personal'),
       registratPer:currentUser?.name||currentUser?.email||'',
       movimentId:mov.id
     };
+    if(!DB.fons)DB.fons=[];
     DB.fons.push(fItem);
     saveFons(fItem).catch(function(e){console.warn(e);});
   }
 
   saveCache();
-  showToast('Registrat: '+(movType==='ing'?'+':'-')+fmtD(imp)+(usaFons?' (fons lliurats)':''));
+  const origenLabel=usaFons===true?' (fons lliurats)':usaFons==='avanc'?' (avançament personal)':'';
+  showToast('Registrat: '+(movType==='ing'?'+':'-')+fmtD(imp)+origenLabel);
   saveMoviment(mov).catch(function(e){showToast('Error guardant a Sheets: '+e.message,true);});
   ['mov-import','mov-establiment','mov-notes','mov-concept'].forEach(function(id){
     document.getElementById(id).value='';
@@ -2158,7 +2173,8 @@ function renderFons(){
     const rebuts=(DB.fons||[]).filter(f=>f.delegEmail===email&&f.tipus==='lliurament').reduce((s,f)=>s+f.import,0);
     const gastat=(DB.moviments||[]).filter(m=>m.responsableEmail===email&&m.tipus==='gast').reduce((s,m)=>s+m.import,0);
     const devol=(DB.fons||[]).filter(f=>f.delegEmail===email&&f.tipus==='devolucio').reduce((s,f)=>s+f.import,0);
-    const saldo=rebuts-gastFonsCard-devol;
+    const reintFons=fonsArr.filter(function(f){return f.tipus==='reintegrament';}).reduce(function(s,f){return s+f.import;},0);
+  const saldo=rebuts-gastFonsCard-devol-avancFons+reintFons;
     const pct=rebuts>0?Math.min(100,Math.round(gastFonsCard/rebuts*100)):0;
     c.innerHTML=`<div class="saldo-banner">
       <div class="saldo-row"><span style="color:var(--text2)">Fons rebuts de Tresoreria</span><span style="color:var(--green);font-weight:500">+${fmtD(rebuts)}</span></div>
@@ -2177,6 +2193,7 @@ function renderFonsCard(u){
   });
   const rebuts=fonsArr.filter(function(f){return f.tipus==='lliurament';}).reduce(function(s,f){return s+f.import;},0);
   const gastFonsCard=fonsArr.filter(function(f){return f.tipus==='gast_fons';}).reduce(function(s,f){return s+f.import;},0);
+  const avancFons=fonsArr.filter(function(f){return f.tipus==='avanc';}).reduce(function(s,f){return s+f.import;},0);
   const gastat=(DB.moviments||[]).filter(function(m){return(m.anyFiscal===af||!m.anyFiscal)&&(m.responsableEmail||'').toLowerCase()===(u.email||'').toLowerCase()&&m.tipus==='gast'&&m.origenFons!=='fons_lliurats';}).reduce(function(s,m){return s+m.import;},0);
   const devol=fonsArr.filter(f=>f.tipus==='devolucio').reduce((s,f)=>s+f.import,0);
   const saldo=rebuts-gastFonsCard-devol;
@@ -2191,8 +2208,9 @@ function renderFonsCard(u){
       const canDel=rol==='president'||rol==='treasury'||((f.registratPer||'').toLowerCase()===myEmail);
       const isLl=f.tipus==='lliurament';
       const isGastF=f.tipus==='gast_fons';
+      const isAvanc=f.tipus==='avanc';
       return'<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:0.5px solid var(--border);font-size:12px">'+
-        '<i class="ti '+(isLl?'ti-arrow-down-left':isGastF?'ti-shopping-cart':'ti-corner-down-left')+'" style="color:'+(isLl?'var(--green)':'var(--blue,#378ADD)')+'"></i>'+
+        '<i class="ti '+(isLl?'ti-arrow-down-left':isGastF?'ti-shopping-cart':isAvanc?'ti-coin':'ti-corner-down-left')+'" style="color:'+(isLl?'var(--green)':'var(--blue,#378ADD)')+'"></i>'+
         '<div style="flex:1">'+
           '<div style="font-weight:500">'+(f.nota||f.tipus)+'</div>'+
           '<div style="font-size:11px;color:var(--text3)">'+f.data+(f.registratPer?' · '+f.registratPer:'')+'</div>'+
@@ -2220,7 +2238,7 @@ function renderFonsCard(u){
     '<div style="display:flex;gap:6px">'+
       '<button class="btn" style="font-size:12px" data-uid="'+u.id+'" onclick="openLliuramentFor(this.dataset.uid)"><i class="ti ti-plus"></i> Lliurar fons</button>'+
       '<button class="btn" style="font-size:12px" data-uid="'+u.id+'" onclick="openDevolucioFor(this.dataset.uid)"><i class="ti ti-corner-down-left"></i> Devolució</button>'+
-    '</div>'+histHtml+
+    +(saldo<0?'<button class="btn" style="font-size:12px;border-color:var(--amber);color:var(--amber)" data-uid="'+u.id+'" onclick="openReintegramentFor(this.dataset.uid)"><i class="ti ti-coin"></i> Reintegrament</button>':'')+'</div>'+histHtml+
   '</div>';
 }
 
@@ -4244,6 +4262,77 @@ async function importarFappTickets(){
   save('moviments').catch(function(e){showToast('Error: '+e.message,true);});
   window._fappTicketRows=null;
   cancelFappImport(3);
+}
+
+function openReintegramentFor(userId){
+  const u=DB.config.usuaris.find(function(x){return x.id===userId;});
+  if(!u)return;
+  const af=getAnyFiscal();
+  const fonsArr=(DB.fons||[]).filter(function(f){
+    return(f.anyFiscal===af||!f.anyFiscal)&&(f.delegId===u.id||(f.delegEmail||'').toLowerCase()===(u.email||'').toLowerCase());
+  });
+  const rebuts=fonsArr.filter(function(f){return f.tipus==='lliurament';}).reduce(function(s,f){return s+f.import;},0);
+  const gastFons=fonsArr.filter(function(f){return f.tipus==='gast_fons';}).reduce(function(s,f){return s+f.import;},0);
+  const devol=fonsArr.filter(function(f){return f.tipus==='devolucio';}).reduce(function(s,f){return s+f.import;},0);
+  const avanc=fonsArr.filter(function(f){return f.tipus==='avanc';}).reduce(function(s,f){return s+f.import;},0);
+  const deute=Math.abs(rebuts-gastFons-devol-avanc);
+  // Reutilitzar modal de lliurament amb títol diferent
+  document.getElementById('ll-title').textContent='Reintegrament a '+u.nom;
+  document.getElementById('ll-delegat').value=u.id;
+  document.getElementById('ll-delegat').disabled=true;
+  document.getElementById('ll-import').value=deute>0?deute.toFixed(2):'';
+  document.getElementById('ll-nota').value='Reintegrament avançament personal';
+  document.getElementById('ll-data').value=today();
+  // Marcar com a reintegrament
+  window._pendingReintegrament=true;
+  openModal('modal-lliurament');
+}
+
+async function saveLliuramentOrReintegrament(){
+  if(window._pendingReintegrament){
+    window._pendingReintegrament=false;
+    await saveReintegrament();
+  }else{
+    await saveLliurament();
+  }
+}
+
+async function saveReintegrament(){
+  const delegId=document.getElementById('ll-delegat').value;
+  const imp=parseFloat(document.getElementById('ll-import').value);
+  if(!imp||imp<=0){showToast('Import invàlid',true);return;}
+  const u=DB.config.usuaris.find(function(x){return x.id===delegId;});
+  if(!DB.fons)DB.fons=[];
+  const fItem={
+    id:'f'+Date.now(),anyFiscal:getAnyFiscal(),tipus:'reintegrament',
+    delegId,delegEmail:u?.email||'',import:imp,
+    data:document.getElementById('ll-data').value||today(),
+    nota:document.getElementById('ll-nota').value||'Reintegrament avançament',
+    registratPer:currentUser?.name||currentUser?.email||''
+  };
+  DB.fons.push(fItem);
+  // També generar moviment d'ingrés (la falla rep els diners que avançà el faller)
+  const area=DB.config.areas[0];
+  const deleg=DB.config.delegacions[0];
+  const mov={
+    id:'m'+Date.now(),anyFiscal:getAnyFiscal(),tipus:'gast',via:'Efectiu',
+    areaId:area?.id||'',areaNom:area?.name||'',
+    delegacioId:deleg?.id||'',delegacioNom:deleg?.name||'',
+    eventId:'',eventNom:'',
+    concepte:'Reintegrament avançament a '+u?.nom,
+    establiment:'',data:fItem.data,
+    responsable:currentUser?.name||'',responsableEmail:currentUser?.email||'',
+    import:imp,notes:'Reintegrament fons delegats',origenFons:'reintegrament'
+  };
+  DB.moviments.push(mov);
+  saveCache();
+  document.getElementById('ll-delegat').disabled=false;
+  document.getElementById('ll-title').textContent='Nou lliurament';
+  closeModal('modal-lliurament');
+  showToast('Reintegrament de '+fmtD(imp)+' registrat');
+  renderFons();
+  saveFons(fItem).catch(function(e){console.warn(e);});
+  saveMoviment(mov).catch(function(e){console.warn(e);});
 }
 
 </script>
