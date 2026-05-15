@@ -1322,16 +1322,19 @@ function initExerciciSelector(){
 }
 
 function updateAllBadges(af){
-  const badge='<span class="af-badge"><i class="ti ti-calendar" style="font-size:14px"></i> Any fiscal '+af+'</span>';
-  const ids=['sub-lliurament','sub-tancament','sub-fallesapp','sub-importacio',
-             'sub-configuracio','sub-manual','hist-af-label','res-sub','flux-sub','pres-estat-sub'];
-  ids.forEach(function(id){
-    const el=document.getElementById(id);
-    if(el&&id!=='pres-estat-sub')el.innerHTML=badge;
+  var badge='<span class="af-badge"><i class="ti ti-calendar" style="font-size:14px"></i> Any fiscal '+af+'</span>';
+  ['sub-lliurament','sub-tancament','sub-fallesapp','sub-importacio','sub-configuracio','sub-manual'].forEach(function(id){
+    var el=document.getElementById(id);
+    if(el)el.innerHTML=badge;
   });
-  // Dashboard badge
-  const dashSub=document.getElementById('dash-sub');
+  var dashSub=document.getElementById('dash-sub');
   if(dashSub)dashSub.innerHTML=badge;
+  var histLabel=document.getElementById('hist-af-label');
+  if(histLabel)histLabel.innerHTML=badge;
+  var resSub=document.getElementById('res-sub');
+  if(resSub)resSub.innerHTML=badge;
+  var fluxSub=document.getElementById('flux-sub');
+  if(fluxSub)fluxSub.innerHTML=badge;
 }
 
 function canviarExercici(any){
@@ -1353,6 +1356,7 @@ function canviarExercici(any){
   }
   save('config_ext').catch(function(e){console.warn(e);});
   updateAllBadges(any);
+  save('config_ext').catch(function(e){console.warn(e);});
   showToast('Exercici '+any+' seleccionat');
 }
 
@@ -1864,6 +1868,13 @@ async function loadFromSheets(){
       e.anyFiscal=afNorm||getAnyFiscal();
       e.year=e.anyFiscal;
     });
+    // Normalitzar anyFiscal dels events (pot ser '2026' o '26/27')
+    cfg.events.forEach(function(e){
+      var raw=e.anyFiscal||e.year||'';
+      if(/^\d{4}$/.test(raw)){var y=parseInt(raw);e.anyFiscal=(String(y-2000).padStart(2,'0'))+'/'+(String(y-2000+1).padStart(2,'0'));}
+      else if(!/^\d{2}\/\d{2}$/.test(raw)){e.anyFiscal=getAnyFiscal();}
+      e.year=e.anyFiscal;
+    });
     DB.config.events=cfg.events;
     DB.config.bancs=cfg.bancs;
     DB.config.usuaris=cfg.usuaris;
@@ -2037,10 +2048,9 @@ function renderDashboard(){
       elArees.innerHTML='<div style="color:var(--text3);font-size:12px">Sense despeses registrades</div>';
     }else{
       const maxV=gastArees[0].v;
-      const gastTotal=gastArees.reduce(function(s,x){return s+x.v;},0);
       elArees.innerHTML=gastArees.map(function(x){
         const col=AREA_COLORS[x.a.id]||'#888';
-        const pct=gastTotal>0?Math.round(x.v/gastTotal*100):0;
+        const pct=Math.round(x.v/gast*100);
         const barW=Math.round(x.v/maxV*100);
         return'<div class="area-row">'+
           '<div class="area-dot" style="background:'+col+'"></div>'+
@@ -2293,7 +2303,6 @@ function filterHist(){
 
 // FONS DELEGATS
 function renderFons(){
-  updateAllBadges(getAnyFiscal());
   const c=document.getElementById('fons-view');
   if(perm('canFons')&&perm('viewAll')){
     // Només mostrar usuaris amb fons actius (saldo != 0 o moviments de fons)
@@ -2313,14 +2322,13 @@ function renderFons(){
     populateDelegatSelects();
   }else{
     const email=currentUser?.email;
-    const af3=getAnyFiscal();
-    const fonsArr2=(DB.fons||[]).filter(f=>(f.anyFiscal===af3||!f.anyFiscal)&&(f.delegEmail||'').toLowerCase()===(email||'').toLowerCase());
-    const rebuts=fonsArr2.filter(f=>f.tipus==='lliurament').reduce((s,f)=>s+f.import,0);
-    const gastFonsCard=fonsArr2.filter(f=>f.tipus==='gast_fons').reduce((s,f)=>s+f.import,0);
-    const avancFons=fonsArr2.filter(f=>f.tipus==='avanc').reduce((s,f)=>s+f.import,0);
-    const devol=fonsArr2.filter(f=>f.tipus==='devolucio').reduce((s,f)=>s+f.import,0);
-    const reintFons=fonsArr2.filter(f=>f.tipus==='reintegrament').reduce((s,f)=>s+f.import,0);
-    const gastat=(DB.moviments||[]).filter(m=>(!m.anyFiscal||m.anyFiscal===af3)&&(m.responsableEmail||'').toLowerCase()===(email||'').toLowerCase()&&m.tipus==='gast').reduce((s,m)=>s+m.import,0);
+    const rebuts=(DB.fons||[]).filter(f=>f.delegEmail===email&&f.tipus==='lliurament').reduce((s,f)=>s+f.import,0);
+    const gastat=(DB.moviments||[]).filter(m=>m.responsableEmail===email&&m.tipus==='gast').reduce((s,m)=>s+m.import,0);
+    const devol=(DB.fons||[]).filter(f=>f.delegEmail===email&&f.tipus==='devolucio').reduce((s,f)=>s+f.import,0);
+    const fonsArr2=(DB.fons||[]).filter(function(f){return(!f.anyFiscal||f.anyFiscal===''||f.anyFiscal===getAnyFiscal())&&(f.delegEmail||'').toLowerCase()===(email||'').toLowerCase();});
+    const gastFonsCard=fonsArr2.filter(function(f){return f.tipus==='gast_fons';}).reduce(function(s,f){return s+f.import;},0);
+    const avancFons=fonsArr2.filter(function(f){return f.tipus==='avanc';}).reduce(function(s,f){return s+f.import;},0);
+    const reintFons=fonsArr2.filter(function(f){return f.tipus==='reintegrament';}).reduce(function(s,f){return s+f.import;},0);
   const saldo=rebuts-gastFonsCard-devol-avancFons+reintFons;
     const pct=rebuts>0?Math.min(100,Math.round(gastFonsCard/rebuts*100)):0;
     c.innerHTML=`<div class="saldo-banner">
@@ -2465,11 +2473,10 @@ async function saveDevolucio(){
 let tancEventId=null;
 
 function renderTancamentList(){
-  updateAllBadges(getAnyFiscal());
   document.getElementById('tancament-list').classList.remove('hidden');
   document.getElementById('tancament-form').classList.add('hidden');
   const myDelegs=getMyDelegacions();
-  const afTanc=getAnyFiscal();
+  var afTanc=getAnyFiscal();
   const events=DB.config.events.filter(e=>(e.anyFiscal===afTanc||e.year===afTanc)&&(perm('viewAll')||myDelegs.includes(e.delegId)));
   document.getElementById('tancament-list').innerHTML=events.map(ev=>{
     const tc=(DB.tancaments||{})[ev.id];
@@ -2531,157 +2538,118 @@ function renderPressupostosEdit(){
   const myDelegs=getMyDelegacions();
   const estat=DB.pres_config?.estat||'obert';
   const bloquejat=estat==='bloquejat';
-  const canLock=perm('canFons');
-  const afPres=getAnyFiscal();
+  const canLock=perm('canFons'); // Treasury i President
 
   // Barra d'estat
-  document.getElementById('pres-estat-sub').innerHTML='<span class="af-badge"><i class="ti ti-calendar" style="font-size:14px"></i> Any fiscal '+afPres+'</span> <span style="font-size:12px;color:var(--text2)">Estat: <strong>'+estat.toUpperCase()+'</strong></span>';
+  const afPres=getAnyFiscal();document.getElementById('pres-estat-sub').innerHTML='<span class="af-badge"><i class="ti ti-calendar" style="font-size:14px"></i> Any fiscal '+afPres+'</span> <span style="font-size:12px;color:var(--text2)">Estat: <strong>'+estat.toUpperCase()+'</strong></span>';
   const bgColor=bloquejat?'var(--amber-bg)':'var(--green-bg)';
   const borderColor=bloquejat?'var(--amber)':'var(--green)';
   const iconClass=bloquejat?'ti-lock':'ti-lock-open';
   const titleColor=bloquejat?'var(--amber-text)':'var(--green-text)';
-  const titleText=bloquejat?'Pressupost bloquejat i aprovat':'Pressupost obert — en fase elaboració';
+  const titleText=bloquejat?'Pressupost bloquejat i aprovat':'Pressupost obert - en fase elaboracio';
   const subText=bloquejat?('Bloquejat per '+DB.pres_config.bloquejatPer+' el '+DB.pres_config.data):'Els responsables poden introduir i modificar els imports planificats';
   const btnHtml=canLock?('<button class="btn '+(bloquejat?'':'btn-primary')+'" onclick="'+(bloquejat?'desbloquejarpres()':'bloquejarPres()')+'" style="font-size:12px;flex-shrink:0"><i class="ti '+(bloquejat?'ti-lock-open':'ti-lock')+'"></i> '+(bloquejat?'Desbloquejar':'Bloquejar i aprovar')+'</button>'):'';
   document.getElementById('pres-estat-bar').innerHTML=
     '<div style="display:flex;align-items:center;gap:10px;padding:12px 16px;background:'+bgColor+';border-radius:var(--r);border:0.5px solid '+borderColor+'">'+
     '<i class="ti '+iconClass+'" style="font-size:18px;color:'+borderColor+'"></i>'+
-    '<div style="flex:1"><div style="font-weight:500;color:'+titleColor+'">'+titleText+'</div>'+
-    '<div style="font-size:11px;color:var(--text2);margin-top:2px">'+subText+'</div></div>'+
-    btnHtml+'</div>';
-
-  // Calcular totals globals
-  const totalPlaGlobal=(DB.pres_plans||[]).filter(function(p){return p.any===afPres;}).reduce(function(s,p){return s+p.importPla;},0);
-  const totalRealGlobal=(DB.moviments||[]).filter(function(m){return(!m.anyFiscal||m.anyFiscal===''||m.anyFiscal===afPres)&&m.tipus==='gast';}).reduce(function(s,m){return s+m.import;},0);
-  const diff=totalRealGlobal-totalPlaGlobal;
-  const diffPct=totalPlaGlobal>0?Math.round(diff/totalPlaGlobal*100):0;
-  const pctExec=totalPlaGlobal>0?Math.min(100,Math.round(totalRealGlobal/totalPlaGlobal*100)):0;
-  const colorDiff=diff>0?'var(--red)':diff<0?'var(--green)':'var(--text2)';
-
-  // RESUM VISUAL GLOBAL
-  let html='<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px">';
-  html+='<div class="metric" style="background:var(--blue-bg);border:0.5px solid var(--blue)">'+
-    '<div class="metric-label" style="color:var(--blue-text)">Total planificat</div>'+
-    '<div class="metric-value" style="color:var(--blue-text)">'+fmt(totalPlaGlobal)+'</div></div>';
-  html+='<div class="metric" style="background:var(--red-bg);border:0.5px solid var(--red)">'+
-    '<div class="metric-label" style="color:var(--red-text)">Total executat</div>'+
-    '<div class="metric-value" style="color:var(--red-text)">'+fmt(totalRealGlobal)+'</div></div>';
-  html+='<div class="metric" style="background:'+(diff>0?'var(--red-bg)':diff<0?'var(--green-bg)':'var(--bg2)')+';border:0.5px solid '+(diff>0?'var(--red)':diff<0?'var(--green)':'var(--border)')+'">'+
-    '<div class="metric-label">Desviació</div>'+
-    '<div class="metric-value" style="color:'+colorDiff+'">'+(diff>=0?'+':'')+fmt(diff)+'</div>'+
-    '<div style="font-size:11px;color:'+colorDiff+'">'+(diffPct>=0?'+':'')+diffPct+'%</div></div>';
-  html+='</div>';
-  // Barra de progrés global
-  html+='<div style="margin-bottom:16px;background:var(--bg2);border-radius:var(--r);padding:12px 16px">';
-  html+='<div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text2);margin-bottom:6px">'+
-    '<span>Execució pressupostària</span><span style="font-weight:600;color:'+(pctExec>=100?'var(--red)':pctExec>=75?'var(--amber)':'var(--green)')+'">'+pctExec+'%</span></div>';
-  html+='<div style="height:10px;background:var(--border);border-radius:5px;overflow:hidden">'+
-    '<div style="height:100%;border-radius:5px;width:'+pctExec+'%;background:'+(pctExec>=100?'var(--red)':pctExec>=75?'var(--amber)':'var(--green)')+';transition:width .3s"></div></div>';
-  html+='</div>';
-
-  // ÀREES amb plegar/desplegar
-  const areas=DB.config.areas.filter(a=>perm('viewAll')||getMyArees().includes(a.id));
-  areas.forEach(function(a){
-    const col=AREA_COLORS[a.id]||'#888';
-    const delegs=DB.config.delegacions.filter(d=>d.areaId===a.id&&(perm('viewAll')||myDelegs.includes(d.id)));
-    if(!delegs.length)return;
-
-    // Totals per àrea
-    const areaPla=delegs.reduce(function(s,d){
-      return s+(DB.pres_plans||[]).filter(function(p){return p.delegacioId===d.id&&p.any===afPres;}).reduce(function(s2,p){return s2+p.importPla;},0);
-    },0);
-    const areaReal=delegs.reduce(function(s,d){
-      return s+(DB.moviments||[]).filter(function(m){return m.delegacioId===d.id&&m.tipus==='gast'&&(!m.anyFiscal||m.anyFiscal===''||m.anyFiscal===afPres);}).reduce(function(s2,m){return s2+m.import;},0);
-    },0);
-    const areaDiff=areaReal-areaPla;
-    const areaDiffColor=areaDiff>0?'var(--red)':areaDiff<0?'var(--green)':'var(--text2)';
-    const areaId='pres-area-'+a.id;
-
-    html+='<div style="margin-bottom:12px">';
-    // Capçalera àrea clicable
-    html+='<div onclick="togglePresArea(''+areaId+'')" style="display:flex;align-items:center;gap:8px;padding:10px 14px;background:var(--bg2);border-radius:var(--r);cursor:pointer;border:0.5px solid var(--border);margin-bottom:2px">'+
-      '<i class="ti ti-chevron-right" id="ch-'+areaId+'" style="font-size:12px;color:var(--text3);transition:transform .2s"></i>'+
-      '<div style="width:10px;height:10px;border-radius:50%;background:'+col+'"></div>'+
-      '<div style="font-weight:600;flex:1">'+a.name+'</div>'+
-      '<div style="font-size:12px;color:var(--blue-text);margin-right:12px">Pla: <strong>'+fmt(areaPla)+'</strong></div>'+
-      '<div style="font-size:12px;color:var(--red-text);margin-right:12px">Real: <strong>'+fmt(areaReal)+'</strong></div>'+
-      '<div style="font-size:12px;font-weight:600;color:'+areaDiffColor+'">'+(areaDiff>=0?'+':'')+fmt(areaDiff)+'</div>'+
-    '</div>';
-
-    // Cos àrea (delegacions) - per defecte obert
-    html+='<div id="'+areaId+'" style="display:block">';
-    delegs.forEach(function(d){
-      const af0=afPres;
-      const dPlans=(DB.pres_plans||[]).filter(function(p){return p.delegacioId===d.id&&p.any===af0;});
-      const totalPla=dPlans.reduce(function(s,p){return s+p.importPla;},0);
-      const totalReal=(DB.moviments||[]).filter(function(m){return m.delegacioId===d.id&&m.tipus==='gast'&&(!m.anyFiscal||m.anyFiscal===''||m.anyFiscal===af0);}).reduce(function(s,m){return s+m.import;},0);
-      const dDiff=totalReal-totalPla;
-      const dDiffColor=dDiff>0?'var(--red)':dDiff<0?'var(--green)':'var(--text2)';
-      const bid='ped'+d.id;
-
-      html+='<div class="deleg-block" style="margin-bottom:4px;margin-left:16px">';
-      html+='<div class="deleg-head" onclick="document.getElementById(''+bid+'').classList.toggle('open');this.querySelector('.chevron').classList.toggle('open')">';
-      html+='<i class="ti ti-chevron-right chevron"></i>';
-      html+='<div style="flex:1;font-weight:500">'+d.name+'</div>';
-      html+='<div style="font-size:12px;color:var(--blue-text);margin-right:10px">'+fmt(totalPla)+'</div>';
-      html+='<div style="font-size:12px;color:var(--red-text);margin-right:10px">'+fmt(totalReal)+'</div>';
-      html+='<div style="font-size:12px;font-weight:600;color:'+dDiffColor+'">'+(dDiff>=0?'+':'')+fmt(dDiff)+'</div>';
-      html+='</div>';
-      html+='<div class="deleg-body" id="'+bid+'">';
-      // Botó afegir
-      if(!bloquejat&&(perm('viewAll')||myDelegs.includes(d.id))){
-        html+='<div style="padding:8px 14px;border-bottom:0.5px solid var(--border)">'+
-          '<button class="btn btn-primary" style="font-size:12px" onclick="openModalPres(''+d.id+'','','event')">'+
-          '<i class="ti ti-plus"></i> Afegir línia</button></div>';
-      }
-      // Línies de pressupost
-      if(dPlans.length){
-        dPlans.forEach(function(p){
-          html+='<div style="display:flex;align-items:center;gap:8px;padding:8px 14px;border-bottom:0.5px solid var(--border);font-size:12px">';
-          html+='<div style="flex:1"><div style="font-weight:500">'+(p.eventNom||'—')+'</div>';
-          if(p.concepte)html+='<div style="color:var(--text3);font-size:11px">'+p.concepte+'</div>';
-          html+='</div>';
-          html+='<span class="pill p-info">'+(p.tipus==='event'?'Event':'Concepte')+'</span>';
-          html+='<div style="font-weight:500;width:80px;text-align:right">'+fmt(p.importPla)+'</div>';
-          if(!bloquejat&&(perm('viewAll')||myDelegs.includes(d.id))){
-            html+='<button class="btn" style="font-size:11px;padding:3px 8px" onclick="deletePres(''+p.delegacioId+'',''+p.eventId+'',''+p.concepte+'')"><i class="ti ti-trash"></i></button>';
-          }
-          html+='</div>';
-        });
-      }else{
-        html+='<div style="padding:10px 14px;color:var(--text3);font-size:12px">Sense imports planificats</div>';
-      }
-      html+='</div></div>';
-    });
-    html+='</div></div>';
-  });
+    '<div style="flex:1">'+
+    '<div style="font-weight:500;color:'+titleColor+'">'+titleText+'</div>'+
+    '<div style="font-size:11px;color:var(--text2);margin-top:2px">'+subText+'</div>'+
+    '</div>'+btnHtml+'</div>';
 
   // Historial de bloquejos
   const hist=DB.pres_historial||[];
-  if(hist.length){
-    html+='<div class="card" style="margin-top:16px"><div class="card-title">Historial de bloquejos</div>'+
-      hist.slice().reverse().map(function(h){
-        return'<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:0.5px solid var(--border);font-size:12px">'+
-          '<i class="ti '+(h.accio==='bloquejat'?'ti-lock':'ti-lock-open')+'" style="color:'+(h.accio==='bloquejat'?'var(--amber)':'var(--green)')+'"></i>'+
-          '<div style="flex:1"><span style="font-weight:500">'+(h.accio==='bloquejat'?'Bloquejat':'Desbloquejat')+'</span> per '+h.usuari+'</div>'+
-          '<div style="color:var(--text3)">'+h.data+'</div>'+
-          (h.motiu?'<div style="color:var(--text2)">'+h.motiu+'</div>':'')+
-        '</div>';
-      }).join('')+'</div>';
-  }
 
+  // Delegacions visibles
+  const areas=DB.config.areas.filter(a=>perm('viewAll')||getMyArees().includes(a.id));
+  var afPres2=getAnyFiscal();
+  // Resum global
+  var totalPlaAll=(DB.pres_plans||[]).filter(function(p){return p.any===afPres2;}).reduce(function(s,p){return s+p.importPla;},0);
+  var totalRealAll=(DB.moviments||[]).filter(function(m){return(!m.anyFiscal||m.anyFiscal===''||m.anyFiscal===afPres2)&&m.tipus==='gast';}).reduce(function(s,m){return s+m.import;},0);
+  var diffAll=totalRealAll-totalPlaAll;
+  var pctExec=totalPlaAll>0?Math.min(100,Math.round(totalRealAll/totalPlaAll*100)):0;
+  var colExec=pctExec>=100?'var(--red)':pctExec>=75?'var(--amber)':'var(--green)';
+  let html='<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:14px">';
+  html+='<div class="metric" style="background:var(--blue-bg);border:0.5px solid var(--blue)"><div class="metric-label" style="color:var(--blue-text)">Total planificat</div><div class="metric-value" style="color:var(--blue-text)">'+fmt(totalPlaAll)+'</div></div>';
+  html+='<div class="metric" style="background:var(--red-bg);border:0.5px solid var(--red)"><div class="metric-label" style="color:var(--red-text)">Total executat</div><div class="metric-value" style="color:var(--red-text)">'+fmt(totalRealAll)+'</div></div>';
+  html+='<div class="metric"><div class="metric-label">Desviació</div><div class="metric-value" style="color:'+(diffAll>0?'var(--red)':diffAll<0?'var(--green)':'var(--text2)')+'">'+fmt(Math.abs(diffAll))+'</div></div>';
+  html+='</div>';
+  html+='<div style="background:var(--bg2);border-radius:var(--r);padding:12px;margin-bottom:16px"><div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text2);margin-bottom:6px"><span>Execució pressupostària</span><span style="font-weight:600;color:'+colExec+'">'+pctExec+'%</span></div><div style="height:10px;background:var(--border);border-radius:5px;overflow:hidden"><div style="height:100%;border-radius:5px;width:'+pctExec+'%;background:'+colExec+'"></div></div></div>';
+  areas.forEach(a=>{
+    const col=AREA_COLORS[a.id]||'#888';
+    const delegs=DB.config.delegacions.filter(d=>d.areaId===a.id&&(perm('viewAll')||myDelegs.includes(d.id)));
+    if(!delegs.length)return;
+    var areaPla=delegs.reduce(function(s,d){return s+(DB.pres_plans||[]).filter(function(p){return p.delegacioId===d.id&&p.any===afPres2;}).reduce(function(s2,p){return s2+p.importPla;},0);},0);
+    var areaReal=delegs.reduce(function(s,d){return s+(DB.moviments||[]).filter(function(m){return m.delegacioId===d.id&&m.tipus==='gast'&&(!m.anyFiscal||m.anyFiscal===''||m.anyFiscal===afPres2);}).reduce(function(s2,m){return s2+m.import;},0);},0);
+    var areaDiff=areaReal-areaPla;
+    var areaColDiff=areaDiff>0?'var(--red)':areaDiff<0?'var(--green)':'var(--text2)';
+    var areaBlockId='pab-'+a.id;
+    html+='<div style="margin-bottom:12px">';
+    html+='<div onclick="var el=document.getElementById(''+areaBlockId+'');el.style.display=el.style.display==='none'?'block':'none'" style="display:flex;align-items:center;gap:8px;padding:10px 14px;background:var(--bg2);border-radius:var(--r);cursor:pointer;margin-bottom:2px">';
+    html+='<div style="width:10px;height:10px;border-radius:50%;background:'+col+'"></div>';
+    html+='<div style="font-weight:600;flex:1">'+a.name+'</div>';
+    html+='<div style="font-size:12px;color:var(--blue-text);margin-right:10px">Pla: '+fmt(areaPla)+'</div>';
+    html+='<div style="font-size:12px;color:var(--red-text);margin-right:10px">Real: '+fmt(areaReal)+'</div>';
+    html+='<div style="font-size:12px;font-weight:600;color:'+areaColDiff+'">'+(areaDiff>=0?'+':'')+fmt(areaDiff)+'</div></div>';
+    html+='<div id="'+areaBlockId+'" style="display:block">';
+    delegs.forEach(d=>{
+      const events=DB.config.events.filter(e=>e.delegId===d.id);
+      const dPlans=DB.pres_plans.filter(p=>p.delegacioId===d.id&&p.any===getAnyFiscal());
+      const totalPla=dPlans.reduce((s,p)=>s+p.importPla,0);
+      const af0=getAnyFiscal();const totalReal=(DB.moviments||[]).filter(m=>m.delegacioId===d.id&&m.tipus==='gast'&&(!m.anyFiscal||m.anyFiscal===''||m.anyFiscal===af0)).reduce((s,m)=>s+m.import,0);
+      const pct=totalPla>0?Math.min(100,Math.round(totalReal/totalPla*100)):0;
+      const bid='ped'+d.id;
+      html+=`<div class="deleg-block" style="margin-bottom:8px;margin-left:16px">
+        <div class="deleg-head" onclick="document.getElementById('${bid}').classList.toggle('open');this.querySelector('.chevron').classList.toggle('open')">
+          <i class="ti ti-chevron-right chevron"></i>
+          <div style="flex:1;font-weight:500">${d.name}</div>
+          <div style="font-size:12px;color:var(--text2);margin-right:12px">Pla: ${totalPla>0?fmt(totalPla):'—'}</div>
+          <div style="font-size:12px;color:${totalReal>0?'var(--red)':'var(--text3)'}">Real: ${totalReal>0?fmt(totalReal):'—'}</div>
+          
+        </div>
+        <div class="deleg-body" id="${bid}">
+          ${!bloquejat&&(perm('viewAll')||myDelegs.includes(d.id))?`
+          <div style="padding:10px 14px;border-bottom:0.5px solid var(--border)">
+            <button class="btn btn-primary" style="font-size:12px" onclick="openModalPres('${d.id}','','event')">
+              <i class="ti ti-plus"></i> Afegir línia de pressupost
+            </button>
+          </div>`:''}
+          ${dPlans.length?dPlans.map(p=>`
+          <div style="display:flex;align-items:center;gap:8px;padding:8px 14px;border-bottom:0.5px solid var(--border);font-size:12px">
+            <div style="flex:1">
+              <div style="font-weight:500">${p.eventNom||'—'}</div>
+              +(p.concepte?'<div style="color:var(--text3);font-size:11px">'+p.concepte+'</div>':'')}
+            </div>
+            <span class="pill p-info">${p.tipus==='event'?'Event':'Concepte'}</span>
+            <div style="font-weight:500;width:80px;text-align:right">${fmt(p.importPla)}</div>
+            ${!bloquejat&&(perm('viewAll')||myDelegs.includes(d.id))?`
+            <button class="btn" style="font-size:11px;padding:3px 8px" onclick="deletePres('${p.delegacioId}','${p.eventId}','${p.concepte}')">
+              <i class="ti ti-trash"></i>
+            </button>`:''}
+          </div>`).join(''):`<div style="padding:10px 14px;color:var(--text3);font-size:12px">Sense imports planificats</div>`}
+          ${events.length&&!bloquejat&&(perm('viewAll')||myDelegs.includes(d.id))?'':`
+          `}
+        </div>
+      </div>`;
+    });
+    html+='</div></div>';
+  });
   document.getElementById('pres-container-edit').innerHTML=html;
-}
 
-function togglePresArea(id){
-  const el=document.getElementById(id);
-  const ch=document.getElementById('ch-'+id);
-  if(!el)return;
-  const open=el.style.display!=='none';
-  el.style.display=open?'none':'block';
-  if(ch)ch.style.transform=open?'rotate(0deg)':'rotate(90deg)';
+  // Historial
+  if(hist.length){
+    document.getElementById('pres-container-edit').innerHTML+=`
+      <div class="card" style="margin-top:20px">
+        <div class="card-title">Historial de bloquejos</div>
+        ${hist.slice().reverse().map(h=>`<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:0.5px solid var(--border);font-size:12px">
+          <i class="ti ${h.accio==='bloquejat'?'ti-lock':'ti-lock-open'}" style="color:${h.accio==='bloquejat'?'var(--amber)':'var(--green)'}"></i>
+          <div style="flex:1"><span style="font-weight:500">${h.accio==='bloquejat'?'Bloquejat':'Desbloquejat'}</span> per ${h.usuari}</div>
+          <div style="color:var(--text3)">${h.data}</div>
+          +(h.motiu?'<div style="color:var(--text2)">'+h.motiu+'</div>':'')}
+        </div>`).join('')}
+      </div>`;
+  }
 }
-
 
 let presDelegId='',presEventId='',presTipus='event';
 
@@ -2976,7 +2944,19 @@ const MANUAL={
       <div>• <strong>Gestionar directiva</strong> — assigna responsables a àrees i delegacions</div>
       <div>• <strong>Copiar directiva</strong> — copia les assignacions d'un exercici a un altre</div>
     </div>`,
-  rols:'__ROLS_DYNAMIC__'  
+  rols:`<h3 style="margin-bottom:12px">Rols i permisos</h3>
+    <p style="color:var(--text2);line-height:1.6;margin-bottom:12px">Cada usuari té un rol que defineix el que pot fer a l'app.</p>
+    <div style="font-size:13px">
+      ${Object.entries(getRoles()).filter(([k])=>k!=='noauth').map(([key,r])=>`
+      <div style="padding:10px 0;border-bottom:0.5px solid var(--border)">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+          <span class="pill ${r.color}">${r.label}</span>
+        </div>
+        <div style="color:var(--text2);font-size:12px;line-height:1.8">
+          ${r.canRegister?'✓ Registra moviments · ':'✗ No registra · '}${r.canFons?'✓ Lliura fons · ':''}${r.canImport?'✓ Importa fitxers · ':''}${r.canConfig?'✓ Configuració · ':''}${r.canUsers?'✓ Gestiona usuaris · ':''}${r.viewAll?'👁 Veu tota la Falla':'👁 Sols les seues àrees/delegacions'}
+        </div>
+      </div>`).join('')}
+    </div>`
 };
 
 function renderManual(){
@@ -3008,30 +2988,7 @@ function renderManual(){
 function showManTab(tab,clickedBtn){
   // Render content
   const mc=document.getElementById('man-content');
-  if(!mc)return;
-  let tabContent=MANUAL[tab]||'';
-  // Rols section generated dynamically
-  if(tab==='rols'){
-    const rols=getRoles();
-    tabContent='<h3 style="margin-bottom:12px">Rols i permisos</h3>'+
-      '<p style="color:var(--text2);line-height:1.6;margin-bottom:12px">Cada usuari té un rol que defineix el que pot fer.</p>'+
-      '<div style="font-size:13px">'+
-      Object.entries(rols).filter(function(e){return e[0]!=='noauth';}).map(function(e){
-        const r=e[1];
-        return'<div style="padding:10px 0;border-bottom:0.5px solid var(--border)">'+
-          '<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">'+
-          '<span class="pill '+(r.color||'p-gray')+'">'+r.label+'</span></div>'+
-          '<div style="color:var(--text2);font-size:12px;line-height:1.8">'+
-          (r.canRegister?'✓ Registra · ':'✗ No registra · ')+
-          (r.canFons?'✓ Lliura fons · ':'')+
-          (r.canImport?'✓ Importa · ':'')+
-          (r.canConfig?'✓ Configuració · ':'')+
-          (r.canUsers?'✓ Usuaris · ':'')+
-          (r.viewAll?'👁 Veu tot':'👁 Sols les seues àrees')+
-          '</div></div>';
-      }).join('')+'</div>';
-  }
-  mc.innerHTML=tabContent;
+  if(mc&&MANUAL[tab])mc.innerHTML=MANUAL[tab];
   // Update button styles
   document.querySelectorAll('#man-tabs button').forEach(function(btn){
     btn.className=btn===clickedBtn?'btn btn-primary':'btn';
@@ -3258,10 +3215,7 @@ function renderCfgEvents(){
   html+='<thead><tr><th>Nom</th><th>Delegació</th><th>Inici</th><th>Fi</th><th>Responsable</th><th>Estat</th>';
   if(canEdit)html+='<th></th>';
   html+='</tr></thead><tbody>';
-  DB.config.events.filter(function(e){
-    var ey=e.anyFiscal||e.year||'';
-    return ey===afEv;
-  }).forEach(function(e){
+  DB.config.events.filter(function(e){return(e.anyFiscal||e.year||'')===(afEv||'');}).forEach(function(e){
     const d=DB.config.delegacions.find(function(x){return x.id===e.delegId;});
     html+='<tr>';
     html+='<td style="font-weight:500">'+e.name+'</td>';
