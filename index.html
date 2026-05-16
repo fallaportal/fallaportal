@@ -211,7 +211,7 @@ tr:hover td{background:var(--bg2)}
     <div class="login-logo">Falla <span>Portal</span></div>
     <div class="login-sub">Sistema de gestió financera</div>
     <div class="login-fiscal">Any fiscal 26/27 · Abr 2026 – Mar 2027</div>
-    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v1.2.19</div>
+    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v1.2.20</div>
     <button class="btn-google" onclick="signIn()">
       <svg viewBox="0 0 24 24" width="20" height="20"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
       Entrar amb Google
@@ -253,7 +253,7 @@ tr:hover td{background:var(--bg2)}
     <div class="sb-bottom">
       <div class="sync-ind"><div class="sync-dot" id="sync-dot"></div><span id="sync-text">Sincronitzat</span></div>
       <button class="btn-logout" onclick="signOut()"><i class="ti ti-logout" style="font-size:14px"></i> Tancar sessió</button>
-      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v1.2.19</div>
+      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v1.2.20</div>
     </div>
   </div>
 
@@ -693,7 +693,31 @@ tr:hover td{background:var(--bg2)}
   <div class="modal">
   <div class="modal-inner">
     <div class="modal-title">Nou lliurament de fons</div>
-    <div class="field"><label>Delegat</label><select id="ll-delegat"></select></div>
+    <div class="field"><label>Delegat receptor</label><select id="ll-delegat"></select></div>
+    <div class="field">
+      <label>Origen dels fons</label>
+      <select id="ll-origen" onchange="onLliuramentOrigenChange()">
+        <option value="caixa">Caixa de la Falla (no genera moviment comptable)</option>
+        <option value="tercer">Ingrés de tercer (genera moviment d'ingrés)</option>
+        <option value="regularitzacio">Regularització avançament (no genera moviment)</option>
+      </select>
+    </div>
+    <div id="ll-tercer-fields" style="display:none">
+      <div class="info-box" style="margin-bottom:8px"><i class="ti ti-info-circle"></i> Es crearà automàticament un moviment d'ingrés a la comptabilitat.</div>
+      <div class="field-row">
+        <div class="field"><label>Àrea</label><select id="ll-area" onchange="onLlAreaChange()"></select></div>
+        <div class="field"><label>Delegació</label><select id="ll-deleg-dest"></select></div>
+      </div>
+      <div class="field"><label>Concepte de l'ingrés</label><input type="text" id="ll-concepte" placeholder="p.e. Patrocini empresa X"></div>
+      <div class="field"><label>Via de cobrament</label>
+        <select id="ll-via">
+          <option value="Efectiu">Efectiu</option>
+          <option value="01 Banc">Caixabank</option>
+          <option value="02 Banc">Caixa Popular</option>
+          <option value="TPV">TPV</option>
+        </select>
+      </div>
+    </div>
     <div class="field-row">
       <div class="field"><label>Import (€)</label><input type="number" id="ll-import" min="0" step="0.01"></div>
       <div class="field"><label>Data</label><input type="date" id="ll-data"></div>
@@ -2304,10 +2328,34 @@ function renderFons(){
     // Només mostrar usuaris amb fons actius (saldo != 0 o moviments de fons)
     const af=getAnyFiscal();
     const delegats=(DB.config.usuaris||[]).filter(function(u){return u.rol!=='noauth';}).sort(function(a,b){return a.nom.localeCompare(b.nom,'ca');});
-    c.innerHTML=`<div style="display:flex;gap:8px;margin-bottom:14px">
-      <button class="btn btn-primary" onclick="openModal('modal-lliurament')"><i class="ti ti-plus"></i> Nou lliurament</button>
-      <button class="btn" onclick="openModal('modal-devolucio')"><i class="ti ti-corner-down-left"></i> Registrar devolució</button>
-    </div>`+(delegats.length?delegats.map(u=>renderFonsCard(u)).join(''):'<div class="card"><div style="color:var(--text3)">No hi ha delegats configurats. Afegeix usuaris a Configuració.</div></div>');
+    // Calcular resum total
+    var af4=getAnyFiscal();
+    var totalFonsEnMans=delegats.reduce(function(s,u){
+      var fu=(DB.fons||[]).filter(function(f){return(!f.anyFiscal||f.anyFiscal===''||f.anyFiscal===af4)&&(f.delegId===u.id||(f.delegEmail||'').toLowerCase()===(u.email||'').toLowerCase());});
+      var reb=fu.filter(function(f){return f.tipus==='lliurament'||f.tipus==='regularitzacio';}).reduce(function(s2,f){return s2+f.import;},0);
+      var gF=fu.filter(function(f){return f.tipus==='gast_fons';}).reduce(function(s2,f){return s2+f.import;},0);
+      var dev=fu.filter(function(f){return f.tipus==='devolucio';}).reduce(function(s2,f){return s2+f.import;},0);
+      var av=fu.filter(function(f){return f.tipus==='avanc';}).reduce(function(s2,f){return s2+f.import;},0);
+      var rei=fu.filter(function(f){return f.tipus==='reintegrament';}).reduce(function(s2,f){return s2+f.import;},0);
+      return s+(reb-gF-dev-av+rei);
+    },0);
+    var nDeleg=delegats.filter(function(u){
+      var fu=(DB.fons||[]).filter(function(f){return(!f.anyFiscal||f.anyFiscal===''||f.anyFiscal===af4)&&(f.delegId===u.id||(f.delegEmail||'').toLowerCase()===(u.email||'').toLowerCase());});
+      return fu.length>0;
+    }).length;
+    var colTotal=totalFonsEnMans>0?'var(--green)':totalFonsEnMans<0?'var(--red)':'var(--text2)';
+
+    c.innerHTML='<div style="display:flex;align-items:center;justify-content:space-between;background:var(--bg);border:0.5px solid var(--border);border-radius:var(--rl);padding:16px 20px;margin-bottom:14px">'
+      +'<div><div style="font-size:13px;color:var(--text2);margin-bottom:2px">Total fons en mans dels delegats</div>'
+      +'<div style="font-size:11px;color:var(--text3)">'+nDeleg+' delegat'+(nDeleg!==1?'s':'')+' amb moviments actius · Any fiscal '+af4+'</div></div>'
+      +'<div style="text-align:right"><div style="font-size:28px;font-weight:700;color:'+colTotal+'">'+fmtD(totalFonsEnMans)+'</div>'
+      +'<div style="font-size:11px;color:'+colTotal+'">'+( totalFonsEnMans>0?'pendents de justificar':totalFonsEnMans<0?'la falla deu als delegats':'tot liquidat')+'</div></div>'
+      +'</div>'
+      +'<div style="display:flex;gap:8px;margin-bottom:14px">'
+      +'<button class="btn btn-primary" onclick="openModal('modal-lliurament')"><i class="ti ti-plus"></i> Nou lliurament</button>'
+      +'<button class="btn" onclick="openModal('modal-devolucio')"><i class="ti ti-corner-down-left"></i> Registrar devolució</button>'
+      +'</div>'
+      +(delegats.length?delegats.map(u=>renderFonsCard(u)).join(''):'<div class="card"><div style="color:var(--text3)">No hi ha delegats configurats. Afegeix usuaris a Configuració.</div></div>');
     populateDelegatSelects();
   }else{
     const email=currentUser?.email;
@@ -2350,11 +2398,11 @@ function renderFonsCard(u){
     '<div style="margin-top:10px;border-top:0.5px solid var(--border);padding-top:8px">'+
     fonsArr.sort(sortByData).map(function(f){
       const canDel=rol==='president'||rol==='treasury'||((f.registratPer||'').toLowerCase()===myEmail);
-      const isLl=f.tipus==='lliurament';
+      const isLl=f.tipus==='lliurament'||f.tipus==='regularitzacio';const isReg=f.tipus==='regularitzacio';
       const isGastF=f.tipus==='gast_fons';
       const isAvanc=f.tipus==='avanc';
       return'<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:0.5px solid var(--border);font-size:12px">'+
-        '<i class="ti '+(isLl?'ti-arrow-down-left':isGastF?'ti-shopping-cart':isAvanc?'ti-coin':'ti-corner-down-left')+'" style="color:'+(isLl?'var(--green)':'var(--blue,#378ADD)')+'"></i>'+
+        '<i class="ti '+(isLl?'ti-refresh':isGastF?'ti-shopping-cart':isAvanc?'ti-coin':isReg?'ti-refresh':'ti-corner-down-left')+'" style="color:'+(isLl?'var(--green)':'var(--blue,#378ADD)')+'"></i>'+
         '<div style="flex:1">'+
           '<div style="font-weight:500">'+(f.nota||f.tipus)+'</div>'+
           '<div style="font-size:11px;color:var(--text3)">'+f.data+(f.registratPer?' · '+f.registratPer:'')+'</div>'+
@@ -2421,16 +2469,90 @@ function populateDelegatSelects(){
 function openLliuramentFor(uid){document.getElementById('ll-delegat').value=uid;openModal('modal-lliurament');}
 function openDevolucioFor(uid){document.getElementById('dev-delegat').value=uid;openModal('modal-devolucio');}
 
+function onLliuramentOrigenChange(){
+  var origen=document.getElementById('ll-origen').value;
+  var tFields=document.getElementById('ll-tercer-fields');
+  if(tFields)tFields.style.display=origen==='tercer'?'block':'none';
+  if(origen==='tercer'){
+    // Populate area select
+    var areaSel=document.getElementById('ll-area');
+    if(areaSel&&!areaSel.options.length){
+      DB.config.areas.forEach(function(a){
+        var o=document.createElement('option');o.value=a.id;o.textContent=a.id+' '+a.name;areaSel.appendChild(o);
+      });
+      onLlAreaChange();
+    }
+  }
+}
+
+function onLlAreaChange(){
+  var areaId=document.getElementById('ll-area')?.value;
+  var delegSel=document.getElementById('ll-deleg-dest');
+  if(!delegSel)return;
+  delegSel.innerHTML='';
+  DB.config.delegacions.filter(function(d){return d.areaId===areaId;}).forEach(function(d){
+    var o=document.createElement('option');o.value=d.id;o.textContent=d.id+' '+d.name;delegSel.appendChild(o);
+  });
+}
+
 async function saveLliurament(){
   const delegId=document.getElementById('ll-delegat').value;
   const imp=parseFloat(document.getElementById('ll-import').value);
   if(!imp||imp<=0){showToast('Import invàlid',true);return;}
+  const origen=document.getElementById('ll-origen')?.value||'caixa';
   const u=DB.config.usuaris.find(x=>x.id===delegId);
+  const af=getAnyFiscal();
+  const data=fmtDateInput(document.getElementById('ll-data').value)||today();
+  const nota=document.getElementById('ll-nota').value;
   if(!DB.fons)DB.fons=[];
-  const fItem={id:'f'+Date.now(),anyFiscal:getAnyFiscal(),tipus:'lliurament',delegId,delegEmail:u?.email||'',import:imp,data:fmtDateInput(document.getElementById('ll-data').value),nota:document.getElementById('ll-nota').value,registratPer:currentUser?.name||currentUser?.email||''};
+
+  // Tipus de lliurament segons origen
+  var tipusFons=origen==='regularitzacio'?'regularitzacio':'lliurament';
+
+  const fItem={
+    id:'f'+Date.now(),anyFiscal:af,tipus:tipusFons,
+    delegId,delegEmail:u?.email||'',
+    import:imp,data,nota,
+    registratPer:currentUser?.name||currentUser?.email||'',
+    origen:origen
+  };
   DB.fons.push(fItem);
+
+  // Si és ingrés de tercer, crear moviment comptable d'ingrés
+  if(origen==='tercer'){
+    const areaId=document.getElementById('ll-area')?.value||'';
+    const delegDestId=document.getElementById('ll-deleg-dest')?.value||'';
+    const concepte=document.getElementById('ll-concepte')?.value||'Ingrés de tercer via delegat';
+    const via=document.getElementById('ll-via')?.value||'Efectiu';
+    const area=DB.config.areas.find(function(a){return a.id===areaId;});
+    const delegDest=DB.config.delegacions.find(function(d){return d.id===delegDestId;});
+    const mov={
+      id:'m'+Date.now(),anyFiscal:af,tipus:'ing',via,
+      areaId,areaNom:area?.name||'',
+      delegacioId:delegDestId,delegacioNom:delegDest?.name||'',
+      eventId:'',eventNom:'',
+      concepte:concepte+' (via '+u?.nom+')',
+      establiment:'',data,
+      responsable:currentUser?.name||'',responsableEmail:currentUser?.email||'',
+      import:imp,notes:'Ingrés de tercer - fons lliurats a '+u?.nom,
+      origenFons:'tercer',fontImport:''
+    };
+    DB.moviments.push(mov);
+    fItem.movimentId=mov.id;
+    saveMoviment(mov).catch(function(e){console.warn(e);});
+    showToast('Lliurament registrat + ingrés comptable de '+fmtD(imp));
+  }else{
+    showToast('Lliurament registrat: '+fmtD(imp)+(origen==='regularitzacio'?' (regularització)':''));
+  }
+
   saveCache();
-  closeModal('modal-lliurament');showToast('Lliurament registrat');renderFons();
+  closeModal('modal-lliurament');
+  document.getElementById('ll-import').value='';
+  document.getElementById('ll-nota').value='';
+  document.getElementById('ll-data').value=todayISO();
+  if(document.getElementById('ll-origen'))document.getElementById('ll-origen').value='caixa';
+  if(document.getElementById('ll-tercer-fields'))document.getElementById('ll-tercer-fields').style.display='none';
+  renderFons();
   saveFons(fItem).catch(e=>showToast('Error guardant: '+e.message,true));
 }
 
