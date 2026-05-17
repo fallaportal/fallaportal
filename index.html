@@ -212,6 +212,26 @@ tr:hover td{background:var(--bg2)}
 }
 .tag-multi{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
 .info-box{padding:10px 12px;background:var(--blue-bg);border-radius:var(--r);font-size:12px;color:var(--blue-text);margin-bottom:12px}
+
+/* === MOBILE IMPROVEMENTS === */
+@media(max-width:767px){
+  .page{padding:12px 12px 80px 12px!important;}
+  .page-title{font-size:20px!important;}
+  .card{padding:12px!important;}
+  .metric-value{font-size:22px!important;}
+  .metrics{grid-template-columns:1fr 1fr!important;gap:8px!important;}
+  .row2{grid-template-columns:1fr!important;}
+  .row1{grid-template-columns:1fr!important;}
+  .field-row{flex-direction:column!important;}
+  .field-row .field{width:100%!important;}
+  table{font-size:12px!important;}
+  th,td{padding:6px 4px!important;}
+  .deleg-head{flex-wrap:wrap;gap:4px!important;}
+  .sb{width:200px!important;}
+  .af-badge{font-size:12px!important;padding:3px 8px!important;}
+  .modal-inner{padding:14px!important;}
+  .modal{margin:8px!important;max-height:calc(100vh - 60px)!important;overflow-y:auto!important;}
+}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
@@ -222,7 +242,7 @@ tr:hover td{background:var(--bg2)}
     <div class="login-logo">Falla <span>Portal</span></div>
     <div class="login-sub">Sistema de gestió financera</div>
     <div class="login-fiscal">Any fiscal 26/27 · Abr 2026 – Mar 2027</div>
-    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v1.2.21</div>
+    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v1.2.22</div>
     <button class="btn-google" onclick="signIn()">
       <svg viewBox="0 0 24 24" width="20" height="20"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
       Entrar amb Google
@@ -252,7 +272,7 @@ tr:hover td{background:var(--bg2)}
       <div class="sb-fiscal" style="display:flex;align-items:center;gap:6px;margin-top:4px">
       <span style="font-size:11px;color:var(--text3)">Any fiscal:</span>
       <select id="sb-any-fiscal" onchange="canviarExercici(this.value)"
-        style="background:var(--bg2);border:0.5px solid var(--border2);border-radius:6px;color:var(--text);font-size:14px;font-weight:600;cursor:pointer;padding:3px 8px;outline:none;font-family:inherit;">
+        style="background:var(--bg2);border:0.5px solid var(--border2);border-radius:6px;color:var(--text);font-size:14px;font-weight:600;cursor:pointer;padding:4px 10px;outline:none;font-family:inherit;-webkit-appearance:auto;appearance:auto;min-height:32px;touch-action:manipulation;">
       </select>
     </div>
     </div>
@@ -264,7 +284,7 @@ tr:hover td{background:var(--bg2)}
     <div class="sb-bottom">
       <div class="sync-ind"><div class="sync-dot" id="sync-dot"></div><span id="sync-text">Sincronitzat</span></div>
       <button class="btn-logout" onclick="signOut()"><i class="ti ti-logout" style="font-size:14px"></i> Tancar sessió</button>
-      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v1.2.21</div>
+      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v1.2.22</div>
     </div>
   </div>
 
@@ -291,6 +311,7 @@ tr:hover td{background:var(--bg2)}
     </div>
 
     <div id="page-moviments" class="page" style="padding:0">
+      <div style="padding:16px 20px 0 20px"><div class="page-title">Registre de moviments</div><div class="page-sub" id="sub-moviments">Nou ingrés o despesa</div></div>
       <div class="mov-header">
         <!-- FILA 1: DESPESA | INGRÉS -->
         <div class="mov-g2">
@@ -309,7 +330,7 @@ tr:hover td{background:var(--bg2)}
             <span id="mov-data-label">Data</span>
           </div>
           <div class="mov-import-box">
-            <input type="text" id="mov-import" placeholder="0,00" inputmode="decimal" pattern="[0-9]*[.,]?[0-9]*">
+            <input type="text" id="mov-import" placeholder="0,00" inputmode="decimal" pattern="[0-9]*[.,]?[0-9]*" oninput="checkMovReady()">
             <span style="font-size:26px;font-weight:700;color:var(--text3);margin-left:4px;pointer-events:none">€</span>
           </div>
         </div>
@@ -324,7 +345,7 @@ tr:hover td{background:var(--bg2)}
       <div class="mov-body">
         <div class="mov-row2">
           <div class="mov-field"><label>Àrea</label><select id="mov-area" onchange="onMovAreaChange()"></select></div>
-          <div class="mov-field"><label>Delegació</label><select id="mov-deleg" onchange="onMovDelegChange()"></select></div>
+          <div class="mov-field"><label>Delegació</label><select id="mov-deleg" onchange="onMovDelegChange();checkMovReady()"></select></div>
         </div>
         <div class="mov-field" id="mov-event-field" style="display:none">
           <label>Event <span class="opt-label">(opcional)</span></label>
@@ -345,13 +366,13 @@ tr:hover td{background:var(--bg2)}
           <div class="mov-field" style="margin-top:8px"><label>Notes</label><textarea id="mov-notes" rows="2" style="resize:none"></textarea></div>
           <div class="mov-field"><label>Justificant <span class="opt-label">(foto/PDF)</span></label><input type="file" id="mov-photo" accept="image/*,application/pdf" style="font-size:13px"></div>
         </div>
-        <button class="btn btn-danger" id="btn-registrar" onclick="registrarMoviment()" style="width:100%;padding:14px;font-size:16px;margin-top:8px;border-radius:var(--r);display:none">
-          <i class="ti ti-check"></i> Registrar despesa
+        <button class="btn" id="btn-registrar" onclick="confirmRegistrar()" style="width:100%;padding:14px;font-size:16px;margin-top:8px;border-radius:var(--r);display:none;background:var(--gray,#555);color:#fff;opacity:0.6;cursor:not-allowed" disabled>
+          <i class="ti ti-check"></i> Registrar movesa
         </button>
       </div>
       <div class="mov-footer-btn" id="mov-footer-btn">
-        <button id="btn-registrar-mob" onclick="registrarMoviment()" style="background:var(--red);color:#fff">
-          <i class="ti ti-check"></i> Registrar despesa
+        <button id="btn-registrar-mob" onclick="confirmRegistrar()" style="background:var(--gray,#555);color:#fff;opacity:0.6;cursor:not-allowed" disabled>
+          <i class="ti ti-check"></i> Registrar moviment
         </button>
       </div>
     </div>
@@ -393,6 +414,20 @@ tr:hover td{background:var(--bg2)}
         <select id="dir-any" onchange="renderDirectiva()" style="font-size:14px;padding:6px 10px;border-radius:var(--r);border:0.5px solid var(--border2);background:var(--bg);color:var(--text)"></select>
       </div>
       <div id="directiva-container"></div>
+    </div>
+
+    <!-- Modal confirmació moviment -->
+    <div id="modal-confirm-mov" class="modal-overlay" style="display:none">
+      <div class="modal" style="max-width:420px">
+        <div class="modal-inner">
+          <div class="modal-title"><i class="ti ti-check-circle" style="color:var(--green)"></i> Confirmar moviment</div>
+          <div id="confirm-mov-text"></div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn" onclick="closeModal('modal-confirm-mov')">Cancel·lar</button>
+          <button class="btn btn-primary" onclick="closeModal('modal-confirm-mov');registrarMoviment()">Confirmar</button>
+        </div>
+      </div>
     </div>
 
     <div id="page-manual" class="page">
@@ -677,6 +712,10 @@ tr:hover td{background:var(--bg2)}
 
 <div id="mob-menu-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:250" onclick="closeMobMenu()"></div>
 <div id="mob-menu" style="display:none;position:fixed;bottom:56px;left:0;right:0;background:var(--bg);border-top:0.5px solid var(--border);z-index:260;padding:8px 0">
+  <div style="padding:10px 20px;border-bottom:0.5px solid var(--border);display:flex;align-items:center;gap:10px">
+    <span style="font-size:13px;color:var(--text2)">Any fiscal:</span>
+    <select id="mob-any-fiscal" onchange="canviarExercici(this.value);closeMobMenu()" style="background:var(--bg2);border:0.5px solid var(--border2);border-radius:6px;color:var(--text);font-size:14px;font-weight:600;padding:4px 10px;outline:none;font-family:inherit;flex:1;min-height:36px"></select>
+  </div>
   <div onclick="showPageMob('historial','');closeMobMenu()" style="padding:12px 20px;font-size:14px;display:flex;align-items:center;gap:12px;cursor:pointer"><i class="ti ti-list" style="font-size:18px;color:var(--text2)"></i> Historial</div>
   <div onclick="showPageMob('pressupostos-edit','');closeMobMenu()" style="padding:12px 20px;font-size:14px;display:flex;align-items:center;gap:12px;cursor:pointer"><i class="ti ti-chart-bar" style="font-size:18px;color:var(--text2)"></i> Pressupostos</div>
   <div onclick="showPageMob('resultats','');closeMobMenu()" style="padding:12px 20px;font-size:14px;display:flex;align-items:center;gap:12px;cursor:pointer"><i class="ti ti-file-text" style="font-size:18px;color:var(--text2)"></i> Estat de Resultats</div>
@@ -1342,9 +1381,12 @@ function initExerciciSelector(){
   if(!DB.config.exercicis||!DB.config.exercicis.length)DB.config.exercicis=['26/27'];
   const exercicis=DB.config.exercicis;
   const current=getAnyFiscal();
-  sel.innerHTML=exercicis.map(function(e){
+  const opts=exercicis.map(function(e){
     return'<option value="'+e+'"'+(e===current?' selected':'')+'>'+e+'</option>';
   }).join('');
+  sel.innerHTML=opts;
+  const mobSel=document.getElementById('mob-any-fiscal');
+  if(mobSel)mobSel.innerHTML=opts;
 }
 
 function updateAllBadges(af){
@@ -2023,12 +2065,17 @@ function renderDashboard(){
       +'<span style="font-size:13px;color:var(--text2)">Total fons</span>'
       +'<span style="font-size:20px;font-weight:700;color:'+(total2>0?'var(--green)':'var(--text2)')+'">'+fmtD(total2)+'</span></div>';
     fonsHtml+='<div style="max-height:220px;overflow-y:auto">';
-    llista.slice(0,10).forEach(function(x){
-      const ini=x.u.nom.split(' ').slice(0,2).map(function(w){return w[0]||'';}).join('').toUpperCase();
-      const col=x.saldo>0?'var(--green)':x.saldo<0?'var(--red)':'var(--text3)';
-      fonsHtml+='<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:0.5px solid var(--border);cursor:pointer" onclick="showPage(\'lliurament\')"><div class="fons-av" style="width:28px;height:28px;font-size:11px">'+ini+'</div><div style="flex:1;font-size:13px">'+x.u.nom+'</div><div style="font-weight:500;font-size:13px;color:'+col+'">'+fmtD(x.saldo)+'</div></div>';
-    });
-    if(llista.length>10){fonsHtml+='<div style="font-size:12px;color:var(--text3);text-align:center;padding:6px">... i '+(llista.length-10)+' més</div>';}
+    const ambSaldo=llista.filter(function(x){return x.saldo!==0;});
+    if(!ambSaldo.length){
+      fonsHtml+='<div style="color:var(--text3);font-size:12px;padding:8px 0">Sense fons actius</div>';
+    }else{
+      ambSaldo.slice(0,10).forEach(function(x){
+        const ini=x.u.nom.split(' ').slice(0,2).map(function(w){return w[0]||'';}).join('').toUpperCase();
+        const col=x.saldo>0?'var(--green)':x.saldo<0?'var(--red)':'var(--text3)';
+        fonsHtml+='<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:0.5px solid var(--border);cursor:pointer" onclick="showPage(\'lliurament\')"><div class="fons-av" style="width:28px;height:28px;font-size:11px">'+ini+'</div><div style="flex:1;font-size:13px">'+x.u.nom+'</div><div style="font-weight:500;font-size:13px;color:'+col+'">'+fmtD(x.saldo)+'</div></div>';
+      });
+      if(ambSaldo.length>10){fonsHtml+='<div style="font-size:12px;color:var(--text3);text-align:center;padding:6px">... i '+(ambSaldo.length-10)+' més</div>';}
+    }
     fonsHtml+='</div>';
     document.getElementById('dash-fons').innerHTML=fonsHtml;
   }
@@ -2075,17 +2122,33 @@ function renderDashboard(){
 // MOVIMENT
 let movType='gast',movVia='Efectiu';
 
+function checkMovReady(){
+  const imp=parseFloat((document.getElementById('mov-import')?.value||'0').replace(',','.'));
+  const deleg=document.getElementById('mov-deleg')?.value||'';
+  const ready=imp>0&&deleg!=='';
+  const isDespesa=movType==='gast';
+  const bg=ready?(isDespesa?'#C0392B':'var(--green)'):'var(--gray,#555)';
+  ['btn-registrar','btn-registrar-mob'].forEach(function(id){
+    const btn=document.getElementById(id);
+    if(!btn)return;
+    btn.style.background=bg;
+    btn.style.opacity=ready?'1':'0.6';
+    btn.style.cursor=ready?'pointer':'not-allowed';
+    btn.disabled=!ready;
+  });
+}
+
 function setMovType(t){
   movType=t;
   document.getElementById('btn-gast').className='mov-tipus-btn gast'+(t==='gast'?' active':'');
   document.getElementById('btn-ing').className='mov-tipus-btn ing'+(t==='ing'?' active':'');
   const isDespesa=t==='gast';
   const label='<i class="ti ti-check"></i> '+(isDespesa?'REGISTRAR DESPESA':'REGISTRAR INGRÉS');
-  const bg=isDespesa?'#C0392B':'var(--green)';
   ['btn-registrar','btn-registrar-mob'].forEach(function(id){
     const btn=document.getElementById(id);
-    if(btn){btn.innerHTML=label;btn.style.background=bg;btn.style.color='#fff';}
+    if(btn)btn.innerHTML=label;
   });
+  checkMovReady();
 }
 
 function setVia(v){
@@ -2130,6 +2193,31 @@ function onMovDelegChange(){
   const evs=DB.config.events.filter(e=>e.delegId===delegId);
   evs.forEach(e=>{const o=document.createElement('option');o.value=e.id;o.textContent=e.name;evSel.appendChild(o);});
   document.getElementById('mov-event-field').style.display=evs.length?'block':'none';
+}
+
+function confirmRegistrar(){
+  const imp=parseFloat((document.getElementById('mov-import')?.value||'0').replace(',','.'));
+  const deleg=document.getElementById('mov-deleg')?.value||'';
+  if(!imp||!deleg){showToast('Omple import i delegació',true);return;}
+  const isDespesa=movType==='gast';
+  const delegNom=document.getElementById('mov-deleg')?.options[document.getElementById('mov-deleg')?.selectedIndex]?.text||deleg;
+  const concepte=document.getElementById('mov-concept')?.value||'';
+  // Show confirmation modal
+  const modal=document.getElementById('modal-confirm-mov');
+  if(modal){
+    document.getElementById('confirm-mov-text').innerHTML=
+      '<div style="font-size:15px;margin-bottom:12px">Confirmes el registre d\'aquest moviment?</div>'+
+      '<div style="background:var(--bg2);border-radius:var(--r);padding:12px;font-size:13px;line-height:1.8">'+
+      '<div><strong>Tipus:</strong> <span style="color:'+(isDespesa?'var(--red)':'var(--green)')+'">'+( isDespesa?'DESPESA':'INGRÉS')+'</span></div>'+
+      '<div><strong>Import:</strong> '+fmtD(imp)+'</div>'+
+      '<div><strong>Delegació:</strong> '+delegNom+'</div>'+
+      (concepte?'<div><strong>Concepte:</strong> '+concepte+'</div>':'')+
+      '<div><strong>Via:</strong> '+movVia+'</div>'+
+      '</div>';
+    openModal('modal-confirm-mov');
+  }else{
+    registrarMoviment();
+  }
 }
 
 async function registrarMoviment(){
@@ -2316,8 +2404,11 @@ function renderFons(){
   if(perm('canFons')&&perm('viewAll')){
     // Només mostrar usuaris amb fons actius (saldo != 0 o moviments de fons)
     const af=getAnyFiscal();
-    const delegats=(DB.config.usuaris||[]).filter(function(u){return u.rol!=='noauth';}).sort(function(a,b){return a.nom.localeCompare(b.nom,'ca');});
     var af5=getAnyFiscal();
+    const delegats=(DB.config.usuaris||[]).filter(function(u){
+      if(u.rol==='noauth')return false;
+      return(DB.fons||[]).some(function(f){return(!f.anyFiscal||f.anyFiscal===''||f.anyFiscal===af5)&&(f.delegId===u.id||(f.delegEmail||'').toLowerCase()===(u.email||'').toLowerCase());});
+    }).sort(function(a,b){return a.nom.localeCompare(b.nom,'ca');});
     var totF=delegats.reduce(function(s,u){
       var fu=(DB.fons||[]).filter(function(f){return(!f.anyFiscal||f.anyFiscal===''||f.anyFiscal===af5)&&(f.delegId===u.id||(f.delegEmail||'').toLowerCase()===(u.email||'').toLowerCase());});
       var r=fu.filter(function(f){return f.tipus==='lliurament'||f.tipus==='regularitzacio';}).reduce(function(s2,f){return s2+f.import;},0);
@@ -4320,7 +4411,7 @@ async function handleGoogleCredential(response){
     tokenClient=google.accounts.oauth2.initTokenClient({
       client_id:CLIENT_ID,
       scope:'https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile',
-      prompt:'',
+      prompt:'none',
       callback:async function(resp){
         if(resp.error){
           // Si falla el silent, mostrar el botó de login
