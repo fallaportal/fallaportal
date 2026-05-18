@@ -263,7 +263,7 @@ tr:hover td{background:var(--bg2)}
     <div class="login-logo">Falla <span>Portal</span></div>
     <div class="login-sub">Sistema de gestió financera</div>
     <div class="login-fiscal">Any fiscal 26/27 · Abr 2026 – Mar 2027</div>
-    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v1.2.36</div>
+    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v1.2.38</div>
     <button class="btn-google" onclick="signIn()">
       <svg viewBox="0 0 24 24" width="20" height="20"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
       Entrar amb Google
@@ -305,7 +305,7 @@ tr:hover td{background:var(--bg2)}
     <div class="sb-bottom">
       <div class="sync-ind"><div class="sync-dot" id="sync-dot"></div><span id="sync-text">Sincronitzat</span></div>
       <button class="btn-logout" onclick="signOut()"><i class="ti ti-logout" style="font-size:14px"></i> Tancar sessió</button>
-      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v1.2.36</div>
+      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v1.2.38</div>
     </div>
   </div>
 
@@ -5025,7 +5025,7 @@ function processXLSBanc(arrayBuffer,zona){
       }
       if(isNaN(imp)||imp===0)continue;
 
-      moviments.push({data:dataVal,concepte,import:imp});
+      moviments.push({data:dataVal,concepte,_concepteOriginal:concepte,import:imp});
     }
 
     if(!moviments.length){showToast('No s\'han trobat moviments al fitxer.',true);return;}
@@ -5036,6 +5036,8 @@ function processXLSBanc(arrayBuffer,zona){
     window['_xlsRows'+zona]=moviments;
     window['_xlsBanc'+zona]=bancTrobat;
     window['_xlsAssignats'+zona]=assignats;
+    window['_xlsCompte'+zona]=compteDetectat;
+    window['_xlsFormat'+zona]=formatBanc;
 
     mostrarPreviewImportacio(zona,moviments,assignats,bancTrobat,compteDetectat,formatBanc);
 
@@ -5047,12 +5049,11 @@ function processXLSBanc(arrayBuffer,zona){
 
 // Aplicar regles de mapeig per assignar àrea/delegació automàticament (DB.regles = 13 Regles CSV)
 function aplicarReglesImportacio(moviments,banc){
-  const fontBanc=banc.codi||banc.id;
   const regles=(DB.regles||[]).filter(function(r){
     if(!r.activa)return false;
     if(r.tipus==='ignore')return false;
-    // Filtrar per font: si la regla té font definida, ha de coincidir amb el banc
-    if(r.font&&r.font!==fontBanc&&r.font!==banc.id)return false;
+    // font buida = s'aplica a tots els bancs; si té font, ha de coincidir amb banc.id
+    if(r.font&&r.font!==banc.id)return false;
     return true;
   }).sort(function(a,b){return(a.prioritat||99)-(b.prioritat||99);});
 
@@ -5186,16 +5187,20 @@ function crearReglaDesdeExcepcio(zona,idx){
   const m=assignats[idx];
   if(!m.areaId){showToast('Primer assigna una àrea a aquest moviment',true);return;}
   if(!DB.regles)DB.regles=[];
-  // Usar les primeres paraules del concepte com a patró de cerca
-  const patrons=m.concepte.split(' ').slice(0,4).join(' ').substring(0,40);
+  // Patrons: primeres paraules del concepte ORIGINAL del banc (no el concepte editat)
+  const concepteOriginal=m._concepteOriginal||m.concepte;
+  const patrons=concepteOriginal.split(' ').slice(0,3).join(' ').substring(0,40);
+  // Concepte: el que l'usuari haja escrit al camp (pot ser diferent)
+  const inputEl=document.getElementById('exc-conc-'+zona+'-'+idx);
+  const concepteFinal=inputEl?inputEl.value.trim()||m.concepte:m.concepte;
   const areaObj=(DB.config.areas||[]).find(function(a){return a.id===m.areaId;});
   const novaRegla={
     id:'r'+Date.now(),
-    font:banc.codi||banc.id,
+    font:banc.id,
     patrons,
     areaId:m.areaId,areaNom:areaObj?areaObj.name:'',
     delegacioId:m.delegacioId||'',delegacioNom:m.delegacioNom||'',
-    concepte:m.concepte,
+    concepte:concepteFinal,
     tipus:'auto',movtype:m.import>0?'ing':'gast',
     prioritat:(DB.regles.length+1)*10,
     activa:true
@@ -5204,6 +5209,30 @@ function crearReglaDesdeExcepcio(zona,idx){
   saveCache();
   save('regles').catch(function(e){console.warn(e);});
   showToast('Regla creada: "'+patrons+'" → '+(areaObj?areaObj.name:'àrea')+' (13 Regles CSV)');
+
+  // Re-aplicar TOTES les regles als moviments de la zona i refrescar el preview
+  const movimentsOriginals=window['_xlsRows'+zona];
+  const bancZona=window['_xlsBanc'+zona];
+  if(movimentsOriginals&&bancZona){
+    const nouAssignats=aplicarReglesImportacio(movimentsOriginals,bancZona);
+    // Preservar els _ignorar i assignacions manuals que l'usuari ja havia fet
+    const vellsAssignats=window['_xlsAssignats'+zona]||[];
+    nouAssignats.forEach(function(nm,i){
+      const vell=vellsAssignats[i];
+      if(!vell)return;
+      if(vell._ignorar)nm._ignorar=true;
+      // Si l'usuari havia assignat manualment i la nova regla no l'ha agafat, conservar manual
+      if(vell.assignatPer==='manual'&&vell.areaId&&nm.assignatPer!=='regla_concepte'){
+        nm.areaId=vell.areaId;nm.areaNom=vell.areaNom;
+        nm.delegacioId=vell.delegacioId;nm.delegacioNom=vell.delegacioNom;
+        nm.concepte=vell.concepte;nm.assignatPer='manual';
+      }
+    });
+    window['_xlsAssignats'+zona]=nouAssignats;
+    const compteDetectat=window['_xlsCompte'+zona]||'';
+    const formatBanc=window['_xlsFormat'+zona]||'';
+    mostrarPreviewImportacio(zona,movimentsOriginals,nouAssignats,bancZona,compteDetectat,formatBanc);
+  }
 }
 
 async function importarXLSZona(zona){
