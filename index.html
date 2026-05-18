@@ -263,7 +263,7 @@ tr:hover td{background:var(--bg2)}
     <div class="login-logo">Falla <span>Portal</span></div>
     <div class="login-sub">Sistema de gestió financera</div>
     <div class="login-fiscal">Any fiscal 26/27 · Abr 2026 – Mar 2027</div>
-    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v1.2.30</div>
+    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v1.2.31</div>
     <button class="btn-google" onclick="signIn()">
       <svg viewBox="0 0 24 24" width="20" height="20"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
       Entrar amb Google
@@ -305,7 +305,7 @@ tr:hover td{background:var(--bg2)}
     <div class="sb-bottom">
       <div class="sync-ind"><div class="sync-dot" id="sync-dot"></div><span id="sync-text">Sincronitzat</span></div>
       <button class="btn-logout" onclick="signOut()"><i class="ti ti-logout" style="font-size:14px"></i> Tancar sessió</button>
-      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v1.2.30</div>
+      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v1.2.31</div>
     </div>
   </div>
 
@@ -602,7 +602,7 @@ tr:hover td{background:var(--bg2)}
     </div>
     <div id="page-importacio" class="page">
       <div class="page-title">Importar extracte bancari</div>
-      <div class="page-sub" id="sub-importacio">Extractes bancaris de Caixabank (format XLS)</div>
+      <div class="page-sub" id="sub-importacio">Extractes bancaris de CaixaBank i Caixa Popular</div>
 
       <!-- INFO DATES -->
       <div class="info-box" style="margin-bottom:20px">
@@ -620,8 +620,8 @@ tr:hover td{background:var(--bg2)}
           <div style="display:flex;align-items:flex-start;gap:14px">
             <div style="width:36px;height:36px;border-radius:50%;background:var(--green-bg);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:18px;font-weight:700;color:var(--green)">1</div>
             <div style="flex:1">
-              <div style="font-weight:600;font-size:15px;margin-bottom:4px">CaixaBank — Extracte XLS</div>
-              <div style="font-size:13px;color:var(--text2);margin-bottom:10px">Importa un extracte XLS de CaixaBank. El sistema detecta automàticament el compte i l'assigna al banc corresponent.</div>
+              <div style="font-weight:600;font-size:15px;margin-bottom:4px">CaixaBank — Extracte XLSX</div>
+              <div style="font-size:13px;color:var(--text2);margin-bottom:10px">Importa un extracte de CaixaBank. Detecta automàticament el compte per l'IBAN i el concepte inclou les dues columnes del fitxer.</div>
               <div style="background:var(--bg2);border-radius:var(--r);padding:10px 12px;font-size:12px;color:var(--text2);margin-bottom:12px">
                 <div style="font-weight:500;margin-bottom:4px"><i class="ti ti-info-circle"></i> Com obtenir l'extracte:</div>
                 <ol style="margin-left:16px;line-height:1.8">
@@ -629,7 +629,9 @@ tr:hover td{background:var(--bg2)}
                   <li>Ves a <strong>Comptes → Moviments</strong></li>
                   <li>Filtra per dates: <span id="csv-instruccio-dates-1" style="font-family:monospace;background:var(--bg);padding:1px 6px;border-radius:4px"></span></li>
                   <li>Exporta com a <strong>Excel / XLS</strong></li>
+                  <li>Obre el fitxer amb <strong>Excel o LibreOffice</strong> i guarda'l com a <strong style="color:var(--green)">XLSX</strong></li>
                 </ol>
+                <div style="margin-top:8px;padding:6px 10px;background:var(--amber-bg);border-radius:var(--r);color:var(--amber);font-size:11px"><i class="ti ti-alert-triangle"></i> CaixaBank exporta en format XLS antic que el navegador no pot llegir directament. Cal convertir-lo a XLSX primer.</div>
               </div>
               <div id="csv-drop-1" class="fapp-dropzone" ondrop="handleCSVDrop(event,1)" ondragover="event.preventDefault()" ondragleave="this.classList.remove('drag-over')" ondragenter="this.classList.add('drag-over')">
                 <i class="ti ti-upload" style="font-size:24px;color:var(--text3);margin-bottom:6px"></i>
@@ -4915,23 +4917,42 @@ function processXLSBanc(arrayBuffer,zona){
       return;
     }
 
-    // Detectar columnes a la capçalera
-    const headerArr=(rows[headerRow]||[]).map(function(c){return String(c||'').toLowerCase().trim();});
-    const colData=headerArr.findIndex(function(c){return c.includes('fecha')||c.includes('data');});
-    const colConcepte=headerArr.findIndex(function(c){return c.includes('tipo')||c.includes('concepte')||c.includes('moviment')||c.includes('descrip');});
-    const colImport=headerArr.findIndex(function(c){return c.includes('importe')||c.includes('import');});
-    const colCategoria=headerArr.findIndex(function(c){return c.includes('columna')||c.includes('categ')||c.includes('tag')||c.includes('nota');});
+    // Detectar format específic per les capçaleres
+    const headerStr=(rows[headerRow]||[]).join(' ').toLowerCase();
+    const isCaixabank=headerStr.includes('moviment')||headerStr.includes('més dades')||headerStr.includes('mas datos');
+    const isCaixaPopular=headerStr.includes('tipo movimiento')||headerStr.includes('nro. apunte');
 
-    // Parsejar files de dades
+    // Detectar columnes
+    const headerArr=(rows[headerRow]||[]).map(function(c){return String(c||'').toLowerCase().trim();});
+    let colData=0, colConcepte=2, colConcepte2=-1, colImport=3;
+
+    if(isCaixabank){
+      // CaixaBank: Data(0) | Data valor(1) | Moviment(2) | Més dades(3) | Import(4) | Saldo(5)
+      colData=0; colConcepte=2; colConcepte2=3; colImport=4;
+    } else if(isCaixaPopular){
+      // Caixa Popular: Fecha op(0) | Fecha valor(1) | Tipo movimiento(2) | Importe(3) | Saldo(4)
+      colData=0; colConcepte=2; colConcepte2=-1; colImport=3;
+    } else {
+      // Genèric: detectar per nom de columna
+      colData=headerArr.findIndex(function(c){return c.includes('fecha')||c.includes('data');});
+      colConcepte=headerArr.findIndex(function(c){return c.includes('tipo')||c.includes('moviment')||c.includes('concepte')||c.includes('descrip');});
+      colImport=headerArr.findIndex(function(c){return c.includes('importe')||c.includes('import');});
+      if(colData<0)colData=0; if(colConcepte<0)colConcepte=2; if(colImport<0)colImport=3;
+    }
+
     const dataStart=headerRow>=0?headerRow+1:1;
     const moviments=[];
     for(let i=dataStart;i<rows.length;i++){
       const row=rows[i]||[];
       if(!row.length)continue;
-      let dataVal=String(row[colData>=0?colData:0]||'').trim();
-      const concepte=String(row[colConcepte>=0?colConcepte:2]||'').trim();
-      let importRaw=String(row[colImport>=0?colImport:3]||'').trim();
-      const categoria=colCategoria>=0?String(row[colCategoria]||'').trim():'';
+      let dataVal=String(row[colData]||'').trim();
+      let concepte=String(row[colConcepte]||'').trim();
+      // Combinar les dues columnes de concepte si existeixen (CaixaBank)
+      if(colConcepte2>=0&&row[colConcepte2]){
+        const extra=String(row[colConcepte2]).trim();
+        if(extra)concepte=concepte+(concepte?' · ':'')+extra;
+      }
+      let importRaw=String(row[colImport]||'').trim();
 
       // Normalitzar data — pot venir com a Date ISO o DD/MM/YYYY
       if(!dataVal||dataVal==='undefined')continue;
@@ -4947,7 +4968,7 @@ function processXLSBanc(arrayBuffer,zona){
       const imp=parseFloat(importRaw);
       if(isNaN(imp)||imp===0)continue;
 
-      moviments.push({data:dataVal,concepte,import:imp,categoria});
+      moviments.push({data:dataVal,concepte,import:imp});
     }
 
     if(!moviments.length){showToast('No s\'han trobat moviments al fitxer.',true);return;}
