@@ -966,7 +966,7 @@ tr:hover td{background:var(--bg2)}
 <div class="modal-overlay" id="modal-copy-dir">
   <div class="modal" style="max-width:400px">
   <div class="modal-inner">
-    html+='<button class="btn" onclick="openModalCopyDirectiva()" style="color:var(--pink,#D4537E)"><i class="ti ti-copy"></i> Copiar directiva</button>';
+    <div class="modal-title"><i class="ti ti-copy" style="font-size:16px;margin-right:6px"></i>Copiar directiva</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
       <div class="field"><label>Any fiscal origen</label><select id="cd-origen"></select></div>
       <div class="field"><label>Any fiscal desti</label><select id="cd-desti"></select></div>
@@ -1075,34 +1075,6 @@ tr:hover td{background:var(--bg2)}
     <div class="modal-footer">
       <button class="btn" onclick="closeModal('modal-banc')">Cancel·lar</button>
       <button class="btn btn-primary" onclick="saveBanc()">Guardar</button>
-    </div>
-  </div>
-</div>
-<div class="modal-overlay" id="modal-usuari">
-  <div class="modal">
-    <div class="modal-inner">
-      <div class="modal-title" id="mu-title">Nou usuari</div>
-      <div class="info-box">L'email ha de coincidir exactament amb el compte de Google del membre.</div>
-      <div class="field"><label>Nom complet</label><input type="text" id="mu-nom" placeholder="Nom i cognoms"></div>
-      <div class="field"><label>Email de Google</label><input type="email" id="mu-email" placeholder="exemple@gmail.com"></div>
-      <div class="field">
-        <label>Rol principal</label>
-        <select id="mu-rol">
-          <option value="president">President</option>
-          <option value="treasury">Tresoreria</option>
-          <option value="area">Responsable d'Area</option>
-          <option value="delegat">Responsable de Delegacio</option>
-          <option value="board">Junta (sols lectura)</option>
-        </select>
-      </div>
-      <div class="info-box" style="font-size:12px">
-        <i class="ti ti-info-circle" style="flex-shrink:0"></i>
-        Les assignacions d'arees i delegacions es gestionen des de <strong>Configuracio &rarr; Gestionar directiva</strong>.
-      </div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn" onclick="closeModal('modal-usuari')">Cancel·lar</button>
-      <button class="btn btn-primary" onclick="saveUsuari()">Guardar usuari</button>
     </div>
   </div>
 </div>
@@ -1232,9 +1204,9 @@ function loadCache(){
   }catch(e){return false;}
 }
 
-// Guardar en segon pla sense bloquejar la UI
+// Guardar en segon pla sense bloquejar la UI — usar per a dades no crítiques
 function saveBackground(key){
-  save(key).then(()=>saveCache()).catch(e=>console.warn('Save error:',e));
+  save(key).then(()=>saveCache()).catch(e=>console.warn('Save background error:',e));
 }
 const AREA_COLORS={'01':'#1D9E75','02':'#7F77DD','03':'#378ADD','04':'#BA7517','05':'#D4537E','06':'#D85A30','07':'#888780'};
 
@@ -1436,7 +1408,7 @@ function canviarExercici(any){
       fallesapp:initFappDates,importacio:initCSVDates};
     if(renders[id])renders[id]();
   }
-  save('config_ext').catch(function(e){console.warn(e);});
+  saveBackground('config_ext');
   updateAllBadges(any);
   showToast('Exercici '+any+' seleccionat');
 }
@@ -1792,7 +1764,7 @@ async function save(key){
     else if(key==='pres_plans'){await writeTab(t.name,t.headers,DB.pres_plans);}
     else if(key==='pres_config'){await writeTab(t.name,t.headers,[DB.pres_config]);}
     else if(key==='pres_historial'){await writeTab(t.name,t.headers,DB.pres_historial);}
-  }catch(e){showToast('Error guardant: '+e.message,true);}
+  }catch(e){showToast('Error guardant: '+e.message,true);setSyncing(false);return;}
   setSyncing(false);
 }
 
@@ -1817,6 +1789,8 @@ async function loadUserInfo(){
   const resp=await fetch('https://www.googleapis.com/oauth2/v3/userinfo',{headers:{Authorization:'Bearer '+accessToken}});
   const info=await resp.json();
   currentUser={email:info.email,name:info.name,picture:info.picture};
+  // Calcular inicials del nom per l'avatar
+  currentUser.initials=(info.name||'?').split(' ').slice(0,2).map(function(w){return w[0]||'';}).join('').toUpperCase()||'?';
   const emailLow=info.email.toLowerCase();
   if(emailLow==='it.fallaportal@gmail.com'){currentUser.rol='treasury';currentUser.id='it';}
   else{const u=(DB.config.usuaris||[]).find(function(x){return(x.email||'').toLowerCase()===emailLow;});currentUser.rol=u?u.rol:'noauth';currentUser.id=u?u.id:'';}
@@ -4341,6 +4315,10 @@ function loadFappFile(e,z){const f=e.target.files[0];if(f)processFappFile(f,z);}
 function handleFappDrop(e,z){e.preventDefault();const dz=document.getElementById('fapp-drop-'+z);if(dz)dz.classList.remove('drag-over');const f=e.dataTransfer.files[0];if(f)processFappFile(f,z);}
 function processFappFile(file,zona){const reader=new FileReader();reader.onload=function(e){try{const data=new Uint8Array(e.target.result);const wb=XLSX.read(data,{type:'array',cellDates:true,cellNF:false,cellText:false});const ws=wb.Sheets[wb.SheetNames[0]];const rows=XLSX.utils.sheet_to_json(ws);const dz=document.getElementById('fapp-drop-'+zona);if(dz)dz.classList.add('loaded');if(zona===1)renderFappPreview1(rows);else if(zona===2)renderFappPreview2(rows);else if(zona===3)renderFappPreview3(rows);}catch(err){const p=document.getElementById('fapp-preview-'+zona);if(p)p.innerHTML='<div class="info-box" style="color:var(--red)">Error: '+err.message+'</div>';}};reader.readAsArrayBuffer(file);}
 function extrPreu(nom){const m=(nom||'').match(/(\d+(?:[.,]\d+)?)\s*€/);return m?parseFloat(m[1].replace(',','.')):0;}
+// Parsejar data de falles.app (acepta Date, DD/MM/AAAA i ISO)
+function parseFT(val){if(!val)return null;if(val instanceof Date)return val;const s=String(val).trim();const m=s.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);if(m)return new Date(parseInt(m[3]),parseInt(m[2])-1,parseInt(m[1]));return new Date(s);}
+// Formatar Date a DD/MM/AAAA
+function fmtD2(d){if(!d)return today();const dd=String(d.getDate()).padStart(2,'0');const mm=String(d.getMonth()+1).padStart(2,'0');return dd+'/'+mm+'/'+d.getFullYear();}
 function renderFappPreview1(rows){window._fappTransRows=rows;const valid=rows.filter(function(r){return r['Estado']==='Autorizado'&&r['Cantidad'];});const totEf=valid.filter(function(r){return r['Tipo']==='Recarga de efectivo';}).reduce(function(s,r){return s+(parseFloat(r['Cantidad'])||0);},0);const totTpv=valid.filter(function(r){return r['Tipo']==='Recarga de TPV';}).reduce(function(s,r){return s+(parseFloat(r['Cantidad'])||0);},0);const totDev=valid.filter(function(r){return(r['Tipo']||'').includes('Devoluci');}).reduce(function(s,r){return s+(parseFloat(r['Cantidad'])||0);},0);let html='<div class="card" style="margin-top:12px"><div class="card-title"><i class="ti ti-check" style="color:var(--green)"></i> '+valid.length+' transaccions</div>';html+='<div class="flow-row"><span>Efectiu (agrupat per dia)</span><span style="color:var(--green);font-weight:500">+'+fmtD(totEf)+'</span></div>';html+='<div class="flow-row"><span>TPV (individual)</span><span style="color:var(--green);font-weight:500">+'+fmtD(totTpv)+'</span></div>';html+='<div class="flow-row"><span>Devolucions</span><span style="color:var(--red);font-weight:500">'+fmtD(totDev)+'</span></div>';html+='<div class="flow-row" style="font-weight:600;border-top:1px solid var(--border);margin-top:6px;padding-top:8px"><span>TOTAL NET</span><span style="color:var(--green)">+'+fmtD(totEf+totTpv+totDev)+'</span></div>';html+='<div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">';html+='<div class="field"><label>Via efectiu</label><select id="fapp-via-ef">'+(DB.config.bancs||[]).filter(function(b){return b.tipus==="cash";}).map(function(b){return'<option value="'+b.codi+'">'+b.nom+'</option>';}).join('')+'</select></div>';html+='<div class="field"><label>Via TPV</label><select id="fapp-via-tpv">'+(DB.config.bancs||[]).filter(function(b){return b.tipus==="bank";}).map(function(b){return'<option value="'+b.codi+'">'+b.nom+'</option>';}).join('')+'</select></div>';html+='<div class="field"><label>Area</label><select id="fapp-area-dest" onchange="updateFappDeleg()">'+DB.config.areas.map(function(a){return'<option value="'+a.id+'">'+a.id+' '+a.name+'</option>';}).join('')+'</select></div>';html+='<div class="field"><label>Delegacio</label><select id="fapp-deleg-dest">'+DB.config.delegacions.filter(function(d){const aId=DB.config.areas[0]?.id;return!aId||d.areaId===aId;}).map(function(d){return'<option value="'+d.id+'">'+d.id+' '+d.name+'</option>';}).join('')+'</select></div></div>';html+='<div style="display:flex;gap:8px;margin-top:10px"><button class="btn btn-primary" onclick="importarFappTrans()"><i class="ti ti-check"></i> Importar</button><button class="btn" onclick="cancelFappImport(1)"><i class="ti ti-x"></i> Cancel·lar</button></div></div>';document.getElementById('fapp-preview-1').innerHTML=html;}
 function renderFappPreview2(rows){const valid=rows.filter(function(r){
     const nom=(r['Usuario']||'').toString().trim().toLowerCase();
@@ -4385,6 +4363,7 @@ function renderFappPreview3(rows){
     html+='<div style="font-weight:500;margin-bottom:6px">Assignació automàtica per event:</div>';
     html+='<div class="info-box" style="font-size:12px;margin-bottom:8px"><i class="ti ti-info-circle" style="flex-shrink:0"></i>Els consums s\'assignen automàticament per dates del mestre d\'events. Els que no coincideixen van a Festejos genèric.</div>';
     // Calcular assignació
+    const assignats={};
     valid.forEach(function(r){
       const d=parseFT(r['Fecha']);if(!d||isNaN(d.getTime()))return;
       let evTrobat=null;
@@ -4421,7 +4400,16 @@ function calcConsumEvent(btn){const evId=btn.getAttribute('data-evid');const evN
 function registrarConsumEventBtn(btn){registrarConsumEvent(btn.dataset.evid,btn.dataset.evnom,parseFloat(btn.dataset.total),btn.dataset.from,btn.dataset.to);}
 async function registrarConsumEvent(evId,evNom,total,from,to){if(!confirm('Registrar '+fmtD(total)+' com a ingres de "'+evNom+'"?'))return;const ev=DB.config.events.find(function(e){return e.id===evId;});const deleg=DB.config.delegacions.find(function(d){return d.id===(ev?.delegId||'');});const area=deleg?DB.config.areas.find(function(a){return a.id===deleg.areaId;}):null;const af=getAnyFiscal();DB.moviments.push({id:'m'+Date.now(),anyFiscal:af,tipus:'ing',via:'app',areaId:area?.id||'',areaNom:area?.name||'',delegacioId:deleg?.id||'',delegacioNom:deleg?.name||'',eventId:evId,eventNom:evNom,concepte:'Consums falles.app - '+evNom,establiment:'falles.app',data:to?to.split('T')[0]:today(),responsable:currentUser?.name||'',responsableEmail:currentUser?.email||'',import:total,notes:'Consums '+from+' fins '+to,fontImport:'fallesapp_tickets'});saveCache();showToast('Ingres de '+fmtD(total)+' registrat per a '+evNom);save('moviments').catch(function(e){showToast('Error: '+e.message,true);});}
 async function registrarBonificacio(){const imp=parseFloat(document.getElementById('fapp-bonif-import').value)||0;const data=fmtDateInput(document.getElementById('fapp-bonif-data').value);const notes=document.getElementById('fapp-bonif-notes').value||'Bonificacio moneders falles.app';if(!imp||!data){showToast('Import i data son obligatoris',true);return;}if(!confirm('Registrar '+fmtD(imp)+' com a despesa?'))return;const af=getAnyFiscal();DB.moviments.push({id:'m'+Date.now(),anyFiscal:af,tipus:'gast',via:'app',areaId:'01',areaNom:'Administracio i Secretaria',delegacioId:'0102',delegacioNom:'Tresoreria',eventId:'',eventNom:'',concepte:notes,establiment:'falles.app',data,responsable:currentUser?.name||'',responsableEmail:currentUser?.email||'',import:imp,notes:'Bonificacio falles.app',fontImport:'fallesapp_bonif'});saveCache();showToast('Bonificacio registrada: '+fmtD(imp));save('moviments').catch(function(e){showToast('Error: '+e.message,true);});document.getElementById('fapp-bonif-import').value='';document.getElementById('fapp-bonif-data').value='';}
-function signOut(){if(accessToken)google.accounts.oauth2.revoke(accessToken,function(){});accessToken=null;currentUser=null;document.getElementById('app').style.display='none';document.getElementById('login').style.display='flex';document.getElementById('sb-name').textContent='—';document.getElementById('sb-role').textContent='—';}
+function signOut(){
+  if(accessToken)google.accounts.oauth2.revoke(accessToken,function(){});
+  accessToken=null;currentUser=null;
+  try{localStorage.removeItem(CACHE_KEY);}catch(e){}
+  document.getElementById('app').classList.add('hidden');
+  document.getElementById('login-screen').classList.remove('hidden');
+  document.getElementById('sb-name').textContent='—';
+  document.getElementById('sb-role').textContent='—';
+  google.accounts.id.disableAutoSelect();
+}
 
 // UTILS
 
@@ -4436,14 +4424,14 @@ async function handleGoogleCredential(response){
       callback:async function(resp){
         if(resp.error){
           // Si falla el silent, mostrar el botó de login
-          document.getElementById('login').style.display='flex';
-          document.getElementById('app').style.display='none';
+          document.getElementById('login-screen').classList.remove('hidden');
+          document.getElementById('app').classList.add('hidden');
           return;
         }
         accessToken=resp.access_token;
         try{
-          await loadAllFromDrive();
           await loadUserInfo();
+          await loadAllFromDrive();
           initApp();
         }catch(e){showToast('Error carregant dades: '+e.message,true);}
       }
@@ -4451,39 +4439,6 @@ async function handleGoogleCredential(response){
   }
   // Demanar token silenciosament (sense prompt)
   tokenClient.requestAccessToken({prompt:''});
-}
-
-function initGoogleAuth(){
-  // Inicialitzar One Tap per a login automàtic
-  google.accounts.id.initialize({
-    client_id:CLIENT_ID,
-    callback:handleGoogleCredential,
-    auto_select:true,  // Seleccionar automàticament si hi ha una sessió activa
-    cancel_on_tap_outside:false
-  });
-
-  // Intentar login automàtic (One Tap)
-  google.accounts.id.prompt(function(notification){
-    if(notification.isNotDisplayed()||notification.isSkippedMoment()){
-      // No s'ha pogut fer login automàtic - mostrar el botó manual
-      console.log('One Tap no disponible:',notification.getNotDisplayedReason()||notification.getSkippedReason());
-    }
-  });
-
-  // Inicialitzar token client per al botó manual
-  tokenClient=google.accounts.oauth2.initTokenClient({
-    client_id:CLIENT_ID,
-    scope:'https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile',
-    callback:async function(resp){
-      if(resp.error){showToast('Error Google: '+resp.error,true);return;}
-      accessToken=resp.access_token;
-      try{
-        await loadAllFromDrive();
-        await loadUserInfo();
-        initApp();
-      }catch(e){showToast('Error carregant dades: '+e.message,true);}
-    }
-  });
 }
 
 
@@ -4582,8 +4537,7 @@ async function importarFappTickets(){
   const rows=window._fappTicketRows;
   if(!rows){showToast('Cap dada per importar',true);return;}
   const af=getAnyFiscal();
-  function parseFT(val){if(!val)return null;if(val instanceof Date)return val;const s=String(val).trim();const m=s.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);if(m)return new Date(parseInt(m[3]),parseInt(m[2])-1,parseInt(m[1]));return new Date(s);}
-  function fmtD2(d){if(!d)return today();const dd=String(d.getDate()).padStart(2,'0');const mm=String(d.getMonth()+1).padStart(2,'0');return dd+'/'+mm+'/'+d.getFullYear();}
+  // parseFT i fmtD2 estan definides globalment
   const eventsAmbData=DB.config.events.filter(function(e){return e.dataInici&&e.dataFi;});
   // Agrupar per event
   const grups={};
