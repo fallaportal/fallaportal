@@ -263,7 +263,7 @@ tr:hover td{background:var(--bg2)}
     <div class="login-logo">Falla <span>Portal</span></div>
     <div class="login-sub">Sistema de gestió financera</div>
     <div class="login-fiscal">Any fiscal 26/27 · Abr 2026 – Mar 2027</div>
-    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v1.2.24</div>
+    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v1.2.27</div>
     <button class="btn-google" onclick="signIn()">
       <svg viewBox="0 0 24 24" width="20" height="20"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
       Entrar amb Google
@@ -305,7 +305,7 @@ tr:hover td{background:var(--bg2)}
     <div class="sb-bottom">
       <div class="sync-ind"><div class="sync-dot" id="sync-dot"></div><span id="sync-text">Sincronitzat</span></div>
       <button class="btn-logout" onclick="signOut()"><i class="ti ti-logout" style="font-size:14px"></i> Tancar sessió</button>
-      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v1.2.24</div>
+      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v1.2.27</div>
     </div>
   </div>
 
@@ -601,34 +601,34 @@ tr:hover td{background:var(--bg2)}
       </div>
     </div>
     <div id="page-importacio" class="page">
-      <div class="page-title">Importar CSV</div>
-      <div class="page-sub" id="sub-importacio">Extractes bancaris de Caixabank o Caixa Popular</div>
+      <div class="page-title">Importar extracte bancari</div>
+      <div class="page-sub" id="sub-importacio">Extractes bancaris de Caixabank (format XLS)</div>
 
       <!-- INFO DATES -->
       <div class="info-box" style="margin-bottom:20px">
         <i class="ti ti-calendar" style="flex-shrink:0;font-size:18px"></i>
         <div>
           <strong>Extractes de l'exercici actiu:</strong> Del <strong id="csv-data-inici"></strong> al <strong id="csv-data-fi"></strong>
-          <div style="font-size:12px;color:var(--text2);margin-top:2px">Exporta l'extracte del teu banc per aquest rang de dates.</div>
+          <div style="font-size:12px;color:var(--text2);margin-top:2px">Exporta l'extracte del teu banc per aquest rang de dates en format XLS o Excel.</div>
         </div>
       </div>
 
       <div style="display:flex;flex-direction:column;gap:16px">
 
-        <!-- ZONA 1: Caixabank -->
+        <!-- ZONA 1: CaixaBank XLS -->
         <div class="card">
           <div style="display:flex;align-items:flex-start;gap:14px">
             <div style="width:36px;height:36px;border-radius:50%;background:var(--green-bg);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:18px;font-weight:700;color:var(--green)">1</div>
             <div style="flex:1">
-              <div style="font-weight:600;font-size:15px;margin-bottom:4px">Caixabank</div>
-              <div style="font-size:13px;color:var(--text2);margin-bottom:10px">Extracte bancari de Caixabank en format CSV.</div>
+              <div style="font-weight:600;font-size:15px;margin-bottom:4px">CaixaBank — Extracte XLS</div>
+              <div style="font-size:13px;color:var(--text2);margin-bottom:10px">Importa un extracte XLS de CaixaBank. El sistema detecta automàticament el compte i l'assigna al banc corresponent.</div>
               <div style="background:var(--bg2);border-radius:var(--r);padding:10px 12px;font-size:12px;color:var(--text2);margin-bottom:12px">
                 <div style="font-weight:500;margin-bottom:4px"><i class="ti ti-info-circle"></i> Com obtenir l'extracte:</div>
                 <ol style="margin-left:16px;line-height:1.8">
                   <li>Accedeix a <strong>CaixaBankNow</strong></li>
                   <li>Ves a <strong>Comptes → Moviments</strong></li>
                   <li>Filtra per dates: <span id="csv-instruccio-dates-1" style="font-family:monospace;background:var(--bg);padding:1px 6px;border-radius:4px"></span></li>
-                  <li>Exporta com a <strong>CSV</strong></li>
+                  <li>Exporta com a <strong>Excel / XLS</strong></li>
                 </ol>
               </div>
               <div id="csv-drop-1" class="fapp-dropzone" ondrop="handleCSVDrop(event,1)" ondragover="event.preventDefault()" ondragleave="this.classList.remove('drag-over')" ondragenter="this.classList.add('drag-over')">
@@ -637,29 +637,29 @@ tr:hover td{background:var(--bg2)}
                 <div style="font-size:12px;color:var(--text3);margin:4px 0">o</div>
                 <label style="cursor:pointer">
                   <span class="btn btn-primary" style="font-size:13px">Seleccionar fitxer</span>
-                  <input type="file" accept=".csv,.txt" style="display:none" onchange="loadCSVFile(event,1)">
+                  <input type="file" accept=".xls,.xlsx,.csv,.txt" style="display:none" onchange="loadCSVFile(event,1)">
                 </label>
-                <div style="font-size:11px;color:var(--text3);margin-top:6px">extracte_caixabank_*.csv</div>
+                <div style="font-size:11px;color:var(--text3);margin-top:6px">Moviments_compte_*.xls · extracte_*.csv</div>
               </div>
               <div id="csv-preview-1"></div>
             </div>
           </div>
         </div>
 
-        <!-- ZONA 2: Caixa Popular -->
+        <!-- ZONA 2: Caixa Popular XLSX -->
         <div class="card">
           <div style="display:flex;align-items:flex-start;gap:14px">
             <div style="width:36px;height:36px;border-radius:50%;background:var(--amber-bg);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:18px;font-weight:700;color:var(--amber)">2</div>
             <div style="flex:1">
-              <div style="font-weight:600;font-size:15px;margin-bottom:4px">Caixa Popular</div>
-              <div style="font-size:13px;color:var(--text2);margin-bottom:10px">Extracte bancari de Caixa Popular en format CSV.</div>
+              <div style="font-weight:600;font-size:15px;margin-bottom:4px">Caixa Popular — Extracte XLSX</div>
+              <div style="font-size:13px;color:var(--text2);margin-bottom:10px">Importa un extracte XLSX de Caixa Popular. El sistema detecta automàticament el compte per l'IBAN i llegeix la columna de categoria si existeix.</div>
               <div style="background:var(--bg2);border-radius:var(--r);padding:10px 12px;font-size:12px;color:var(--text2);margin-bottom:12px">
                 <div style="font-weight:500;margin-bottom:4px"><i class="ti ti-info-circle"></i> Com obtenir l'extracte:</div>
                 <ol style="margin-left:16px;line-height:1.8">
                   <li>Accedeix a la <strong>banca online de Caixa Popular</strong></li>
                   <li>Ves a <strong>Comptes → Moviments</strong></li>
                   <li>Filtra per dates: <span id="csv-instruccio-dates-2" style="font-family:monospace;background:var(--bg);padding:1px 6px;border-radius:4px"></span></li>
-                  <li>Exporta com a <strong>CSV</strong></li>
+                  <li>Exporta com a <strong>Excel / XLSX</strong></li>
                 </ol>
               </div>
               <div id="csv-drop-2" class="fapp-dropzone" ondrop="handleCSVDrop(event,2)" ondragover="event.preventDefault()" ondragleave="this.classList.remove('drag-over')" ondragenter="this.classList.add('drag-over')">
@@ -668,9 +668,9 @@ tr:hover td{background:var(--bg2)}
                 <div style="font-size:12px;color:var(--text3);margin:4px 0">o</div>
                 <label style="cursor:pointer">
                   <span class="btn btn-primary" style="font-size:13px">Seleccionar fitxer</span>
-                  <input type="file" accept=".csv,.txt" style="display:none" onchange="loadCSVFile(event,2)">
+                  <input type="file" accept=".xlsx,.xls,.csv,.txt" style="display:none" onchange="loadCSVFile(event,2)">
                 </label>
-                <div style="font-size:11px;color:var(--text3);margin-top:6px">extracte_caixapopular_*.csv</div>
+                <div style="font-size:11px;color:var(--text3);margin-top:6px">movimientos.xlsx · extracte_*.xlsx</div>
               </div>
               <div id="csv-preview-2"></div>
             </div>
@@ -1061,6 +1061,10 @@ tr:hover td{background:var(--bg2)}
           <option value="tpv">TPV / Targeta</option>
         </select>
       </div>
+      <div class="field">
+        <label>Número de compte <span style="color:var(--text3);font-size:12px">(IBAN o últims dígits, opcional)</span></label>
+        <input type="text" id="mb-compte" placeholder="p.e. ES56 2100 7990 ... o 0088726">
+      </div>
       <div class="field-row">
         <div class="field">
           <label>Saldo inicial (€) <span style="color:var(--text3);font-size:11px">(opcional)</span></label>
@@ -1173,7 +1177,8 @@ const TABS={
   arees:{name:'04 Arees',headers:['id','nom','responsable']},
   delegacions:{name:'05 Delegacions',headers:['id','areaId','nom','responsable']},
   events:{name:'06 Events',headers:['id','delegId','nom','year','responsable','status','dataInici','horaInici','dataFi','horaFi','anyFiscal']},
-  bancs:{name:'07 Bancs',headers:['id','codi','nom','tipus','saldoInicial','saldoData']},
+  bancs:{name:'07 Bancs',headers:['id','codi','nom','tipus','compte','saldoInicial','saldoData']},
+  reglesImportacio:{name:'08 Regles Import',headers:['id','tipus','valor','bancId','areaId','areaNom','delegacioId','delegacioNom']},
   usuaris:{name:'08 Usuaris',headers:['id','nom','email','rol']},
   usuaris_assignacions:{name:'09 Usuaris Assignacions',headers:['userId','userNom','tipus','id','nom','anyFiscal']},
   pres_plans:{name:'10 Pressupostos Plans',headers:['any','delegacioId','delegacioNom','eventId','eventNom','concepte','tipus','importPla','notes']},
@@ -1854,7 +1859,8 @@ function configToRows(){
   const arees=(cfg.areas||[]).map(function(a){return{id:a.id,nom:a.name,responsable:''};});
   const delegacions=(cfg.delegacions||[]).map(function(d){return{id:d.id,areaId:d.areaId,nom:d.name,responsable:''};});
   const events=(cfg.events||[]).map(function(e){return{id:e.id,delegId:e.delegId,nom:e.name,year:e.anyFiscal||e.year||'',responsable:e.resp||'',status:e.status||'pendent',dataInici:e.dataInici||'',horaInici:e.horaInici||'20:00',dataFi:e.dataFi||'',horaFi:e.horaFi||'02:00',anyFiscal:e.anyFiscal||e.year||''};});
-  const bancs=(cfg.bancs||[]).map(function(b){return{id:b.id,codi:b.codi,nom:b.nom,tipus:b.tipus,saldoInicial:b.saldoInicial||0,saldoData:b.saldoData||''};});
+  const bancs=(cfg.bancs||[]).map(function(b){return{id:b.id,codi:b.codi,nom:b.nom,tipus:b.tipus,compte:b.compte||'',saldoInicial:b.saldoInicial||0,saldoData:b.saldoData||''};});
+  const reglesImportacio=(cfg.reglesImportacio||[]).map(function(r){return{id:r.id,tipus:r.tipus,valor:r.valor,bancId:r.bancId||'',areaId:r.areaId,areaNom:r.areaNom,delegacioId:r.delegacioId||'',delegacioNom:r.delegacioNom||''};});
   const usuaris=(cfg.usuaris||[]).map(function(u){return{id:u.id,nom:u.nom,email:u.email,rol:u.rol};});
   const assignacions=[];
   const directiva=cfg.directiva||{};
@@ -1872,7 +1878,8 @@ function rowsToConfig(arees,delegacions,events,bancs,usuaris,assignacions){
     areas:arees.map(function(r){return{id:r.id,name:r.nom,resp:r.responsable};}),
     delegacions:delegacions.map(function(r){return{id:r.id,areaId:r.areaId,name:r.nom,resp:r.responsable};}),
     events:events.map(function(r){return{id:r.id,delegId:r.delegId,name:r.nom,year:r.anyFiscal||r.year||'',anyFiscal:r.anyFiscal||r.year||'',resp:r.responsable,status:r.status,dataInici:r.dataInici||'',horaInici:r.horaInici||'20:00',dataFi:r.dataFi||'',horaFi:r.horaFi||'02:00'};}),
-    bancs:bancs.map(function(r){return{id:r.id,codi:r.codi,nom:r.nom,tipus:r.tipus,saldoInicial:parseFloat(r.saldoInicial)||0,saldoData:r.saldoData||''};}),
+    bancs:bancs.map(function(r){return{id:r.id,codi:r.codi,nom:r.nom,tipus:r.tipus,compte:r.compte||'',saldoInicial:parseFloat(r.saldoInicial)||0,saldoData:r.saldoData||''};}),
+    reglesImportacio:(reglesImportacio||[]).map(function(r){return{id:r.id,tipus:r.tipus,valor:r.valor,bancId:r.bancId||'',areaId:r.areaId,areaNom:r.areaNom,delegacioId:r.delegacioId||'',delegacioNom:r.delegacioNom||''};}),
     usuaris:usuaris.map(function(u){return{id:u.id,nom:u.nom,email:u.email,rol:u.rol,arees:[],delegacions:[]};}),
     directiva:buildDirectivaFromRows(assignacions)
   };
@@ -3455,7 +3462,9 @@ function renderCfgBancs(){
     const hasSaldo=b.saldoInicial!==undefined&&b.saldoInicial!==null&&b.saldoInicial!=='';
     html+='<div style="flex:1">'+
       '<div style="font-weight:500">'+b.nom+'</div>'+
-      '<div style="font-size:12px;color:var(--text3)">'+b.codi+(b.saldoData?' · Saldo inicial: '+fmt(b.saldoInicial||0)+' ('+b.saldoData+')':'')+'</div>'+
+      '<div style="font-size:12px;color:var(--text3)">'+b.codi+
+        (b.compte?' · <span style="font-family:monospace">'+b.compte+'</span>':'')+
+        (b.saldoData?' · Saldo inicial: '+fmt(b.saldoInicial||0)+' ('+b.saldoData+')':'')+'</div>'+
     '</div>';
     if(hasSaldo){
       html+='<div style="text-align:right;margin-right:12px">'+
@@ -3482,6 +3491,7 @@ function openModalBanc(id){
   document.getElementById('mb-codi').disabled=!!id;
   document.getElementById('mb-nom').value=b?.nom||'';
   document.getElementById('mb-tipus').value=b?.tipus||'bank';
+  document.getElementById('mb-compte').value=b?.compte||'';
   document.getElementById('mb-saldo').value=b?.saldoInicial||'';
   document.getElementById('mb-saldo-data').value=dd2iso(b?.saldoData)||'';
   openModal('modal-banc');
@@ -3493,13 +3503,14 @@ async function saveBanc(){
   const tipus=document.getElementById('mb-tipus').value;
   if(!codi||!nom){showToast('Codi i nom son obligatoris',true);return;}
   if(!editBancId&&DB.config.bancs.find(b=>b.codi===codi)){showToast('Ja existeix un banc amb aquest codi',true);return;}
+  const compte=document.getElementById('mb-compte').value.trim();
   const saldoInicial=parseFloat(document.getElementById('mb-saldo').value)||0;
   const saldoData=fmtDateInput(document.getElementById('mb-saldo-data').value)||'';
   if(editBancId){
     const b=DB.config.bancs.find(x=>x.id===editBancId);
-    if(b){b.nom=nom;b.tipus=tipus;b.saldoInicial=saldoInicial;b.saldoData=saldoData;}
+    if(b){b.nom=nom;b.tipus=tipus;b.compte=compte;b.saldoInicial=saldoInicial;b.saldoData=saldoData;}
   }else{
-    DB.config.bancs.push({id:'b'+Date.now(),codi,nom,tipus,saldoInicial,saldoData});
+    DB.config.bancs.push({id:'b'+Date.now(),codi,nom,tipus,compte,saldoInicial,saldoData});
   }
   saveCache();
   closeModal('modal-banc');
@@ -4799,6 +4810,7 @@ function initCSVDates(){
     const el=document.getElementById(id);
     if(el)el.textContent=dates;
   });
+  initCSVBancSelector();
 }
 
 function handleCSVDrop(event,zona){
@@ -4806,45 +4818,422 @@ function handleCSVDrop(event,zona){
   const dz=document.getElementById('csv-drop-'+zona);
   if(dz)dz.classList.remove('drag-over');
   const file=event.dataTransfer.files[0];
-  if(file)processCSVFile(file,zona);
+  if(file)processImportFile(file,zona);
 }
 
 function loadCSVFile(event,zona){
   const file=event.target.files[0];
-  if(file)processCSVFile(file,zona);
+  if(file)processImportFile(file,zona);
 }
 
-function processCSVFile(file,zona){
-  const reader=new FileReader();
-  reader.onload=function(e){
-    const text=e.target.result;
-    const dz=document.getElementById('csv-drop-'+zona);
-    if(dz)dz.classList.add('loaded');
-    renderCSVPreview(text,zona);
-  };
-  reader.readAsText(file,'UTF-8');
+// Detectar si el fitxer és XLS binari (magic bytes OLE2)
+function isXLSFile(arrayBuffer){
+  const bytes=new Uint8Array(arrayBuffer,0,8);
+  return bytes[0]===0xD0&&bytes[1]===0xCF&&bytes[2]===0x11&&bytes[3]===0xE0;
+}
+
+function processImportFile(file,zona){
+  const ext=(file.name||'').split('.').pop().toLowerCase();
+  if(ext==='xls'||ext==='xlsx'){
+    const reader=new FileReader();
+    reader.onload=function(e){
+      const dz=document.getElementById('csv-drop-'+zona);
+      if(dz)dz.classList.add('loaded');
+      processXLSBanc(e.target.result,zona);
+    };
+    reader.readAsArrayBuffer(file);
+  }else{
+    const reader=new FileReader();
+    reader.onload=function(e){
+      const dz=document.getElementById('csv-drop-'+zona);
+      if(dz)dz.classList.add('loaded');
+      renderCSVPreview(e.target.result,zona);
+    };
+    reader.readAsText(file,'UTF-8');
+  }
+}
+
+// Parser unificat XLS/XLSX — detecta banc per IBAN i format per la capçalera
+function processXLSBanc(arrayBuffer,zona){
+  try{
+    if(typeof XLSX==='undefined'){showToast('Error: llibreria XLSX no disponible',true);return;}
+    const data=new Uint8Array(arrayBuffer);
+    const wb=XLSX.read(data,{type:'array',cellDates:true});
+    const ws=wb.Sheets[wb.SheetNames[0]];
+    const rows=XLSX.utils.sheet_to_json(ws,{header:1,raw:false,dateNF:'DD/MM/YYYY'});
+
+    // Detectar IBAN i capçalera de dades
+    let compteDetectat='';
+    let nomEntitat='';
+    let headerRow=-1;
+    let formatBanc='generic'; // 'caixabank' | 'caixapopular' | 'generic'
+
+    for(let i=0;i<Math.min(rows.length,10);i++){
+      const rowArr=rows[i]||[];
+      const rowStr=rowArr.join(' ');
+      // IBAN
+      const mIBAN=rowStr.match(/ES\d{2}[\s\d]{20,}/);
+      if(mIBAN){
+        compteDetectat=mIBAN[0].replace(/\s/g,'');
+        // Detectar entitat per BIC/codi entitat IBAN
+        const codiEntitat=compteDetectat.substring(4,8);
+        if(codiEntitat==='3159'){formatBanc='caixapopular';}
+        else if(codiEntitat==='2100'||codiEntitat==='2030'){formatBanc='caixabank';}
+      }
+      // Nom entitat (fila Nombre/Nombre)
+      if(String(rowArr[0]||'').toLowerCase()==='nombre'&&rowArr[1]){nomEntitat=String(rowArr[1]);}
+      // Capçalera: detectar per columnes conegudes
+      const rl=rowStr.toLowerCase();
+      if((rl.includes('fecha')&&rl.includes('importe'))||(rl.includes('data')&&rl.includes('import'))){
+        headerRow=i;break;
+      }
+    }
+
+    // Trobar banc configurat per IBAN
+    let bancTrobat=null;
+    if(compteDetectat){
+      bancTrobat=DB.config.bancs.find(function(b){
+        const bc=(b.compte||'').replace(/\s/g,'');
+        return bc&&(compteDetectat.includes(bc)||bc.includes(compteDetectat.slice(-7)));
+      });
+    }
+    // Fallback per nom
+    if(!bancTrobat&&formatBanc==='caixapopular'){
+      bancTrobat=DB.config.bancs.find(function(b){return(b.nom||'').toLowerCase().includes('popular');});
+    }
+    if(!bancTrobat&&formatBanc==='caixabank'){
+      bancTrobat=DB.config.bancs.find(function(b){return(b.nom||'').toLowerCase().includes('caixa')&&!(b.nom||'').toLowerCase().includes('popular');});
+    }
+    if(!bancTrobat){bancTrobat=DB.config.bancs.find(function(b){return b.tipus==='bank';});}
+
+    if(!bancTrobat){
+      showToast('Cap banc configurat amb aquest IBAN. Ves a Configuració → Bancs.',true);
+      return;
+    }
+
+    // Detectar columnes a la capçalera
+    const headerArr=(rows[headerRow]||[]).map(function(c){return String(c||'').toLowerCase().trim();});
+    const colData=headerArr.findIndex(function(c){return c.includes('fecha')||c.includes('data');});
+    const colConcepte=headerArr.findIndex(function(c){return c.includes('tipo')||c.includes('concepte')||c.includes('moviment')||c.includes('descrip');});
+    const colImport=headerArr.findIndex(function(c){return c.includes('importe')||c.includes('import');});
+    const colCategoria=headerArr.findIndex(function(c){return c.includes('columna')||c.includes('categ')||c.includes('tag')||c.includes('nota');});
+
+    // Parsejar files de dades
+    const dataStart=headerRow>=0?headerRow+1:1;
+    const moviments=[];
+    for(let i=dataStart;i<rows.length;i++){
+      const row=rows[i]||[];
+      if(!row.length)continue;
+      let dataVal=String(row[colData>=0?colData:0]||'').trim();
+      const concepte=String(row[colConcepte>=0?colConcepte:2]||'').trim();
+      let importRaw=String(row[colImport>=0?colImport:3]||'').trim();
+      const categoria=colCategoria>=0?String(row[colCategoria]||'').trim():'';
+
+      // Normalitzar data — pot venir com a Date ISO o DD/MM/YYYY
+      if(!dataVal||dataVal==='undefined')continue;
+      if(dataVal.match(/^\d{4}-\d{2}-\d{2}/)){
+        const p=dataVal.split('T')[0].split('-');
+        dataVal=p[2]+'/'+p[1]+'/'+p[0];
+      }else if(dataVal.match(/^\d{1,2}\/\d{1,2}\/\d{4}$/)){
+        // ja és DD/MM/YYYY
+      }else{continue;}
+
+      // Normalitzar import
+      importRaw=importRaw.replace(/\s/g,'').replace(/\./g,'').replace(',','.');
+      const imp=parseFloat(importRaw);
+      if(isNaN(imp)||imp===0)continue;
+
+      moviments.push({data:dataVal,concepte,import:imp,categoria});
+    }
+
+    if(!moviments.length){showToast('No s\'han trobat moviments al fitxer.',true);return;}
+
+    // Intentar assignació automàtica per regles de mapeig
+    const assignats=aplicarReglesImportacio(moviments,bancTrobat);
+
+    window['_xlsRows'+zona]=moviments;
+    window['_xlsBanc'+zona]=bancTrobat;
+    window['_xlsAssignats'+zona]=assignats;
+
+    mostrarPreviewImportacio(zona,moviments,assignats,bancTrobat,compteDetectat,formatBanc);
+
+  }catch(err){
+    showToast('Error llegint el fitxer: '+err.message,true);
+    console.error(err);
+  }
+}
+
+// Aplicar regles de mapeig per assignar àrea/delegació automàticament (cerca per concepte)
+function aplicarReglesImportacio(moviments,banc){
+  const regles=(DB.config.reglesImportacio||[]).filter(function(r){
+    return!r.bancId||r.bancId===banc.id;
+  });
+  return moviments.map(function(m){
+    const regla=regles.find(function(r){
+      return r.tipus==='concepte'&&m.concepte.toLowerCase().includes(String(r.valor||'').toLowerCase());
+    });
+    if(regla)return{...m,areaId:regla.areaId,areaNom:regla.areaNom,delegacioId:regla.delegacioId||'',delegacioNom:regla.delegacioNom||'',assignatPer:'regla_concepte'};
+    return{...m,areaId:'',areaNom:'',delegacioId:'',delegacioNom:'',assignatPer:'manual'};
+  });
+}
+
+function mostrarPreviewImportacio(zona,moviments,assignats,banc,compteDetectat,formatBanc){
+  const totIng=moviments.filter(function(m){return m.import>0;}).reduce(function(s,m){return s+m.import;},0);
+  const totGast=moviments.filter(function(m){return m.import<0;}).reduce(function(s,m){return s+m.import;},0);
+  const nAssignats=assignats.filter(function(m){return m.areaId;}).length;
+  const nExcepcions=assignats.filter(function(m){return!m.areaId;}).length;
+
+  let html='<div class="card" style="margin-top:12px">';
+  html+='<div class="card-title"><i class="ti ti-check" style="color:var(--green)"></i> '+moviments.length+' moviments detectats</div>';
+  // Resum
+  html+='<div style="background:var(--bg2);border-radius:var(--r);padding:10px 12px;font-size:13px;margin-bottom:12px">';
+  html+='<div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="color:var(--text2)">Banc</span><strong>'+banc.nom+'</strong></div>';
+  if(compteDetectat)html+='<div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="color:var(--text2)">IBAN</span><span style="font-family:monospace;font-size:11px">'+compteDetectat+'</span></div>';
+  html+='<div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="color:var(--text2)">Format</span><span>'+formatBanc+'</span></div>';
+  html+='<div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="color:var(--text2)">Ingressos</span><span style="color:var(--green)">+'+fmtD(totIng)+'</span></div>';
+  html+='<div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="color:var(--text2)">Pagaments</span><span style="color:var(--red)">'+fmtD(totGast)+'</span></div>';
+  html+='<div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="color:var(--text2)">Assignats automàticament</span><span style="color:var(--green);font-weight:500">'+nAssignats+' de '+moviments.length+'</span></div>';
+  if(nExcepcions>0){
+    html+='<div style="display:flex;justify-content:space-between"><span style="color:var(--text2)">Excepcions a revisar</span><span style="color:var(--amber);font-weight:500">'+nExcepcions+'</span></div>';
+  }
+  html+='</div>';
+
+  // Llista excepcions
+  if(nExcepcions>0){
+    html+='<div style="font-size:13px;font-weight:500;margin-bottom:8px;color:var(--amber)"><i class="ti ti-alert-triangle"></i> Moviments sense àrea assignada — revisa i assigna:</div>';
+    html+='<div id="excepcions-'+zona+'" style="display:flex;flex-direction:column;gap:6px;margin-bottom:12px">';
+    assignats.forEach(function(m,idx){
+      if(m.areaId)return;
+      const areaOpts=(DB.config.areas||[]).map(function(a){
+        return '<option value="'+a.id+'">'+a.nom+'</option>';
+      }).join('');
+      html+='<div style="background:var(--bg2);border-radius:var(--r);padding:8px 10px;font-size:12px" id="exc-'+zona+'-'+idx+'">';
+      html+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">';
+      html+='<span style="font-weight:500">'+m.data+' · '+m.concepte.substring(0,45)+(m.concepte.length>45?'…':'')+'</span>';
+      html+='<span style="color:'+(m.import>0?'var(--green)':'var(--red)')+';font-weight:500">'+(m.import>0?'+':'')+fmtD(m.import)+'</span>';
+      html+='</div>';
+      html+='<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">';
+      html+='<select style="font-size:12px;padding:4px 8px;border-radius:var(--r);border:0.5px solid var(--border2);background:var(--bg);color:var(--text);flex:1" onchange="assignarExcepcio('+zona+','+idx+',this.value)">';
+      html+='<option value="">— Selecciona àrea —</option>'+areaOpts+'</select>';
+      html+='<button class="btn" style="font-size:11px;padding:4px 8px" onclick="crearReglaDesdeExcepcio('+zona+','+idx+')" title="Crea regla automàtica per concepte">+ Regla</button>';
+      html+='<button class="btn" style="font-size:11px;padding:4px 8px;color:var(--text3)" onclick="ignorarExcepcio('+zona+','+idx+')">Ignorar</button>';
+      html+='</div></div>';
+    });
+    html+='</div>';
+  }
+
+  html+='<div style="display:flex;gap:8px;flex-wrap:wrap">';
+  html+='<button class="btn btn-primary" data-zona="'+zona+'" onclick="importarXLSZona(parseInt(this.dataset.zona))"><i class="ti ti-check"></i> Importar '+moviments.length+' moviments</button>';
+  html+='<button class="btn" onclick="cancelCSVImport('+zona+')"><i class="ti ti-x"></i> Cancel·lar</button>';
+  html+='</div></div>';
+  document.getElementById('csv-preview-'+zona).innerHTML=html;
+}
+
+// Assignar àrea a una excepció des del preview
+function assignarExcepcio(zona,idx,areaId){
+  const assignats=window['_xlsAssignats'+zona];
+  if(!assignats)return;
+  const area=(DB.config.areas||[]).find(function(a){return a.id===areaId;});
+  if(area){
+    assignats[idx].areaId=area.id;
+    assignats[idx].areaNom=area.nom;
+    assignats[idx].assignatPer='manual';
+    // Marcar visualment com assignat
+    const el=document.getElementById('exc-'+zona+'-'+idx);
+    if(el)el.style.opacity='0.5';
+  }
+}
+
+// Ignorar una excepció (no s'importarà)
+function ignorarExcepcio(zona,idx){
+  const assignats=window['_xlsAssignats'+zona];
+  if(!assignats)return;
+  assignats[idx]._ignorar=true;
+  const el=document.getElementById('exc-'+zona+'-'+idx);
+  if(el){el.style.opacity='0.3';el.style.textDecoration='line-through';}
+}
+
+// Crear regla automàtica des d'una excepció
+function crearReglaDesdeExcepcio(zona,idx){
+  const assignats=window['_xlsAssignats'+zona];
+  const banc=window['_xlsBanc'+zona];
+  if(!assignats||!banc)return;
+  const m=assignats[idx];
+  if(!m.areaId){showToast('Primer assigna una àrea a aquest moviment',true);return;}
+  if(!DB.config.reglesImportacio)DB.config.reglesImportacio=[];
+  // Usar les primeres paraules del concepte com a clau de cerca
+  const valor=m.concepte.split(' ').slice(0,4).join(' ').substring(0,40);
+  const areaObj=(DB.config.areas||[]).find(function(a){return a.id===m.areaId;});
+  DB.config.reglesImportacio.push({
+    id:'r'+Date.now(),
+    tipus:'concepte',valor,
+    bancId:banc.id,
+    areaId:m.areaId,areaNom:areaObj?areaObj.nom:'',
+    delegacioId:m.delegacioId||'',delegacioNom:m.delegacioNom||''
+  });
+  saveCache();
+  save('config').catch(function(e){console.warn(e);});
+  showToast('Regla creada: "'+valor+'" → '+(areaObj?areaObj.nom:'àrea'));
+}
+
+async function importarXLSZona(zona){
+  const moviments=window['_xlsAssignats'+zona]||window['_xlsRows'+zona];
+  const banc=window['_xlsBanc'+zona];
+  if(!moviments||!banc){showToast('Error: no hi ha dades per importar',true);return;}
+  const af=getAnyFiscal();
+  let importats=0;
+  let excepcions=0;
+  moviments.forEach(function(m){
+    if(m._ignorar)return;
+    DB.moviments.push({
+      id:'m'+Date.now()+Math.random(),anyFiscal:af,
+      tipus:m.import>0?'ing':'gast',
+      via:banc.codi,
+      areaId:m.areaId||'',areaNom:m.areaNom||'',
+      delegacioId:m.delegacioId||'',delegacioNom:m.delegacioNom||'',
+      eventId:'',eventNom:'',
+      concepte:m.concepte,establiment:'',
+      data:m.data,
+      responsable:currentUser?.name||'',
+      responsableEmail:currentUser?.email||'',
+      import:Math.abs(m.import),
+      notes:'Importat '+banc.nom+(m.categoria?' ['+m.categoria+']':''),
+      fontImport:'xls_'+banc.id,
+      assignatPer:m.assignatPer||'manual'
+    });
+    importats++;
+    if(!m.areaId)excepcions++;
+  });
+  saveCache();
+  let msg=importats+' moviments importats de '+banc.nom;
+  if(excepcions>0)msg+=' ('+excepcions+' sense àrea — assigna\'ls des de l\'historial)';
+  showToast(msg);
+  save('moviments').catch(function(e){showToast('Error: '+e.message,true);});
+  document.getElementById('csv-preview-'+zona).innerHTML=
+    '<div class="info-box" style="margin-top:10px"><i class="ti ti-check" style="color:var(--green)"></i> '+msg+'</div>';
+  window['_xlsRows'+zona]=null;
+  window['_xlsBanc'+zona]=null;
+  window['_xlsAssignats'+zona]=null;
+  const dz=document.getElementById('csv-drop-'+zona);
+  if(dz){dz.classList.remove('loaded');const inp=dz.querySelector('input[type=file]');if(inp)inp.value='';}
 }
 
 function renderCSVPreview(text,zona){
-  const banc=zona===1?'b1':'b2';
-  const bancNom=zona===1?'Caixabank':'Caixa Popular';
-  // Usar la funció previewCSV existent però adaptada per zona
   const lines=text.split('\n').filter(function(l){return l.trim();});
-  const total=Math.max(0,lines.length-1); // resta capçalera
-
+  const total=Math.max(0,lines.length-1);
   let html='<div class="card" style="margin-top:12px">';
-  html+='<div class="card-title"><i class="ti ti-check" style="color:var(--green)"></i> Fitxer llegit — '+total+' línies</div>';
-  html+='<div style="font-size:13px;color:var(--text2);margin-bottom:10px">Primeres línies del fitxer:</div>';
+  html+='<div class="card-title"><i class="ti ti-check" style="color:var(--green)"></i> Fitxer CSV llegit — '+total+' línies</div>';
   html+='<div style="font-size:11px;font-family:monospace;background:var(--bg2);padding:8px;border-radius:var(--r);max-height:100px;overflow-y:auto">';
   lines.slice(0,4).forEach(function(l){html+='<div>'+l.substring(0,120)+'</div>';});
   html+='</div>';
   html+='<div style="margin-top:12px;display:flex;gap:8px">';
-  html+='<button class="btn btn-primary" data-zona="'+zona+'" data-banc="'+banc+'" onclick="importarCSVZonaBtn(this)"><i class="ti ti-check"></i> Importar a '+bancNom+'</button>';
+  html+='<button class="btn" onclick="cancelCSVImport('+zona+')"><i class="ti ti-x"></i> Cancel·lar</button>';
+  html+='</div></div>';
+  window['_csvText'+zona]=text;
+  document.getElementById('csv-preview-'+zona).innerHTML=html;
+}
+
+function initCSVBancSelector(){
+  const sel=document.getElementById('csv-banc-2');
+  if(!sel)return;
+  const bancs=(DB.config.bancs||[]).filter(function(b){return b.tipus==='bank';});
+  sel.innerHTML='<option value="">— Selecciona banc —</option>'+
+    bancs.map(function(b){return'<option value="'+b.id+'">'+b.nom+(b.compte?' ('+b.compte+')':'')+'</option>';}).join('');
+}
+
+function cancelCSVImport(zona){
+  const prev=document.getElementById('csv-preview-'+zona);
+  const drop=document.getElementById('csv-drop-'+zona);
+  if(prev)prev.innerHTML='';
+  if(drop){drop.classList.remove('loaded');const inp=drop.querySelector('input[type=file]');if(inp)inp.value='';}
+  window['_csvText'+zona]=null;
+  window['_xlsRows'+zona]=null;
+  window['_xlsBanc'+zona]=null;
+  window['_xlsAssignats'+zona]=null;
+}
+
+async function importarCSVZona(zona,bancId,text){
+  if(!text){showToast('Cap fitxer carregat',true);return;}
+  const banc=DB.config.bancs.find(function(b){return b.id===bancId;});
+  const bancCodi=banc?banc.codi:'Banc';
+  const bancNom=banc?banc.nom:'Banc';
+  const af=getAnyFiscal();
+  const lines=text.split('\n').filter(function(l){return l.trim();});
+  if(lines.length<2){showToast('Fitxer buit',true);return;}
+  let importats=0;
+  lines.slice(1).forEach(function(line){
+    if(!line.trim())return;
+    const cols=line.split(';').map(function(c){return c.replace(/"/g,'').trim();});
+    if(cols.length<3)return;
+    let data=cols[0]||'';
+    const concepte=cols[1]||'';
+    let importRaw=cols[cols.length-1]||'0';
+    importRaw=importRaw.replace(/\./g,'').replace(',','.');
+    const imp=parseFloat(importRaw)||0;
+    if(!imp)return;
+    if(data.match(/^\d{4}-\d{2}-\d{2}/)){const p=data.split('-');data=p[2]+'/'+p[1]+'/'+p[0];}
+    DB.moviments.push({
+      id:'m'+Date.now()+Math.random(),anyFiscal:af,
+      tipus:imp>0?'ing':'gast',via:bancCodi,
+      areaId:'',areaNom:'',delegacioId:'',delegacioNom:'',
+      eventId:'',eventNom:'',concepte,establiment:'',data,
+      responsable:currentUser?.name||'',responsableEmail:currentUser?.email||'',
+      import:Math.abs(imp),notes:'Importat CSV '+bancNom,fontImport:'csv'
+    });
+    importats++;
+  });
+  if(!importats){showToast('No s\'han trobat moviments vàlids',true);return;}
+  saveCache();
+  showToast(importats+' moviments importats de '+bancNom);
+  save('moviments').catch(function(e){showToast('Error: '+e.message,true);});
+  window['_csvText'+zona]=null;
+  const dz=document.getElementById('csv-drop-'+zona);
+  if(dz){const inp=dz.querySelector('input[type=file]');if(inp)inp.value='';}
+}
+
+function importarCSVZonaBtn(btn){
+  const zona=parseInt(btn.dataset.zona);
+  const banc=btn.dataset.banc;
+  const text=window['_csvText'+zona];
+  importarCSVZona(zona,banc,text);
+}
+
+
+
+
+
+function renderCSVPreview(text,zona){
+  // CSV genèric (zona 2)
+  const bancSel=document.getElementById('csv-banc-2');
+  const bancId=bancSel?bancSel.value:'';
+  const banc=DB.config.bancs.find(function(b){return b.id===bancId;});
+  const bancNom=banc?banc.nom:'Banc seleccionat';
+
+  const lines=text.split('\n').filter(function(l){return l.trim();});
+  const total=Math.max(0,lines.length-1);
+
+  let html='<div class="card" style="margin-top:12px">';
+  html+='<div class="card-title"><i class="ti ti-check" style="color:var(--green)"></i> Fitxer llegit — '+total+' línies</div>';
+  html+='<div style="font-size:13px;color:var(--text2);margin-bottom:10px">Primeres línies:</div>';
+  html+='<div style="font-size:11px;font-family:monospace;background:var(--bg2);padding:8px;border-radius:var(--r);max-height:100px;overflow-y:auto">';
+  lines.slice(0,4).forEach(function(l){html+='<div>'+l.substring(0,120)+'</div>';});
+  html+='</div>';
+  html+='<div style="margin-top:12px;display:flex;gap:8px">';
+  html+='<button class="btn btn-primary" data-zona="'+zona+'" data-banc="'+bancId+'" onclick="importarCSVZonaBtn(this)"><i class="ti ti-check"></i> Importar a '+bancNom+'</button>';
   html+='<button class="btn" onclick="cancelCSVImport('+zona+')"><i class="ti ti-x"></i> Cancel·lar</button>';
   html+='</div></div>';
 
   window['_csvText'+zona]=text;
   document.getElementById('csv-preview-'+zona).innerHTML=html;
+}
+
+// Inicialitzar el selector de bancs de la zona 2
+function initCSVBancSelector(){
+  const sel=document.getElementById('csv-banc-2');
+  if(!sel)return;
+  const bancs=(DB.config.bancs||[]).filter(function(b){return b.tipus==='bank';});
+  sel.innerHTML='<option value="">— Selecciona banc —</option>'+
+    bancs.map(function(b){return'<option value="'+b.id+'">'+b.nom+(b.compte?' ('+b.compte+')':'')+'</option>';}).join('');
 }
 
 function cancelCSVImport(zona){
@@ -4857,38 +5246,34 @@ function cancelCSVImport(zona){
     if(inp)inp.value='';
   }
   window['_csvText'+zona]=null;
+  window['_xlsRows'+zona]=null;
+  window['_xlsBanc'+zona]=null;
 }
 
 async function importarCSVZona(zona,bancId,text){
   if(!text){showToast('Cap fitxer carregat',true);return;}
-  // Usar la funció importarCSV existent adaptada
   const banc=DB.config.bancs.find(function(b){return b.id===bancId;});
-  const bancCodi=banc?banc.codi:(zona===1?'01 Banc':'02 Banc');
-  // Parsear CSV i crear moviments
+  const bancCodi=banc?banc.codi:'Banc';
+  const bancNom=banc?banc.nom:'Banc';
   const af=getAnyFiscal();
   const lines=text.split('\n').filter(function(l){return l.trim();});
   if(lines.length<2){showToast('Fitxer buit o sense dades',true);return;}
   let importats=0;
-  // Detecció automàtica de format per les columnes
-  const header=lines[0].toLowerCase();
   lines.slice(1).forEach(function(line){
     if(!line.trim())return;
     const cols=line.split(';').map(function(c){return c.replace(/"/g,'').trim();});
     if(cols.length<3)return;
-    // Format genèric: Data;Concepte;Import
     let data=cols[0]||'';
     let concepte=cols[1]||'';
     let importRaw=cols[cols.length-1]||'0';
-    const imp=parseFloat(importRaw.replace(',','.'))||0;
+    const imp=parseFloat(importRaw.replace(/\./g,'').replace(',','.'))||0;
     if(!imp)return;
-    // Normalitzar data
     if(data.match(/^\d{4}-\d{2}-\d{2}/)){
       const p=data.split('-');data=p[2]+'/'+p[1]+'/'+p[0];
     }
-    const tipusMov=imp>0?'ing':'gast';
     DB.moviments.push({
       id:'m'+Date.now()+Math.random(),anyFiscal:af,
-      tipus:tipusMov,via:bancCodi,
+      tipus:imp>0?'ing':'gast',via:bancCodi,
       areaId:'',areaNom:'',delegacioId:'',delegacioNom:'',
       eventId:'',eventNom:'',
       concepte:concepte,establiment:'',data,
@@ -4899,7 +5284,7 @@ async function importarCSVZona(zona,bancId,text){
     });
     importats++;
   });
-  if(!importats){showToast('No s\'han trobat moviments vàlids al fitxer',true);return;}
+  if(!importats){showToast('No s\'han trobat moviments vàlids',true);return;}
   saveCache();
   showToast(importats+' moviments importats de '+bancNom);
   save('moviments').catch(function(e){showToast('Error: '+e.message,true);});
