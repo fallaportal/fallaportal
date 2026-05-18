@@ -263,7 +263,7 @@ tr:hover td{background:var(--bg2)}
     <div class="login-logo">Falla <span>Portal</span></div>
     <div class="login-sub">Sistema de gestió financera</div>
     <div class="login-fiscal">Any fiscal 26/27 · Abr 2026 – Mar 2027</div>
-    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v1.2.43</div>
+    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v1.2.44</div>
     <button class="btn-google" onclick="signIn()">
       <svg viewBox="0 0 24 24" width="20" height="20"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
       Entrar amb Google
@@ -305,7 +305,7 @@ tr:hover td{background:var(--bg2)}
     <div class="sb-bottom">
       <div class="sync-ind"><div class="sync-dot" id="sync-dot"></div><span id="sync-text">Sincronitzat</span></div>
       <button class="btn-logout" onclick="signOut()"><i class="ti ti-logout" style="font-size:14px"></i> Tancar sessió</button>
-      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v1.2.43</div>
+      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v1.2.44</div>
     </div>
   </div>
 
@@ -490,13 +490,27 @@ tr:hover td{background:var(--bg2)}
       <div class="page-title">Historial de moviments</div>
       <div class="page-sub">Tots els moviments de l'any fiscal <span id='hist-af-label'></span></div>
       <div class="card">
-        <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
-          <input type="text" id="hist-search" placeholder="Cerca..." style="flex:1;min-width:180px" oninput="filterHist()">
+        <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap">
+          <input type="text" id="hist-search" placeholder="Cerca concepte, establiment..." style="flex:1;min-width:180px" oninput="filterHist()">
           <select id="hist-area" onchange="filterHist()" style="width:180px"><option value="">Totes les àrees</option></select>
+          <select id="hist-deleg" onchange="filterHist()" style="width:180px"><option value="">Totes les delegacions</option></select>
+        </div>
+        <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
           <select id="hist-tipus" onchange="filterHist()" style="width:130px"><option value="">Tots</option><option value="ing">Ingressos</option><option value="gast">Despeses</option></select>
+          <select id="hist-via" onchange="filterHist()" style="width:150px"><option value="">Totes les vies</option></select>
+          <select id="hist-responsable" onchange="filterHist()" style="width:180px"><option value="">Tots els responsables</option></select>
         </div>
         <div class="table-wrap">
-          <table><thead><tr><th>Data</th><th>Concepte</th><th>Àrea · Delegació</th><th>Event</th><th>Via</th><th>Responsable</th><th style="text-align:right">Import</th><th></th></tr></thead>
+          <table><thead><tr id="hist-thead">
+            <th class="sortable" data-col="data" onclick="sortHist('data')" style="cursor:pointer;white-space:nowrap">Data <span id="sort-data"></span></th>
+            <th class="sortable" data-col="concepte" onclick="sortHist('concepte')" style="cursor:pointer">Concepte <span id="sort-concepte"></span></th>
+            <th class="sortable" data-col="areaNom" onclick="sortHist('areaNom')" style="cursor:pointer">Àrea · Delegació <span id="sort-areaNom"></span></th>
+            <th class="sortable" data-col="eventNom" onclick="sortHist('eventNom')" style="cursor:pointer">Event <span id="sort-eventNom"></span></th>
+            <th class="sortable" data-col="via" onclick="sortHist('via')" style="cursor:pointer">Via <span id="sort-via"></span></th>
+            <th class="sortable" data-col="responsable" onclick="sortHist('responsable')" style="cursor:pointer">Responsable <span id="sort-responsable"></span></th>
+            <th class="sortable" data-col="import" onclick="sortHist('import')" style="cursor:pointer;text-align:right">Import <span id="sort-import"></span></th>
+            <th></th>
+          </tr></thead>
           <tbody id="hist-tbody"></tbody></table>
         </div>
         <div style="font-size:11px;color:var(--text3);margin-top:10px;display:flex;justify-content:space-between"><span id="hist-count"></span><span id="hist-total"></span></div>
@@ -2370,14 +2384,39 @@ function renderHistorial(){
   const afH2=getAnyFiscal();
   const afLabel=document.getElementById('hist-af-label');
   if(afLabel)afLabel.innerHTML='<span class="af-badge"><i class="ti ti-calendar" style="font-size:14px"></i> '+afH2+'</span>';
+  // Àrees
   const areaSel=document.getElementById('hist-area');
-  const cur=areaSel.value;
+  const curArea=areaSel.value;
   areaSel.innerHTML='<option value="">Totes les àrees</option>';
   const myArees=getMyArees();
   DB.config.areas.filter(a=>myArees.includes(a.id)).forEach(a=>{
     const o=document.createElement('option');o.value=a.id;o.textContent=a.name;areaSel.appendChild(o);
   });
-  areaSel.value=cur;
+  areaSel.value=curArea;
+  // Delegacions
+  const delegSel=document.getElementById('hist-deleg');
+  const curDeleg=delegSel.value;
+  delegSel.innerHTML='<option value="">Totes les delegacions</option>';
+  const af=getAnyFiscal();
+  const delegsUsades=new Set((DB.moviments||[]).filter(m=>!m.anyFiscal||m.anyFiscal===af).map(m=>m.delegacioId).filter(Boolean));
+  (DB.config.delegacions||[]).filter(d=>delegsUsades.has(d.id)).forEach(d=>{
+    const o=document.createElement('option');o.value=d.id;o.textContent=d.name;delegSel.appendChild(o);
+  });
+  delegSel.value=curDeleg;
+  // Vies
+  const viaSel=document.getElementById('hist-via');
+  const curVia=viaSel.value;
+  viaSel.innerHTML='<option value="">Totes les vies</option>';
+  const viesUsades=[...new Set((DB.moviments||[]).filter(m=>!m.anyFiscal||m.anyFiscal===af).map(m=>m.via).filter(Boolean))].sort();
+  viesUsades.forEach(v=>{const o=document.createElement('option');o.value=v;o.textContent=v;viaSel.appendChild(o);});
+  viaSel.value=curVia;
+  // Responsables
+  const respSel=document.getElementById('hist-responsable');
+  const curResp=respSel.value;
+  respSel.innerHTML='<option value="">Tots els responsables</option>';
+  const respsUsats=[...new Set((DB.moviments||[]).filter(m=>!m.anyFiscal||m.anyFiscal===af).map(m=>m.responsable).filter(Boolean))].sort();
+  respsUsats.forEach(r=>{const o=document.createElement('option');o.value=r;o.textContent=r;respSel.appendChild(o);});
+  respSel.value=curResp;
   filterHist();
 }
 
@@ -2459,16 +2498,49 @@ async function saveEditMov(){
   save('moviments').catch(function(e){showToast('Error: '+e.message,true);});
 }
 
+let _histSort={col:'data',dir:-1}; // -1=desc, 1=asc
+
+function sortHist(col){
+  if(_histSort.col===col){_histSort.dir*=-1;}
+  else{_histSort={col,dir:col==='data'||col==='import'?-1:1};}
+  filterHist();
+}
+
 function filterHist(){
   const q=(document.getElementById('hist-search').value||'').toLowerCase();
   const aF=document.getElementById('hist-area').value;
+  const dF=document.getElementById('hist-deleg').value;
   const tF=document.getElementById('hist-tipus').value;
+  const vF=document.getElementById('hist-via').value;
+  const rF=document.getElementById('hist-responsable').value;
   const myArees=getMyArees();
   const afH=getAnyFiscal();
-  let movs=[...(DB.moviments||[])].filter(function(m){return(!m.anyFiscal||m.anyFiscal===''||m.anyFiscal===afH)&&(perm('viewAll')||myArees.includes(m.areaId));}).sort(sortByData);
-  if(q)movs=movs.filter(m=>(m.concepte||'').toLowerCase().includes(q)||(m.establiment||'').toLowerCase().includes(q));
+  let movs=[...(DB.moviments||[])].filter(function(m){
+    return(!m.anyFiscal||m.anyFiscal===''||m.anyFiscal===afH)&&(perm('viewAll')||myArees.includes(m.areaId));
+  });
+  if(q)movs=movs.filter(m=>(m.concepte||'').toLowerCase().includes(q)||(m.establiment||'').toLowerCase().includes(q)||(m.areaNom||'').toLowerCase().includes(q)||(m.delegacioNom||'').toLowerCase().includes(q)||(m.responsable||'').toLowerCase().includes(q));
   if(aF)movs=movs.filter(m=>m.areaId===aF);
+  if(dF)movs=movs.filter(m=>m.delegacioId===dF);
   if(tF)movs=movs.filter(m=>m.tipus===tF);
+  if(vF)movs=movs.filter(m=>m.via===vF);
+  if(rF)movs=movs.filter(m=>m.responsable===rF);
+  // Ordenació
+  const {col,dir}=_histSort;
+  movs.sort(function(a,b){
+    let va=a[col]||'', vb=b[col]||'';
+    if(col==='import'){va=parseFloat(a.import)||0;vb=parseFloat(b.import)||0;return(va-vb)*dir;}
+    if(col==='data'){
+      const pa=va.split('/').reverse().join('');
+      const pb=vb.split('/').reverse().join('');
+      return pa<pb?-dir:pa>pb?dir:0;
+    }
+    return va.toString().localeCompare(vb.toString(),'ca')*dir;
+  });
+  // Actualitzar indicadors d'ordenació a les capçaleres
+  ['data','concepte','areaNom','eventNom','via','responsable','import'].forEach(function(c){
+    const el=document.getElementById('sort-'+c);
+    if(el)el.textContent=col===c?(dir===1?'↑':'↓'):'';
+  });
   const rol=getRol();
   const myEmail=(currentUser?.email||'').toLowerCase();
   const canEditAssig=rol==='president'||rol==='treasury';
