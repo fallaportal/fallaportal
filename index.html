@@ -263,7 +263,7 @@ tr:hover td{background:var(--bg2)}
     <div class="login-logo">Falla <span>Portal</span></div>
     <div class="login-sub">Sistema de gestió financera</div>
     <div class="login-fiscal">Any fiscal 26/27 · Abr 2026 – Mar 2027</div>
-    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v1.2.32</div>
+    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v1.2.33</div>
     <button class="btn-google" onclick="signIn()">
       <svg viewBox="0 0 24 24" width="20" height="20"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
       Entrar amb Google
@@ -305,7 +305,7 @@ tr:hover td{background:var(--bg2)}
     <div class="sb-bottom">
       <div class="sync-ind"><div class="sync-dot" id="sync-dot"></div><span id="sync-text">Sincronitzat</span></div>
       <button class="btn-logout" onclick="signOut()"><i class="ti ti-logout" style="font-size:14px"></i> Tancar sessió</button>
-      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v1.2.32</div>
+      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v1.2.33</div>
     </div>
   </div>
 
@@ -4867,7 +4867,7 @@ function processXLSBanc(arrayBuffer,zona){
     const wb=XLSX.read(data,{type:'array',cellDates:true});
     const ws=wb.Sheets[wb.SheetNames[0]];
     // raw:true per no convertir dates a strings i poder detectar millor
-    const rows=XLSX.utils.sheet_to_json(ws,{header:1,raw:false,dateNF:'DD/MM/YYYY',defval:''});
+    const rows=XLSX.utils.sheet_to_json(ws,{header:1,raw:true,cellDates:true,defval:''});
 
     // Detectar IBAN i capçalera de dades
     let compteDetectat='';
@@ -4955,30 +4955,72 @@ function processXLSBanc(arrayBuffer,zona){
     for(let i=dataStart;i<rows.length;i++){
       const row=rows[i]||[];
       if(!row.length)continue;
-      let dataVal=String(row[colData]||'').trim();
+      let dataVal='';
       let concepte=String(row[colConcepte]||'').trim();
       // Combinar les dues columnes de concepte si existeixen (CaixaBank)
       if(colConcepte2>=0&&row[colConcepte2]){
         const extra=String(row[colConcepte2]).trim();
         if(extra)concepte=concepte+(concepte?' · ':'')+extra;
       }
-      let importRaw=String(row[colImport]||'').trim();
+      // Import: pot ser number (raw:true) o string
+      const rawImp=row[colImport];
+      let importRaw=(typeof rawImp==='number')?String(rawImp):String(rawImp||'').trim();
 
-      // Normalitzar data — DD/MM/YYYY, YYYY-MM-DD, ISO amb hora, o objecte Date
-      if(!dataVal||dataVal==='undefined'||dataVal==='null')continue;
-      // ISO amb hora: 2025-04-16 01:59:16 o 2025-04-16T01:59:16
-      if(dataVal.match(/^\d{4}-\d{2}-\d{2}/)){
-        const p=dataVal.split('T')[0].replace(' ','T').split('T')[0].split('-');
-        dataVal=p[2]+'/'+p[1]+'/'+p[0];
-      }else if(dataVal.match(/^\d{1,2}\/\d{1,2}\/\d{4}$/)){
-        // ja és DD/MM/YYYY
-      }else if(dataVal.match(/^\d{1,2}-\d{1,2}-\d{4}$/)){
-        const p=dataVal.split('-');dataVal=p[0]+'/'+p[1]+'/'+p[2];
-      }else{continue;}
+      // Normalitzar data — suporta: objecte Date JS, YYYY-MM-DD, DD/MM/YYYY, M/D/YYYY, ISO amb hora
+      const rawDate=row[colData];
+      if(rawDate===''||rawDate===null||rawDate===undefined)continue;
+      if(rawDate instanceof Date||Object.prototype.toString.call(rawDate)==='[object Date]'){
+        // Objecte Date JS — SheetJS amb cellDates:true retorna Date objects
+        const d=rawDate;
+        const dd=String(d.getDate()).padStart(2,'0');
+        const mm=String(d.getMonth()+1).padStart(2,'0');
+        const yyyy=d.getFullYear();
+        if(yyyy<2000||yyyy>2100)continue;
+        dataVal=dd+'/'+mm+'/'+yyyy;
+      } else if(typeof rawDate==='number'&&rawDate>40000){
+        // Serial de data Excel (dies des del 1900)
+        const d=new Date(Math.round((rawDate-25569)*86400*1000));
+        const dd=String(d.getUTCDate()).padStart(2,'0');
+        const mm=String(d.getUTCMonth()+1).padStart(2,'0');
+        const yyyy=d.getUTCFullYear();
+        if(yyyy<2000||yyyy>2100)continue;
+        dataVal=dd+'/'+mm+'/'+yyyy;
+      } else {
+        dataVal=String(rawDate).trim();
+        if(!dataVal||dataVal==='undefined'||dataVal==='null')continue;
+        // ISO amb hora: 2025-04-16 01:59:16 o 2025-04-16T01:59:16
+        if(dataVal.match(/^\d{4}-\d{2}-\d{2}/)){
+          const p=dataVal.split(/[T ]/)[0].split('-');
+          dataVal=p[2]+'/'+p[1]+'/'+p[0];
+        }else if(dataVal.match(/^\d{1,2}\/\d{1,2}\/\d{4}$/)){
+          // Pot ser DD/MM/YYYY o M/D/YYYY (americà de SheetJS raw:false)
+          const p=dataVal.split('/');
+          if(parseInt(p[0])>12){
+            // El primer nombre és > 12, per tant és DD/MM/YYYY ja correcte
+          } else if(parseInt(p[1])>12){
+            // El segon nombre és > 12, per tant és M/D/YYYY → convertir
+            dataVal=String(p[1]).padStart(2,'0')+'/'+String(p[0]).padStart(2,'0')+'/'+p[2];
+          }
+          // Si cap supera 12, assumir DD/MM/YYYY (format europeu)
+        }else if(dataVal.match(/^\d{1,2}-\d{1,2}-\d{4}$/)){
+          const p=dataVal.split('-');dataVal=p[0]+'/'+p[1]+'/'+p[2];
+        }else{continue;}
+      }
 
-      // Normalitzar import
-      importRaw=importRaw.replace(/\s/g,'').replace(/\./g,'').replace(',','.');
-      const imp=parseFloat(importRaw);
+      // Normalitzar import — si ja és number (raw:true) usar directament
+      let imp;
+      if(typeof rawImp==='number'){
+        imp=rawImp;
+      }else{
+        importRaw=importRaw.replace(/\s/g,'');
+        // Si té coma com a decimal europeu (1.234,56) → eliminar punt de miler, substituir coma
+        if(importRaw.match(/\d+\.\d{3},\d{2}/)){
+          importRaw=importRaw.replace(/\./g,'').replace(',','.');
+        }else if(importRaw.includes(',')&&!importRaw.includes('.')){
+          importRaw=importRaw.replace(',','.');
+        }
+        imp=parseFloat(importRaw);
+      }
       if(isNaN(imp)||imp===0)continue;
 
       moviments.push({data:dataVal,concepte,import:imp});
