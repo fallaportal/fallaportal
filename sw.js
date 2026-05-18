@@ -1,6 +1,5 @@
-// Falla Portal — Service Worker v1.2.22
-// NOTA: Incrementar BUILD_VERSION cada cop que es desplega una nova versió
-const BUILD_VERSION = '20260518-1';
+// Falla Portal — Service Worker v1.2.24
+const BUILD_VERSION = '1224';
 const CACHE_NAME = 'falla-portal-v' + BUILD_VERSION;
 const BASE = '/fallaportal';
 
