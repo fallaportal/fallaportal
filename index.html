@@ -2728,10 +2728,10 @@ function renderFonsEvents(){
   const eventsOberts=Object.values(DB.tancaments||{}).filter(tc=>tc.estat==='obert'&&(tc.anyFiscal===af||!tc.anyFiscal));
   if(!eventsOberts.length)return '';
   let html='<div style="margin-bottom:14px">';
-  html+='<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--amber-text);margin-bottom:8px"><i class="ti ti-flame"></i> Caixetes d'event obertes</div>';
+  html+='<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--amber-text);margin-bottom:8px"><i class="ti ti-flame"></i> Caixetes d\'event obertes</div>';
   eventsOberts.forEach(function(tc){
     const canviTotal=getTancCanviTotal(tc.eventId);
-    html+='<div style="background:var(--amber-bg);border:1px solid var(--amber);border-radius:var(--rl);padding:14px 16px;margin-bottom:8px;cursor:pointer" onclick="showPage('tancament');setTimeout(function(){var s=document.getElementById('tanc-event-sel');if(s){s.value=''+tc.eventId+'';onTancEventChange();}},100)">';
+    html+='<div style="background:var(--amber-bg);border:1px solid var(--amber);border-radius:var(--rl);padding:14px 16px;margin-bottom:8px;cursor:pointer" onclick="showPage(\'tancament\');setTimeout(function(){var s=document.getElementById(\'tanc-event-sel\');if(s){s.value=\''+tc.eventId+'\';onTancEventChange();}},100)">';
     html+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">';
     html+='<div style="font-weight:600;color:var(--amber-text)"><i class="ti ti-door-enter"></i> '+tc.concepte+'</div>';
     html+='<div style="font-size:18px;font-weight:700;color:var(--amber-text)">'+fmtD(canviTotal)+'</div>';
