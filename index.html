@@ -263,7 +263,7 @@ tr:hover td{background:var(--bg2)}
     <div class="login-logo">Falla <span>Portal</span></div>
     <div class="login-sub">Sistema de gestió financera</div>
     <div class="login-fiscal">Any fiscal 26/27 · Abr 2026 – Mar 2027</div>
-    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v1.2.50</div>
+    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v1.2.51</div>
     <button class="btn-google" onclick="signIn()">
       <svg viewBox="0 0 24 24" width="20" height="20"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
       Entrar amb Google
@@ -305,7 +305,7 @@ tr:hover td{background:var(--bg2)}
     <div class="sb-bottom">
       <div class="sync-ind"><div class="sync-dot" id="sync-dot"></div><span id="sync-text">Sincronitzat</span></div>
       <button class="btn-logout" onclick="signOut()"><i class="ti ti-logout" style="font-size:14px"></i> Tancar sessió</button>
-      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v1.2.50</div>
+      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v1.2.51</div>
     </div>
   </div>
 
@@ -404,85 +404,134 @@ tr:hover td{background:var(--bg2)}
     </div>
 
     <div id="page-tancament" class="page" style="padding:0">
-      <div style="padding:16px 20px 0 20px">
+      <div style="padding:16px 20px 8px 20px">
         <div class="page-title">Caixa d'event</div>
-        <div class="page-sub" id="sub-tancament">Obrir, gestionar i tancar la caixa d'un event</div>
+        <div class="page-sub" id="sub-tancament">Gestió de la caixa menuda dels events</div>
       </div>
 
-      <!-- CAPÇALERA: selector d'event -->
-      <div class="mov-header">
-        <div style="padding:0 4px">
-          <select id="tanc-event-sel" onchange="onTancEventChange()" style="width:100%;height:56px;font-size:15px;font-weight:600;border-radius:var(--r);border:0.5px solid var(--border2);background:var(--bg);color:var(--text);padding:0 12px">
-            <option value="">— Selecciona event o dia —</option>
-            <option value="_sense_event">📅 Sense event (introduir data)</option>
-          </select>
-        </div>
-        <div id="tanc-data-row" style="display:none;padding:0 4px">
-          <div class="mov-data-box" style="margin-bottom:6px">
-            <input type="date" id="tanc-data-input" onchange="updateTancDataLabel()">
-            <i class="ti ti-calendar" style="font-size:16px;color:var(--text3);margin-right:6px;pointer-events:none"></i>
-            <span id="tanc-data-label">Selecciona la data</span>
+      <!-- PESTANYES OBRIR / TANCAR -->
+      <div style="display:flex;border-bottom:0.5px solid var(--border);margin-bottom:0">
+        <button id="tanc-tab-obrir" onclick="showTancTab('obrir')" style="flex:1;padding:12px;font-size:14px;font-weight:600;border:none;border-bottom:2px solid var(--green);background:var(--bg2);color:var(--green);cursor:pointer">
+          <i class="ti ti-door-enter"></i> Obrir caixa
+        </button>
+        <button id="tanc-tab-tancar" onclick="showTancTab('tancar')" style="flex:1;padding:12px;font-size:14px;font-weight:600;border:none;border-bottom:2px solid transparent;background:var(--bg);color:var(--text2);cursor:pointer">
+          <i class="ti ti-lock"></i> Tancar caixa
+        </button>
+      </div>
+
+      <!-- PANEL OBRIR -->
+      <div id="tanc-panel-obrir">
+        <div class="mov-header">
+          <!-- Selector event (sense oberts) -->
+          <div style="padding:0 4px">
+            <select id="tanc-obrir-sel" onchange="onTancObrirChange()" style="width:100%;height:52px;font-size:15px;font-weight:600;border-radius:var(--r);border:0.5px solid var(--border2);background:var(--bg);color:var(--text);padding:0 12px">
+              <option value="">— Selecciona event a obrir —</option>
+              <option value="_sense_event">📅 Sense event (introduir data)</option>
+            </select>
           </div>
-          <input type="text" id="tanc-concepte" placeholder="Descripció de l'event (obligatori)" oninput="updateTancResum()" style="width:100%;padding:10px 12px;border-radius:var(--r);border:0.5px solid var(--border2);background:var(--bg);color:var(--text);font-size:14px">
-        </div>
-        <div id="tanc-estat-row" style="display:none;padding:0 4px">
-          <div id="tanc-estat-badge" style="padding:10px 14px;border-radius:var(--r);font-size:13px;font-weight:600;text-align:center"></div>
-        </div>
-        <div id="tanc-canvi-row" style="padding:0 4px">
-          <div style="font-size:10px;color:var(--text3);text-align:center;margin-bottom:2px;text-transform:uppercase;letter-spacing:.05em">Canvi inicial (€)</div>
-          <div class="mov-import-box" style="border-color:var(--amber)">
-            <input type="text" id="tanc-canvi" placeholder="0,00" inputmode="decimal" oninput="updateTancResum()" style="font-size:22px;color:var(--amber)">
-            <span style="font-size:20px;font-weight:700;color:var(--amber);margin-left:4px">€</span>
+          <!-- Data + Concepte per Sense Event -->
+          <div id="obrir-data-row" style="display:none;padding:0 4px">
+            <div class="mov-data-box" style="margin-bottom:6px">
+              <input type="date" id="tanc-data-input" onchange="updateTancDataLabel()">
+              <i class="ti ti-calendar" style="font-size:16px;color:var(--text3);margin-right:6px;pointer-events:none"></i>
+              <span id="tanc-data-label">Selecciona la data</span>
+            </div>
+            <input type="text" id="tanc-concepte" placeholder="Descripció de l'event (obligatori)" style="width:100%;padding:10px 12px;border-radius:var(--r);border:0.5px solid var(--border2);background:var(--bg);color:var(--text);font-size:14px">
+          </div>
+          <!-- Canvi inicial -->
+          <div style="padding:0 4px">
+            <div style="font-size:10px;color:var(--text3);text-align:center;margin-bottom:2px;text-transform:uppercase;letter-spacing:.05em">Canvi inicial (€) — obligatori</div>
+            <div class="mov-import-box" style="border-color:var(--amber)">
+              <input type="text" id="tanc-canvi" placeholder="0,00" inputmode="decimal" oninput="updateObrirResum()" style="font-size:22px;color:var(--amber)">
+              <span style="font-size:20px;font-weight:700;color:var(--amber);margin-left:4px">€</span>
+            </div>
           </div>
         </div>
-        <div id="tanc-efectiu-row" style="display:none">
-          <div class="mov-g2">
-            <div style="position:relative">
-              <div style="font-size:10px;color:var(--text3);text-align:center;margin-bottom:2px;text-transform:uppercase;letter-spacing:.05em">Efectiu comptat</div>
-              <div class="mov-import-box" style="border-color:var(--green)">
-                <input type="text" id="tanc-efectiu" placeholder="0,00" inputmode="decimal" oninput="updateTancResum()" style="font-size:22px;color:var(--green)">
-                <span style="font-size:20px;font-weight:700;color:var(--green);margin-left:4px">€</span>
+        <div class="mov-body">
+          <div id="obrir-resum" style="background:var(--bg2);border-radius:var(--r);padding:12px 14px;margin-bottom:12px;font-size:13px;color:var(--text3)">Introdueix el canvi inicial per obrir la caixa</div>
+          <div class="mov-field">
+            <label>Notes <span class="opt-label">(opcional)</span></label>
+            <input type="text" id="tanc-obrir-notes" placeholder="Observacions...">
+          </div>
+          <button onclick="obrirEvent()" style="width:100%;padding:14px;font-size:16px;background:var(--green);color:#fff;border:none;border-radius:var(--r);font-weight:700;cursor:pointer;margin-top:8px">
+            <i class="ti ti-door-enter"></i> Obrir caixa
+          </button>
+        </div>
+      </div>
+
+      <!-- PANEL TANCAR -->
+      <div id="tanc-panel-tancar" style="display:none">
+        <div class="mov-header">
+          <!-- Selector event (només oberts) -->
+          <div style="padding:0 4px">
+            <select id="tanc-tancar-sel" onchange="onTancTancarChange()" style="width:100%;height:52px;font-size:15px;font-weight:600;border-radius:var(--r);border:0.5px solid var(--border2);background:var(--bg);color:var(--text);padding:0 12px">
+              <option value="">— Selecciona event obert —</option>
+            </select>
+          </div>
+          <!-- Badge estat + canvi total -->
+          <div id="tanc-obert-info" style="display:none;padding:0 4px">
+            <div id="tanc-obert-badge" style="padding:10px 14px;border-radius:var(--r);font-size:13px;font-weight:600;text-align:center;background:var(--amber-bg);color:var(--amber-text);border:1px solid var(--amber)"></div>
+            <!-- Afegir canvi addicional -->
+            <div style="margin-top:8px;padding:10px 12px;background:var(--bg2);border-radius:var(--r);border:0.5px solid var(--border)">
+              <div style="font-size:12px;color:var(--text2);margin-bottom:6px;font-weight:500">Afegir canvi addicional</div>
+              <div style="display:flex;gap:8px;align-items:center">
+                <div class="mov-import-box" style="flex:1;border-color:var(--amber)">
+                  <input type="text" id="tanc-canvi-add" placeholder="0,00" inputmode="decimal" style="font-size:18px;color:var(--amber)">
+                  <span style="font-size:16px;font-weight:700;color:var(--amber);margin-left:4px">€</span>
+                </div>
+                <button onclick="afegirCanviEvent()" style="padding:10px 16px;background:var(--amber-bg);color:var(--amber-text);border:1px solid var(--amber);border-radius:var(--r);font-weight:600;cursor:pointer;white-space:nowrap;font-size:13px">
+                  <i class="ti ti-plus"></i> Afegir
+                </button>
               </div>
             </div>
-            <div style="position:relative">
-              <div style="font-size:10px;color:var(--text3);text-align:center;margin-bottom:2px;text-transform:uppercase;letter-spacing:.05em">Pagaments efectuats</div>
-              <div class="mov-import-box" style="border-color:var(--red)">
-                <input type="text" id="tanc-pagaments" placeholder="0,00" inputmode="decimal" oninput="updateTancResum()" style="font-size:22px;color:var(--red)">
-                <span style="font-size:20px;font-weight:700;color:var(--red);margin-left:4px">€</span>
+          </div>
+          <!-- Camps de tancament -->
+          <div id="tanc-efectiu-row" style="display:none">
+            <div class="mov-g2">
+              <div>
+                <div style="font-size:10px;color:var(--text3);text-align:center;margin-bottom:2px;text-transform:uppercase;letter-spacing:.05em">Efectiu comptat</div>
+                <div class="mov-import-box" style="border-color:var(--green)">
+                  <input type="text" id="tanc-efectiu" placeholder="0,00" inputmode="decimal" oninput="updateTancResum()" style="font-size:22px;color:var(--green)">
+                  <span style="font-size:20px;font-weight:700;color:var(--green);margin-left:4px">€</span>
+                </div>
+              </div>
+              <div>
+                <div style="font-size:10px;color:var(--text3);text-align:center;margin-bottom:2px;text-transform:uppercase;letter-spacing:.05em">Pagaments efectuats</div>
+                <div class="mov-import-box" style="border-color:var(--red)">
+                  <input type="text" id="tanc-pagaments" placeholder="0,00" inputmode="decimal" oninput="updateTancResum()" style="font-size:22px;color:var(--red)">
+                  <span style="font-size:20px;font-weight:700;color:var(--red);margin-left:4px">€</span>
+                </div>
+              </div>
+            </div>
+            <div style="padding:0 4px;margin-top:6px">
+              <div style="font-size:10px;color:var(--text3);text-align:center;margin-bottom:2px;text-transform:uppercase;letter-spacing:.05em">Vendes TPV</div>
+              <div class="mov-import-box">
+                <input type="text" id="tanc-tpv" placeholder="0,00" inputmode="decimal" oninput="updateTancResum()" style="font-size:22px">
+                <span style="font-size:20px;font-weight:700;color:var(--text3);margin-left:4px">€</span>
               </div>
             </div>
           </div>
-          <div style="padding:0 4px;margin-top:6px">
-            <div style="font-size:10px;color:var(--text3);text-align:center;margin-bottom:2px;text-transform:uppercase;letter-spacing:.05em">Vendes TPV</div>
-            <div class="mov-import-box">
-              <input type="text" id="tanc-tpv" placeholder="0,00" inputmode="decimal" oninput="updateTancResum()" style="font-size:22px">
-              <span style="font-size:20px;font-weight:700;color:var(--text3);margin-left:4px">€</span>
+        </div>
+        <div class="mov-body">
+          <div id="tanc-resum" style="background:var(--bg2);border-radius:var(--r);padding:14px 16px;margin-bottom:12px;font-size:13px;color:var(--text3)">Selecciona un event obert per tancar</div>
+          <div id="tanc-area-row" style="display:none">
+            <div class="mov-field">
+              <label>Àrea</label>
+              <select id="tanc-area" onchange="onTancAreaChange()"></select>
+            </div>
+            <div class="mov-field">
+              <label>Delegació</label>
+              <select id="tanc-deleg"></select>
             </div>
           </div>
-        </div>
-      </div>
-
-      <div class="mov-body">
-        <div id="tanc-resum" style="background:var(--bg2);border-radius:var(--r);padding:14px 16px;margin-bottom:12px;font-size:13px"></div>
-        <div id="tanc-area-row" style="display:none">
-          <div class="mov-field">
-            <label>Àrea</label>
-            <select id="tanc-area" onchange="onTancAreaChange()"></select>
+          <div class="mov-field" id="tanc-notes-row" style="display:none">
+            <label>Notes <span class="opt-label">(opcional)</span></label>
+            <input type="text" id="tanc-notes" placeholder="Observacions del tancament...">
           </div>
-          <div class="mov-field">
-            <label>Delegació</label>
-            <select id="tanc-deleg"></select>
-          </div>
+          <button id="btn-confirmar-tancar" onclick="tancarEvent()" style="display:none;width:100%;padding:14px;font-size:16px;background:var(--red);color:#fff;border:none;border-radius:var(--r);font-weight:700;cursor:pointer;margin-top:8px">
+            <i class="ti ti-lock"></i> Confirmar tancament
+          </button>
         </div>
-        <div class="mov-field">
-          <label>Notes <span class="opt-label">(opcional)</span></label>
-          <input type="text" id="tanc-notes" placeholder="Observacions...">
-        </div>
-        <div id="tanc-accions" style="display:none;margin-top:8px"></div>
-      </div>
-
-      <div class="mov-footer-btn" id="tanc-footer-btn" style="display:none">
-        <button id="tanc-footer-btn-inner" style="width:100%;padding:14px;font-size:16px;border-radius:var(--r);border:none;font-weight:700;cursor:pointer"></button>
       </div>
     </div>
     <div id="page-pressupostos" class="page">
@@ -2724,23 +2773,34 @@ function renderFons(){
 
 function renderFonsEvents(){
   const af=getAnyFiscal();
-  // Trobar events oberts (caixa oberta)
   const eventsOberts=Object.values(DB.tancaments||{}).filter(tc=>tc.estat==='obert'&&(tc.anyFiscal===af||!tc.anyFiscal));
   if(!eventsOberts.length)return '';
   let html='<div style="margin-bottom:14px">';
   html+='<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--amber-text);margin-bottom:8px"><i class="ti ti-flame"></i> Caixetes d\'event obertes</div>';
   eventsOberts.forEach(function(tc){
     const canviTotal=getTancCanviTotal(tc.eventId);
-    html+='<div style="background:var(--amber-bg);border:1px solid var(--amber);border-radius:var(--rl);padding:14px 16px;margin-bottom:8px;cursor:pointer" onclick="showPage(\'tancament\');setTimeout(function(){var s=document.getElementById(\'tanc-event-sel\');if(s){s.value=\''+tc.eventId+'\';onTancEventChange();}},100)">';
-    html+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">';
-    html+='<div style="font-weight:600;color:var(--amber-text)"><i class="ti ti-door-enter"></i> '+tc.concepte+'</div>';
-    html+='<div style="font-size:18px;font-weight:700;color:var(--amber-text)">'+fmtD(canviTotal)+'</div>';
-    html+='</div>';
-    html+='<div style="font-size:12px;color:var(--amber-text);opacity:.8">Obert el '+tc.data+' · Toca per gestionar</div>';
-    html+='</div>';
+    const evId=tc.eventId;
+    html+='<div style="background:var(--amber-bg);border:1px solid var(--amber);border-radius:var(--rl);padding:14px 16px;margin-bottom:8px;cursor:pointer" onclick="anarATancarEvent(\''+evId+'\')">'+
+      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">'+
+      '<div style="font-weight:600;color:var(--amber-text)"><i class="ti ti-lock"></i> '+tc.concepte+'</div>'+
+      '<div style="font-size:18px;font-weight:700;color:var(--amber-text)">'+fmtD(canviTotal)+'</div>'+
+      '</div>'+
+      '<div style="font-size:12px;color:var(--amber-text);opacity:.8">Obert el '+tc.data+' · Toca per tancar</div>'+
+      '</div>';
   });
   html+='</div>';
   return html;
+}
+
+function anarATancarEvent(evId){
+  showPage('tancament');
+  setTimeout(function(){
+    showTancTab('tancar');
+    setTimeout(function(){
+      const sel=document.getElementById('tanc-tancar-sel');
+      if(sel){sel.value=evId;onTancTancarChange();}
+    },50);
+  },50);
 }
 
 function renderFonsCard(u){
@@ -2889,20 +2949,79 @@ async function saveDevolucio(){
 let tancEventId=null;
 
 function renderTancamentList(){
-  const sel=document.getElementById('tanc-event-sel');
-  if(!sel)return;
+  showTancTab('obrir');
+  populateTancSelectors();
+}
+
+function showTancTab(tab){
+  const panelObrir=document.getElementById('tanc-panel-obrir');
+  const panelTancar=document.getElementById('tanc-panel-tancar');
+  const tabObrir=document.getElementById('tanc-tab-obrir');
+  const tabTancar=document.getElementById('tanc-tab-tancar');
+  if(!panelObrir)return;
+  if(tab==='obrir'){
+    panelObrir.style.display='';
+    panelTancar.style.display='none';
+    tabObrir.style.borderBottomColor='var(--green)';
+    tabObrir.style.color='var(--green)';
+    tabObrir.style.background='var(--bg2)';
+    tabTancar.style.borderBottomColor='transparent';
+    tabTancar.style.color='var(--text2)';
+    tabTancar.style.background='var(--bg)';
+  } else {
+    panelObrir.style.display='none';
+    panelTancar.style.display='';
+    tabTancar.style.borderBottomColor='var(--red)';
+    tabTancar.style.color='var(--red)';
+    tabTancar.style.background='var(--bg2)';
+    tabObrir.style.borderBottomColor='transparent';
+    tabObrir.style.color='var(--text2)';
+    tabObrir.style.background='var(--bg)';
+  }
+  populateTancSelectors();
+}
+
+function populateTancSelectors(){
   const afT=getAnyFiscal();
   const events=(DB.config.events||[]).filter(e=>e.anyFiscal===afT||e.year===afT);
-  while(sel.options.length>2)sel.remove(2);
-  events.forEach(function(ev){
-    const tc=(DB.tancaments||{})[ev.id];
-    const estat=tc?tc.estat:'';
-    let prefix=estat==='obert'?'🟠 ':estat==='tancat'?'✓ ':'';
-    const opt=document.createElement('option');
-    opt.value=ev.id;
-    opt.textContent=prefix+ev.name;
-    sel.appendChild(opt);
-  });
+  const tancaments=DB.tancaments||{};
+
+  // Selector OBRIR: events sense caixa oberta (no obert i no tancat)
+  const selObrir=document.getElementById('tanc-obrir-sel');
+  if(selObrir){
+    const val=selObrir.value;
+    while(selObrir.options.length>2)selObrir.remove(2);
+    events.filter(ev=>!tancaments[ev.id]||tancaments[ev.id].estat==='tancat').forEach(function(ev){
+      const opt=document.createElement('option');
+      opt.value=ev.id;
+      const tc=tancaments[ev.id];
+      opt.textContent=(tc&&tc.estat==='tancat'?'✓ ':'')+ev.name;
+      selObrir.appendChild(opt);
+    });
+    if(val)selObrir.value=val;
+  }
+
+  // Selector TANCAR: només events amb caixa oberta
+  const selTancar=document.getElementById('tanc-tancar-sel');
+  if(selTancar){
+    const val=selTancar.value;
+    while(selTancar.options.length>1)selTancar.remove(1);
+    const oberts=Object.values(tancaments).filter(tc=>tc.estat==='obert'&&(tc.anyFiscal===afT||!tc.anyFiscal));
+    oberts.forEach(function(tc){
+      const opt=document.createElement('option');
+      opt.value=tc.eventId;
+      opt.textContent='🟠 '+tc.concepte;
+      selTancar.appendChild(opt);
+    });
+    if(val)selTancar.value=val;
+    // Si no hi ha events oberts, mostrar missatge
+    const resumEl=document.getElementById('tanc-resum');
+    if(!oberts.length&&resumEl){
+      resumEl.innerHTML='<span style="color:var(--text3)">No hi ha cap caixa oberta. Primer obre una caixa.</span>';
+    }
+  }
+
+  // Poblar àrees
   const areaSel=document.getElementById('tanc-area');
   if(areaSel){
     areaSel.innerHTML='<option value="">— Selecciona àrea —</option>';
@@ -2910,123 +3029,14 @@ function renderTancamentList(){
       areaSel.innerHTML+='<option value="'+a.id+'">'+a.id+' · '+a.name+'</option>';
     });
   }
-  updateTancResum();
 }
 
-function getTancEstat(evId){
-  if(!evId||evId==='_sense_event')return null;
-  const tc=(DB.tancaments||{})[evId];
-  return tc?tc.estat:null;
-}
-
-function getTancCanviTotal(evId){
-  // Suma tots els fons de tipus event_canvi associats a aquest tancament
-  return (DB.fons||[]).filter(f=>f.eventTancamentId===evId&&f.tipus==='event_canvi').reduce((s,f)=>s+f.import,0);
-}
-
-function onTancEventChange(){
-  const val=document.getElementById('tanc-event-sel').value;
-  tancEventId=val==='_sense_event'?null:val||null;
-
-  const dataRow=document.getElementById('tanc-data-row');
-  const estatRow=document.getElementById('tanc-estat-row');
-  const canviRow=document.getElementById('tanc-canvi-row');
-  const efectiuRow=document.getElementById('tanc-efectiu-row');
-  const areaRow=document.getElementById('tanc-area-row');
-  const accions=document.getElementById('tanc-accions');
-  const footerBtn=document.getElementById('tanc-footer-btn');
-  const footerBtnInner=document.getElementById('tanc-footer-btn-inner');
-  const resumEl=document.getElementById('tanc-resum');
-
-  // Reset camps
-  ['tanc-canvi','tanc-efectiu','tanc-tpv','tanc-pagaments','tanc-notes'].forEach(id=>{
-    const el=document.getElementById(id);if(el)el.value='';
-  });
-
-  if(!val){
-    dataRow.style.display='none';
-    estatRow.style.display='none';
-    canviRow.style.display='block';
-    efectiuRow.style.display='none';
-    areaRow.style.display='none';
-    if(accions)accions.style.display='none';
-    if(footerBtn)footerBtn.style.display='none';
-    if(resumEl)resumEl.innerHTML='<span style="color:var(--text3);font-size:12px">Selecciona un event per continuar</span>';
-    return;
-  }
-
-  // Sense event
-  if(val==='_sense_event'){
-    dataRow.style.display='block';
-    estatRow.style.display='none';
-    canviRow.style.display='block';
-    efectiuRow.style.display='none';
-    areaRow.style.display='none';
-    if(accions){
-      accions.style.display='block';
-      accions.innerHTML='<button class="btn btn-primary" onclick="obrirEvent()" style="width:100%;padding:14px;font-size:16px"><i class="ti ti-door-enter"></i> Obrir caixa</button>';
-    }
-    if(footerBtn){footerBtn.style.display='block';footerBtnInner.style.background='var(--green)';footerBtnInner.style.color='#fff';footerBtnInner.textContent='Obrir caixa';footerBtnInner.onclick=obrirEvent;}
-    updateTancResum();
-    return;
-  }
-
-  // Event existent
-  const tc=(DB.tancaments||{})[val];
-  const estat=tc?tc.estat:null;
-  const estatBadge=document.getElementById('tanc-estat-badge');
-
-  estatRow.style.display='block';
-  dataRow.style.display='none';
-
-  if(!estat){
-    // Encara no obert
-    estatBadge.style.cssText='padding:10px 14px;border-radius:var(--r);font-size:13px;font-weight:600;text-align:center;background:var(--bg2);color:var(--text2)';
-    estatBadge.innerHTML='<i class="ti ti-door-enter"></i> Caixa no oberta';
-    canviRow.style.display='block';
-    efectiuRow.style.display='none';
-    areaRow.style.display='none';
-    if(accions){
-      accions.style.display='block';
-      accions.innerHTML='<button class="btn btn-primary" onclick="obrirEvent()" style="width:100%;padding:14px;font-size:16px"><i class="ti ti-door-enter"></i> Obrir caixa</button>';
-    }
-    if(footerBtn){footerBtn.style.display='block';footerBtnInner.style.background='var(--green)';footerBtnInner.style.color='#fff';footerBtnInner.textContent='Obrir caixa';footerBtnInner.onclick=obrirEvent;}
-  } else if(estat==='obert'){
-    estatBadge.style.cssText='padding:10px 14px;border-radius:var(--r);font-size:13px;font-weight:600;text-align:center;background:var(--amber-bg);color:var(--amber-text);border:1px solid var(--amber)';
-    const canviTotal=getTancCanviTotal(val);
-    estatBadge.innerHTML='<i class="ti ti-clock"></i> Caixa OBERTA · Canvi: '+fmtD(canviTotal);
-    // Mode modificar: mostrar camp canvi per afegir més
-    canviRow.style.display='block';
-    document.getElementById('tanc-canvi').placeholder='Afegir canvi addicional...';
-    efectiuRow.style.display='none';
-    areaRow.style.display='none';
-    if(accions){
-      accions.style.display='block';
-      accions.innerHTML=
-        '<button class="btn" onclick="afegirCanviEvent()" style="width:100%;padding:12px;font-size:15px;margin-bottom:8px;border-color:var(--amber);color:var(--amber)"><i class="ti ti-plus"></i> Afegir canvi addicional</button>'+
-        '<button class="btn" onclick="iniciarTancamentEvent()" style="width:100%;padding:12px;font-size:15px;background:var(--green);color:#fff;border-color:var(--green)"><i class="ti ti-lock"></i> Tancar caixa</button>';
-    }
-    if(footerBtn){footerBtn.style.display='block';footerBtnInner.style.background='var(--green)';footerBtnInner.style.color='#fff';footerBtnInner.textContent='Tancar caixa';footerBtnInner.onclick=iniciarTancamentEvent;}
-  } else if(estat==='tancat'){
-    estatBadge.style.cssText='padding:10px 14px;border-radius:var(--r);font-size:13px;font-weight:600;text-align:center;background:var(--green-bg);color:var(--green-text);border:1px solid var(--green)';
-    estatBadge.innerHTML='<i class="ti ti-check"></i> Caixa TANCADA · '+tc.data;
-    // Mostrar resum del tancament
-    canviRow.style.display='none';
-    efectiuRow.style.display='none';
-    areaRow.style.display='none';
-    if(accions)accions.style.display='none';
-    if(footerBtn)footerBtn.style.display='none';
-    const netEf=(tc.efectiu||0)-(tc.canvi||0);
-    if(resumEl)resumEl.innerHTML=
-      '<div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="color:var(--text2)">Efectiu comptat</span><span>+'+fmtD(tc.efectiu||0)+'</span></div>'+
-      '<div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="color:var(--text2)">− Canvi inicial</span><span>−'+fmtD(tc.canvi||0)+'</span></div>'+
-      '<div style="display:flex;justify-content:space-between;margin-bottom:4px;padding-bottom:4px;border-bottom:0.5px solid var(--border)"><span style="font-weight:500">= Ingrés net efectiu</span><span style="font-weight:600;color:var(--green)">'+fmtD(netEf)+'</span></div>'+
-      (tc.tpv>0?'<div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="color:var(--text2)">Vendes TPV</span><span>+'+fmtD(tc.tpv)+'</span></div>':'')+
-      (tc.pagaments>0?'<div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="color:var(--text2)">Pagaments</span><span style="color:var(--red)">−'+fmtD(tc.pagaments)+'</span></div>':'')+
-      '<div style="display:flex;justify-content:space-between;font-weight:700;font-size:15px;margin-top:6px"><span>Resultat net</span><span style="color:var(--green)">'+fmtD(netEf+(tc.tpv||0)-(tc.pagaments||0))+'</span></div>';
-    return;
-  }
-  updateTancResum();
+function onTancObrirChange(){
+  const val=document.getElementById('tanc-obrir-sel').value;
+  const dataRow=document.getElementById('obrir-data-row');
+  if(dataRow)dataRow.style.display=(val==='_sense_event')?'block':'none';
+  document.getElementById('tanc-canvi').value='';
+  updateObrirResum();
 }
 
 function updateTancDataLabel(){
@@ -3034,6 +3044,59 @@ function updateTancDataLabel(){
   const lbl=document.getElementById('tanc-data-label');
   if(v){const p=v.split('-');lbl.textContent=p[2]+'/'+p[1]+'/'+p[0];}
   else{lbl.textContent='Selecciona la data';}
+}
+
+function updateObrirResum(){
+  const canvi=parseFloat((document.getElementById('tanc-canvi')?.value||'0').replace(',','.'))||0;
+  const resumEl=document.getElementById('obrir-resum');
+  if(!resumEl)return;
+  if(!canvi){
+    resumEl.style.color='var(--text3)';
+    resumEl.textContent='Introdueix el canvi inicial per obrir la caixa';
+    return;
+  }
+  resumEl.style.color='var(--text)';
+  resumEl.innerHTML='<div style="display:flex;justify-content:space-between;font-size:14px"><span>Canvi a lliurar</span><span style="font-weight:700;color:var(--amber)">'+fmtD(canvi)+'</span></div>'+
+    '<div style="font-size:12px;color:var(--text3);margin-top:4px"><i class="ti ti-info-circle"></i> Es crearà un fons d\'event per aquest import</div>';
+}
+
+function onTancTancarChange(){
+  const val=document.getElementById('tanc-tancar-sel').value;
+  const infoEl=document.getElementById('tanc-obert-info');
+  const efectiuRow=document.getElementById('tanc-efectiu-row');
+  const areaRow=document.getElementById('tanc-area-row');
+  const notesRow=document.getElementById('tanc-notes-row');
+  const btnTancar=document.getElementById('btn-confirmar-tancar');
+  const resumEl=document.getElementById('tanc-resum');
+
+  // Reset
+  if(document.getElementById('tanc-efectiu'))document.getElementById('tanc-efectiu').value='';
+  if(document.getElementById('tanc-tpv'))document.getElementById('tanc-tpv').value='';
+  if(document.getElementById('tanc-pagaments'))document.getElementById('tanc-pagaments').value='';
+  if(document.getElementById('tanc-canvi-add'))document.getElementById('tanc-canvi-add').value='';
+
+  if(!val){
+    if(infoEl)infoEl.style.display='none';
+    if(efectiuRow)efectiuRow.style.display='none';
+    if(areaRow)areaRow.style.display='none';
+    if(notesRow)notesRow.style.display='none';
+    if(btnTancar)btnTancar.style.display='none';
+    if(resumEl){resumEl.style.color='var(--text3)';resumEl.textContent='Selecciona un event obert per tancar';}
+    return;
+  }
+
+  const tc=(DB.tancaments||{})[val];
+  if(!tc||tc.estat!=='obert'){return;}
+
+  const canviTotal=getTancCanviTotal(val);
+  const badgeEl=document.getElementById('tanc-obert-badge');
+  if(badgeEl)badgeEl.innerHTML='<i class="ti ti-clock"></i> '+tc.concepte+' — Canvi: <strong>'+fmtD(canviTotal)+'</strong>';
+  if(infoEl)infoEl.style.display='block';
+  if(efectiuRow)efectiuRow.style.display='block';
+  if(areaRow)areaRow.style.display='block';
+  if(notesRow)notesRow.style.display='block';
+  if(btnTancar)btnTancar.style.display='block';
+  if(resumEl){resumEl.style.color='var(--text3)';resumEl.textContent='Introdueix l\'efectiu comptat i els pagaments realitzats';}
   updateTancResum();
 }
 
@@ -3048,22 +3111,39 @@ function onTancAreaChange(){
 }
 
 function updateTancResum(){
-  const val=document.getElementById('tanc-event-sel')?.value;
-  const estat=getTancEstat(val);
-  if(estat==='obert'||estat==='tancat')return; // el resum es gestiona a onTancEventChange
-  const canvi=parseFloat((document.getElementById('tanc-canvi')?.value||'0').replace(',','.'))||0;
+  const val=document.getElementById('tanc-tancar-sel')?.value;
+  if(!val)return;
+  const canvi=getTancCanviTotal(val);
+  const ef=parseFloat((document.getElementById('tanc-efectiu')?.value||'0').replace(',','.'))||0;
+  const tpv=parseFloat((document.getElementById('tanc-tpv')?.value||'0').replace(',','.'))||0;
+  const pag=parseFloat((document.getElementById('tanc-pagaments')?.value||'0').replace(',','.'))||0;
+  const netEf=ef-canvi;
+  const total=netEf+tpv-pag;
   const resumEl=document.getElementById('tanc-resum');
-  if(!canvi){
-    if(resumEl)resumEl.innerHTML='<span style="color:var(--text3);font-size:12px">Introdueix el canvi inicial per obrir la caixa</span>';
-    return;
-  }
-  if(resumEl)resumEl.innerHTML=
-    '<div style="display:flex;justify-content:space-between;font-size:14px"><span style="color:var(--text2)">Canvi a lliurar</span><span style="font-weight:600;color:var(--amber)">'+fmtD(canvi)+'</span></div>'+
-    '<div style="margin-top:6px;font-size:12px;color:var(--text3)"><i class="ti ti-info-circle"></i> Es crearà un fons a nom de l\'event per aquest import</div>';
+  if(!resumEl)return;
+  if(!ef&&!tpv&&!pag){resumEl.style.color='var(--text3)';resumEl.textContent='Introdueix l\'efectiu comptat i els pagaments realitzats';return;}
+  resumEl.style.color='var(--text)';
+  resumEl.innerHTML=
+    '<div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="color:var(--text2)">Efectiu comptat</span><span style="color:var(--green)">+'+fmtD(ef)+'</span></div>'+
+    '<div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="color:var(--text2)">− Canvi inicial</span><span style="color:var(--text2)">−'+fmtD(canvi)+'</span></div>'+
+    '<div style="display:flex;justify-content:space-between;margin-bottom:8px;padding-bottom:8px;border-bottom:0.5px solid var(--border)"><span style="font-weight:500">= Ingrés net efectiu</span><span style="font-weight:600;color:'+(netEf>=0?'var(--green)':'var(--red)')+'">'+fmtS(netEf)+'</span></div>'+
+    (tpv>0?'<div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="color:var(--text2)">Vendes TPV</span><span>+'+fmtD(tpv)+'</span></div>':'')+
+    (pag>0?'<div style="display:flex;justify-content:space-between;margin-bottom:8px;padding-bottom:8px;border-bottom:0.5px solid var(--border)"><span style="color:var(--text2)">− Pagaments</span><span style="color:var(--red)">−'+fmtD(pag)+'</span></div>':'')+
+    '<div style="display:flex;justify-content:space-between;font-weight:700;font-size:15px"><span>Resultat net</span><span style="color:'+(total>=0?'var(--green)':'var(--red)')+'">'+fmtS(Math.round(total*100)/100)+'</span></div>';
+}
+
+function getTancEstat(evId){
+  if(!evId||evId==='_sense_event')return null;
+  const tc=(DB.tancaments||{})[evId];
+  return tc?tc.estat:null;
+}
+
+function getTancCanviTotal(evId){
+  return (DB.fons||[]).filter(f=>f.eventTancamentId===evId&&f.tipus==='event_canvi').reduce((s,f)=>s+f.import,0);
 }
 
 function getTancNomEvent(){
-  const val=document.getElementById('tanc-event-sel').value;
+  const val=document.getElementById('tanc-obrir-sel').value;
   const dataInput=document.getElementById('tanc-data-input')?.value||'';
   let dataStr='';
   if(dataInput){const p=dataInput.split('-');dataStr=p[2]+'/'+p[1]+'/'+p[0];}
@@ -3077,83 +3157,72 @@ function getTancNomEvent(){
 }
 
 async function obrirEvent(){
-  const val=document.getElementById('tanc-event-sel').value;
+  const val=document.getElementById('tanc-obrir-sel').value;
   if(!val){showToast('Selecciona un event',true);return;}
   const canvi=parseFloat((document.getElementById('tanc-canvi')?.value||'0').replace(',','.'))||0;
-  if(!canvi||canvi<=0){showToast('El canvi inicial és obligatori per obrir la caixa',true);return;}
-
-  // Validar concepte si és Sense Event
+  if(!canvi||canvi<=0){showToast('El canvi inicial és obligatori',true);return;}
   if(val==='_sense_event'){
     const dataInput=document.getElementById('tanc-data-input')?.value;
-    if(!dataInput){showToast('Introdueix la data de l\'event',true);return;}
+    if(!dataInput){showToast('Introdueix la data',true);return;}
     const concepte=(document.getElementById('tanc-concepte')?.value||'').trim();
-    if(!concepte){showToast('La descripció és obligatòria per Sense Event',true);return;}
+    if(!concepte){showToast('La descripció és obligatòria',true);return;}
   }
-
   const nomFons=getTancNomEvent();
   if(!nomFons){showToast('No s\'ha pogut determinar el nom de l\'event',true);return;}
-
   const af=getAnyFiscal();
   const dataInput=document.getElementById('tanc-data-input')?.value||'';
   let dataT=today();
   if(val==='_sense_event'&&dataInput){const p=dataInput.split('-');dataT=p[2]+'/'+p[1]+'/'+p[0];}
-
   const ev=val==='_sense_event'?null:(DB.config.events||[]).find(e=>e.id===val);
   const evId=val==='_sense_event'?('_dia_'+dataT.replace(/\//g,'')):val;
   const evNom=ev?ev.name:(document.getElementById('tanc-concepte')?.value||'').trim();
-  const notes=document.getElementById('tanc-notes')?.value||'';
-
-  // Crear fons per al canvi
+  const notes=document.getElementById('tanc-obrir-notes')?.value||'';
   const fonsId='fc'+Date.now();
   const fItem={id:fonsId,data:dataT,tipus:'event_canvi',delegId:'_event',delegEmail:'_event',
     import:canvi,nota:nomFons,registratPer:currentUser?.email||'',anyFiscal:af,
     movimentId:'',eventTancamentId:evId};
   DB.fons.push(fItem);
-
-  // Crear/actualitzar registre tancament en estat obert
   if(!DB.tancaments)DB.tancaments={};
   DB.tancaments[evId]={eventId:evId,anyFiscal:af,eventNom:evNom,concepte:nomFons,
     canvi,efectiu:0,tpv:0,pagaments:0,notes,data:dataT,
     tancat:false,estat:'obert',fonsId,registratPer:currentUser?.email||''};
-
   saveCache();
   showToast('Caixa oberta · Canvi: '+fmtD(canvi));
-  document.getElementById('tanc-notes').value='';
-  // Actualitzar selector per reflectir estat
-  renderTancamentList();
-  document.getElementById('tanc-event-sel').value=evId;
-  onTancEventChange();
+  document.getElementById('tanc-canvi').value='';
+  if(document.getElementById('tanc-obrir-notes'))document.getElementById('tanc-obrir-notes').value='';
+  populateTancSelectors();
+  // Passar a pestanya tancar amb l'event seleccionat
+  showTancTab('tancar');
+  setTimeout(function(){
+    const sel=document.getElementById('tanc-tancar-sel');
+    if(sel){sel.value=evId;onTancTancarChange();}
+  },50);
   await Promise.all([
     save('tancaments').catch(e=>showToast('Error: '+e.message,true)),
     saveFons(fItem).catch(e=>showToast('Error fons: '+e.message,true))
   ]);
-  // Refrescar fons si la pàgina és visible
   if(document.getElementById('page-lliurament')?.classList.contains('active'))renderFons();
 }
 
 async function afegirCanviEvent(){
-  const val=document.getElementById('tanc-event-sel').value;
-  if(!val||val==='_sense_event'){showToast('Selecciona un event obert',true);return;}
+  const val=document.getElementById('tanc-tancar-sel').value;
+  if(!val){showToast('Selecciona un event obert',true);return;}
   const tc=(DB.tancaments||{})[val];
   if(!tc||tc.estat!=='obert'){showToast('L\'event no està obert',true);return;}
-  const canviAdicional=parseFloat((document.getElementById('tanc-canvi')?.value||'0').replace(',','.'))||0;
-  if(!canviAdicional||canviAdicional<=0){showToast('Introdueix el canvi addicional a afegir',true);return;}
-
+  const canviAdicional=parseFloat((document.getElementById('tanc-canvi-add')?.value||'0').replace(',','.'))||0;
+  if(!canviAdicional||canviAdicional<=0){showToast('Introdueix el canvi addicional',true);return;}
   const af=getAnyFiscal();
   const fonsId='fc'+Date.now();
   const fItem={id:fonsId,data:today(),tipus:'event_canvi',delegId:'_event',delegEmail:'_event',
-    import:canviAdicional,nota:tc.concepte||tc.eventNom+' (ampliació)',
+    import:canviAdicional,nota:tc.concepte+' (ampliació)',
     registratPer:currentUser?.email||'',anyFiscal:af,movimentId:'',eventTancamentId:val};
   DB.fons.push(fItem);
-
-  // Actualitzar canvi total al tancament
   tc.canvi=(tc.canvi||0)+canviAdicional;
   DB.tancaments[val]=tc;
-
   saveCache();
-  document.getElementById('tanc-canvi').value='';
-  showToast('Canvi addicional afegit · Total canvi: '+fmtD(tc.canvi));
-  onTancEventChange();
+  document.getElementById('tanc-canvi-add').value='';
+  showToast('Canvi afegit · Total: '+fmtD(getTancCanviTotal(val)));
+  onTancTancarChange();
   await Promise.all([
     save('tancaments').catch(e=>showToast('Error: '+e.message,true)),
     saveFons(fItem).catch(e=>showToast('Error fons: '+e.message,true))
@@ -3161,38 +3230,16 @@ async function afegirCanviEvent(){
   if(document.getElementById('page-lliurament')?.classList.contains('active'))renderFons();
 }
 
-function iniciarTancamentEvent(){
-  const val=document.getElementById('tanc-event-sel').value;
-  const tc=(DB.tancaments||{})[val];
-  if(!tc||tc.estat!=='obert'){showToast('L\'event no està obert',true);return;}
-  // Mostrar camps de tancament
-  const canviTotal=getTancCanviTotal(val);
-  document.getElementById('tanc-canvi').value=canviTotal.toFixed(2).replace('.',',');
-  document.getElementById('tanc-canvi-row').style.display='none';
-  document.getElementById('tanc-efectiu-row').style.display='block';
-  document.getElementById('tanc-area-row').style.display='block';
-  const accions=document.getElementById('tanc-accions');
-  if(accions){
-    accions.style.display='block';
-    accions.innerHTML='<button class="btn btn-primary" onclick="tancarEvent()" style="width:100%;padding:14px;font-size:16px;background:var(--red);border-color:var(--red)"><i class="ti ti-lock"></i> Confirmar tancament</button>';
-  }
-  const footerBtnInner=document.getElementById('tanc-footer-btn-inner');
-  if(footerBtnInner){footerBtnInner.style.background='var(--red)';footerBtnInner.style.color='#fff';footerBtnInner.textContent='Confirmar tancament';footerBtnInner.onclick=tancarEvent;}
-  document.getElementById('tanc-resum').innerHTML='<span style="color:var(--text3);font-size:12px">Introdueix l\'efectiu comptat i els pagaments realitzats</span>';
-}
-
 async function tancarEvent(){
-  const val=document.getElementById('tanc-event-sel').value;
+  const val=document.getElementById('tanc-tancar-sel').value;
   if(!val){showToast('Selecciona un event',true);return;}
   const tc=(DB.tancaments||{})[val];
   if(!tc||tc.estat!=='obert'){showToast('Només es poden tancar events oberts',true);return;}
-
   const canvi=getTancCanviTotal(val);
   const ef=parseFloat((document.getElementById('tanc-efectiu')?.value||'0').replace(',','.'))||0;
   const tpv=parseFloat((document.getElementById('tanc-tpv')?.value||'0').replace(',','.'))||0;
   const pag=parseFloat((document.getElementById('tanc-pagaments')?.value||'0').replace(',','.'))||0;
   if(!ef&&!tpv&&!pag){showToast('Introdueix almenys un import',true);return;}
-
   const areaId=document.getElementById('tanc-area')?.value||'';
   const delegId=document.getElementById('tanc-deleg')?.value||'';
   const notes=document.getElementById('tanc-notes')?.value||'';
@@ -3203,13 +3250,9 @@ async function tancarEvent(){
   const evId=val;
   const evNom=tc.eventNom||tc.concepte||'';
   const ev=(DB.config.events||[]).find(e=>e.id===val);
-
-  // Actualitzar tancament
   tc.efectiu=ef;tc.tpv=tpv;tc.pagaments=pag;tc.canvi=canvi;
   tc.notes=notes;tc.estat='tancat';tc.tancat=true;tc.registratPer=currentUser?.email||'';
   DB.tancaments[evId]=tc;
-
-  // Generar moviments
   const netEfectiu=ef-canvi;
   const t1=Date.now();
   if(netEfectiu>0){
@@ -3226,22 +3269,19 @@ async function tancarEvent(){
       data:dataT,responsable:currentUser?.name||'',responsableEmail:currentUser?.email||'',
       import:pag,notes:'Pagaments tancament · '+notes,fontImport:'tancament'});
   }
-
-  // Devolució automàtica del fons (anul·lació del canvi)
   const fonsDevolId='fd'+Date.now();
   const fDevol={id:fonsDevolId,data:dataT,tipus:'event_canvi_devolucio',delegId:'_event',delegEmail:'_event',
     import:canvi,nota:'Devolució canvi · '+evNom,registratPer:currentUser?.email||'',
     anyFiscal:af,movimentId:'',eventTancamentId:evId};
   DB.fons.push(fDevol);
-
   saveCache();
   showToast('Caixa tancada · Resultat: '+fmtD(netEfectiu+tpv-pag));
   ['tanc-efectiu','tanc-tpv','tanc-pagaments','tanc-notes'].forEach(id=>{
     const el=document.getElementById(id);if(el)el.value='';
   });
-  renderTancamentList();
-  document.getElementById('tanc-event-sel').value=evId;
-  onTancEventChange();
+  populateTancSelectors();
+  document.getElementById('tanc-tancar-sel').value='';
+  onTancTancarChange();
   await Promise.all([
     save('tancaments').catch(e=>showToast('Error tancaments: '+e.message,true)),
     save('moviments').catch(e=>showToast('Error moviments: '+e.message,true)),
