@@ -263,7 +263,7 @@ tr:hover td{background:var(--bg2)}
     <div class="login-logo">Falla <span>Portal</span></div>
     <div class="login-sub">Sistema de gestió financera</div>
     <div class="login-fiscal">Any fiscal 26/27 · Abr 2026 – Mar 2027</div>
-    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v1.2.48</div>
+    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v1.2.49</div>
     <button class="btn-google" onclick="signIn()">
       <svg viewBox="0 0 24 24" width="20" height="20"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
       Entrar amb Google
@@ -305,7 +305,7 @@ tr:hover td{background:var(--bg2)}
     <div class="sb-bottom">
       <div class="sync-ind"><div class="sync-dot" id="sync-dot"></div><span id="sync-text">Sincronitzat</span></div>
       <button class="btn-logout" onclick="signOut()"><i class="ti ti-logout" style="font-size:14px"></i> Tancar sessió</button>
-      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v1.2.48</div>
+      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v1.2.49</div>
     </div>
   </div>
 
@@ -403,19 +403,90 @@ tr:hover td{background:var(--bg2)}
       <div id="fons-view"></div>
     </div>
 
-    <div id="page-tancament" class="page">
-      <div class="page-title">Tancament d'event</div>
-      <div class="page-sub" id="sub-tancament">Tanca un event i declara efectiu i TPV</div>
-      <div id="tancament-list"></div>
-      <div id="tancament-form" class="hidden">
-        <button class="btn" onclick="backTancament()" style="margin-bottom:14px"><i class="ti ti-arrow-left"></i> Tornar</button>
-        <div class="card" style="max-width:500px">
-          <div class="card-title" id="tanc-title">Tancament</div>
-          <div class="field"><label>Efectiu comptat a la caixa (€)</label><input type="number" id="tanc-efectiu" min="0" step="0.01" inputmode="decimal" placeholder="0.00" oninput="updateTancResum()"></div>
-          <div class="field"><label>Vendes TPV — tiquet del terminal (€)</label><input type="number" id="tanc-tpv" min="0" step="0.01" inputmode="decimal" placeholder="0.00" oninput="updateTancResum()"></div>
-          <div id="tanc-resum" style="background:var(--bg2);border-radius:var(--r);padding:12px;margin-bottom:14px;font-size:12px"></div>
-          <button class="btn btn-primary" style="width:100%;padding:12px" id="btn-tancar" onclick="tancarEvent()"><i class="ti ti-lock"></i> Tancar event i enviar a Tresoreria</button>
+    <div id="page-tancament" class="page" style="padding:0">
+      <div style="padding:16px 20px 0 20px">
+        <div class="page-title">Tancament de caixa</div>
+        <div class="page-sub">Declara efectiu, TPV i pagaments d'un event o dia</div>
+      </div>
+
+      <!-- CAPÇALERA: selector d'event (estil mov-header) -->
+      <div class="mov-header">
+        <!-- FILA 1: Event selector -->
+        <div style="padding:0 4px">
+          <select id="tanc-event-sel" onchange="onTancEventChange()" style="width:100%;height:56px;font-size:15px;font-weight:600;border-radius:var(--r);border:0.5px solid var(--border2);background:var(--bg);color:var(--text);padding:0 12px">
+            <option value="">— Selecciona event o dia —</option>
+            <option value="_sense_event">📅 Sense event (introduir data)</option>
+          </select>
         </div>
+        <!-- FILA 2: Data (sols visible si Sense Event) -->
+        <div id="tanc-data-row" style="display:none;padding:0 4px">
+          <div class="mov-data-box">
+            <input type="date" id="tanc-data-input" onchange="updateTancDataLabel()">
+            <i class="ti ti-calendar" style="font-size:16px;color:var(--text3);margin-right:6px;pointer-events:none"></i>
+            <span id="tanc-data-label">Selecciona la data</span>
+          </div>
+        </div>
+        <!-- FILA 3: Canvi inicial | Efectiu comptat -->
+        <div class="mov-g2">
+          <div style="position:relative">
+            <div style="font-size:10px;color:var(--text3);text-align:center;margin-bottom:2px;text-transform:uppercase;letter-spacing:.05em">Canvi inicial</div>
+            <div class="mov-import-box" style="border-color:var(--border2)">
+              <input type="text" id="tanc-canvi" placeholder="0,00" inputmode="decimal" oninput="updateTancResum()" style="font-size:22px">
+              <span style="font-size:20px;font-weight:700;color:var(--text3);margin-left:4px">€</span>
+            </div>
+          </div>
+          <div style="position:relative">
+            <div style="font-size:10px;color:var(--text3);text-align:center;margin-bottom:2px;text-transform:uppercase;letter-spacing:.05em">Efectiu comptat</div>
+            <div class="mov-import-box" style="border-color:var(--green)">
+              <input type="text" id="tanc-efectiu" placeholder="0,00" inputmode="decimal" oninput="updateTancResum()" style="font-size:22px;color:var(--green)">
+              <span style="font-size:20px;font-weight:700;color:var(--green);margin-left:4px">€</span>
+            </div>
+          </div>
+        </div>
+        <!-- FILA 4: Vendes TPV | Pagaments efectuats -->
+        <div class="mov-g2">
+          <div style="position:relative">
+            <div style="font-size:10px;color:var(--text3);text-align:center;margin-bottom:2px;text-transform:uppercase;letter-spacing:.05em">Vendes TPV</div>
+            <div class="mov-import-box">
+              <input type="text" id="tanc-tpv" placeholder="0,00" inputmode="decimal" oninput="updateTancResum()" style="font-size:22px">
+              <span style="font-size:20px;font-weight:700;color:var(--text3);margin-left:4px">€</span>
+            </div>
+          </div>
+          <div style="position:relative">
+            <div style="font-size:10px;color:var(--text3);text-align:center;margin-bottom:2px;text-transform:uppercase;letter-spacing:.05em">Pagaments efectuats</div>
+            <div class="mov-import-box" style="border-color:var(--red)">
+              <input type="text" id="tanc-pagaments" placeholder="0,00" inputmode="decimal" oninput="updateTancResum()" style="font-size:22px;color:var(--red)">
+              <span style="font-size:20px;font-weight:700;color:var(--red);margin-left:4px">€</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- COS: resum calculat -->
+      <div class="mov-body">
+        <div id="tanc-resum" style="background:var(--bg2);border-radius:var(--r);padding:14px 16px;margin-bottom:12px;font-size:13px"></div>
+        <div class="mov-field">
+          <label>Àrea</label>
+          <select id="tanc-area" onchange="onTancAreaChange()"></select>
+        </div>
+        <div class="mov-field">
+          <label>Delegació</label>
+          <select id="tanc-deleg"></select>
+        </div>
+        <div class="mov-field">
+          <label>Notes <span class="opt-label">(opcional)</span></label>
+          <input type="text" id="tanc-notes" placeholder="Observacions del tancament...">
+        </div>
+        <button class="btn btn-primary" id="btn-tancar" onclick="tancarEvent()" style="width:100%;padding:14px;font-size:16px;margin-top:8px;border-radius:var(--r);display:none">
+          <i class="ti ti-lock"></i> Tancar i registrar moviments
+        </button>
+      </div>
+
+      <!-- BOTÓ FOOTER MÒBIL -->
+      <div class="mov-footer-btn" id="tanc-footer-btn" style="display:none">
+        <button onclick="tancarEvent()" style="background:var(--green);color:#fff;width:100%;padding:14px;font-size:16px;border-radius:var(--r);border:none;font-weight:700;cursor:pointer">
+          <i class="ti ti-lock"></i> Tancar i registrar moviments
+        </button>
       </div>
     </div>
 
@@ -1232,7 +1303,8 @@ const TABS={
   pres_historial:{name:'12 Pressupostos Historial',headers:['data','accio','any','usuari','email','motiu']},
   regles:{name:'13 Regles CSV',headers:['id','font','patrons','areaId','areaNom','delegacioId','delegacioNom','concepte','tipus','movtype','prioritat','activa']},
   rols:{name:'14 Rols',headers:['id','label','color','canRegister','canFons','canImport','canConfig','canUsers','viewAll','custom']},
-  fapp_passiu:{name:'15 Fapp Passiu',headers:['data','total','fallers','anyFiscal']},
+  saldos:{name:'15 Saldos',headers:['bancId','anyFiscal','saldoInicial','saldoData']},
+  fapp_passiu:{name:'16 Fapp Passiu',headers:['data','total','fallers','anyFiscal']},
   config_ext:{name:'00 Config',headers:['clau','valor']}
 };
 const CACHE_KEY='fallaportal_cache';
@@ -1493,6 +1565,26 @@ async function saveNouExercici(){
   const dataOb=fmtDateInput(dataObertura)||calcDataObertura(nouAny);
   DB.config.estats_exercicis[nouAny]={tancat:false,dataObertura:dataOb,dataTancament:'',test:isTest};
   DB.config.anyFiscal=nouAny;
+  // Migrar saldos finals de l'exercici anterior com a saldos inicials del nou
+  const exercicisOrdenats=(DB.config.exercicis||[]).sort();
+  const idxNou=exercicisOrdenats.indexOf(nouAny);
+  if(idxNou>0&&!editMode){
+    const anyAnterior=exercicisOrdenats[idxNou-1];
+    if(!DB.saldos)DB.saldos={};
+    (DB.config.bancs||[]).forEach(function(b){
+      const movsAnt=(DB.moviments||[]).filter(m=>m.anyFiscal===anyAnterior&&m.via===b.codi);
+      const ingAnt=movsAnt.filter(m=>m.tipus==='ing').reduce((s,m)=>s+m.import,0);
+      const gastAnt=movsAnt.filter(m=>m.tipus==='gast').reduce((s,m)=>s+m.import,0);
+      const keyAnt=b.id+'_'+anyAnterior;
+      const saldoIniAnt=(DB.saldos[keyAnt]?.saldoInicial||parseFloat(b.saldoInicial)||0);
+      const saldoFinal=saldoIniAnt+ingAnt-gastAnt;
+      const keyNou=b.id+'_'+nouAny;
+      if(!DB.saldos[keyNou]){// Només si no existeix ja
+        DB.saldos[keyNou]={saldoInicial:Math.round(saldoFinal*100)/100,saldoData:dataOb||today()};
+      }
+    });
+    save('saldos').catch(function(e){console.warn('Error migrant saldos:',e);});
+  }
   saveCache();
   initExerciciSelector();
   canviarExercici(nouAny);
@@ -1793,6 +1885,13 @@ async function save(key){
     if(key==='moviments'){await writeTab(t.name,t.headers,DB.moviments);}
     else if(key==='fons'){await writeTab(t.name,t.headers,DB.fons);}
     else if(key==='tancaments'){await writeTab(t.name,t.headers,Object.values(DB.tancaments));}
+    else if(key==='saldos'){
+      const saldosArr=Object.entries(DB.saldos||{}).map(function(e){
+        const parts=e[0].split('_');const bancId=parts[0];const anyFiscal=parts.slice(1).join('_');
+        return{bancId,anyFiscal,saldoInicial:e[1].saldoInicial||0,saldoData:e[1].saldoData||''};
+      });
+      await writeTab(t.name,t.headers,saldosArr);
+    }
     else if(key==='regles'){await writeTab(t.name,t.headers,DB.regles);}
     else if(key==='rols'){
       const rolsArr=Object.values(getRoles()).map(function(r){
@@ -1948,7 +2047,12 @@ async function loadFromSheets(){
   DB.fons=fonsRows.map(function(r){return{...r,import:parseFloat(r.import)||0};});
   const tancRows=await readTab(TABS.tancaments.name);
   DB.tancaments={};
-  tancRows.forEach(function(r){DB.tancaments[r.eventId]={...r,efectiu:parseFloat(r.efectiu)||0,tpv:parseFloat(r.tpv)||0};});
+  tancRows.forEach(function(r){DB.tancaments[r.eventId]={...r,efectiu:parseFloat(r.efectiu)||0,tpv:parseFloat(r.tpv)||0,pagaments:parseFloat(r.pagaments)||0};});
+  // Llegir saldos inicials per any fiscal
+  let saldosRows=[];
+  try{saldosRows=await readTab(TABS.saldos.name);}catch(e){saldosRows=[];}
+  DB.saldos={};// {bancId_anyFiscal: {saldoInicial, saldoData}}
+  saldosRows.forEach(function(r){DB.saldos[r.bancId+'_'+r.anyFiscal]={saldoInicial:parseFloat(r.saldoInicial)||0,saldoData:r.saldoData||''};});
   const arees=await readTab(TABS.arees.name);
   const delegacions=await readTab(TABS.delegacions.name);
   const events=await readTab(TABS.events.name);
@@ -2100,13 +2204,13 @@ function renderDashboard(){
   const allUsuaris=DB.config.usuaris||[];
   const ambFons=allUsuaris.filter(function(u){
     if(u.rol==='noauth')return false;
-    const fu=(DB.fons||[]).filter(function(f){return(f.anyFiscal===af2||!f.anyFiscal)&&(f.delegId===u.id||(f.delegEmail||'').toLowerCase()===(u.email||'').toLowerCase());});
+    const fu=(DB.fons||[]).filter(function(f){return(f.delegId===u.id||(f.delegEmail||'').toLowerCase()===(u.email||'').toLowerCase());});
     return fu.length>0;
   });
   const delegats=ambFons.length>0?ambFons:allUsuaris.filter(function(u){return u.rol!=='noauth';});
   if(delegats.length){
     const llista=delegats.map(function(u){
-      const fu=(DB.fons||[]).filter(function(f){return(f.anyFiscal===af2||!f.anyFiscal)&&(f.delegId===u.id||(f.delegEmail||'').toLowerCase()===(u.email||'').toLowerCase());});
+      const fu=(DB.fons||[]).filter(function(f){return(f.delegId===u.id||(f.delegEmail||'').toLowerCase()===(u.email||'').toLowerCase());});
       const rebuts=fu.filter(function(f){return f.tipus==='lliurament';}).reduce(function(s,f){return s+f.import;},0);
       const gastF=fu.filter(function(f){return f.tipus==='gast_fons';}).reduce(function(s,f){return s+f.import;},0);
       const devol=fu.filter(function(f){return f.tipus==='devolucio';}).reduce(function(s,f){return s+f.import;},0);
@@ -2576,10 +2680,10 @@ function renderFons(){
     var af5=getAnyFiscal();
     const delegats=(DB.config.usuaris||[]).filter(function(u){
       if(u.rol==='noauth')return false;
-      return(DB.fons||[]).some(function(f){return(!f.anyFiscal||f.anyFiscal===''||f.anyFiscal===af5)&&(f.delegId===u.id||(f.delegEmail||'').toLowerCase()===(u.email||'').toLowerCase());});
+      return(DB.fons||[]).some(function(f){return(f.delegId===u.id||(f.delegEmail||'').toLowerCase()===(u.email||'').toLowerCase());});
     }).sort(function(a,b){return a.nom.localeCompare(b.nom,'ca');});
     var totF=delegats.reduce(function(s,u){
-      var fu=(DB.fons||[]).filter(function(f){return(!f.anyFiscal||f.anyFiscal===''||f.anyFiscal===af5)&&(f.delegId===u.id||(f.delegEmail||'').toLowerCase()===(u.email||'').toLowerCase());});
+      var fu=(DB.fons||[]).filter(function(f){return(f.delegId===u.id||(f.delegEmail||'').toLowerCase()===(u.email||'').toLowerCase());});
       var r=fu.filter(function(f){return f.tipus==='lliurament'||f.tipus==='regularitzacio';}).reduce(function(s2,f){return s2+f.import;},0);
       var g=fu.filter(function(f){return f.tipus==='gast_fons';}).reduce(function(s2,f){return s2+f.import;},0);
       var d=fu.filter(function(f){return f.tipus==='devolucio';}).reduce(function(s2,f){return s2+f.import;},0);
@@ -2767,64 +2871,161 @@ async function saveDevolucio(){
 // TANCAMENT CAIXA
 let tancEventId=null;
 
-function renderTancamentList(){
-  document.getElementById('tancament-list').classList.remove('hidden');
-  document.getElementById('tancament-form').classList.add('hidden');
-  const myDelegs=getMyDelegacions();
-  var afTanc=getAnyFiscal();
-  const events=DB.config.events.filter(e=>(e.anyFiscal===afTanc||e.year===afTanc)&&(perm('viewAll')||myDelegs.includes(e.delegId)));
-  document.getElementById('tancament-list').innerHTML=events.map(ev=>{
-    const tc=(DB.tancaments||{})[ev.id];
-    return`<div class="card" style="cursor:pointer;margin-bottom:8px" onclick="selectTancEvent('${ev.id}')">
-      <div style="display:flex;align-items:center;gap:10px">
-        <i class="ti ti-calendar-event" style="font-size:18px;color:var(--text3)"></i>
-        <div style="flex:1"><div style="font-weight:500">${ev.name}</div>
-        <div style="font-size:11px;color:var(--text2)">${DB.config.delegacions.find(d=>d.id===ev.delegId)?.name||''}</div></div>
-        <span class="pill ${tc?'p-ok':'p-warn'}">${tc?'Tancat '+tc.data:'Pendent'}</span>
-      </div>
-    </div>`;
-  }).join('');
-}
+let tancEventId=null;
 
-function selectTancEvent(id){
-  tancEventId=id;
-  const ev=DB.config.events.find(e=>e.id===id);
-  const tc=(DB.tancaments||{})[id];
-  document.getElementById('tancament-list').classList.add('hidden');
-  document.getElementById('tancament-form').classList.remove('hidden');
-  document.getElementById('tanc-title').textContent='Tancament · '+ev?.name;
-  document.getElementById('tanc-efectiu').value=tc?.efectiu||'';
-  document.getElementById('tanc-tpv').value=tc?.tpv||'';
-  const btn=document.getElementById('btn-tancar');
-  if(tc){btn.disabled=true;btn.textContent='Ja tancat el '+tc.data;}
-  else{btn.disabled=false;btn.innerHTML='<i class="ti ti-lock"></i> Tancar i enviar a Tresoreria';}
+function renderTancamentList(){
+  // Poblar selector d'events
+  const sel=document.getElementById('tanc-event-sel');
+  if(!sel)return;
+  const afT=getAnyFiscal();
+  const events=(DB.config.events||[]).filter(e=>e.anyFiscal===afT||e.year===afT);
+  // Mantenir les opcions fixes i afegir els events
+  while(sel.options.length>2)sel.remove(2);
+  events.forEach(function(ev){
+    const opt=document.createElement('option');
+    opt.value=ev.id;
+    opt.textContent=(DB.tancaments||{})[ev.id]?'✓ '+ev.name:ev.name;
+    sel.appendChild(opt);
+  });
+  // Poblar àrees
+  const areaSel=document.getElementById('tanc-area');
+  areaSel.innerHTML='<option value="">— Selecciona àrea —</option>';
+  (DB.config.areas||[]).forEach(function(a){
+    areaSel.innerHTML+='<option value="'+a.id+'">'+a.id+' · '+a.name+'</option>';
+  });
   updateTancResum();
 }
 
+function onTancEventChange(){
+  const val=document.getElementById('tanc-event-sel').value;
+  tancEventId=val==='_sense_event'?null:val||null;
+  const dataRow=document.getElementById('tanc-data-row');
+  dataRow.style.display=(val==='_sense_event')?'block':'none';
+  if(val&&val!=='_sense_event'){
+    // Si event ja tancat, omplir els valors
+    const tc=(DB.tancaments||{})[val];
+    if(tc){
+      document.getElementById('tanc-canvi').value=tc.canvi||'';
+      document.getElementById('tanc-efectiu').value=tc.efectiu||'';
+      document.getElementById('tanc-tpv').value=tc.tpv||'';
+      document.getElementById('tanc-pagaments').value=tc.pagaments||'';
+      document.getElementById('tanc-notes').value=tc.notes||'';
+    }
+  }
+  updateTancResum();
+}
+
+function updateTancDataLabel(){
+  const v=document.getElementById('tanc-data-input').value;
+  const lbl=document.getElementById('tanc-data-label');
+  if(v){const p=v.split('-');lbl.textContent=p[2]+'/'+p[1]+'/'+p[0];}
+  else{lbl.textContent='Selecciona la data';}
+  updateTancResum();
+}
+
+function onTancAreaChange(){
+  const areaId=document.getElementById('tanc-area').value;
+  const delegSel=document.getElementById('tanc-deleg');
+  delegSel.innerHTML='<option value="">— Selecciona delegació —</option>';
+  (DB.config.delegacions||[]).filter(d=>d.areaId===areaId).forEach(function(d){
+    delegSel.innerHTML+='<option value="'+d.id+'">'+d.id+' · '+d.name+'</option>';
+  });
+  delegSel.disabled=!areaId;
+}
+
 function updateTancResum(){
-  const ef=parseFloat(document.getElementById('tanc-efectiu').value)||0;
-  const tpv=parseFloat(document.getElementById('tanc-tpv').value)||0;
-  const gast=(DB.moviments||[]).filter(m=>m.eventId===tancEventId&&m.tipus==='gast').reduce((s,m)=>s+m.import,0);
-  const net=ef+tpv-gast;
-  document.getElementById('tanc-resum').innerHTML=`
-    <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="color:var(--text2)">Efectiu declarat</span><span style="color:var(--green)">${fmtD(ef)}</span></div>
-    <div style="display:flex;justify-content:space-between;margin-bottom:8px;padding-bottom:8px;border-bottom:0.5px solid var(--border)"><span style="color:var(--text2)">TPV declarat</span><span>${fmtD(tpv)} <span style="font-size:10px;color:var(--text3)">(pendent CSV)</span></span></div>
-    <div style="display:flex;justify-content:space-between;font-weight:500"><span>Resultat net</span><span style="color:${net>=0?'var(--green)':'var(--red)'}">${fmtS(Math.round(net))}</span></div>`;
+  const canvi=parseFloat((document.getElementById('tanc-canvi')?.value||'0').replace(',','.'))||0;
+  const ef=parseFloat((document.getElementById('tanc-efectiu')?.value||'0').replace(',','.'))||0;
+  const tpv=parseFloat((document.getElementById('tanc-tpv')?.value||'0').replace(',','.'))||0;
+  const pag=parseFloat((document.getElementById('tanc-pagaments')?.value||'0').replace(',','.'))||0;
+  const netEfectiu=ef-canvi; // ingrés net en efectiu
+  const total=netEfectiu+tpv-pag;
+  const hasVal=ef>0||tpv>0||pag>0;
+  const hasSel=document.getElementById('tanc-event-sel')?.value;
+
+  document.getElementById('tanc-resum').innerHTML=!hasVal?'<span style="color:var(--text3);font-size:12px">Introdueix els imports per veure el resum</span>':`
+    <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="color:var(--text2)">Efectiu comptat</span><span style="color:var(--green)">+${fmtD(ef)}</span></div>
+    <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="color:var(--text2)">− Canvi inicial</span><span style="color:var(--text2)">−${fmtD(canvi)}</span></div>
+    <div style="display:flex;justify-content:space-between;margin-bottom:8px;padding-bottom:8px;border-bottom:0.5px solid var(--border)"><span style="font-weight:500">= Ingrés net efectiu</span><span style="font-weight:600;color:${netEfectiu>=0?'var(--green)':'var(--red)'}">${fmtS(netEfectiu)}</span></div>
+    ${tpv>0?'<div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="color:var(--text2)">Vendes TPV</span><span>+'+fmtD(tpv)+'</span></div>':''}
+    ${pag>0?'<div style="display:flex;justify-content:space-between;margin-bottom:8px;padding-bottom:8px;border-bottom:0.5px solid var(--border)"><span style="color:var(--text2)">Pagaments efectuats</span><span style="color:var(--red)">−'+fmtD(pag)+'</span></div>':''}
+    <div style="display:flex;justify-content:space-between;font-weight:700;font-size:15px"><span>Resultat net</span><span style="color:${total>=0?'var(--green)':'var(--red)'}">${fmtS(Math.round(total*100)/100)}</span></div>
+    <div style="margin-top:8px;padding:8px;background:var(--bg);border-radius:var(--r);font-size:12px;color:var(--text2)"><i class="ti ti-info-circle"></i> Efectiu en caixa a comprovar: <strong style="color:${netEfectiu>=0?'var(--green)':'var(--red)'}">${fmtS(netEfectiu)}</strong></div>`;
+
+  // Mostrar/amagar botó
+  const show=hasVal&&hasSel;
+  const btnDesk=document.getElementById('btn-tancar');
+  const btnMob=document.getElementById('tanc-footer-btn');
+  if(btnDesk)btnDesk.style.display=show?'block':'none';
+  if(btnMob)btnMob.style.display=show?'block':'none';
+}
+
+async function tancarEvent(){
+  const sel=document.getElementById('tanc-event-sel').value;
+  if(!sel){showToast('Selecciona un event o "Sense event"',true);return;}
+  const canvi=parseFloat((document.getElementById('tanc-canvi').value||'0').replace(',','.'))||0;
+  const ef=parseFloat((document.getElementById('tanc-efectiu').value||'0').replace(',','.'))||0;
+  const tpv=parseFloat((document.getElementById('tanc-tpv').value||'0').replace(',','.'))||0;
+  const pag=parseFloat((document.getElementById('tanc-pagaments').value||'0').replace(',','.'))||0;
+  if(!ef&&!tpv&&!pag){showToast('Introdueix almenys un import',true);return;}
+  const areaId=document.getElementById('tanc-area').value;
+  const delegId=document.getElementById('tanc-deleg').value;
+  const notes=document.getElementById('tanc-notes').value;
+  const area=(DB.config.areas||[]).find(a=>a.id===areaId);
+  const deleg=(DB.config.delegacions||[]).find(d=>d.id===delegId);
+  const af=getAnyFiscal();
+
+  // Data del tancament
+  let dataT=today();
+  if(sel==='_sense_event'){
+    const di=document.getElementById('tanc-data-input').value;
+    if(!di){showToast('Introdueix la data del tancament',true);return;}
+    const p=di.split('-');dataT=p[2]+'/'+p[1]+'/'+p[0];
+  }
+
+  // Event info
+  const ev=sel==='_sense_event'?null:(DB.config.events||[]).find(e=>e.id===sel);
+  const evNom=ev?ev.name:'Sense event '+dataT;
+  const evId=sel==='_sense_event'?('_dia_'+dataT.replace(/\//g,'')):sel;
+
+  // Guardar tancament
+  if(!DB.tancaments)DB.tancaments={};
+  const tItem={eventId:evId,anyFiscal:af,eventNom:evNom,canvi,efectiu:ef,tpv,pagaments:pag,notes,data:dataT,tancat:true,registratPer:currentUser?.email||''};
+  DB.tancaments[evId]=tItem;
+
+  // Generar moviments
+  const netEfectiu=ef-canvi;
+  if(netEfectiu>0){
+    DB.moviments.push({id:'m'+Date.now(),anyFiscal:af,tipus:'ing',via:'Efectiu',
+      areaId:areaId||'',areaNom:area?.name||'',delegacioId:delegId||'',delegacioNom:deleg?.name||'',
+      eventId:ev?.id||'',eventNom:evNom,concepte:'Efectiu net · '+evNom,establiment:'',
+      data:dataT,responsable:currentUser?.name||'',responsableEmail:currentUser?.email||'',
+      import:Math.abs(netEfectiu),notes:'Tancament caixa · '+notes,fontImport:'tancament'});
+  }
+  if(pag>0){
+    DB.moviments.push({id:'m'+(Date.now()+1),anyFiscal:af,tipus:'gast',via:'Efectiu',
+      areaId:areaId||'',areaNom:area?.name||'',delegacioId:delegId||'',delegacioNom:deleg?.name||'',
+      eventId:ev?.id||'',eventNom:evNom,concepte:'Pagaments · '+evNom,establiment:'',
+      data:dataT,responsable:currentUser?.name||'',responsableEmail:currentUser?.email||'',
+      import:pag,notes:'Pagaments tancament · '+notes,fontImport:'tancament'});
+  }
+
+  saveCache();
+  showToast('Tancament registrat · '+fmtD(netEfectiu)+' efectiu net');
+  // Netejar formulari
+  ['tanc-canvi','tanc-efectiu','tanc-tpv','tanc-pagaments','tanc-notes'].forEach(function(id){
+    const el=document.getElementById(id);if(el)el.value='';
+  });
+  document.getElementById('tanc-event-sel').value='';
+  onTancEventChange();
+  updateTancResum();
+  await Promise.all([
+    save('tancaments').catch(e=>showToast('Error tancaments: '+e.message,true)),
+    save('moviments').catch(e=>showToast('Error moviments: '+e.message,true))
+  ]);
 }
 
 function backTancament(){renderTancamentList();}
-
-async function tancarEvent(){
-  const ef=parseFloat(document.getElementById('tanc-efectiu').value)||0;
-  const tpv=parseFloat(document.getElementById('tanc-tpv').value)||0;
-  if(!ef&&!tpv){showToast('Introdueix almenys un import',true);return;}
-  if(!DB.tancaments)DB.tancaments={};
-  const tItem={eventId:tancEventId,anyFiscal:getAnyFiscal(),eventNom:DB.config.events.find(e=>e.id===tancEventId)?.name||'',efectiu:ef,tpv,data:today(),tancat:true,registratPer:currentUser?.email};
-  DB.tancaments[tancEventId]=tItem;
-  saveCache();
-  showToast('Event tancat correctament');renderTancamentList();
-  save('tancaments').catch(e=>showToast('Error guardant: '+e.message,true));
-}
 
 // PRESSUPOSTOS
 function renderPressupostos(){showPage('pressupostos');}
@@ -3062,7 +3263,11 @@ function renderFlux(){
   const movs=(DB.moviments||[]).filter(m=>m.anyFiscal===afF||!m.anyFiscal);
   const ing=movs.filter(m=>m.tipus==='ing').reduce((s,m)=>s+m.import,0);
   const gast=movs.filter(m=>m.tipus==='gast').reduce((s,m)=>s+m.import,0);
-  const saldoIni=(DB.config.bancs||[]).reduce(function(s,b){return s+(parseFloat(b.saldoInicial)||0);},0);
+  const saldoIni=(DB.config.bancs||[]).reduce(function(s,b){
+    const key=b.id+'_'+afF;
+    const saldoAf=(DB.saldos||{})[key];
+    return s+(saldoAf?parseFloat(saldoAf.saldoInicial)||0:parseFloat(b.saldoInicial)||0);
+  },0);
   document.getElementById('flux-ini').textContent=fmtS(saldoIni);
   document.getElementById('flux-ini').className='metric-value '+(saldoIni>=0?'ok':'danger');
   document.getElementById('flux-ing').textContent=fmt(ing);
