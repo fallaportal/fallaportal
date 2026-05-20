@@ -263,7 +263,7 @@ tr:hover td{background:var(--bg2)}
     <div class="login-logo">Falla <span>Portal</span></div>
     <div class="login-sub">Sistema de gestió financera</div>
     <div class="login-fiscal">Any fiscal 26/27 · Abr 2026 – Mar 2027</div>
-    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v1.2.65</div>
+    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v1.2.66</div>
     <button class="btn-google" onclick="signIn()">
       <svg viewBox="0 0 24 24" width="20" height="20"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
       Entrar amb Google
@@ -305,7 +305,7 @@ tr:hover td{background:var(--bg2)}
     <div class="sb-bottom">
       <div class="sync-ind"><div class="sync-dot" id="sync-dot"></div><span id="sync-text">Sincronitzat</span></div>
       <button class="btn-logout" onclick="signOut()"><i class="ti ti-logout" style="font-size:14px"></i> Tancar sessió</button>
-      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v1.2.65</div>
+      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v1.2.66</div>
     </div>
   </div>
 
@@ -4816,6 +4816,7 @@ function renderCfgExercicis(){
       }
       html+='<button class="btn" style="font-size:12px;padding:3px 8px" data-any="'+e+'" onclick="editarExercici(this.dataset.any)"><i class="ti ti-edit"></i></button>';
       if(!isActiu){
+        html+='<button class="btn" style="font-size:12px;padding:3px 8px;margin-right:2px" title="Backup JSON" data-any="'+e+'" onclick="exportSnapshotExercici(this.dataset.any)"><i class="ti ti-download"></i></button>';
         html+='<button class="btn" style="font-size:12px;padding:3px 8px" data-any="'+e+'" onclick="eliminarExercici(this.dataset.any)"><i class="ti ti-trash"></i></button>';
       }
       html+='</td>';
@@ -5575,18 +5576,137 @@ function editarExercici(any){
   openModal('modal-nou-exercici');
 }
 
+// Genera i descarrega un snapshot JSON de totes les dades d'un any fiscal
+function exportSnapshotExercici(any){
+  const movsAny=(DB.moviments||[]).filter(function(m){return m.anyFiscal===any;});
+  const fonsAny=(DB.fons||[]).filter(function(f){return f.anyFiscal===any;});
+  const eventsAny=(DB.config.events||[]).filter(function(e){return(e.anyFiscal||e.year||'')===any;});
+  const tancIds=eventsAny.map(function(e){return e.id;});
+  const tancsAny=Object.fromEntries(Object.entries(DB.tancaments||{}).filter(function(e){return tancIds.includes(e[0]);}));
+  const saldosAny=Object.fromEntries(Object.entries(DB.saldos||{}).filter(function(e){return e[0].endsWith('_'+any);}));
+  const presAny=(DB.pres_plans||[]).filter(function(p){return p.any===any;});
+  const assignsAny=(function(){
+    const result=[];
+    (DB.config.usuaris||[]).forEach(function(u){
+      if((u.arees||[]).some(function(a){return a.anyFiscal===any;})||(u.delegacions||[]).some(function(d){return d.anyFiscal===any;})){
+        result.push({usuariId:u.id,nom:u.nom,email:u.email});
+      }
+    });
+    return result;
+  })();
+  const snapshot={
+    versio:'1.0',anyFiscal:any,dataExport:new Date().toISOString(),
+    resum:{moviments:movsAny.length,fons:fonsAny.length,events:eventsAny.length,tancaments:Object.keys(tancsAny).length},
+    moviments:movsAny,fons:fonsAny,events:eventsAny,
+    tancaments:tancsAny,saldos:saldosAny,pressupostos:presAny,assignacions:assignsAny
+  };
+  const json=JSON.stringify(snapshot,null,2);
+  const a=document.createElement('a');
+  a.href='data:application/json;charset=utf-8,'+encodeURIComponent(json);
+  a.download='backup_exercici_'+any.replace('/','_')+'_'+new Date().toISOString().slice(0,10)+'.json';
+  a.click();
+}
+
 async function eliminarExercici(any){
+  // Comprovació de permís: només President i Tresoreria
+  const rol=getRol();
+  if(rol!=='president'&&rol!=='treasury'){
+    showToast('Només el President o Tresoreria poden eliminar exercicis',true);
+    return;
+  }
   if(any===getAnyFiscal()){showToast('No es pot eliminar l\'exercici actiu',true);return;}
-  const nMovs=(DB.moviments||[]).filter(function(m){return m.anyFiscal===any;}).length;
-  if(nMovs>0&&!confirm('Aquest exercici té '+nMovs+' moviments. Segur que vols eliminar-lo?'))return;
-  if(!confirm('Eliminar l\'exercici '+any+'? Aquesta acció no es pot desfer.'))return;
+
+  // Recompte de dades afectades
+  const movsAny=(DB.moviments||[]).filter(function(m){return m.anyFiscal===any;});
+  const fonsAny=(DB.fons||[]).filter(function(f){return f.anyFiscal===any;});
+  const eventsAny=(DB.config.events||[]).filter(function(e){return(e.anyFiscal||e.year||'')===any;});
+  const tancIds=eventsAny.map(function(e){return e.id;});
+  const tancsAny=Object.keys(DB.tancaments||{}).filter(function(k){return tancIds.includes(k);});
+  const saldosAny=Object.keys(DB.saldos||{}).filter(function(k){return k.endsWith('_'+any);});
+  const presAny=(DB.pres_plans||[]).filter(function(p){return p.any===any;});
+
+  // Modal de confirmació
+  const estat=DB.config.estats_exercicis?.[any];
+  const esTancat=estat?.tancat;
+  const hasDades=movsAny.length>0||eventsAny.length>0||fonsAny.length>0;
+
+  const html='<div style="margin-bottom:16px">'+
+    '<div style="background:var(--red-bg);border:1px solid var(--red);border-radius:var(--r);padding:12px 14px;margin-bottom:12px">'+
+      '<div style="font-size:14px;font-weight:700;color:var(--red-text);margin-bottom:6px"><i class="ti ti-alert-triangle"></i> Eliminar exercici '+any+'</div>'+
+      '<div style="font-size:13px;color:var(--red-text)">Aquesta acci&#243; &#233;s <strong>irreversible</strong>. S&#39;eliminaran totes les dades associades del Google Sheets.</div>'+
+    '</div>'+
+    '<div style="font-size:13px;margin-bottom:10px"><strong>Dades que s&#39;eliminaran:</strong></div>'+
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:12px;margin-bottom:12px">'+
+      '<div style="background:var(--bg2);padding:8px;border-radius:6px"><i class="ti ti-arrows-exchange"></i> <strong>'+movsAny.length+'</strong> moviments</div>'+
+      '<div style="background:var(--bg2);padding:8px;border-radius:6px"><i class="ti ti-calendar"></i> <strong>'+eventsAny.length+'</strong> events</div>'+
+      '<div style="background:var(--bg2);padding:8px;border-radius:6px"><i class="ti ti-wallet"></i> <strong>'+fonsAny.length+'</strong> moviments de fons</div>'+
+      '<div style="background:var(--bg2);padding:8px;border-radius:6px"><i class="ti ti-lock"></i> <strong>'+tancsAny.length+'</strong> tancaments</div>'+
+      '<div style="background:var(--bg2);padding:8px;border-radius:6px"><i class="ti ti-chart-bar"></i> <strong>'+presAny.length+'</strong> línies pressupost</div>'+
+      '<div style="background:var(--bg2);padding:8px;border-radius:6px"><i class="ti ti-database"></i> <strong>'+saldosAny.length+'</strong> saldos inicials</div>'+
+    '</div>'+
+    (hasDades?'<div style="background:var(--amber-bg);border:1px solid var(--amber);border-radius:var(--r);padding:10px 12px;font-size:12px;color:var(--amber-text)">'+
+      '<i class="ti ti-download"></i> Es descarregar&#224; autom&#224;ticament un backup JSON amb totes les dades abans d&#39;eliminar.'+
+    '</div>':'<div style="font-size:12px;color:var(--text3);font-style:italic">Exercici sense dades registrades.</div>')+
+  '</div>'+
+  '<div style="display:flex;gap:8px;justify-content:flex-end">'+
+    '<button class="btn" onclick="closeModal(\'modal-dyn\')">Cancel&#183;lar</button>'+
+    '<button class="btn" style="background:var(--red);color:#fff;border-color:var(--red)" onclick="confirmarEliminarExercici(\''+any+'\')">'+
+      '<i class="ti ti-trash"></i> Sí, eliminar exercici '+any+
+    '</button>'+
+  '</div>';
+
+  // Usar modal dinàmic
+  let modal=document.getElementById('modal-dyn');
+  if(!modal){
+    modal=document.createElement('div');modal.id='modal-dyn';modal.className='modal-overlay';
+    modal.innerHTML='<div class="modal" style="max-width:480px"><div class="modal-inner" id="modal-dyn-body"></div></div>';
+    document.body.appendChild(modal);
+    modal.addEventListener('click',function(e){if(e.target===modal)closeModal('modal-dyn');});
+  }
+  document.getElementById('modal-dyn-body').innerHTML=html;
+  openModal('modal-dyn');
+}
+
+async function confirmarEliminarExercici(any){
+  closeModal('modal-dyn');
+  // Backup automàtic si hi ha dades
+  const movsAny=(DB.moviments||[]).filter(function(m){return m.anyFiscal===any;});
+  const eventsAny=(DB.config.events||[]).filter(function(e){return(e.anyFiscal||e.year||'')===any;});
+  const fonsAny=(DB.fons||[]).filter(function(f){return f.anyFiscal===any;});
+  if(movsAny.length>0||eventsAny.length>0||fonsAny.length>0){
+    exportSnapshotExercici(any);
+    await new Promise(function(r){setTimeout(r,400);});// pausa per deixar descarregar
+  }
+  showToast('Eliminant exercici '+any+'...',false,3000);
+
+  // Eliminar de memòria
+  const tancIds=eventsAny.map(function(e){return e.id;});
+  DB.moviments=(DB.moviments||[]).filter(function(m){return m.anyFiscal!==any;});
+  DB.fons=(DB.fons||[]).filter(function(f){return f.anyFiscal!==any;});
+  tancIds.forEach(function(id){delete (DB.tancaments||{})[id];});
+  DB.config.events=(DB.config.events||[]).filter(function(e){return(e.anyFiscal||e.year||'')!==any;});
+  Object.keys(DB.saldos||{}).filter(function(k){return k.endsWith('_'+any);}).forEach(function(k){delete DB.saldos[k];});
+  DB.pres_plans=(DB.pres_plans||[]).filter(function(p){return p.any!==any;});
   DB.config.exercicis=(DB.config.exercicis||[]).filter(function(e){return e!==any;});
   if(DB.config.estats_exercicis)delete DB.config.estats_exercicis[any];
+
   saveCache();
   renderCfgExercicis();
-  showToast('Exercici '+any+' eliminat');
-  save('config').catch(function(e){showToast('Error: '+e.message,true);});
-  save('config_ext').catch(function(e){console.warn(e);});
+
+  // Guardar totes les taules afectades al Sheets
+  try{
+    await save('moviments');
+    await save('fons');
+    // Tancaments: reconstruir de DB.tancaments
+    await save('tancaments');
+    await save('config');   // events + bancs
+    await save('saldos');
+    await save('pres_plans');
+    await save('config_ext'); // exercicis + anyFiscal
+    showToast('Exercici '+any+' eliminat correctament');
+  }catch(e){
+    showToast('Error eliminant dades: '+e.message,true);
+  }
 }
 
 function openModalCopyEvents(){
