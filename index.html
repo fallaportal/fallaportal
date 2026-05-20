@@ -263,7 +263,7 @@ tr:hover td{background:var(--bg2)}
     <div class="login-logo">Falla <span>Portal</span></div>
     <div class="login-sub">Sistema de gestió financera</div>
     <div class="login-fiscal">Any fiscal 26/27 · Abr 2026 – Mar 2027</div>
-    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v1.2.64</div>
+    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v1.2.65</div>
     <button class="btn-google" onclick="signIn()">
       <svg viewBox="0 0 24 24" width="20" height="20"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
       Entrar amb Google
@@ -305,7 +305,7 @@ tr:hover td{background:var(--bg2)}
     <div class="sb-bottom">
       <div class="sync-ind"><div class="sync-dot" id="sync-dot"></div><span id="sync-text">Sincronitzat</span></div>
       <button class="btn-logout" onclick="signOut()"><i class="ti ti-logout" style="font-size:14px"></i> Tancar sessió</button>
-      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v1.2.64</div>
+      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v1.2.65</div>
     </div>
   </div>
 
@@ -1486,7 +1486,7 @@ let DB={
       {id:'b3',codi:'Efectiu',nom:'Caixa efectiu',tipus:'cash'},
       {id:'b4',codi:'TPV',nom:'TPV targetes',tipus:'tpv'}
     ],
-    usuaris:[],anyFiscal:'26/27',exercicis:['26/27'],directiva:{},estats_exercicis:{},rols:{}
+    usuaris:[],anyFiscal:'',exercicis:[],directiva:{},estats_exercicis:{},rols:{}
   },
   moviments:[],fons:[],tancaments:{},pres_plans:[],pres_config:{any:'',estat:'obert',bloquejatPer:'',bloquejatEmail:'',data:''},pres_historial:[],regles:[]
 };
@@ -1565,7 +1565,7 @@ function signIn(){
 function initExerciciSelector(){
   const sel=document.getElementById('sb-any-fiscal');
   if(!sel)return;
-  if(!DB.config.exercicis||!DB.config.exercicis.length)DB.config.exercicis=['26/27'];
+  if(!DB.config.exercicis||!DB.config.exercicis.length)DB.config.exercicis=[getAnyFiscal()];
   const exercicis=DB.config.exercicis;
   const current=getAnyFiscal();
   const opts=exercicis.map(function(e){
@@ -1693,7 +1693,16 @@ function getUsuari(){
 }
 
 function getRol(){const u=getUsuari();return u?u.rol:'delegat';}
-function getAnyFiscal(){return DB.config.anyFiscal||'26/27';}
+function getAnyFiscal(){
+  if(DB.config.anyFiscal)return DB.config.anyFiscal;
+  // Fallback dinàmic: últim exercici de la llista
+  const anys=(DB.config.exercicis||[]).slice().sort();
+  if(anys.length)return anys[anys.length-1];
+  // Fallback per data: any fiscal actual
+  const now=new Date();const m=now.getMonth()+1;const y=now.getFullYear();
+  const fy=m>=4?y:y-1;
+  return String(fy-2000).padStart(2,'0')+'/'+String(fy-2000+1).padStart(2,'0');
+}
 
 // Construir mapa de directiva des de les files de Sheets
 function buildDirectivaFromRows(assignacions){
@@ -2157,26 +2166,6 @@ async function loadFromSheets(){
     DB.config.events=cfg.events;
     DB.config.bancs=cfg.bancs;
     DB.config.usuaris=cfg.usuaris;
-    // Migració automàtica one-time: saldoInicial de 07 Bancs → 15 Saldos
-    (function migrarSaldosLegacy(){
-      const anys=(DB.config.exercicis||[]).slice().sort();
-      if(!anys.length)return;
-      const firstYear=anys[0];
-      let needSave=false;
-      (DB.config.bancs||[]).forEach(function(b){
-        if((b.saldoInicial||b.saldoData)){
-          const key=b.id+'_'+firstYear;
-          if(!DB.saldos[key]){
-            DB.saldos[key]={saldoInicial:parseFloat(b.saldoInicial)||0,saldoData:b.saldoData||''};
-            needSave=true;
-          }
-        }
-      });
-      if(needSave){
-        console.log('Migrant saldos legacy de 07 Bancs a 15 Saldos...');
-        save('saldos').catch(function(e){console.warn('Error migrant saldos legacy:',e);});
-      }
-    })();
     if(cfg.directiva&&Object.keys(cfg.directiva).length>0)DB.config.directiva=cfg.directiva;
   }
   if(!DB.config.bancs||!DB.config.bancs.length){
@@ -4278,10 +4267,10 @@ function renderCfgBancs(){
     const ingBanc=movsBanc.filter(function(m){return m.tipus==='ing';}).reduce(function(s,m){return s+m.import;},0);
     const gastBanc=movsBanc.filter(function(m){return m.tipus==='gast';}).reduce(function(s,m){return s+m.import;},0);
     const saldoAf=DB.saldos[b.id+'_'+getAnyFiscal()];
-    const saldoIniAf=saldoAf!=null?parseFloat(saldoAf.saldoInicial)||0:0;
-    const saldoDataAf=saldoAf?.saldoData||'';
+    const saldoIniAf=saldoAf!=null?parseFloat(saldoAf.saldoInicial)||0:(parseFloat(b.saldoInicial)||0);
+    const saldoDataAf=saldoAf?.saldoData||b.saldoData||'';
     const saldoActual=saldoIniAf+ingBanc-gastBanc;
-    const hasSaldo=saldoAf!=null;
+    const hasSaldo=true;// Tots els bancs configurats mostren saldo
     html+='<div style="flex:1">'+
       '<div style="font-weight:500">'+b.nom+'</div>'+
       '<div style="font-size:12px;color:var(--text3)">'+b.codi+
@@ -4315,8 +4304,8 @@ function openModalBanc(id){
   document.getElementById('mb-tipus').value=b?.tipus||'bank';
   document.getElementById('mb-compte').value=b?.compte||'';
   const bSaldoAf=b?DB.saldos[b.id+'_'+getAnyFiscal()]:null;
-  document.getElementById('mb-saldo').value=bSaldoAf!=null?bSaldoAf.saldoInicial:b?.saldoInicial||'';
-  document.getElementById('mb-saldo-data').value=dd2iso(bSaldoAf?.saldoData||b?.saldoData)||'';
+  document.getElementById('mb-saldo').value=bSaldoAf!=null?bSaldoAf.saldoInicial:(b?.saldoInicial||0);
+  document.getElementById('mb-saldo-data').value=dd2iso(bSaldoAf?.saldoData||b?.saldoData||'')||'';
   openModal('modal-banc');
 }
 
