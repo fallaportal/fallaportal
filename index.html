@@ -263,7 +263,7 @@ tr:hover td{background:var(--bg2)}
     <div class="login-logo">Falla <span>Portal</span></div>
     <div class="login-sub">Sistema de gestió financera</div>
     <div class="login-fiscal">Any fiscal 26/27 · Abr 2026 – Mar 2027</div>
-    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v1.2.54</div>
+    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v1.2.55</div>
     <button class="btn-google" onclick="signIn()">
       <svg viewBox="0 0 24 24" width="20" height="20"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
       Entrar amb Google
@@ -305,7 +305,7 @@ tr:hover td{background:var(--bg2)}
     <div class="sb-bottom">
       <div class="sync-ind"><div class="sync-dot" id="sync-dot"></div><span id="sync-text">Sincronitzat</span></div>
       <button class="btn-logout" onclick="signOut()"><i class="ti ti-logout" style="font-size:14px"></i> Tancar sessió</button>
-      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v1.2.54</div>
+      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v1.2.55</div>
     </div>
   </div>
 
@@ -403,7 +403,7 @@ tr:hover td{background:var(--bg2)}
       <div id="fons-view"></div>
     </div>
 
-    <div id="page-tancament" class="page" style="padding:0">
+    <div id="page-tancament" class="page" style="padding:0;padding-bottom:calc(80px + var(--sab))">
       <div style="padding:12px 20px 4px 20px">
         <div class="page-title">Caixa d'event</div>
         <div class="page-sub" id="sub-tancament">Gestió de la caixa menuda dels events</div>
@@ -411,11 +411,11 @@ tr:hover td{background:var(--bg2)}
 
       <!-- PESTANYES OBRIR / TANCAR -->
       <div style="display:flex;border-bottom:0.5px solid var(--border)">
-        <button id="tanc-tab-obrir" onclick="showTancTab('obrir')" style="flex:1;padding:8px 4px;font-size:12px;font-weight:600;border:none;border-bottom:2px solid var(--green);background:var(--bg2);color:var(--green);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px">
-          <i class="ti ti-door-enter" style="font-size:14px"></i> Obrir caixa
+        <button id="tanc-tab-obrir" onclick="showTancTab('obrir')" style="flex:1;padding:10px 4px;font-size:14px;font-weight:600;border:none;border-bottom:2px solid var(--green);background:var(--bg2);color:var(--green);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px">
+          <i class="ti ti-door-enter" style="font-size:16px"></i> Obrir caixa
         </button>
-        <button id="tanc-tab-tancar" onclick="showTancTab('tancar')" style="flex:1;padding:8px 4px;font-size:12px;font-weight:600;border:none;border-bottom:2px solid transparent;background:var(--bg);color:var(--text2);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px">
-          <i class="ti ti-lock" style="font-size:14px"></i> Tancar caixa
+        <button id="tanc-tab-tancar" onclick="showTancTab('tancar')" style="flex:1;padding:10px 4px;font-size:14px;font-weight:600;border:none;border-bottom:2px solid transparent;background:var(--bg);color:var(--text2);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px">
+          <i class="ti ti-lock" style="font-size:16px"></i> Tancar caixa
         </button>
       </div>
 
@@ -472,7 +472,7 @@ tr:hover td{background:var(--bg2)}
           <div id="tanc-obert-info" style="display:none;padding:0 4px">
             <div style="display:flex;align-items:stretch;gap:8px;margin-bottom:8px">
               <div id="tanc-obert-badge" style="flex:1;padding:10px 12px;border-radius:var(--r);font-size:13px;font-weight:600;background:var(--amber-bg);color:var(--amber-text);border:1px solid var(--amber);line-height:1.3"></div>
-              <button onclick="eliminarEventObert()" title="Eliminar event obert" style="padding:0 14px;background:var(--red-bg);color:var(--red-text);border:1px solid var(--red);border-radius:var(--r);cursor:pointer;font-size:16px;flex-shrink:0">
+              <button onclick="eliminarEventObert()" title="Eliminar event obert" style="padding:0 14px;background:var(--red);color:#fff;border:none;border-radius:var(--r);cursor:pointer;font-size:18px;flex-shrink:0">
                 <i class="ti ti-trash"></i>
               </button>
             </div>
@@ -907,7 +907,7 @@ tr:hover td{background:var(--bg2)}
   <div class="mob-item active" id="mob-dashboard" onclick="showPageMob('dashboard','mob-dashboard')"><i class="ti ti-home"></i>Inici</div>
   <div class="mob-item" id="mob-moviments" onclick="showPageMob('moviments','mob-moviments')"><i class="ti ti-plus"></i>Moviment</div>
   <div class="mob-item" id="mob-fons" onclick="showPageMob('lliurament','mob-fons')"><i class="ti ti-arrow-down-left"></i>Fons</div>
-  <div class="mob-item" id="mob-tancament" onclick="showPageMob('tancament','mob-tancament')"><i class="ti ti-lock"></i>Caixa</div>
+  <div class="mob-item" id="mob-tancament" onclick="showPageMob('tancament','mob-tancament')"><i class="ti ti-lock"></i>Caixa d'Event</div>
   <div class="mob-item" id="mob-mes" onclick="showMobMenu()"><i class="ti ti-dots"></i>Més</div>
 </nav>
 
@@ -1553,7 +1553,7 @@ window.onload=()=>{
 };
 
 function signIn(){
-  if(tokenClient)tokenClient.requestAccessToken({prompt:'select_account'});
+  if(tokenClient)tokenClient.requestAccessToken({prompt:''});
 }
 function initExerciciSelector(){
   const sel=document.getElementById('sb-any-fiscal');
@@ -1763,7 +1763,7 @@ function buildNav(){
   html+='<div class="nav-item active" onclick="showPage(\'dashboard\')"><i class="ti ti-home"></i> Dashboard</div>';
   if(can.canRegister)html+='<div class="nav-item" onclick="showPage(\'moviments\')"><i class="ti ti-plus"></i> Nou moviment</div>';
   if(can.canFons)html+='<div class="nav-item" onclick="showPage(\'lliurament\')"><i class="ti ti-arrow-down-left"></i> Fons delegats</div>';
-  html+='<div class="nav-item" onclick="showPage(\'tancament\')"><i class="ti ti-lock"></i> Tancament event</div>';
+  html+='<div class="nav-item" onclick="showPage(\'tancament\')"><i class="ti ti-lock"></i> Caixa d\'Event</div>';
   html+='<div class="nav-sec">Gestió</div>';
   html+='<div class="nav-item" onclick="showPage(\'pressupostos-edit\')"><i class="ti ti-chart-bar"></i> Pressupostos</div>';
   html+='<div class="nav-item" onclick="showPage(\'historial\')"><i class="ti ti-list"></i> Historial</div>';
@@ -3051,8 +3051,20 @@ function populateTancSelectors(){
     (DB.config.areas||[]).forEach(function(a){
       areaSel.innerHTML+='<option value="'+a.id+'">'+a.id+' · '+a.name+'</option>';
     });
+    // Per defecte àrea 04
+    if(!areaSel.value||areaSel.value===''){
+      const def04=Array.from(areaSel.options).find(o=>o.value==='04');
+      if(def04){areaSel.value='04';onTancAreaChange();}
+    }
   }
-}
+  // Delegació per defecte 0401
+  setTimeout(function(){
+    const delegSel=document.getElementById('tanc-deleg');
+    if(delegSel&&(!delegSel.value||delegSel.value==='')){
+      const def0401=Array.from(delegSel.options).find(o=>o.value==='0401');
+      if(def0401)delegSel.value='0401';
+    }
+  },50);
 
 function onTancObrirChange(){
   const val=document.getElementById('tanc-obrir-sel').value;
@@ -3113,7 +3125,7 @@ function onTancTancarChange(){
 
   const canviTotal=getTancCanviTotal(val);
   const badgeEl=document.getElementById('tanc-obert-badge');
-  if(badgeEl)badgeEl.innerHTML='<i class="ti ti-clock"></i> '+tc.concepte+' — Canvi: <strong>'+fmtD(canviTotal)+'</strong>';
+  if(badgeEl)badgeEl.innerHTML='<div style="display:flex;align-items:center;gap:6px;margin-bottom:3px"><i class="ti ti-clock" style="flex-shrink:0"></i><span>'+tc.concepte+'</span></div><div style="font-size:15px;color:var(--amber)">Canvi: <strong>'+fmtD(canviTotal)+'</strong></div>';
   if(infoEl)infoEl.style.display='block';
   if(efectiuRow)efectiuRow.style.display='block';
   if(areaRow)areaRow.style.display='block';
