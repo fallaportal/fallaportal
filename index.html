@@ -274,7 +274,7 @@ tr:hover td{background:var(--bg2)}
     <div class="login-logo">Falla <span>Portal</span></div>
     <div class="login-sub">Sistema de gestió financera</div>
     <div class="login-fiscal">Any fiscal 26/27 · Abr 2026 – Mar 2027</div>
-    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v2.1.15</div>
+    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v2.1.16</div>
     <button class="btn-google" onclick="signIn()">
       <svg viewBox="0 0 24 24" width="20" height="20"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
       Entrar amb Google
@@ -316,7 +316,7 @@ tr:hover td{background:var(--bg2)}
     <div class="sb-bottom">
       <div class="sync-ind"><div class="sync-dot" id="sync-dot"></div><span id="sync-text">Sincronitzat</span></div>
       <button class="btn-logout" onclick="signOut()"><i class="ti ti-logout" style="font-size:14px"></i> Tancar sessió</button>
-      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v2.1.15</div>
+      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v2.1.16</div>
     </div>
   </div>
 
@@ -1406,7 +1406,7 @@ const TABS={
   tancaments:{name:'03 Tancaments',headers:['eventId','eventNom','data','efectiu','tpv','canvi','pagaments','tancat','estat','fonsId','concepte','registratPer','anyFiscal']},
   arees:{name:'04 Arees',headers:['id','nom','responsable']},
   delegacions:{name:'05 Delegacions',headers:['id','areaId','nom','responsable']},
-  events:{name:'06 Events',headers:['id','delegId','nom','year','responsable','status','dataInici','horaInici','dataFi','horaFi','anyFiscal']},
+  events:{name:'06 Events',headers:['id','delegId','nom','year','responsable','status','dataInici','horaInici','dataFi','horaFi','anyFiscal','perDefecte']},
   bancs:{name:'07 Bancs',headers:['id','codi','nom','tipus','compte']},
   reglesImportacio:{name:'08 Regles Import',headers:['id','tipus','valor','bancId','areaId','areaNom','delegacioId','delegacioNom']},
   usuaris:{name:'08 Usuaris',headers:['id','nom','email','rol']},
@@ -2141,7 +2141,7 @@ function configToRows(){
   const cfg=DB.config;
   const arees=(cfg.areas||[]).map(function(a){return{id:a.id,nom:a.name,responsable:''};});
   const delegacions=(cfg.delegacions||[]).map(function(d){return{id:d.id,areaId:d.areaId,nom:d.name,responsable:''};});
-  const events=(cfg.events||[]).map(function(e){return{id:e.id,delegId:e.delegId,nom:e.name,year:e.anyFiscal||e.year||'',responsable:e.resp||'',status:e.status||'pendent',dataInici:e.dataInici||'',horaInici:e.horaInici||'20:00',dataFi:e.dataFi||'',horaFi:e.horaFi||'02:00',anyFiscal:e.anyFiscal||e.year||''};});
+  const events=(cfg.events||[]).map(function(e){return{id:e.id,delegId:e.delegId,nom:e.name,year:e.anyFiscal||e.year||'',responsable:e.resp||'',status:e.status||'pendent',dataInici:e.dataInici||'',horaInici:e.horaInici||'20:00',dataFi:e.dataFi||'',horaFi:e.horaFi||'02:00',anyFiscal:e.anyFiscal||e.year||'',perDefecte:e.perDefecte?'true':''};});
   const bancs=(cfg.bancs||[]).map(function(b){return{id:b.id,codi:b.codi,nom:b.nom,tipus:b.tipus,compte:b.compte||''};});
   const reglesImportacio=[];// deprecated — unificat a DB.regles (13 Regles CSV)
   const usuaris=(cfg.usuaris||[]).map(function(u){return{id:u.id,nom:u.nom,email:u.email,rol:u.rol};});
@@ -2160,7 +2160,7 @@ function rowsToConfig(arees,delegacions,events,bancs,usuaris,assignacions,regles
   return{
     areas:arees.map(function(r){return{id:r.id,name:r.nom,resp:r.responsable};}),
     delegacions:delegacions.map(function(r){return{id:r.id,areaId:r.areaId,name:r.nom,resp:r.responsable};}),
-    events:events.map(function(r){return{id:r.id,delegId:r.delegId,name:r.nom,year:r.anyFiscal||r.year||'',anyFiscal:r.anyFiscal||r.year||'',resp:r.responsable,status:r.status,dataInici:r.dataInici||'',horaInici:r.horaInici||'20:00',dataFi:r.dataFi||'',horaFi:r.horaFi||'02:00'};}),
+    events:events.map(function(r){return{id:r.id,delegId:r.delegId,name:r.nom,year:r.anyFiscal||r.year||'',anyFiscal:r.anyFiscal||r.year||'',resp:r.responsable,status:r.status,dataInici:r.dataInici||'',horaInici:r.horaInici||'20:00',dataFi:r.dataFi||'',horaFi:r.horaFi||'02:00',perDefecte:r.perDefecte==='true'||r.perDefecte===true};}),
     bancs:bancs.map(function(r){return{id:r.id,codi:r.codi,nom:r.nom,tipus:r.tipus,compte:r.compte||'',saldoInicial:parseFloat(r.saldoInicial)||0,saldoData:r.saldoData||''};}),
     reglesImportacio:[],// deprecated — unificat a DB.regles
     usuaris:usuaris.map(function(u){return{id:u.id,nom:u.nom,email:u.email,rol:u.rol,arees:[],delegacions:[]};}),
@@ -5372,7 +5372,7 @@ function renderFappPreview3(rows){
 function calcConsumEvent(btn){const evId=btn.getAttribute('data-evid');const evNom=btn.getAttribute('data-evnom');const from=document.getElementById('ev-from-'+evId)?.value;const to=document.getElementById('ev-to-'+evId)?.value;const rows=window._fappTicketRows||[];if(!from||!to){showToast("Selecciona data i hora d'inici i fi",true);return;}const fD=new Date(from);const tD=new Date(to);const filtered=rows.filter(function(r){const d=new Date(r['Fecha']);return d>=fD&&d<=tD;});const total=filtered.reduce(function(s,r){return s+(parseFloat(r['Cantidad'])||0)*extrPreu(r['Ticket']||'');},0);const res=document.getElementById('ev-result-'+evId);if(res){res.innerHTML='<span style="color:var(--green)">'+filtered.length+' consums · <strong>'+fmtD(total)+'</strong></span> <button class="btn btn-primary" style="font-size:11px;margin-left:6px" data-evid="'+evId+'" data-evnom="'+evNom+'" data-total="'+total+'" data-from="'+from+'" data-to="'+to+'" onclick="registrarConsumEventBtn(this)">Registrar ingres</button>';}}
 function registrarConsumEventBtn(btn){registrarConsumEvent(btn.dataset.evid,btn.dataset.evnom,parseFloat(btn.dataset.total),btn.dataset.from,btn.dataset.to);}
 async function registrarConsumEvent(evId,evNom,total,from,to){if(!confirm('Registrar '+fmtD(total)+' com a ingres de "'+evNom+'"?'))return;const ev=DB.config.events.find(function(e){return e.id===evId;});const deleg=DB.config.delegacions.find(function(d){return d.id===(ev?.delegId||'');});const area=deleg?DB.config.areas.find(function(a){return a.id===deleg.areaId;}):null;const af=getAnyFiscal();DB.moviments.push({id:'m'+Date.now(),anyFiscal:af,tipus:'ing',via:'app',areaId:area?.id||'',areaNom:area?.name||'',delegacioId:deleg?.id||'',delegacioNom:deleg?.name||'',eventId:evId,eventNom:evNom,concepte:'Consums falles.app - '+evNom,establiment:'falles.app',data:to?to.split('T')[0]:today(),responsable:currentUser?.name||'',responsableEmail:currentUser?.email||'',import:total,notes:'Consums '+from+' fins '+to,fontImport:'fallesapp_tickets'});saveCache();showToast('Ingres de '+fmtD(total)+' registrat per a '+evNom);save('moviments').catch(function(e){showToast('Error: '+e.message,true);});}
-async function registrarBonificacio(){const imp=parseFloat(document.getElementById('fapp-bonif-import').value)||0;const data=fmtDateInput(document.getElementById('fapp-bonif-data').value);const notes=document.getElementById('fapp-bonif-notes').value||'Bonificacio moneders falles.app';if(!imp||!data){showToast('Import i data son obligatoris',true);return;}if(!confirm('Registrar '+fmtD(imp)+' com a despesa?'))return;const af=getAnyFiscal();DB.moviments.push({id:'m'+Date.now(),anyFiscal:af,tipus:'gast',via:'app',areaId:'01',areaNom:'Administracio i Secretaria',delegacioId:'0102',delegacioNom:'Tresoreria',eventId:'',eventNom:'',concepte:notes,establiment:'falles.app',data,responsable:currentUser?.name||'',responsableEmail:currentUser?.email||'',import:imp,notes:'Bonificacio falles.app',fontImport:'fallesapp_bonif'});saveCache();showToast('Bonificacio registrada: '+fmtD(imp));save('moviments').catch(function(e){showToast('Error: '+e.message,true);});document.getElementById('fapp-bonif-import').value='';document.getElementById('fapp-bonif-data').value='';}
+async function registrarBonificacio(){const imp=parseFloat(document.getElementById('fapp-bonif-import').value)||0;const data=fmtDateInput(document.getElementById('fapp-bonif-data').value);const notes=document.getElementById('fapp-bonif-notes').value||'Bonificacio moneders falles.app';if(!imp||!data){showToast('Import i data son obligatoris',true);return;}if(!confirm('Registrar '+fmtD(imp)+' com a despesa?'))return;const af=getAnyFiscal();DB.moviments.push({id:'m'+Date.now(),anyFiscal:af,tipus:'gast',via:'virtual',areaId:'01',areaNom:'Administracio i Secretaria',delegacioId:'0102',delegacioNom:'Tresoreria',eventId:'',eventNom:'',concepte:notes,establiment:'falles.app',data,responsable:currentUser?.name||'',responsableEmail:currentUser?.email||'',import:imp,notes:'Bonificacio falles.app',fontImport:'fallesapp_bonif'});saveCache();showToast('Bonificacio registrada: '+fmtD(imp));save('moviments').catch(function(e){showToast('Error: '+e.message,true);});document.getElementById('fapp-bonif-import').value='';document.getElementById('fapp-bonif-data').value='';}
 function signOut(){
   if(accessToken)google.accounts.oauth2.revoke(accessToken,function(){});
   accessToken=null;currentUser=null;
@@ -5512,37 +5512,43 @@ function renderFappPreview4(rows){
   });
 
   const totValid=valid.reduce(function(s,r){return s+(parseFloat(r['Price'])||0)*(parseFloat(r['Cantidad'])||0);},0);
+  // Guardar info d'assignació per a l'importació
+  window._fapp4Assignats=assignats;
   let html='<div class="card" style="margin-top:12px">';
   html+='<div class="card-title"><i class="ti ti-check" style="color:var(--green)"></i> '+valid.length+' entrades vàlides · <strong>'+fmt(totValid)+'</strong></div>';
+  html+='<div style="font-size:12px;color:var(--text2);margin-bottom:10px">Revisa i modifica l\'assignació si cal abans d\'importar.</div>';
 
-  // Llista assignacions
+  // Llista assignacions — totes amb opció de modificar
   Object.entries(assignats).forEach(function(entry,idx){
     const g=entry[1];
-    const col=g.ev?'var(--green)':evPerDefecte?'var(--amber)':'var(--red)';
-    const nomEv=g.ev?g.ev.name:(evPerDefecte?'→ '+evPerDefecte.name+' (Per Defecte)':'Sense event — assignació manual');
+    const assignatAuto=!!g.ev;
+    const evDefId=evPerDefecte?evPerDefecte.id:'';
+    const col=assignatAuto?'var(--green)':evPerDefecte?'var(--amber)':'var(--red)';
+    const badge=assignatAuto?'<span style="font-size:10px;background:var(--green);color:#fff;padding:2px 6px;border-radius:4px;margin-left:6px">Auto</span>':'<span style="font-size:10px;background:var(--amber);color:#fff;padding:2px 6px;border-radius:4px;margin-left:6px">Manual</span>';
     html+='<div style="border:1px solid var(--border);border-radius:var(--r);padding:10px 12px;margin-bottom:8px">';
-    html+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">';
-    html+='<span style="font-weight:600;color:'+col+'">'+esc(g.concepte)+'</span>';
+    html+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">';
+    html+='<span style="font-weight:600;color:'+col+'">'+esc(g.concepte)+badge+'</span>';
     html+='<span style="font-weight:700">'+fmt(g.total)+' ('+g.count+' entrades)</span>';
     html+='</div>';
-    html+='<div style="font-size:12px;color:var(--text2);margin-bottom:'+(g.needsManual&&!evPerDefecte?'8px':'0')+'">';
-    html+=nomEv;
+    // Selector event (preseleccionat si trobat auto o per defecte)
+    const evSelId=g.ev?g.ev.id:(evPerDefecte?evPerDefecte.id:'');
+    html+='<div style="display:flex;gap:6px;flex-wrap:wrap">';
+    html+='<select id="fapp4-event-'+idx+'" onchange="updateFapp4AreaFromEvent('+idx+')" style="padding:5px 8px;border-radius:6px;border:1px solid var(--border);background:var(--bg2);color:var(--text);font-size:12px;flex:1;min-width:160px">';
+    html+='<option value="">— Sense event —</option>';
+    html+=DB.config.events.filter(function(e){return(e.anyFiscal||e.year||'')===af;}).map(function(e){return'<option value="'+e.id+'"'+(e.id===evSelId?' selected':'')+'>'+e.name+'</option>';}).join('');
+    html+='</select>';
+    html+='<select id="fapp4-area-'+idx+'" onchange="updateFapp4Deleg('+idx+')" style="padding:5px 8px;border-radius:6px;border:1px solid var(--border);background:var(--bg2);color:var(--text);font-size:12px">';
+    // Preseleccionar àrea de l'event assignat
+    const evSel4=g.ev||(evPerDefecte&&evSelId?evPerDefecte:null);
+    const delegSel4=evSel4?DB.config.delegacions.find(function(d){return d.id===evSel4.delegId;}):null;
+    const areaSel4=delegSel4?delegSel4.areaId:(DB.config.areas[0]?.id||'');
+    html+=DB.config.areas.map(function(a){return'<option value="'+a.id+'"'+(a.id===areaSel4?' selected':'')+'>'+a.id+' '+a.name+'</option>';}).join('');
+    html+='</select>';
+    html+='<select id="fapp4-deleg-'+idx+'" style="padding:5px 8px;border-radius:6px;border:1px solid var(--border);background:var(--bg2);color:var(--text);font-size:12px">';
+    const delegId4=delegSel4?delegSel4.id:'';
+    html+=DB.config.delegacions.filter(function(d){return d.areaId===areaSel4;}).map(function(d){return'<option value="'+d.id+'"'+(d.id===delegId4?' selected':'')+'>'+d.id+' '+d.name+'</option>';}).join('');
+    html+='</select>';
     html+='</div>';
-    if(g.needsManual&&!evPerDefecte){
-      html+='<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">';
-      html+='<select id="fapp4-area-'+idx+'" onchange="updateFapp4Deleg('+idx+')" style="padding:5px 8px;border-radius:6px;border:1px solid var(--border);background:var(--bg2);color:var(--text);font-size:12px">';
-      html+=DB.config.areas.map(function(a){return'<option value="'+a.id+'">'+a.id+' '+a.name+'</option>';}).join('');
-      html+='</select>';
-      html+='<select id="fapp4-deleg-'+idx+'" style="padding:5px 8px;border-radius:6px;border:1px solid var(--border);background:var(--bg2);color:var(--text);font-size:12px">';
-      const primeraArea=DB.config.areas[0]?.id;
-      html+=DB.config.delegacions.filter(function(d){return d.areaId===primeraArea;}).map(function(d){return'<option value="'+d.id+'">'+d.id+' '+d.name+'</option>';}).join('');
-      html+='</select>';
-      html+='<select id="fapp4-event-'+idx+'" style="padding:5px 8px;border-radius:6px;border:1px solid var(--border);background:var(--bg2);color:var(--text);font-size:12px">';
-      html+='<option value="">— Sense event —</option>';
-      html+=DB.config.events.filter(function(e){return(e.anyFiscal||e.year||'')===af;}).map(function(e){return'<option value="'+e.id+'">'+e.name+'</option>';}).join('');
-      html+='</select>';
-      html+='</div>';
-    }
     html+='</div>';
   });
 
@@ -5551,6 +5557,23 @@ function renderFappPreview4(rows){
   html+='<button class="btn" onclick="cancelFappImport(4)"><i class="ti ti-x"></i> Cancel·lar</button>';
   html+='</div></div>';
   document.getElementById('fapp-preview-4').innerHTML=html;
+}
+
+function updateFapp4AreaFromEvent(idx){
+  const evId=document.getElementById('fapp4-event-'+idx)?.value;
+  if(!evId)return;
+  const ev=DB.config.events.find(function(e){return e.id===evId;});
+  if(!ev)return;
+  const deleg=DB.config.delegacions.find(function(d){return d.id===ev.delegId;});
+  if(!deleg)return;
+  const areaSel=document.getElementById('fapp4-area-'+idx);
+  if(areaSel)areaSel.value=deleg.areaId;
+  updateFapp4Deleg(idx);
+  // Preseleccionar delegació
+  setTimeout(function(){
+    const delegSel=document.getElementById('fapp4-deleg-'+idx);
+    if(delegSel)delegSel.value=deleg.id;
+  },50);
 }
 
 function updateFapp4Deleg(idx){
@@ -5591,30 +5614,15 @@ async function importarFappEntrades(){
   Object.entries(assignats).forEach(function(entry){
     const g=entry[1];
     if(g.total<=0){idx++;return;}
-    let ev=g.ev;
-    let deleg,area;
-    if(!ev&&evPerDefecte){
-      ev=evPerDefecte;
-      deleg=DB.config.delegacions.find(function(d){return d.id===ev.delegId;});
-      area=deleg?DB.config.areas.find(function(a){return a.id===deleg.areaId;}):null;
-    }else if(!ev){
-      // Selecció manual — event, àrea i delegació
-      const evId4=document.getElementById('fapp4-event-'+idx)?.value;
-      const aId=document.getElementById('fapp4-area-'+idx)?.value;
-      const dId=document.getElementById('fapp4-deleg-'+idx)?.value;
-      if(evId4){
-        ev=DB.config.events.find(function(e){return e.id===evId4;})||null;
-        if(ev){
-          deleg=DB.config.delegacions.find(function(d){return d.id===ev.delegId;});
-          area=deleg?DB.config.areas.find(function(a){return a.id===deleg.areaId;}):null;
-        }
-      }
-      if(!area)area=DB.config.areas.find(function(a){return a.id===aId;})||DB.config.areas[0];
-      if(!deleg)deleg=DB.config.delegacions.find(function(d){return d.id===dId;})||DB.config.delegacions[0];
-    }else{
-      deleg=DB.config.delegacions.find(function(d){return d.id===ev.delegId;});
-      area=deleg?DB.config.areas.find(function(a){return a.id===deleg.areaId;}):null;
-    }
+    // Llegir sempre dels selectors (l'usuari pot haver modificat)
+    const evId4=document.getElementById('fapp4-event-'+idx)?.value;
+    const aId=document.getElementById('fapp4-area-'+idx)?.value;
+    const dId=document.getElementById('fapp4-deleg-'+idx)?.value;
+    let ev=evId4?DB.config.events.find(function(e){return e.id===evId4;})||null:null;
+    let deleg=DB.config.delegacions.find(function(d){return d.id===dId;})||null;
+    let area=DB.config.areas.find(function(a){return a.id===aId;})||null;
+    if(!deleg&&ev)deleg=DB.config.delegacions.find(function(d){return d.id===ev.delegId;});
+    if(!area&&deleg)area=DB.config.areas.find(function(a){return a.id===deleg.areaId;});
     DB.moviments.push({
       id:'m'+Date.now()+Math.random(),anyFiscal:af,tipus:'ing',via:'app',
       areaId:area?.id||'',areaNom:area?.name||'',
