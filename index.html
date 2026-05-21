@@ -274,7 +274,7 @@ tr:hover td{background:var(--bg2)}
     <div class="login-logo">Falla <span>Portal</span></div>
     <div class="login-sub">Sistema de gestió financera</div>
     <div class="login-fiscal">Any fiscal 26/27 · Abr 2026 – Mar 2027</div>
-    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v2.1.7</div>
+    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v2.1.8</div>
     <button class="btn-google" onclick="signIn()">
       <svg viewBox="0 0 24 24" width="20" height="20"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
       Entrar amb Google
@@ -316,7 +316,7 @@ tr:hover td{background:var(--bg2)}
     <div class="sb-bottom">
       <div class="sync-ind"><div class="sync-dot" id="sync-dot"></div><span id="sync-text">Sincronitzat</span></div>
       <button class="btn-logout" onclick="signOut()"><i class="ti ti-logout" style="font-size:14px"></i> Tancar sessió</button>
-      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v2.1.7</div>
+      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v2.1.8</div>
     </div>
   </div>
 
@@ -6463,6 +6463,7 @@ function renderReports(){
   const tabs=[
     {id:'r1',icon:'ti-lock',label:'Tancaments caixa'},
     {id:'r2',icon:'ti-arrow-down-left',label:'Fons lliurats'},
+    {id:'r3',icon:'ti-calendar-event',label:'Resultat per event'},
   ];
   const bar=document.getElementById('rep-tabs-bar');
   if(bar){
@@ -6483,6 +6484,7 @@ function repTab(id,noRender){
   });
   if(id==='r1') renderReport1();
   else if(id==='r2') renderReport2();
+  else if(id==='r3') renderReport3();
 }
 
 function renderReport1(){
@@ -6498,8 +6500,10 @@ function renderReport1(){
   // Enriquir amb dades d'event
   const rows=tancaments.filter(t=>(t.anyFiscal||af)===afSel).map(t=>{
     const ev=events.find(e=>e.id===t.eventId)||{};
+    const respUsuari=(DB.config.usuaris||[]).find(u=>(u.email||'').toLowerCase()===(t.registratPer||'').toLowerCase());
+    const respNom=respUsuari?respUsuari.nom:(t.registratPer||'—');
     const desviacioEfectiu=(t.efectiu||0)-(t.canvi||0)-(t.pagaments||0);
-    return {...t,ev,desviacioEfectiu};
+    return {...t,ev,desviacioEfectiu,respNom};
   }).sort((a,b)=>{
     if(!a.data&&!b.data)return 0;
     if(!a.data)return 1;
@@ -6555,7 +6559,7 @@ function renderReport1(){
     html+='<td style="padding:8px 10px;border-bottom:1px solid var(--border);font-weight:500">'+esc(r.eventNom||r.ev.nom||r.eventId)+'</td>';
     html+='<td style="padding:8px 10px;border-bottom:1px solid var(--border);white-space:nowrap">'+esc(r.data||'—')+'</td>';
     html+='<td style="padding:8px 10px;border-bottom:1px solid var(--border)">'+esc(r.anyFiscal||af)+'</td>';
-    html+='<td style="padding:8px 10px;border-bottom:1px solid var(--border)">'+esc(r.registratPer||'—')+'</td>';
+    html+='<td style="padding:8px 10px;border-bottom:1px solid var(--border)">'+esc(r.respNom)+'</td>';
     html+='<td style="padding:8px 10px;border-bottom:1px solid var(--border);text-align:right">'+fmt(r.canvi||0)+'</td>';
     html+='<td style="padding:8px 10px;border-bottom:1px solid var(--border);text-align:right">'+fmt(r.efectiu||0)+'</td>';
     html+='<td style="padding:8px 10px;border-bottom:1px solid var(--border);text-align:right">'+fmt(r.pagaments||0)+'</td>';
@@ -6732,6 +6736,128 @@ function exportRep2CSV(){
   a.download='fons_'+af.replace('/','_')+'.csv';
   a.click();
 }
+function renderReport3(){
+  const af=getAnyFiscal();
+  const events=(DB.config&&DB.config.events)||[];
+  const moviments=DB.moviments||[];
+  const pres=DB.pres_plans||[];
+  const tancaments=DB.tancaments||{};
+
+  let afSel=window._rep3AF||af;
+  const afsDisponibles=[...new Set(events.map(e=>e.anyFiscal||af).filter(Boolean))].sort().reverse();
+  if(!afsDisponibles.includes(af))afsDisponibles.unshift(af);
+
+  const eventsFiltrats=events.filter(e=>(e.anyFiscal||af)===afSel);
+
+  const rows=eventsFiltrats.map(ev=>{
+    // Ingressos: moviments tipus 'ing' associats a l'event
+    const ing=moviments.filter(m=>m.eventId===ev.id&&m.tipus==='ing'&&(m.anyFiscal===afSel||!m.anyFiscal)).reduce((s,m)=>s+m.import,0);
+    // Despeses: moviments tipus 'gast' associats a l'event
+    const gast=moviments.filter(m=>m.eventId===ev.id&&m.tipus==='gast'&&(m.anyFiscal===afSel||!m.anyFiscal)).reduce((s,m)=>s+m.import,0);
+    // Pressupost despeses planificades per l'event
+    const presPla=pres.filter(p=>p.eventId===ev.id&&p.any===afSel).reduce((s,p)=>s+p.importPla,0);
+    // Resultat net
+    const resultat=ing-gast;
+    // Desviació vs pressupost
+    const desv=presPla>0?gast-presPla:null;
+    // Estat tancament
+    const tc=tancaments[ev.id];
+    const estat=tc?tc.estat:'pendent';
+    return {ev,ing,gast,presPla,resultat,desv,estat};
+  }).sort((a,b)=>(a.ev.nom||'').localeCompare(b.ev.nom||'','ca'));
+
+  const totIng=rows.reduce((s,r)=>s+r.ing,0);
+  const totGast=rows.reduce((s,r)=>s+r.gast,0);
+  const totResultat=totIng-totGast;
+
+  let html='';
+  // Filtre AF
+  html+='<div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap">';
+  html+='<label style="font-size:13px;color:var(--text2);font-weight:500">Any fiscal:</label>';
+  html+='<select onchange="window._rep3AF=this.value;renderReport3()" style="padding:6px 10px;border-radius:8px;border:1px solid var(--border);background:var(--bg2);color:var(--text);font-size:13px">';
+  afsDisponibles.forEach(a=>{ html+='<option value="'+a+'"'+(a===afSel?' selected':'')+'>'+a+'</option>'; });
+  html+='</select>';
+  html+='<button onclick="exportRep3CSV()" class="btn" style="margin-left:auto;padding:6px 14px;font-size:13px"><i class="ti ti-download"></i> Exportar CSV</button>';
+  html+='</div>';
+
+  // Mètriques
+  html+='<div class="metrics" style="margin-bottom:16px">';
+  html+='<div class="metric"><div class="metric-label">Events</div><div class="metric-value">'+rows.length+'</div></div>';
+  html+='<div class="metric"><div class="metric-label">Total ingressos</div><div class="metric-value ok">'+fmt(totIng)+'</div></div>';
+  html+='<div class="metric"><div class="metric-label">Total despeses</div><div class="metric-value danger">'+fmt(totGast)+'</div></div>';
+  html+='<div class="metric" style="background:'+(totResultat>=0?'var(--green)':'var(--red)')+'"><div class="metric-label" style="color:rgba(255,255,255,0.8)">Resultat Total</div><div class="metric-value" style="color:#fff">'+(totResultat>=0?'+':'')+fmt(totResultat)+'</div></div>';
+  html+='</div>';
+
+  if(!rows.length){
+    html+='<div style="text-align:center;padding:40px;color:var(--text3);font-size:14px"><i class="ti ti-inbox" style="font-size:32px;display:block;margin-bottom:8px"></i>Sense events per a l\'any fiscal '+afSel+'</div>';
+    document.getElementById('rep-container').innerHTML=html;
+    return;
+  }
+
+  // Taula
+  html+='<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:13px">';
+  html+='<thead><tr style="background:var(--bg2);color:var(--text2)">';
+  html+='<th style="padding:8px 10px;text-align:left;font-weight:600;border-bottom:1px solid var(--border)">Event</th>';
+  html+='<th style="padding:8px 10px;text-align:right;font-weight:600;border-bottom:1px solid var(--border)">Ingressos</th>';
+  html+='<th style="padding:8px 10px;text-align:right;font-weight:600;border-bottom:1px solid var(--border)">Despeses</th>';
+  html+='<th style="padding:8px 10px;text-align:right;font-weight:600;border-bottom:1px solid var(--border)">Pressupost</th>';
+  html+='<th style="padding:8px 10px;text-align:right;font-weight:600;border-bottom:1px solid var(--border)">Desv. pressupost</th>';
+  html+='<th style="padding:8px 10px;text-align:right;font-weight:600;border-bottom:1px solid var(--border)">Resultat</th>';
+  html+='<th style="padding:8px 10px;text-align:center;font-weight:600;border-bottom:1px solid var(--border)">Estat</th>';
+  html+='</tr></thead><tbody>';
+
+  rows.forEach((r,i)=>{
+    const bg=i%2===0?'var(--bg)':'var(--bg2)';
+    const resCol=r.resultat>=0?'var(--green)':'var(--red)';
+    const deskCol=r.desv===null?'var(--text3)':r.desv<=0?'var(--green)':'var(--red)';
+    const deskTxt=r.desv===null?'—':(r.desv>=0?'+':'')+fmt(r.desv);
+    const estatPill=r.estat==='tancat'?'<span class="pill p-ok">Tancat</span>':r.estat==='obert'?'<span class="pill p-warn">Obert</span>':'<span class="pill p-gray">Pendent</span>';
+    html+='<tr style="background:'+bg+'">';
+    html+='<td style="padding:8px 10px;border-bottom:1px solid var(--border);font-weight:500">'+esc(r.ev.nom||r.ev.id)+'</td>';
+    html+='<td style="padding:8px 10px;border-bottom:1px solid var(--border);text-align:right;color:var(--green)">'+fmt(r.ing)+'</td>';
+    html+='<td style="padding:8px 10px;border-bottom:1px solid var(--border);text-align:right;color:var(--red)">'+fmt(r.gast)+'</td>';
+    html+='<td style="padding:8px 10px;border-bottom:1px solid var(--border);text-align:right;color:var(--text2)">'+( r.presPla>0?fmt(r.presPla):'—')+'</td>';
+    html+='<td style="padding:8px 10px;border-bottom:1px solid var(--border);text-align:right;font-weight:600;color:'+deskCol+'">'+deskTxt+'</td>';
+    html+='<td style="padding:8px 10px;border-bottom:1px solid var(--border);text-align:right;font-weight:700;color:'+resCol+'">'+(r.resultat>=0?'+':'')+fmt(r.resultat)+'</td>';
+    html+='<td style="padding:8px 10px;border-bottom:1px solid var(--border);text-align:center">'+estatPill+'</td>';
+    html+='</tr>';
+  });
+
+  // Totals
+  html+='<tr style="background:var(--bg2);font-weight:700">';
+  html+='<td style="padding:8px 10px;border-top:2px solid var(--border)">TOTAL</td>';
+  html+='<td style="padding:8px 10px;border-top:2px solid var(--border);text-align:right;color:var(--green)">'+fmt(totIng)+'</td>';
+  html+='<td style="padding:8px 10px;border-top:2px solid var(--border);text-align:right;color:var(--red)">'+fmt(totGast)+'</td>';
+  html+='<td colspan="2" style="padding:8px 10px;border-top:2px solid var(--border)"></td>';
+  html+='<td style="padding:8px 10px;border-top:2px solid var(--border);text-align:right;color:'+(totResultat>=0?'var(--green)':'var(--red)')+'"> '+(totResultat>=0?'+':'')+fmt(totResultat)+'</td>';
+  html+='<td style="padding:8px 10px;border-top:2px solid var(--border)"></td>';
+  html+='</tr>';
+  html+='</tbody></table></div>';
+
+  document.getElementById('rep-container').innerHTML=html;
+}
+
+function exportRep3CSV(){
+  const af=window._rep3AF||getAnyFiscal();
+  const events=(DB.config&&DB.config.events)||[];
+  const moviments=DB.moviments||[];
+  const pres=DB.pres_plans||[];
+  const rows=events.filter(e=>(e.anyFiscal||af)===af).map(ev=>{
+    const ing=moviments.filter(m=>m.eventId===ev.id&&m.tipus==='ing').reduce((s,m)=>s+m.import,0);
+    const gast=moviments.filter(m=>m.eventId===ev.id&&m.tipus==='gast').reduce((s,m)=>s+m.import,0);
+    const presPla=pres.filter(p=>p.eventId===ev.id&&p.any===af).reduce((s,p)=>s+p.importPla,0);
+    const resultat=ing-gast;
+    const desv=presPla>0?gast-presPla:null;
+    return [ev.nom||ev.id,ing,gast,presPla||'',desv!==null?desv:'',resultat];
+  });
+  const cap=['Event','Ingressos','Despeses','Pressupost','Desv. pressupost','Resultat'];
+  const csv=[cap,...rows].map(r=>r.map(v=>'"'+(String(v).replace(/"/g,'""'))+'"').join(',')).join('\n');
+  const a=document.createElement('a');
+  a.href='data:text/csv;charset=utf-8,\uFEFF'+encodeURIComponent(csv);
+  a.download='resultat_events_'+af.replace('/','_')+'.csv';
+  a.click();
+}
+
 // ─── FI REPORTS ─────────────────────────────────────────────────────────────
 
 function updateMovDataLabel(){
