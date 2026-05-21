@@ -274,7 +274,7 @@ tr:hover td{background:var(--bg2)}
     <div class="login-logo">Falla <span>Portal</span></div>
     <div class="login-sub">Sistema de gestió financera</div>
     <div class="login-fiscal">Any fiscal 26/27 · Abr 2026 – Mar 2027</div>
-    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v2.1.1</div>
+    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v2.1.2</div>
     <button class="btn-google" onclick="signIn()">
       <svg viewBox="0 0 24 24" width="20" height="20"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
       Entrar amb Google
@@ -316,7 +316,7 @@ tr:hover td{background:var(--bg2)}
     <div class="sb-bottom">
       <div class="sync-ind"><div class="sync-dot" id="sync-dot"></div><span id="sync-text">Sincronitzat</span></div>
       <button class="btn-logout" onclick="signOut()"><i class="ti ti-logout" style="font-size:14px"></i> Tancar sessió</button>
-      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v2.1.1</div>
+      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v2.1.2</div>
     </div>
   </div>
 
@@ -896,6 +896,15 @@ tr:hover td{background:var(--bg2)}
       </div>
       <div id="flux-container"></div>
       <button class="btn" onclick="exportCSV('flux')"><i class="ti ti-download"></i> Exportar CSV</button>
+    </div>
+
+    <div id="page-reports" class="page">
+      <div class="page-title">Reports</div>
+      <div class="page-sub" id="rep-sub">Informes operacionals</div>
+      <!-- Tabs de reports -->
+      <div style="display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap" id="rep-tabs-bar"></div>
+      <!-- Contingut del report actiu -->
+      <div id="rep-container"></div>
     </div>
 
     <div id="page-configuracio" class="page">
@@ -1797,6 +1806,7 @@ function buildNav(){
   html+='<div class="nav-sec">Reportes</div>';
   html+='<div class="nav-item" onclick="showPage(\'resultats\')"><i class="ti ti-file-text"></i> Estat de Resultats</div>';
   html+='<div class="nav-item" onclick="showPage(\'flux\')"><i class="ti ti-arrows-exchange"></i> Flux d\'Efectiu</div>';
+  html+='<div class="nav-item" onclick="showPage(\'reports\')"><i class="ti ti-chart-dots"></i> Reports</div>';
   if(can.canConfig){
     html+='<div class="nav-sec">Sistema</div>';
     html+='<div class="nav-item" onclick="showPage(\'configuracio\')"><i class="ti ti-settings"></i> Configuració</div>';
@@ -1901,7 +1911,7 @@ function showPage(id){
     'pressupostos':renderPressupostosEdit,'pressupostos-edit':renderPressupostosEdit,
     'directiva':renderDirectiva,
     'lliurament':renderFons,'tancament':renderTancamentList,'resultats':renderResultats,
-    'flux':renderFlux,'configuracio':renderConfig,'manual':renderManual}[id]||function(){})();
+    'flux':renderFlux,'reports':renderReports,'configuracio':renderConfig,'manual':renderManual}[id]||function(){})();
 }
 
 // DASHBOARD
@@ -6443,6 +6453,257 @@ function importarCSVZonaBtn(btn){
   const text=window['_csvText'+zona];
   importarCSVZona(zona,banc,text);
 }
+
+// ─── REPORTS ────────────────────────────────────────────────────────────────
+var _repTab='r1'; // tab activa per defecte
+
+function renderReports(){
+  // Tabs
+  const tabs=[
+    {id:'r1',icon:'ti-lock',label:'Tancaments caixa'},
+    {id:'r2',icon:'ti-arrow-down-left',label:'Fons lliurats'},
+  ];
+  const bar=document.getElementById('rep-tabs-bar');
+  if(bar){
+    bar.innerHTML=tabs.map(t=>'<button onclick="repTab(\''+t.id+'\')" id="repbtn-'+t.id+'" style="padding:6px 14px;border-radius:20px;border:none;cursor:pointer;font-size:13px;font-weight:500;display:flex;align-items:center;gap:6px;background:'+(_repTab===t.id?'var(--red)':'var(--bg2)')+';color:'+(_repTab===t.id?'#fff':'var(--text2)')+'"><i class=\"ti '+t.icon+'\"></i>'+t.label+'</button>').join('');
+  }
+  const sub=document.getElementById('rep-sub');
+  if(sub)sub.textContent='Informes operacionals';
+  repTab(_repTab,true);
+}
+
+function repTab(id,noRender){
+  _repTab=id;
+  // Actualitzar botons
+  document.querySelectorAll('[id^="repbtn-"]').forEach(b=>{
+    const active=b.id==='repbtn-'+id;
+    b.style.background=active?'var(--red)':'var(--bg2)';
+    b.style.color=active?'#fff':'var(--text2)';
+  });
+  if(id==='r1') renderReport1();
+  else if(id==='r2') renderReport2();
+}
+
+function renderReport1(){
+  const af=getAnyFiscal();
+  const tancaments=Object.values(DB.tancaments||{});
+  const events=DB.config&&DB.config.events?DB.config.events:(DB.events||[]);
+
+  // Filtre any fiscal
+  const afsDisponibles=[...new Set(tancaments.map(t=>t.anyFiscal||af))].sort().reverse();
+  let afSel=window._rep1AF||af;
+
+  // Enriquir amb dades d'event
+  const rows=tancaments.filter(t=>(t.anyFiscal||af)===afSel).map(t=>{
+    const ev=events.find(e=>e.id===t.eventId)||{};
+    const desviacioEfectiu=(t.efectiu||0)-(t.canvi||0)-(t.pagaments||0);
+    return {...t,ev,desviacioEfectiu};
+  }).sort((a,b)=>{
+    if(!a.data&&!b.data)return 0;
+    if(!a.data)return 1;
+    if(!b.data)return -1;
+    return sortByData(b,a,'data');
+  });
+
+  // Totals
+  const totCanvi=rows.reduce((s,r)=>s+(r.canvi||0),0);
+  const totEfectiu=rows.reduce((s,r)=>s+(r.efectiu||0),0);
+  const totPagaments=rows.reduce((s,r)=>s+(r.pagaments||0),0);
+  const totTPV=rows.reduce((s,r)=>s+(r.tpv||0),0);
+  const totDesv=rows.reduce((s,r)=>s+r.desviacioEfectiu,0);
+
+  let html='';
+  // Filtre AF
+  html+='<div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap">';
+  html+='<label style="font-size:13px;color:var(--text2);font-weight:500">Any fiscal:</label>';
+  html+='<select onchange="window._rep1AF=this.value;renderReport1()" style="padding:6px 10px;border-radius:8px;border:1px solid var(--border);background:var(--bg2);color:var(--text);font-size:13px">';
+  afsDisponibles.forEach(a=>{ html+='<option value="'+a+'"'+(a===afSel?' selected':'')+'>'+a+'</option>'; });
+  if(!afsDisponibles.includes(af))html+='<option value="'+af+'"'+(af===afSel?' selected':'')+'>'+af+'</option>';
+  html+='</select>';
+  html+='<button onclick="exportRep1CSV()" class="btn" style="margin-left:auto;padding:6px 14px;font-size:13px"><i class="ti ti-download"></i> Exportar CSV</button>';
+  html+='</div>';
+
+  // Mètriques resum
+  html+='<div class="metrics" style="margin-bottom:16px">';
+  html+='<div class="metric"><div class="metric-label">Tancaments</div><div class="metric-value">'+rows.length+'</div></div>';
+  html+='<div class="metric"><div class="metric-label">Canvi lliurat</div><div class="metric-value">'+fmt(totCanvi)+'</div></div>';
+  html+='<div class="metric"><div class="metric-label">Efectiu comptat</div><div class="metric-value">'+fmt(totEfectiu)+'</div></div>';
+  html+='<div class="metric"><div class="metric-label">Pagaments</div><div class="metric-value">'+fmt(totPagaments)+'</div></div>';
+  html+='<div class="metric"><div class="metric-label">TPV</div><div class="metric-value">'+fmt(totTPV)+'</div></div>';
+  html+='<div class="metric" style="background:'+(totDesv===0?'var(--green)':totDesv>0?'var(--amber)':'var(--red)')+'"><div class="metric-label" style="color:rgba(255,255,255,0.8)">Desviació total</div><div class="metric-value" style="color:#fff">'+(totDesv>=0?'+':'')+fmt(totDesv)+'</div></div>';
+  html+='</div>';
+
+  if(!rows.length){
+    html+='<div style="text-align:center;padding:40px;color:var(--text3);font-size:14px"><i class="ti ti-inbox" style="font-size:32px;display:block;margin-bottom:8px"></i>Sense tancaments per a l\'any fiscal '+afSel+'</div>';
+    document.getElementById('rep-container').innerHTML=html;
+    return;
+  }
+
+  // Taula
+  html+='<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:13px">';
+  html+='<thead><tr style="background:var(--bg2);color:var(--text2)">';
+  ['Event','Data tancament','Any fiscal','Responsable','Canvi inicial','Efectiu comptat','Pagaments','TPV','Desviació','Estat'].forEach(col=>{
+    html+='<th style="padding:8px 10px;text-align:left;font-weight:600;white-space:nowrap;border-bottom:1px solid var(--border)">'+col+'</th>';
+  });
+  html+='</tr></thead><tbody>';
+  rows.forEach((r,i)=>{
+    const bg=i%2===0?'var(--bg)':'var(--bg2)';
+    const dCol=r.desviacioEfectiu===0?'var(--green)':r.desviacioEfectiu>0?'var(--amber)':'var(--red)';
+    const estatPill=r.estat==='tancat'?'<span class="pill p-ok">Tancat</span>':r.estat==='obert'?'<span class="pill p-warn">Obert</span>':'<span class="pill p-gray">Pendent</span>';
+    html+='<tr style="background:'+bg+'">';
+    html+='<td style="padding:8px 10px;border-bottom:1px solid var(--border);font-weight:500">'+escHtml(r.eventNom||r.ev.nom||r.eventId)+'</td>';
+    html+='<td style="padding:8px 10px;border-bottom:1px solid var(--border);white-space:nowrap">'+escHtml(r.data||'—')+'</td>';
+    html+='<td style="padding:8px 10px;border-bottom:1px solid var(--border)">'+escHtml(r.anyFiscal||af)+'</td>';
+    html+='<td style="padding:8px 10px;border-bottom:1px solid var(--border)">'+escHtml(r.registratPer||'—')+'</td>';
+    html+='<td style="padding:8px 10px;border-bottom:1px solid var(--border);text-align:right">'+fmt(r.canvi||0)+'</td>';
+    html+='<td style="padding:8px 10px;border-bottom:1px solid var(--border);text-align:right">'+fmt(r.efectiu||0)+'</td>';
+    html+='<td style="padding:8px 10px;border-bottom:1px solid var(--border);text-align:right">'+fmt(r.pagaments||0)+'</td>';
+    html+='<td style="padding:8px 10px;border-bottom:1px solid var(--border);text-align:right">'+fmt(r.tpv||0)+'</td>';
+    html+='<td style="padding:8px 10px;border-bottom:1px solid var(--border);text-align:right;font-weight:600;color:'+dCol+'">'+(r.desviacioEfectiu>=0?'+':'')+fmt(r.desviacioEfectiu)+'</td>';
+    html+='<td style="padding:8px 10px;border-bottom:1px solid var(--border)">'+estatPill+'</td>';
+    html+='</tr>';
+  });
+  // Fila totals
+  html+='<tr style="background:var(--bg2);font-weight:700">';
+  html+='<td colspan="4" style="padding:8px 10px;border-top:2px solid var(--border)">TOTAL ('+rows.length+' tancaments)</td>';
+  html+='<td style="padding:8px 10px;border-top:2px solid var(--border);text-align:right">'+fmt(totCanvi)+'</td>';
+  html+='<td style="padding:8px 10px;border-top:2px solid var(--border);text-align:right">'+fmt(totEfectiu)+'</td>';
+  html+='<td style="padding:8px 10px;border-top:2px solid var(--border);text-align:right">'+fmt(totPagaments)+'</td>';
+  html+='<td style="padding:8px 10px;border-top:2px solid var(--border);text-align:right">'+fmt(totTPV)+'</td>';
+  html+='<td style="padding:8px 10px;border-top:2px solid var(--border);text-align:right;color:'+(totDesv===0?'var(--green)':totDesv>0?'var(--amber)':'var(--red)')+'"> '+(totDesv>=0?'+':'')+fmt(totDesv)+'</td>';
+  html+='<td style="padding:8px 10px;border-top:2px solid var(--border)"></td>';
+  html+='</tr>';
+  html+='</tbody></table></div>';
+
+  document.getElementById('rep-container').innerHTML=html;
+}
+
+function exportRep1CSV(){
+  const af=window._rep1AF||getAnyFiscal();
+  const tancaments=Object.values(DB.tancaments||{});
+  const events=DB.config&&DB.config.events?DB.config.events:(DB.events||[]);
+  const rows=tancaments.filter(t=>(t.anyFiscal||getAnyFiscal())===af).map(t=>{
+    const ev=events.find(e=>e.id===t.eventId)||{};
+    const desv=(t.efectiu||0)-(t.canvi||0)-(t.pagaments||0);
+    return [t.eventNom||ev.nom||t.eventId,t.data||'',t.anyFiscal||af,t.registratPer||'',t.canvi||0,t.efectiu||0,t.pagaments||0,t.tpv||0,desv,t.estat||''];
+  });
+  const cap=['Event','Data tancament','Any fiscal','Responsable','Canvi inicial','Efectiu comptat','Pagaments','TPV','Desviació','Estat'];
+  const csv=[cap,...rows].map(r=>r.map(v=>'"'+(String(v).replace(/"/g,'""'))+'"').join(',')).join('\n');
+  const a=document.createElement('a');
+  a.href='data:text/csv;charset=utf-8,\uFEFF'+encodeURIComponent(csv);
+  a.download='tancaments_'+af.replace('/','_')+'.csv';
+  a.click();
+}
+
+function renderReport2(){
+  const af=getAnyFiscal();
+  const fons=DB.fons||[];
+  const usuaris=DB.config&&DB.config.usuaris?DB.config.usuaris:[];
+
+  let afSel=window._rep2AF||af;
+  const afsDisponibles=[...new Set(fons.map(f=>f.anyFiscal||af))].sort().reverse();
+
+  // Agrupar per usuari
+  const fonsFiltrats=fons.filter(f=>(f.anyFiscal||af)===afSel);
+  const perUsuari={};
+  fonsFiltrats.forEach(f=>{
+    const uid=f.userId||f.usuariId||'';
+    if(!perUsuari[uid])perUsuari[uid]={uid,nom:f.usuariNom||uid,lliuraments:0,gastFons:0,devolucions:0,avancos:0,reintegraments:0,saldo:0,files:[]};
+    const pu=perUsuari[uid];
+    if(f.tipus==='lliurament')pu.lliuraments+=f.import||0;
+    else if(f.tipus==='gast_fons')pu.gastFons+=f.import||0;
+    else if(f.tipus==='devolucio')pu.devolucions+=f.import||0;
+    else if(f.tipus==='avanc')pu.avancos+=f.import||0;
+    else if(f.tipus==='reintegrament')pu.reintegraments+=f.import||0;
+    pu.files.push(f);
+  });
+  Object.values(perUsuari).forEach(pu=>{
+    pu.saldo=pu.lliuraments-pu.gastFons-pu.devolucions-pu.avancos+pu.reintegraments;
+  });
+
+  const rows=Object.values(perUsuari).sort((a,b)=>b.lliuraments-a.lliuraments);
+  const totLl=rows.reduce((s,r)=>s+r.lliuraments,0);
+  const totGast=rows.reduce((s,r)=>s+r.gastFons,0);
+  const totDev=rows.reduce((s,r)=>s+r.devolucions,0);
+  const totSaldo=rows.reduce((s,r)=>s+r.saldo,0);
+
+  let html='';
+  html+='<div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap">';
+  html+='<label style="font-size:13px;color:var(--text2);font-weight:500">Any fiscal:</label>';
+  html+='<select onchange="window._rep2AF=this.value;renderReport2()" style="padding:6px 10px;border-radius:8px;border:1px solid var(--border);background:var(--bg2);color:var(--text);font-size:13px">';
+  afsDisponibles.forEach(a=>{ html+='<option value="'+a+'"'+(a===afSel?' selected':'')+'>'+a+'</option>'; });
+  if(!afsDisponibles.includes(af))html+='<option value="'+af+'"'+(af===afSel?' selected':'')+'>'+af+'</option>';
+  html+='</select>';
+  html+='<button onclick="exportRep2CSV()" class="btn" style="margin-left:auto;padding:6px 14px;font-size:13px"><i class="ti ti-download"></i> Exportar CSV</button>';
+  html+='</div>';
+
+  html+='<div class="metrics" style="margin-bottom:16px">';
+  html+='<div class="metric"><div class="metric-label">Delegats</div><div class="metric-value">'+rows.length+'</div></div>';
+  html+='<div class="metric"><div class="metric-label">Total lliurat</div><div class="metric-value">'+fmt(totLl)+'</div></div>';
+  html+='<div class="metric"><div class="metric-label">Total gastat</div><div class="metric-value danger">'+fmt(totGast)+'</div></div>';
+  html+='<div class="metric"><div class="metric-label">Total retornat</div><div class="metric-value ok">'+fmt(totDev)+'</div></div>';
+  html+='<div class="metric" style="background:'+(totSaldo===0?'var(--green)':totSaldo>0?'var(--amber)':'var(--red)')+'"><div class="metric-label" style="color:rgba(255,255,255,0.8)">Saldo pendent</div><div class="metric-value" style="color:#fff">'+fmt(totSaldo)+'</div></div>';
+  html+='</div>';
+
+  if(!rows.length){
+    html+='<div style="text-align:center;padding:40px;color:var(--text3);font-size:14px"><i class="ti ti-inbox" style="font-size:32px;display:block;margin-bottom:8px"></i>Sense fons per a l\'any fiscal '+afSel+'</div>';
+    document.getElementById('rep-container').innerHTML=html;
+    return;
+  }
+
+  html+='<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:13px">';
+  html+='<thead><tr style="background:var(--bg2);color:var(--text2)">';
+  ['Delegat','Lliurat','Gastat','Retornat','Saldo pendent'].forEach(col=>{
+    html+='<th style="padding:8px 10px;text-align:left;font-weight:600;white-space:nowrap;border-bottom:1px solid var(--border)">'+col+'</th>';
+  });
+  html+='</tr></thead><tbody>';
+  rows.forEach((r,i)=>{
+    const bg=i%2===0?'var(--bg)':'var(--bg2)';
+    const sCol=r.saldo===0?'var(--green)':r.saldo>0?'var(--amber)':'var(--red)';
+    html+='<tr style="background:'+bg+'">';
+    html+='<td style="padding:8px 10px;border-bottom:1px solid var(--border);font-weight:500">'+escHtml(r.nom)+'</td>';
+    html+='<td style="padding:8px 10px;border-bottom:1px solid var(--border);text-align:right">'+fmt(r.lliuraments)+'</td>';
+    html+='<td style="padding:8px 10px;border-bottom:1px solid var(--border);text-align:right">'+fmt(r.gastFons)+'</td>';
+    html+='<td style="padding:8px 10px;border-bottom:1px solid var(--border);text-align:right">'+fmt(r.devolucions)+'</td>';
+    html+='<td style="padding:8px 10px;border-bottom:1px solid var(--border);text-align:right;font-weight:600;color:'+sCol+'">'+fmt(r.saldo)+'</td>';
+    html+='</tr>';
+  });
+  html+='<tr style="background:var(--bg2);font-weight:700">';
+  html+='<td style="padding:8px 10px;border-top:2px solid var(--border)">TOTAL</td>';
+  html+='<td style="padding:8px 10px;border-top:2px solid var(--border);text-align:right">'+fmt(totLl)+'</td>';
+  html+='<td style="padding:8px 10px;border-top:2px solid var(--border);text-align:right">'+fmt(totGast)+'</td>';
+  html+='<td style="padding:8px 10px;border-top:2px solid var(--border);text-align:right">'+fmt(totDev)+'</td>';
+  html+='<td style="padding:8px 10px;border-top:2px solid var(--border);text-align:right;color:'+(totSaldo===0?'var(--green)':totSaldo>0?'var(--amber)':'var(--red)')+'">'+fmt(totSaldo)+'</td>';
+  html+='</tr>';
+  html+='</tbody></table></div>';
+
+  document.getElementById('rep-container').innerHTML=html;
+}
+
+function exportRep2CSV(){
+  const af=window._rep2AF||getAnyFiscal();
+  const fons=(DB.fons||[]).filter(f=>(f.anyFiscal||getAnyFiscal())===af);
+  const perUsuari={};
+  fons.forEach(f=>{
+    const uid=f.userId||f.usuariId||'';
+    if(!perUsuari[uid])perUsuari[uid]={nom:f.usuariNom||uid,lliuraments:0,gastFons:0,devolucions:0,saldo:0};
+    const pu=perUsuari[uid];
+    if(f.tipus==='lliurament')pu.lliuraments+=f.import||0;
+    else if(f.tipus==='gast_fons')pu.gastFons+=f.import||0;
+    else if(f.tipus==='devolucio')pu.devolucions+=f.import||0;
+    else if(f.tipus==='avanc')pu.avancos=(pu.avancos||0)+(f.import||0);
+    else if(f.tipus==='reintegrament')pu.reintegraments=(pu.reintegraments||0)+(f.import||0);
+  });
+  Object.values(perUsuari).forEach(pu=>{ pu.saldo=pu.lliuraments-pu.gastFons-pu.devolucions-(pu.avancos||0)+(pu.reintegraments||0); });
+  const cap=['Delegat','Lliurat','Gastat','Retornat','Saldo pendent'];
+  const rows=Object.values(perUsuari).map(r=>[r.nom,r.lliuraments,r.gastFons,r.devolucions,r.saldo]);
+  const csv=[cap,...rows].map(r=>r.map(v=>'"'+(String(v).replace(/"/g,'""'))+'"').join(',')).join('\n');
+  const a=document.createElement('a');
+  a.href='data:text/csv;charset=utf-8,\uFEFF'+encodeURIComponent(csv);
+  a.download='fons_'+af.replace('/','_')+'.csv';
+  a.click();
+}
+// ─── FI REPORTS ─────────────────────────────────────────────────────────────
 
 function updateMovDataLabel(){
   const val=document.getElementById('mov-data')?.value;
