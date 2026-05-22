@@ -274,7 +274,7 @@ tr:hover td{background:var(--bg2)}
     <div class="login-logo">Falla <span>Portal</span></div>
     <div class="login-sub">Sistema de gestió financera</div>
     <div class="login-fiscal">Any fiscal 26/27 · Abr 2026 – Mar 2027</div>
-    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v2.1.19</div>
+    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v2.1.20</div>
     <button class="btn-google" onclick="signIn()">
       <svg viewBox="0 0 24 24" width="20" height="20"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
       Entrar amb Google
@@ -316,7 +316,7 @@ tr:hover td{background:var(--bg2)}
     <div class="sb-bottom">
       <div class="sync-ind"><div class="sync-dot" id="sync-dot"></div><span id="sync-text">Sincronitzat</span></div>
       <button class="btn-logout" onclick="signOut()"><i class="ti ti-logout" style="font-size:14px"></i> Tancar sessió</button>
-      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v2.1.19</div>
+      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v2.1.20</div>
     </div>
   </div>
 
@@ -1057,21 +1057,21 @@ tr:hover td{background:var(--bg2)}
 <div class="modal-overlay" id="modal-pres">
   <div class="modal">
   <div class="modal-inner">
-    <div class="modal-title">Afegir línia de pressupost</div>
+    <div class="modal-title" id="mp-title">Afegir línia de pressupost</div>
     <div style="font-size:13px;color:var(--text2);margin-bottom:12px" id="mp-deleg-nom"></div>
-    <div class="field">
-      <label>Event</label>
-      <select id="mp-event"></select>
-    </div>
     <div class="field">
       <label>Tipus de línia</label>
       <select id="mp-tipus" onchange="updateMpTipus()">
-        <option value="event">Import global de l'event</option>
-        <option value="concepte">Concepte concret dins de l'event</option>
+        <option value="event">Event</option>
+        <option value="concepte">Concepte</option>
       </select>
     </div>
-    <div class="field hidden" id="mp-concepte-field">
-      <label>Concepte</label>
+    <div class="field" id="mp-event-field">
+      <label><span id="mp-event-label">Event</span></label>
+      <select id="mp-event"><option value="">— Sense event —</option></select>
+    </div>
+    <div class="field" id="mp-concepte-field">
+      <label><span id="mp-concepte-label">Concepte</span></label>
       <input type="text" id="mp-concepte" placeholder="p.e. Honoraris Orquestra, Begudes...">
     </div>
     <div class="field">
@@ -1082,6 +1082,34 @@ tr:hover td{background:var(--bg2)}
   <div class="modal-footer">
       <button class="btn" onclick="closeModal('modal-pres')">Cancel·lar</button>
       <button class="btn btn-primary" onclick="savePresPla()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal confirmar sobreescriptura línia existent -->
+<div class="modal-overlay" id="modal-pres-duplicate">
+  <div class="modal" style="max-width:440px">
+    <div class="modal-inner">
+      <div class="modal-title"><i class="ti ti-alert-circle" style="color:var(--amber)"></i> Línia ja existent</div>
+      <div id="mpd-body" style="font-size:14px"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('modal-pres-duplicate')">Cancel·lar</button>
+      <button class="btn btn-primary" onclick="confirmSobreescriurePres()"><i class="ti ti-check"></i> Sobreescriure</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal confirmar augment de global d'event -->
+<div class="modal-overlay" id="modal-pres-excess">
+  <div class="modal" style="max-width:460px">
+    <div class="modal-inner">
+      <div class="modal-title"><i class="ti ti-alert-triangle" style="color:var(--amber)"></i> Augmentar pressupost total</div>
+      <div id="mpe-body" style="font-size:14px"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('modal-pres-excess')">Cancel·lar</button>
+      <button class="btn btn-primary" onclick="confirmAugmentarGlobal()"><i class="ti ti-check"></i> Confirmar nou total</button>
     </div>
   </div>
 </div>
@@ -3585,38 +3613,98 @@ function renderPressupostosEdit(){
       const af0=getAnyFiscal();const totalReal=(DB.moviments||[]).filter(m=>m.delegacioId===d.id&&m.tipus==='gast'&&(!m.anyFiscal||m.anyFiscal===''||m.anyFiscal===af0)).reduce((s,m)=>s+m.import,0);
       const pct=totalPla>0?Math.min(100,Math.round(totalReal/totalPla*100)):0;
       const bid='ped'+d.id;
-      html+=`<div class="deleg-block" style="margin-bottom:8px;margin-left:16px">
-        <div class="deleg-head" onclick="document.getElementById('${bid}').classList.toggle('open');this.querySelector('.chevron').classList.toggle('open')">
-          <i class="ti ti-chevron-right chevron"></i>
-          <div style="flex:1;font-weight:500">${d.name}</div>
-          <span style="font-size:11px;color:#fff;background:var(--blue);padding:2px 8px;border-radius:4px;min-width:70px;display:inline-block;text-align:right">${fmt(totalPla)}</span>
-          <span style="font-size:11px;color:#fff;background:var(--purple);padding:2px 8px;border-radius:4px;min-width:70px;display:inline-block;text-align:right;margin-left:4px">${fmt(totalReal)}</span>
-          <span style="font-size:11px;font-weight:600;color:#fff;background:${(totalReal-totalPla)>0?'var(--red)':(totalReal-totalPla)<0?'var(--green)':'var(--gray)'};padding:2px 8px;border-radius:4px;min-width:70px;display:inline-block;text-align:right;margin-left:4px">${(totalReal-totalPla)>=0?'+':''}${fmt(totalReal-totalPla)}</span>
-        </div>
-        <div class="deleg-body" id="${bid}">
-          ${!bloquejat&&(perm('viewAll')||myDelegs.includes(d.id))?`
-          <div style="padding:10px 14px;border-bottom:0.5px solid var(--border)">
-            <button class="btn btn-primary" style="font-size:12px" onclick="openModalPres('${d.id}','','event')">
-              <i class="ti ti-plus"></i> Afegir línia de pressupost
-            </button>
-          </div>`:''}
-          ${dPlans.length?dPlans.map(p=>`
-          <div style="display:flex;align-items:center;gap:8px;padding:8px 14px;border-bottom:0.5px solid var(--border);font-size:12px">
-            <div style="flex:1">
-              <div style="font-weight:500">${p.eventNom||'—'}</div>
-              +(p.concepte?'<div style="color:var(--text3);font-size:11px">'+p.concepte+'</div>':'')}
-            </div>
-            <span class="pill p-info">${p.tipus==='event'?'Event':'Concepte'}</span>
-            <div style="font-weight:500;width:80px;text-align:right">${fmt(p.importPla)}</div>
-            ${!bloquejat&&(perm('viewAll')||myDelegs.includes(d.id))?`
-            <button class="btn" style="font-size:11px;padding:3px 8px" onclick="deletePres('${p.delegacioId}','${p.eventId}','${p.concepte}')">
-              <i class="ti ti-trash"></i>
-            </button>`:''}
-          </div>`).join(''):`<div style="padding:10px 14px;color:var(--text3);font-size:12px">Sense imports planificats</div>`}
-          ${events.length&&!bloquejat&&(perm('viewAll')||myDelegs.includes(d.id))?'':`
-          `}
-        </div>
-      </div>`;
+      const canEdit=!bloquejat&&(perm('viewAll')||myDelegs.includes(d.id));
+
+      // Agrupar dPlans per eventId
+      const grupsByEvent={};
+      dPlans.forEach(p=>{
+        const key=p.eventId||'__sense_event__';
+        if(!grupsByEvent[key])grupsByEvent[key]={eventNom:p.eventNom||'(sense event)',eventId:p.eventId||'',lines:[]};
+        grupsByEvent[key].lines.push(p);
+      });
+
+      html+='<div class="deleg-block" style="margin-bottom:8px;margin-left:16px">';
+      html+='<div class="deleg-head" onclick="document.getElementById(\''+bid+'\').classList.toggle(\'open\');this.querySelector(\'.chevron\').classList.toggle(\'open\')">';
+      html+='<i class="ti ti-chevron-right chevron"></i>';
+      html+='<div style="flex:1;font-weight:500">'+d.name+'</div>';
+      html+='<span style="font-size:11px;color:#fff;background:var(--blue);padding:2px 8px;border-radius:4px;min-width:70px;display:inline-block;text-align:right">'+fmt(totalPla)+'</span>';
+      html+='<span style="font-size:11px;color:#fff;background:var(--purple);padding:2px 8px;border-radius:4px;min-width:70px;display:inline-block;text-align:right;margin-left:4px">'+fmt(totalReal)+'</span>';
+      html+='<span style="font-size:11px;font-weight:600;color:#fff;background:'+((totalReal-totalPla)>0?'var(--red)':(totalReal-totalPla)<0?'var(--green)':'var(--gray)')+';padding:2px 8px;border-radius:4px;min-width:70px;display:inline-block;text-align:right;margin-left:4px">'+((totalReal-totalPla)>=0?'+':'')+fmt(totalReal-totalPla)+'</span>';
+      html+='</div>';
+      html+='<div class="deleg-body" id="'+bid+'">';
+
+      if(canEdit){
+        html+='<div style="padding:10px 14px;border-bottom:0.5px solid var(--border)">';
+        html+='<button class="btn btn-primary" style="font-size:12px" onclick="openModalPres(\''+d.id+'\',\'\',\'event\')">';
+        html+='<i class="ti ti-plus"></i> Afegir línia de pressupost</button>';
+        html+='</div>';
+      }
+
+      if(!dPlans.length){
+        html+='<div style="padding:10px 14px;color:var(--text3);font-size:12px">Sense imports planificats</div>';
+      }else{
+        // Render per grups d'event
+        Object.entries(grupsByEvent).forEach(function(entry){
+          const grup=entry[1];
+          const lines=grup.lines;
+          const totalGrup=lines.reduce((s,p)=>s+(parseFloat(p.importPla)||0),0);
+          const eventSol=lines.find(p=>!p.concepte&&p.eventId);
+          const varisLine=lines.find(p=>p.concepte===VARIS_LABEL);
+          const conceptesExpl=lines.filter(p=>p.concepte&&p.concepte!==VARIS_LABEL);
+          const teMultiplesLines=lines.length>1||(lines.length===1&&lines[0].concepte&&lines[0].concepte!==VARIS_LABEL);
+
+          // Capçalera del grup (si hi ha event)
+          if(grup.eventId){
+            html+='<div style="display:flex;align-items:center;gap:8px;padding:8px 14px;background:var(--bg2);border-bottom:0.5px solid var(--border);font-size:12px">';
+            html+='<i class="ti ti-calendar-event" style="color:var(--text2);font-size:14px"></i>';
+            html+='<div style="flex:1;font-weight:600">'+esc(grup.eventNom)+'</div>';
+            if(teMultiplesLines){
+              html+='<div style="font-weight:600;width:80px;text-align:right;color:var(--text)">'+fmt(totalGrup)+'</div>';
+              html+='<div style="width:60px"></div>'; // espai botons
+            }
+            html+='</div>';
+          }
+
+          // Renderitzar línies individuals
+          lines.forEach(function(p){
+            const esVaris=p.concepte===VARIS_LABEL;
+            const esEventSol=!p.concepte&&p.eventId;
+            const esConcSenseEv=p.concepte&&!p.eventId;
+            const esConcAmbEv=p.concepte&&p.eventId&&!esVaris;
+            // Pill segons cas
+            let pillHtml='';
+            if(esVaris){pillHtml='<span class="pill p-gray" style="font-style:italic">Varis (auto)</span>';}
+            else if(esEventSol){pillHtml='<span class="pill p-info">Event</span>';}
+            else if(esConcAmbEv){pillHtml='<span class="pill p-ok">Event + Concepte</span>';}
+            else if(esConcSenseEv){pillHtml='<span class="pill p-warn">Concepte</span>';}
+            // Padding lateral diferent si està dins d'un grup d'event
+            const padLeft=grup.eventId?'34px':'14px';
+            const styleVaris=esVaris?'font-style:italic;color:var(--text2);':'';
+            html+='<div style="display:flex;align-items:center;gap:8px;padding:8px 14px 8px '+padLeft+';border-bottom:0.5px solid var(--border);font-size:12px;'+styleVaris+'">';
+            html+='<div style="flex:1">';
+            if(p.concepte&&p.concepte!==VARIS_LABEL){
+              html+='<div style="font-weight:500">'+esc(p.concepte)+'</div>';
+            }else if(esVaris){
+              html+='<div style="font-weight:500">Varis <span style="font-size:10px;color:var(--text3)">· residual auto</span></div>';
+            }else if(esEventSol){
+              html+='<div style="font-weight:500">Import global</div>';
+            }
+            html+='</div>';
+            html+=pillHtml;
+            html+='<div style="font-weight:500;width:80px;text-align:right">'+fmt(p.importPla)+'</div>';
+            if(canEdit&&!esVaris){
+              const editAttr='data-d="'+p.delegacioId+'" data-e="'+(p.eventId||'')+'" data-c="'+esc(p.concepte||'')+'"';
+              html+='<button class="btn" style="font-size:11px;padding:3px 6px;margin-right:2px" '+editAttr+' onclick="editPresBtn(this)" title="Editar"><i class="ti ti-edit"></i></button>';
+              html+='<button class="btn" style="font-size:11px;padding:3px 6px" '+editAttr+' onclick="deletePres(this.dataset.d,this.dataset.e,this.dataset.c)" title="Eliminar"><i class="ti ti-trash"></i></button>';
+            }else if(esVaris){
+              html+='<div style="width:60px"></div>';
+            }
+            html+='</div>';
+          });
+        });
+      }
+
+      html+='</div></div>';
     });
     html+='</div></div>';
   });
@@ -3637,54 +3725,358 @@ function renderPressupostosEdit(){
   }
 }
 
-let presDelegId='',presEventId='',presTipus='event';
+let presDelegId='',presEventId='',presTipus='event',presEditingKey=null;
+let _pendingPres=null;      // per modal duplicat / excés
+let _pendingPresMode=null;  // 'duplicate' | 'excess'
 
-function openModalPres(delegId,eventId,tipus){
-  presDelegId=delegId;presEventId=eventId;presTipus=tipus;
+// Funcions helper sistema Varis ----------------------------------------------
+const VARIS_LABEL='Varis';
+
+// Retorna línies de pressupost d'un event concret (delegació + any + event)
+function _presLinesEvent(delegId,eventId,any){
+  return (DB.pres_plans||[]).filter(p=>p.delegacioId===delegId&&p.eventId===eventId&&p.any===any);
+}
+// Detecta si un event té algun pressupost "global" (línia sense concepte o línia Varis)
+function _presHasGlobal(delegId,eventId,any){
+  return _presLinesEvent(delegId,eventId,any).some(p=>!p.concepte||p.concepte===VARIS_LABEL);
+}
+// Retorna la línia "Varis" d'un event si existeix
+function _presGetVaris(delegId,eventId,any){
+  return _presLinesEvent(delegId,eventId,any).find(p=>p.concepte===VARIS_LABEL);
+}
+// Retorna la línia "global sense concepte" si existeix (no Varis)
+function _presGetEventSol(delegId,eventId,any){
+  return _presLinesEvent(delegId,eventId,any).find(p=>!p.concepte);
+}
+// Suma del global d'un event = suma de totes les línies (Event sol + conceptes + Varis)
+function _presTotalEvent(delegId,eventId,any){
+  return _presLinesEvent(delegId,eventId,any).reduce((s,p)=>s+(parseFloat(p.importPla)||0),0);
+}
+// Suma de conceptes explícits (excloent Varis i Event sol)
+function _presSumaConceptes(delegId,eventId,any){
+  return _presLinesEvent(delegId,eventId,any).filter(p=>p.concepte&&p.concepte!==VARIS_LABEL)
+    .reduce((s,p)=>s+(parseFloat(p.importPla)||0),0);
+}
+// Eliminar una línia per clau composta (delegId, eventId, concepte)
+function _presEliminarLinia(delegId,eventId,concepte){
+  DB.pres_plans=(DB.pres_plans||[]).filter(p=>!(p.delegacioId===delegId&&p.eventId===eventId&&p.concepte===concepte&&p.any===getAnyFiscal()));
+}
+// Crear/actualitzar línia Varis amb un import donat (si import>0 crea, si <=0 elimina)
+function _presSetVaris(delegId,delegNom,eventId,eventNom,importVaris){
+  const af=getAnyFiscal();
+  // Eliminar la línia Varis existent si n'hi ha
+  _presEliminarLinia(delegId,eventId,VARIS_LABEL);
+  if(importVaris>0.005){
+    DB.pres_plans.push({
+      any:af,delegacioId:delegId,delegacioNom:delegNom||'',
+      eventId:eventId||'',eventNom:eventNom||'',
+      concepte:VARIS_LABEL,tipus:'concepte',
+      importPla:Math.round(importVaris*100)/100,notes:'Auto'
+    });
+  }
+}
+// Si l'únic que queda en un event és Varis, fusionar-lo en una línia Event sol
+function _presFusionarSiSol(delegId,eventId){
+  const lines=_presLinesEvent(delegId,eventId,getAnyFiscal());
+  if(lines.length===1&&lines[0].concepte===VARIS_LABEL){
+    const v=lines[0];
+    _presEliminarLinia(delegId,eventId,VARIS_LABEL);
+    DB.pres_plans.push({
+      any:v.any,delegacioId:v.delegacioId,delegacioNom:v.delegacioNom,
+      eventId:v.eventId,eventNom:v.eventNom,concepte:'',tipus:'event',
+      importPla:v.importPla,notes:''
+    });
+  }
+}
+
+// Modal handlers --------------------------------------------------------------
+function openModalPres(delegId,eventId,tipus,editKey){
+  presDelegId=delegId;presEventId=eventId||'';presTipus=tipus||'event';
+  presEditingKey=editKey||null; // si editem: {delegId, eventId, concepte}
   const deleg=DB.config.delegacions.find(d=>d.id===delegId);
   const events=DB.config.events.filter(e=>e.delegId===delegId);
   document.getElementById('mp-deleg-nom').textContent=deleg?.name||delegId;
   const evSel=document.getElementById('mp-event');
-  evSel.innerHTML=events.map(e=>`<option value="${e.id}">${e.name}</option>`).join('');
-  if(eventId)evSel.value=eventId;
-  document.getElementById('mp-concepte').value='';
-  document.getElementById('mp-import').value='';
-  document.getElementById('mp-tipus').value=tipus;
+  evSel.innerHTML='<option value="">— Sense event —</option>'+events.map(e=>`<option value="${e.id}">${e.name}</option>`).join('');
+  // Si estem editant, omplir camps
+  if(editKey){
+    const linia=(DB.pres_plans||[]).find(p=>p.delegacioId===editKey.delegId&&p.eventId===editKey.eventId&&p.concepte===editKey.concepte&&p.any===getAnyFiscal());
+    document.getElementById('mp-title').textContent='Editar línia de pressupost';
+    if(linia){
+      const teEvent=!!linia.eventId;
+      const teConcepte=!!linia.concepte&&linia.concepte!==VARIS_LABEL;
+      // Determinar tipus segons contingut
+      const tipDeduit=teConcepte?'concepte':'event';
+      document.getElementById('mp-tipus').value=tipDeduit;
+      evSel.value=linia.eventId||'';
+      document.getElementById('mp-concepte').value=linia.concepte===VARIS_LABEL?'':linia.concepte;
+      document.getElementById('mp-import').value=linia.importPla;
+    }
+  }else{
+    document.getElementById('mp-title').textContent='Afegir línia de pressupost';
+    if(eventId)evSel.value=eventId;
+    document.getElementById('mp-concepte').value='';
+    document.getElementById('mp-import').value='';
+    document.getElementById('mp-tipus').value=tipus||'event';
+  }
   updateMpTipus();
   openModal('modal-pres');
 }
 
 function updateMpTipus(){
   const t=document.getElementById('mp-tipus').value;
-  document.getElementById('mp-concepte-field').style.display=t==='concepte'?'block':'none';
+  // En els dos casos, els dos camps són VISIBLES, però amb obligatorietat diferent
+  const evLabel=document.getElementById('mp-event-label');
+  const conLabel=document.getElementById('mp-concepte-label');
+  if(t==='event'){
+    if(evLabel)evLabel.innerHTML='Event';
+    if(conLabel)conLabel.innerHTML='Concepte <span class="opt-label">(opcional)</span>';
+  }else{
+    if(evLabel)evLabel.innerHTML='Event <span class="opt-label">(opcional)</span>';
+    if(conLabel)conLabel.innerHTML='Concepte';
+  }
+  // En canviar tipus → buidem camps (P4=a)
+  if(!presEditingKey){
+    document.getElementById('mp-event').value='';
+    document.getElementById('mp-concepte').value='';
+  }
 }
 
 async function savePresPla(){
   const delegId=presDelegId;
-  const eventId=document.getElementById('mp-event').value;
+  const eventId=document.getElementById('mp-event').value||'';
+  const tipus=document.getElementById('mp-tipus').value;
   const event=DB.config.events.find(e=>e.id===eventId);
   const deleg=DB.config.delegacions.find(d=>d.id===delegId);
-  const tipus=document.getElementById('mp-tipus').value;
-  const concepte=tipus==='concepte'?document.getElementById('mp-concepte').value:'';
+  const conceptRaw=(document.getElementById('mp-concepte').value||'').trim();
   const importPla=parseFloat(document.getElementById('mp-import').value)||0;
-  if(!importPla){showToast('Introdueix un import vàlid',true);return;}
-  const pla={
-    any:getAnyFiscal(),delegacioId:delegId,delegacioNom:deleg?.name||'',
-    eventId,eventNom:event?.name||'',concepte,tipus,importPla,notes:''
+  const af=getAnyFiscal();
+
+  // Validacions de tipus
+  if(tipus==='event'){
+    if(!eventId){showToast('Selecciona l\'event',true);return;}
+  }else if(tipus==='concepte'){
+    if(!conceptRaw){showToast('Introdueix el concepte',true);return;}
+    // Evitar que l'usuari introdueixi manualment "Varis" (paraula reservada)
+    if(conceptRaw.toLowerCase()===VARIS_LABEL.toLowerCase()){
+      showToast('"'+VARIS_LABEL+'" és una paraula reservada del sistema',true);return;
+    }
+  }
+  if(!importPla||importPla<=0){showToast('Introdueix un import vàlid',true);return;}
+
+  // Concepte final: buit si tipus=event sense concepte, sinó el text
+  const concepte=tipus==='event'?conceptRaw:conceptRaw;
+
+  // Construcció de la línia nova
+  const novaLinia={
+    any:af,delegacioId:delegId,delegacioNom:deleg?.name||'',
+    eventId:eventId,eventNom:event?.name||'',
+    concepte:concepte,tipus:tipus,
+    importPla:Math.round(importPla*100)/100,notes:''
   };
-  // Eliminar si ja existia la mateixa combinació
-  DB.pres_plans=DB.pres_plans.filter(p=>!(p.delegacioId===delegId&&p.eventId===eventId&&p.concepte===concepte));
-  DB.pres_plans.push(pla);
+
+  // En mode edició, retornar l'import original a Varis (si pertoca) i eliminar l'original
+  if(presEditingKey){
+    const ek=presEditingKey;
+    const orig=(DB.pres_plans||[]).find(p=>p.delegacioId===ek.delegId&&p.eventId===ek.eventId&&p.concepte===ek.concepte&&p.any===af);
+    if(orig){
+      const impOrig=parseFloat(orig.importPla)||0;
+      // Si era un concepte (no Varis, no Event sol) dins d'un event, els seus diners tornen a Varis
+      if(ek.concepte&&ek.concepte!==VARIS_LABEL&&ek.eventId){
+        const restant=_presLinesEvent(ek.delegId,ek.eventId,af).filter(p=>!(p.delegacioId===ek.delegId&&p.eventId===ek.eventId&&p.concepte===ek.concepte));
+        const teGlobal=restant.some(p=>!p.concepte||p.concepte===VARIS_LABEL);
+        if(teGlobal){
+          const varisAct=_presGetVaris(ek.delegId,ek.eventId,af);
+          const varisActImp=varisAct?(parseFloat(varisAct.importPla)||0):0;
+          const delegEd=DB.config.delegacions.find(d=>d.id===ek.delegId);
+          const eventEd=DB.config.events.find(e=>e.id===ek.eventId);
+          _presSetVaris(ek.delegId,delegEd?.name||'',ek.eventId,eventEd?.name||'',varisActImp+impOrig);
+        }
+      }
+    }
+    _presEliminarLinia(ek.delegId,ek.eventId,ek.concepte);
+  }
+
+  // Comprovació de duplicat (només en mode CREAR; en EDIT ja hem eliminat la pròpia)
+  if(!presEditingKey){
+    const dup=(DB.pres_plans||[]).find(p=>p.delegacioId===delegId&&p.eventId===eventId&&p.concepte===concepte&&p.any===af);
+    if(dup){
+      _pendingPres={novaLinia,delegId,eventId,deleg,event,concepte,importPla,duplicat:dup};
+      _pendingPresMode='duplicate';
+      const evNom=event?event.name:'(sense event)';
+      const conNom=concepte||'(sense concepte)';
+      document.getElementById('mpd-body').innerHTML=
+        '<div style="margin-bottom:10px">Ja existeix una línia de pressupost amb aquesta combinació:</div>'+
+        '<div style="background:var(--bg2);border-radius:var(--r);padding:10px 12px;font-size:13px;margin-bottom:10px">'+
+          '<div><strong>Event:</strong> '+esc(evNom)+'</div>'+
+          '<div><strong>Concepte:</strong> '+esc(conNom)+'</div>'+
+          '<div style="margin-top:6px"><strong>Import actual:</strong> '+fmtD(dup.importPla)+'</div>'+
+          '<div><strong>Import nou:</strong> '+fmtD(importPla)+'</div>'+
+        '</div>'+
+        '<div style="font-size:12px;color:var(--text2)">Vols sobreescriure l\'import existent?</div>';
+      openModal('modal-pres-duplicate');
+      return;
+    }
+  }
+
+  // Si la nova línia és un Event sol (tipus=event, sense concepte, té eventId)
+  // i ja hi ha conceptes detallats → l'estem modificant el global; cal recalcular Varis
+  if(tipus==='event'&&!concepte&&eventId){
+    await _aplicarCanviGlobalEvent(delegId,deleg,eventId,event,importPla,novaLinia);
+    return; // _aplicarCanviGlobalEvent finalitza tot el flux
+  }
+
+  // Si la nova línia és un concepte dins d'un event amb global → descomptar de Varis
+  if(tipus==='event'&&concepte&&eventId||tipus==='concepte'&&concepte&&eventId){
+    const hasGlobal=_presHasGlobal(delegId,eventId,af);
+    if(hasGlobal){
+      await _aplicarConcepteAmbGlobal(delegId,deleg,eventId,event,concepte,importPla,novaLinia);
+      return;
+    }
+  }
+
+  // Cas simple: concepte sense event, o concepte dins d'event sense global encara
+  DB.pres_plans.push(novaLinia);
+  await _finalitzarSavePres('Línia de pressupost guardada');
+}
+
+// Aplicar el canvi d'un Event sol (global) quan ja hi ha conceptes
+async function _aplicarCanviGlobalEvent(delegId,deleg,eventId,event,nouImportGlobal,novaLinia){
+  const af=getAnyFiscal();
+  const sumaConceptes=_presSumaConceptes(delegId,eventId,af);
+  const novaVaris=nouImportGlobal-sumaConceptes;
+  // Eliminar Event sol antic i Varis antic
+  _presEliminarLinia(delegId,eventId,'');
+  _presEliminarLinia(delegId,eventId,VARIS_LABEL);
+  if(sumaConceptes===0){
+    // No hi ha conceptes detallats → simplement crea l'Event sol
+    DB.pres_plans.push(novaLinia);
+  }else{
+    // Hi ha conceptes → crear Varis amb el restant (pot ser negatiu)
+    _presSetVaris(delegId,deleg?.name||'',eventId,event?.name||'',novaVaris);
+    if(novaVaris<0){
+      showToast('Atenció: Varis queda negatiu ('+fmtD(novaVaris)+'). Conceptes superen el global.',true);
+    }
+  }
+  await _finalitzarSavePres('Global d\'event actualitzat');
+}
+
+// Aplicar el canvi quan afegim/editem un concepte dins d'un event amb global
+async function _aplicarConcepteAmbGlobal(delegId,deleg,eventId,event,concepte,importNou,novaLinia){
+  const af=getAnyFiscal();
+  // Convertir Event sol en Varis si encara existeix
+  const eventSol=_presGetEventSol(delegId,eventId,af);
+  if(eventSol){
+    const importEventSol=parseFloat(eventSol.importPla)||0;
+    _presEliminarLinia(delegId,eventId,'');
+    _presSetVaris(delegId,deleg?.name||'',eventId,event?.name||'',importEventSol);
+  }
+  const varis=_presGetVaris(delegId,eventId,af);
+  const varisActual=varis?(parseFloat(varis.importPla)||0):0;
+  // Calcular nou import de Varis: restem el nou concepte
+  const novaVaris=varisActual-importNou;
+  if(novaVaris<-0.005){
+    // Excedeix global → preguntar a l'usuari si augmenta global
+    const globalActual=_presTotalEvent(delegId,eventId,af); // suma actual abans del canvi
+    const globalNou=globalActual+(importNou-(0)); // perquè és una línia nova, suma sencera
+    _pendingPres={novaLinia,delegId,deleg,eventId,event,concepte,importNou,novaVaris,esConcepte:true};
+    _pendingPresMode='excess';
+    document.getElementById('mpe-body').innerHTML=
+      '<div style="margin-bottom:10px">Aquesta operació supera el pressupost total actual de l\'event.</div>'+
+      '<div style="background:var(--bg2);border-radius:var(--r);padding:10px 12px;font-size:13px;margin-bottom:10px">'+
+        '<div><strong>Event:</strong> '+esc(event?.name||'')+'</div>'+
+        '<div><strong>Total actual:</strong> '+fmtD(globalActual)+'</div>'+
+        '<div><strong>Total després del canvi:</strong> '+fmtD(globalActual+importNou-(varisActual<0?0:Math.min(varisActual,importNou)))+'</div>'+
+      '</div>'+
+      '<div style="font-size:12px;color:var(--text2)">Confirmar el nou total significa augmentar el pressupost original de l\'event.</div>';
+    openModal('modal-pres-excess');
+    return;
+  }
+  // Aplicar canvi normal: afegir concepte + actualitzar Varis
+  DB.pres_plans.push(novaLinia);
+  _presSetVaris(delegId,deleg?.name||'',eventId,event?.name||'',novaVaris);
+  _presFusionarSiSol(delegId,eventId);
+  await _finalitzarSavePres('Concepte afegit (Varis actualitzat)');
+}
+
+// Confirmació de sobreescriure (modal duplicat)
+async function confirmSobreescriurePres(){
+  closeModal('modal-pres-duplicate');
+  if(!_pendingPres)return;
+  const {novaLinia,delegId,deleg,eventId,event,concepte,importPla}=_pendingPres;
+  const af=getAnyFiscal();
+  // Eliminar el duplicat
+  _presEliminarLinia(delegId,eventId,concepte);
+  _pendingPres=null;
+  _pendingPresMode=null;
+  // Refer la mateixa lògica que savePresPla post-validació
+  const tipus=novaLinia.tipus;
+  if(tipus==='event'&&!concepte&&eventId){
+    await _aplicarCanviGlobalEvent(delegId,deleg,eventId,event,importPla,novaLinia);
+    return;
+  }
+  if(eventId&&_presHasGlobal(delegId,eventId,af)){
+    await _aplicarConcepteAmbGlobal(delegId,deleg,eventId,event,concepte,importPla,novaLinia);
+    return;
+  }
+  DB.pres_plans.push(novaLinia);
+  await _finalitzarSavePres('Línia sobreescrita');
+}
+
+// Confirmació d'augmentar global
+async function confirmAugmentarGlobal(){
+  closeModal('modal-pres-excess');
+  if(!_pendingPres)return;
+  const {novaLinia,delegId,deleg,eventId,event,importNou,novaVaris}=_pendingPres;
+  _pendingPres=null;
+  _pendingPresMode=null;
+  // Afegir el concepte, ajustar Varis a 0 (la diferència ha estat absorbida pel nou global)
+  DB.pres_plans.push(novaLinia);
+  // Varis nou = 0 (perquè l'usuari ha augmentat el global per encabir el nou concepte sencer)
+  _presSetVaris(delegId,deleg?.name||'',eventId,event?.name||'',0);
+  _presFusionarSiSol(delegId,eventId);
+  await _finalitzarSavePres('Pressupost de l\'event augmentat');
+}
+
+// Finalitzar i persistir
+async function _finalitzarSavePres(missatge){
+  presEditingKey=null;
   saveCache();
   closeModal('modal-pres');
   renderPressupostosEdit();
-  showToast('Import planificat guardat');
+  showToast(missatge);
   save('pres_plans').catch(e=>showToast('Error guardant: '+e.message,true));
+}
+
+// Wrapper per al botó d'editar — extreu data-* i obre el modal en mode edició
+function editPresBtn(btn){
+  const delegId=btn.dataset.d||'';
+  const eventId=btn.dataset.e||'';
+  const concepte=btn.dataset.c||'';
+  const tipus=concepte?'concepte':'event';
+  openModalPres(delegId,eventId,tipus,{delegId,eventId,concepte});
 }
 
 async function deletePres(delegId,eventId,concepte){
   if(!confirm('Eliminar aquesta línia de pressupost?'))return;
-  DB.pres_plans=DB.pres_plans.filter(p=>!(p.delegacioId===delegId&&p.eventId===eventId&&p.concepte===concepte));
+  const af=getAnyFiscal();
+  const linia=(DB.pres_plans||[]).find(p=>p.delegacioId===delegId&&p.eventId===eventId&&p.concepte===concepte&&p.any===af);
+  if(!linia){showToast('Línia no trobada',true);return;}
+  const imp=parseFloat(linia.importPla)||0;
+  _presEliminarLinia(delegId,eventId,concepte);
+  // Si era un concepte dins d'un event amb Varis, els diners tornen a Varis
+  if(concepte&&concepte!==VARIS_LABEL&&eventId){
+    const restant=_presLinesEvent(delegId,eventId,af);
+    const teGlobal=restant.some(p=>!p.concepte||p.concepte===VARIS_LABEL);
+    if(teGlobal||restant.length>0){
+      const varisExistent=_presGetVaris(delegId,eventId,af);
+      const varisActual=varisExistent?(parseFloat(varisExistent.importPla)||0):0;
+      const deleg=DB.config.delegacions.find(d=>d.id===delegId);
+      const event=DB.config.events.find(e=>e.id===eventId);
+      _presSetVaris(delegId,deleg?.name||'',eventId,event?.name||'',varisActual+imp);
+      _presFusionarSiSol(delegId,eventId);
+    }
+  }
   saveCache();
   renderPressupostosEdit();
   save('pres_plans').catch(e=>console.warn(e));
