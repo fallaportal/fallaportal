@@ -274,7 +274,7 @@ tr:hover td{background:var(--bg2)}
     <div class="login-logo">Falla <span>Portal</span></div>
     <div class="login-sub">Sistema de gestió financera</div>
     <div class="login-fiscal">Any fiscal 26/27 · Abr 2026 – Mar 2027</div>
-    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v2.1.24</div>
+    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v2.1.25</div>
     <button class="btn-google" onclick="signIn()">
       <svg viewBox="0 0 24 24" width="20" height="20"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
       Entrar amb Google
@@ -316,7 +316,7 @@ tr:hover td{background:var(--bg2)}
     <div class="sb-bottom">
       <div class="sync-ind"><div class="sync-dot" id="sync-dot"></div><span id="sync-text">Sincronitzat</span></div>
       <button class="btn-logout" onclick="signOut()"><i class="ti ti-logout" style="font-size:14px"></i> Tancar sessió</button>
-      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v2.1.24</div>
+      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v2.1.25</div>
     </div>
   </div>
 
@@ -965,12 +965,7 @@ tr:hover td{background:var(--bg2)}
     <span style="font-size:13px;color:var(--text2)">Any fiscal:</span>
     <select id="mob-any-fiscal" onchange="canviarExercici(this.value);closeMobMenu()" style="background:var(--bg2);border:0.5px solid var(--border2);border-radius:6px;color:var(--text);font-size:14px;font-weight:600;padding:4px 10px;outline:none;font-family:inherit;flex:1;min-height:36px"></select>
   </div>
-  <div onclick="showPageMob('historial','');closeMobMenu()" style="padding:12px 20px;font-size:14px;display:flex;align-items:center;gap:12px;cursor:pointer"><i class="ti ti-list" style="font-size:18px;color:var(--text2)"></i> Historial</div>
-  <div onclick="showPageMob('pressupostos-edit','');closeMobMenu()" style="padding:12px 20px;font-size:14px;display:flex;align-items:center;gap:12px;cursor:pointer"><i class="ti ti-chart-bar" style="font-size:18px;color:var(--text2)"></i> Pressupostos</div>
-  <div onclick="showPageMob('resultats','');closeMobMenu()" style="padding:12px 20px;font-size:14px;display:flex;align-items:center;gap:12px;cursor:pointer"><i class="ti ti-file-text" style="font-size:18px;color:var(--text2)"></i> Estat de Resultats</div>
-  <div onclick="showPageMob('flux','');closeMobMenu()" style="padding:12px 20px;font-size:14px;display:flex;align-items:center;gap:12px;cursor:pointer"><i class="ti ti-arrows-exchange" style="font-size:18px;color:var(--text2)"></i> Flux d'Efectiu</div>
-  <div onclick="showPageMob('manual','');closeMobMenu()" style="padding:12px 20px;font-size:14px;display:flex;align-items:center;gap:12px;cursor:pointer"><i class="ti ti-help-circle" style="font-size:18px;color:var(--text2)"></i> Manual d'usuari</div>
-  <div onclick="showPageMob('configuracio','');closeMobMenu()"  style="padding:12px 20px;font-size:14px;display:flex;align-items:center;gap:12px;cursor:pointer"><i class="ti ti-settings" style="font-size:18px;color:var(--text2)"></i> Configuració</div>
+  <div id="mob-menu-items"></div>
   <div onclick="signOut();closeMobMenu()" style="padding:12px 20px;font-size:14px;display:flex;align-items:center;gap:12px;cursor:pointer;color:var(--red)"><i class="ti ti-logout" style="font-size:18px"></i> Tancar sessió</div>
 </div>
 
@@ -1832,7 +1827,13 @@ function perm(p){return getRoles()[getRol()]?.[p]||false;}
 function getMyArees(){
   const u=getUsuari();if(!u)return[];
   if(getRoles()[u.rol]?.viewAll)return DB.config.areas.map(a=>a.id);
-  return u.arees||[];
+  const res=[...(u.arees||[])];
+  // Inferir àrees a partir de delegacions assignades (fix per a rol delegat)
+  (u.delegacions||[]).forEach(function(dId){
+    const d=DB.config.delegacions.find(function(x){return x.id===dId;});
+    if(d&&!res.includes(d.areaId))res.push(d.areaId);
+  });
+  return res;
 }
 
 function getMyDelegacions(){
@@ -1871,6 +1872,25 @@ function buildNav(){
   html+='<div class="nav-sec">Ajuda</div>';
   html+='<div class="nav-item" onclick="showPage(\'manual\')"><i class="ti ti-help-circle"></i> Manual d\'usuari</div>';
   nav.innerHTML=html;
+  buildMobMenu();
+}
+
+function buildMobMenu(){
+  const can=getRoles()[getRol()]||{};
+  const s='padding:12px 20px;font-size:14px;display:flex;align-items:center;gap:12px;cursor:pointer';
+  const ic='font-size:18px;color:var(--text2)';
+  let html='';
+  html+=`<div onclick="showPageMob('historial','');closeMobMenu()" style="${s}"><i class="ti ti-list" style="${ic}"></i> Historial</div>`;
+  html+=`<div onclick="showPageMob('pressupostos-edit','');closeMobMenu()" style="${s}"><i class="ti ti-chart-bar" style="${ic}"></i> Pressupostos</div>`;
+  html+=`<div onclick="showPageMob('resultats','');closeMobMenu()" style="${s}"><i class="ti ti-file-text" style="${ic}"></i> Estat de Resultats</div>`;
+  html+=`<div onclick="showPageMob('flux','');closeMobMenu()" style="${s}"><i class="ti ti-arrows-exchange" style="${ic}"></i> Flux d'Efectiu</div>`;
+  html+=`<div onclick="showPageMob('reports','');closeMobMenu()" style="${s}"><i class="ti ti-chart-dots" style="${ic}"></i> Reports</div>`;
+  if(can.canImport)html+=`<div onclick="showPageMob('fallesapp','');closeMobMenu()" style="${s}"><i class="ti ti-device-mobile" style="${ic}"></i> Falles.app</div>`;
+  if(can.canImport)html+=`<div onclick="showPageMob('importacio','');closeMobMenu()" style="${s}"><i class="ti ti-upload" style="${ic}"></i> Importar CSV</div>`;
+  if(can.canConfig)html+=`<div onclick="showPageMob('configuracio','');closeMobMenu()" style="${s}"><i class="ti ti-settings" style="${ic}"></i> Configuració</div>`;
+  html+=`<div onclick="showPageMob('manual','');closeMobMenu()" style="${s}"><i class="ti ti-help-circle" style="${ic}"></i> Manual d'usuari</div>`;
+  const el=document.getElementById('mob-menu-items');
+  if(el)el.innerHTML=html;
 }
 
 function initApp(){
@@ -2668,8 +2688,9 @@ function renderHistorial(){
   const curDeleg=delegSel.value;
   delegSel.innerHTML='<option value="">Totes les delegacions</option>';
   const af=getAnyFiscal();
+  const myDelegsH=getMyDelegacions();
   const delegsUsades=new Set((DB.moviments||[]).filter(m=>!m.anyFiscal||m.anyFiscal===af).map(m=>m.delegacioId).filter(Boolean));
-  (DB.config.delegacions||[]).filter(d=>delegsUsades.has(d.id)).forEach(d=>{
+  (DB.config.delegacions||[]).filter(d=>delegsUsades.has(d.id)&&(perm('viewAll')||myDelegsH.includes(d.id))).forEach(d=>{
     const o=document.createElement('option');o.value=d.id;o.textContent=d.name;delegSel.appendChild(o);
   });
   delegSel.value=curDeleg;
@@ -3108,12 +3129,30 @@ function showTancTab(tab){
 
 function populateTancSelectors(){
   const afT=getAnyFiscal();
-  const events=(DB.config.events||[]).filter(e=>e.anyFiscal===afT||e.year===afT);
+  const rol=getRol();
+  const canObrir=perm('canFons')||perm('canConfig'); // Només president i tresoreria
   const tancaments=DB.tancaments||{};
 
-  // Selector OBRIR: events sense caixa oberta (no obert i no tancat)
+  // E7: Amagar tab Obrir per a rols que no poden obrir caixa
+  const tabObrir=document.getElementById('tanc-tab-obrir');
+  const panelObrir=document.getElementById('tanc-panel-obrir');
+  if(tabObrir)tabObrir.style.display=canObrir?'':'none';
+  if(!canObrir&&panelObrir)panelObrir.style.display='none';
+
+  // Filtrar events per scope
+  const myDelegsT=getMyDelegacions();
+  const myEmail=(currentUser?.email||'').toLowerCase();
+  let events=(DB.config.events||[]).filter(e=>e.anyFiscal===afT||e.year===afT);
+  // Delegat: només events on és responsable (camp resp)
+  if(rol==='delegat'){
+    events=events.filter(function(ev){
+      return(ev.resp||'').toLowerCase()===myEmail||myDelegsT.includes(ev.delegId);
+    });
+  }
+
+  // Selector OBRIR: events sense caixa oberta — només per a president/tresoreria
   const selObrir=document.getElementById('tanc-obrir-sel');
-  if(selObrir){
+  if(selObrir&&canObrir){
     const val=selObrir.value;
     while(selObrir.options.length>2)selObrir.remove(2);
     events.filter(ev=>!tancaments[ev.id]||tancaments[ev.id].estat==='tancat').forEach(function(ev){
@@ -3126,12 +3165,17 @@ function populateTancSelectors(){
     if(val)selObrir.value=val;
   }
 
-  // Selector TANCAR: només events amb caixa oberta
+  // Selector TANCAR: events amb caixa oberta, filtrats per scope
   const selTancar=document.getElementById('tanc-tancar-sel');
   if(selTancar){
     const val=selTancar.value;
     while(selTancar.options.length>1)selTancar.remove(1);
-    const oberts=Object.values(tancaments).filter(tc=>tc.estat==='obert'&&(tc.anyFiscal===afT||!tc.anyFiscal));
+    let oberts=Object.values(tancaments).filter(tc=>tc.estat==='obert'&&(tc.anyFiscal===afT||!tc.anyFiscal));
+    // Delegat: filtrar per events del seu scope
+    if(rol==='delegat'){
+      const evIds=new Set(events.map(e=>e.id));
+      oberts=oberts.filter(tc=>evIds.has(tc.eventId));
+    }
     oberts.forEach(function(tc){
       const opt=document.createElement('option');
       opt.value=tc.eventId;
@@ -4139,7 +4183,8 @@ async function desbloquejarpres(){
 function renderResultats(){
   const afR=getAnyFiscal();
   const resSub=document.getElementById('res-sub');if(resSub)resSub.innerHTML='<span class="af-badge"><i class="ti ti-calendar" style="font-size:14px"></i> Any fiscal '+afR+'</span>';
-  const movs=(perm('viewAll')?(DB.moviments||[]):(DB.moviments||[]).filter(m=>getMyArees().includes(m.areaId))).filter(m=>(m.anyFiscal===afR||!m.anyFiscal)&&m.via!=='app');
+  const myDelegsR=getMyDelegacions();
+  const movs=(perm('viewAll')?(DB.moviments||[]):(DB.moviments||[]).filter(m=>getMyArees().includes(m.areaId)&&(perm('viewAll')||myDelegsR.includes(m.delegacioId)||!m.delegacioId))).filter(m=>(m.anyFiscal===afR||!m.anyFiscal)&&m.via!=='app');
   const ing=movs.filter(m=>m.tipus==='ing').reduce((s,m)=>s+m.import,0);
   const gast=movs.filter(m=>m.tipus==='gast').reduce((s,m)=>s+m.import,0);
   const net=ing-gast;
@@ -4165,13 +4210,14 @@ function renderResultats(){
     '<div class="flow-row" style="font-weight:500;border-top:1px solid var(--border2);margin-top:4px;padding-top:8px">'+
     '<span>Total despeses</span><span style="color:var(--red)">-'+fmt(gast)+'</span></div></div>'+
     '<div class="card"><div class="flow-row" style="font-size:15px;font-weight:500">'+
-    '<span>Resultat exercici 26/27</span>'+
+    '<span>Resultat exercici '+afR+'</span>'+
     '<span style="color:'+(net>=0?'var(--green)':'var(--red)')+'">'+fmtS(net)+'</span></div></div>';
 }
 function renderFlux(){
   const afF=getAnyFiscal();
   const fluxSub=document.getElementById('flux-sub');if(fluxSub)fluxSub.innerHTML='<span class="af-badge"><i class="ti ti-calendar" style="font-size:14px"></i> Any fiscal '+afF+'</span>';
-  const movs=(DB.moviments||[]).filter(m=>(m.anyFiscal===afF||!m.anyFiscal)&&m.via!=='app');
+  const myDelegsF=getMyDelegacions();
+  const movs=(DB.moviments||[]).filter(m=>(m.anyFiscal===afF||!m.anyFiscal)&&m.via!=='app'&&(perm('viewAll')||myDelegsF.includes(m.delegacioId)));
   const ing=movs.filter(m=>m.tipus==='ing').reduce((s,m)=>s+m.import,0);
   const gast=movs.filter(m=>m.tipus==='gast').reduce((s,m)=>s+m.import,0);
   const saldoIni=(DB.config.bancs||[]).reduce(function(s,b){
@@ -6572,7 +6618,7 @@ function processImportFile(file,zona){
 }
 
 // ============================================================================
-// DETECCIÓ DE DUPLICATS FALLES.APP (v2.1.24)
+// DETECCIÓ DE DUPLICATS FALLES.APP (v2.1.25)
 // ============================================================================
 // Usa el mateix sistema de bankHash que els bancs.
 // Hash: fontImport|data|import_2dec|concepte_normalitzat
@@ -7349,7 +7395,14 @@ function renderReport1(){
   let afSel=window._rep1AF||af;
 
   // Enriquir amb dades d'event
-  const rows=tancaments.filter(t=>(t.anyFiscal||af)===afSel).map(t=>{
+  const myDelegsR1=getMyDelegacions();
+  const eventsScope=(DB.config&&DB.config.events)||[];
+  const rows=tancaments.filter(t=>{
+    if((t.anyFiscal||af)!==afSel)return false;
+    if(perm('viewAll'))return true;
+    const ev=eventsScope.find(e=>e.id===t.eventId);
+    return ev&&myDelegsR1.includes(ev.delegId);
+  }).map(t=>{
     const ev=events.find(e=>e.id===t.eventId)||{};
     const respUsuari=(DB.config.usuaris||[]).find(u=>(u.email||'').toLowerCase()===(t.registratPer||'').toLowerCase());
     const respNom=respUsuari?respUsuari.nom:(t.registratPer||'—');
@@ -7468,7 +7521,14 @@ function renderReport2(){
   if(!afsDisponibles.includes(af))afsDisponibles.unshift(af);
 
   // Agrupar per delegat (per email)
-  const fonsFiltrats=fons.filter(f=>(f.anyFiscal||af)===afSel && f.tipus!=='event_canvi' && f.tipus!=='event_devolucio');
+  const myEmailR2=(currentUser?.email||'').toLowerCase();
+  const fonsFiltrats=fons.filter(f=>{
+    if((f.anyFiscal||af)!==afSel)return false;
+    if(f.tipus==='event_canvi'||f.tipus==='event_devolucio')return false;
+    if(perm('viewAll'))return true;
+    // Delegat: només veu els seus propis fons
+    return(f.delegEmail||'').toLowerCase()===myEmailR2;
+  });
   const perUsuari={};
   fonsFiltrats.forEach(f=>{
     const uid=f.delegEmail||f.delegId||'';
@@ -7605,7 +7665,8 @@ function renderReport3(){
   const afsDisponibles=[...new Set(events.map(e=>e.anyFiscal||af).filter(Boolean))].sort().reverse();
   if(!afsDisponibles.includes(af))afsDisponibles.unshift(af);
 
-  const eventsFiltrats=events.filter(e=>(e.anyFiscal||af)===afSel);
+  const myDelegsR3=getMyDelegacions();
+  const eventsFiltrats=events.filter(e=>(e.anyFiscal||af)===afSel&&(perm('viewAll')||myDelegsR3.includes(e.delegId)));
 
   const rows=eventsFiltrats.map(ev=>{
     // Ingressos: moviments tipus 'ing' associats a l'event
