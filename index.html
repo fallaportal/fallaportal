@@ -274,7 +274,7 @@ tr:hover td{background:var(--bg2)}
     <div class="login-logo">Falla <span>Portal</span></div>
     <div class="login-sub">Sistema de gestió financera</div>
     <div class="login-fiscal">Any fiscal 26/27 · Abr 2026 – Mar 2027</div>
-    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v2.1.42</div>
+    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v2.1.43</div>
     <button class="btn-google" onclick="signIn()">
       <svg viewBox="0 0 24 24" width="20" height="20"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
       Entrar amb Google
@@ -316,7 +316,7 @@ tr:hover td{background:var(--bg2)}
     <div class="sb-bottom">
       <div class="sync-ind"><div class="sync-dot" id="sync-dot"></div><span id="sync-text">Sincronitzat</span></div>
       <button class="btn-logout" onclick="signOut()"><i class="ti ti-logout" style="font-size:14px"></i> Tancar sessió</button>
-      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v2.1.42</div>
+      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v2.1.43</div>
     </div>
   </div>
 
@@ -2136,7 +2136,8 @@ async function save(key){
         {clau:'exercicis',valor:JSON.stringify(DB.config.exercicis||[])},
         {clau:'estats_exercicis',valor:JSON.stringify(DB.config.estats_exercicis||{})},
         {clau:'fappPassiu',valor:JSON.stringify(DB.config.fappPassiu||{})},
-        {clau:'justificant',valor:JSON.stringify(DB.config.justificant||{mode:'mai',llindar:0})}
+        {clau:'justificant',valor:JSON.stringify(DB.config.justificant||{mode:'mai',llindar:0})},
+        {clau:'drive_folders',valor:JSON.stringify(DB.config.drive_folders||{})}
       ];
       await writeTab(TABS.config_ext.name,TABS.config_ext.headers,cfgRows);
     }
@@ -2152,38 +2153,16 @@ async function save(key){
 // Cache de folder IDs per any fiscal
 const _driveFolderCache={};
 
-const DRIVE_PARENT_ID='1pDLonQN7aTlHVMTYwDS2JJtB7-QK6N8v';
-
-async function _driveGetOrCreateFolder(af){
-  if(_driveFolderCache[af])return _driveFolderCache[af];
-  const nomCarpeta='Tickets '+af;
-  const parentId=DRIVE_PARENT_ID;
-  // Buscar si ja existeix dins la mateixa carpeta pare
-  let q="name='"+nomCarpeta+"' and mimeType='application/vnd.google-apps.folder' and trashed=false";
-  if(parentId)q+=" and '"+parentId+"' in parents";
-  const resp=await fetch('https://www.googleapis.com/drive/v3/files?q='+encodeURIComponent(q)+'&fields=files(id,name)',{
-    headers:{Authorization:'Bearer '+accessToken}
-  });
-  const data=await resp.json();
-  if(data.files&&data.files.length>0){
-    _driveFolderCache[af]=data.files[0].id;
-    return data.files[0].id;
-  }
-  // Crear-la al mateix lloc que el Sheet
-  const body={name:nomCarpeta,mimeType:'application/vnd.google-apps.folder'};
-  if(parentId)body.parents=[parentId];
-  const createResp=await fetch('https://www.googleapis.com/drive/v3/files',{
-    method:'POST',
-    headers:{Authorization:'Bearer '+accessToken,'Content-Type':'application/json'},
-    body:JSON.stringify(body)
-  });
-  const created=await createResp.json();
-  _driveFolderCache[af]=created.id;
-  return created.id;
+async function _driveGetTicketFolder(af){
+  // Retorna l'ID de la carpeta de tickets configurada per l'any fiscal
+  // Si no hi ha ID configurat, llança error
+  const folderId=getDriveFolderTickets(af);
+  if(!folderId)throw new Error('Cal configurar la carpeta Drive de Tickets per a l\'any fiscal '+af+' a Configuracio > Justificants');
+  return folderId;
 }
 
 async function _driveUploadTicket(file, movId, af){
-  const folderId=await _driveGetOrCreateFolder(af);
+  const folderId=await _driveGetTicketFolder(af);
   const ext=file.name.split('.').pop()||'jpg';
   const nomFitxer=movId+'.'+ext;
   // Upload multipart
@@ -2435,6 +2414,7 @@ async function loadFromSheets(){
     if(cfgMap.estats_exercicis){try{DB.config.estats_exercicis=JSON.parse(cfgMap.estats_exercicis);}catch(e){}}
     if(cfgMap.fappPassiu){try{const fp=JSON.parse(cfgMap.fappPassiu);if(fp&&fp.total)DB.config.fappPassiu=fp;}catch(e){}}
     if(cfgMap.justificant){try{DB.config.justificant=JSON.parse(cfgMap.justificant);}catch(e){}}
+    if(cfgMap.drive_folders){try{DB.config.drive_folders=JSON.parse(cfgMap.drive_folders);}catch(e){}}
   }
 }
 
@@ -5814,21 +5794,43 @@ function openModalTancarExercici(){
 
 function renderCfgJustificants(){
   const cfg=DB.config.justificant||{mode:'mai',llindar:0};
+  const folders=DB.config.drive_folders||{};
   const canEdit=perm('canConfig');
-  let html='<div class="card"><div class="card-title"><i class="ti ti-receipt"></i> Configuració de Justificants</div>';
+  const exercicis=(DB.config.exercicis||[]).slice().sort().reverse();
+
+  let html='<div class="card" style="margin-bottom:12px"><div class="card-title"><i class="ti ti-receipt"></i> Obligatorietat del justificant</div>';
   html+='<p style="font-size:13px;color:var(--text2);margin-bottom:16px">Defineix quan cal adjuntar un ticket o albaran en registrar una despesa.</p>';
   html+='<div class="mov-field"><label>Mode d\'obligatorietat</label>';
   html+='<select id="just-mode" onchange="onJustModeChange()" '+(canEdit?'':'disabled')+'>';
   html+='<option value="mai"'+(cfg.mode==='mai'?' selected':'')+'>Mai (sempre opcional)</option>';
-  html+='<option value="sempre"'+(cfg.mode==='sempre'?' selected':'')+'>Sempre (obligatori, amb excepció justificada)</option>';
-  html+='<option value="import"'+(cfg.mode==='import'?' selected':'')+'>A partir d\'un import (obligatori si supera el llindar)</option>';
+  html+='<option value="sempre"'+(cfg.mode==='sempre'?' selected':'')+'>Sempre (obligatori, amb excepcio justificada)</option>';
+  html+='<option value="import"'+(cfg.mode==="import"?' selected':'')+'>A partir d\'un import (obligatori si supera el llindar)</option>';
   html+='</select></div>';
   html+='<div id="just-llindar-wrap" style="'+(cfg.mode==='import'?'':'display:none')+'">';
-  html+='<div class="mov-field"><label>Import mínim (€)</label>';
+  html+='<div class="mov-field"><label>Import minim (euros)</label>';
   html+='<input type="number" id="just-llindar" min="0" step="1" value="'+(cfg.llindar||50)+'" style="font-size:16px" '+(canEdit?'':'disabled')+'></div>';
   html+='</div>';
-  if(canEdit){
-    html+='<button class="btn btn-primary" style="margin-top:12px" onclick="saveJustificantConfig()"><i class="ti ti-check"></i> Guardar configuració</button>';
+  if(canEdit){html+='<button class="btn btn-primary" style="margin-top:12px" onclick="saveJustificantConfig()"><i class="ti ti-check"></i> Guardar</button>';}
+  html+='</div>';
+
+  html+='<div class="card"><div class="card-title"><i class="ti ti-folder"></i> Carpetes Google Drive per any fiscal</div>';
+  html+='<p style="font-size:13px;color:var(--text2);margin-bottom:12px">Enganxa l\'ID de la carpeta de Drive (el que apareix a la URL despres de /folders/).</p>';
+  if(exercicis.length===0){
+    html+='<div style="color:var(--text3);font-size:13px">No hi ha exercicis configurats.</div>';
+  }else{
+    exercicis.forEach(function(af){
+      const ticketId=folders['tickets_'+af]||'';
+      const facturaId=folders['factures_'+af]||'';
+      const k=af.replace('/','_');
+      html+='<div style="border:1px solid var(--border);border-radius:var(--r);padding:12px;margin-bottom:10px">';
+      html+='<div style="font-weight:600;margin-bottom:8px">'+af+'</div>';
+      html+='<div class="mov-field"><label style="font-size:12px">Carpeta Tickets</label>';
+      html+='<input type="text" id="drive-tickets-'+k+'" value="'+ticketId+'" placeholder="ID de la carpeta..." style="font-size:13px;font-family:monospace" '+(canEdit?'':'disabled')+'></div>';
+      html+='<div class="mov-field"><label style="font-size:12px">Carpeta Factures</label>';
+      html+='<input type="text" id="drive-factures-'+k+'" value="'+facturaId+'" placeholder="ID de la carpeta..." style="font-size:13px;font-family:monospace" '+(canEdit?'':'disabled')+'></div>';
+      html+='</div>';
+    });
+    if(canEdit){html+='<button class="btn btn-primary" onclick="saveDriveFolders()"><i class="ti ti-check"></i> Guardar carpetes</button>';}
   }
   html+='</div>';
   document.getElementById('cfg-justificants').innerHTML=html;
@@ -5847,7 +5849,32 @@ function saveJustificantConfig(){
   DB.config.justificant={mode,llindar};
   saveCache();
   save('config_ext').catch(function(e){showToast('Error guardant: '+e.message,true);});
-  showToast('Configuració de justificants guardada');
+  showToast('Configuracio de justificants guardada');
+}
+
+function saveDriveFolders(){
+  const exercicis=(DB.config.exercicis||[]);
+  const folders={};
+  exercicis.forEach(function(af){
+    const k=af.replace('/','_');
+    const tEl=document.getElementById('drive-tickets-'+k);
+    const fEl=document.getElementById('drive-factures-'+k);
+    if(tEl&&tEl.value.trim())folders['tickets_'+af]=tEl.value.trim();
+    if(fEl&&fEl.value.trim())folders['factures_'+af]=fEl.value.trim();
+  });
+  if(!DB.config)DB.config={};
+  DB.config.drive_folders=folders;
+  saveCache();
+  save('config_ext').catch(function(e){showToast('Error guardant: '+e.message,true);});
+  showToast('Carpetes Drive guardades');
+}
+
+function getDriveFolderTickets(af){
+  return (DB.config.drive_folders||{})['tickets_'+af]||null;
+}
+
+function getDriveFolderFactures(af){
+  return (DB.config.drive_folders||{})['factures_'+af]||null;
 }
 
 function renderCfgUsuaris(){
@@ -6948,7 +6975,7 @@ function processImportFile(file,zona){
 }
 
 // ============================================================================
-// DETECCIÓ DE DUPLICATS FALLES.APP (v2.1.42)
+// DETECCIÓ DE DUPLICATS FALLES.APP (v2.1.43)
 // ============================================================================
 // Usa el mateix sistema de bankHash que els bancs.
 // Hash: fontImport|data|import_2dec|concepte_normalitzat
