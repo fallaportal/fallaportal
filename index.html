@@ -274,7 +274,7 @@ tr:hover td{background:var(--bg2)}
     <div class="login-logo">Falla <span>Portal</span></div>
     <div class="login-sub">Sistema de gestió financera</div>
     <div class="login-fiscal">Any fiscal 26/27 · Abr 2026 – Mar 2027</div>
-    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v2.1.36</div>
+    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v2.1.37</div>
     <button class="btn-google" onclick="signIn()">
       <svg viewBox="0 0 24 24" width="20" height="20"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
       Entrar amb Google
@@ -316,7 +316,7 @@ tr:hover td{background:var(--bg2)}
     <div class="sb-bottom">
       <div class="sync-ind"><div class="sync-dot" id="sync-dot"></div><span id="sync-text">Sincronitzat</span></div>
       <button class="btn-logout" onclick="signOut()"><i class="ti ti-logout" style="font-size:14px"></i> Tancar sessió</button>
-      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v2.1.36</div>
+      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v2.1.37</div>
     </div>
   </div>
 
@@ -6857,7 +6857,7 @@ function processImportFile(file,zona){
 }
 
 // ============================================================================
-// DETECCIÓ DE DUPLICATS FALLES.APP (v2.1.36)
+// DETECCIÓ DE DUPLICATS FALLES.APP (v2.1.37)
 // ============================================================================
 // Usa el mateix sistema de bankHash que els bancs.
 // Hash: fontImport|data|import_2dec|concepte_normalitzat
@@ -7601,6 +7601,7 @@ function renderReports(){
     {id:'r1',icon:'ti-lock',label:'Tancaments caixa'},
     {id:'r2',icon:'ti-arrow-down-left',label:'Fons lliurats'},
     {id:'r3',icon:'ti-calendar-event',label:'Resultat per event'},
+    {id:'r4',icon:'ti-receipt-off',label:'Sense justificant'},
   ];
   const bar=document.getElementById('rep-tabs-bar');
   if(bar){
@@ -7622,6 +7623,7 @@ function repTab(id,noRender){
   if(id==='r1') renderReport1();
   else if(id==='r2') renderReport2();
   else if(id==='r3') renderReport3();
+  else if(id==='r4') renderReport4();
 }
 
 function renderReport1(){
@@ -8020,6 +8022,146 @@ function exportRep3CSV(){
   a.download='resultat_events_'+af.replace('/','_')+'.csv';
   a.click();
 }
+
+function renderReport4(){
+  const af=getAnyFiscal();
+  const container=document.getElementById('rep-content');
+  if(!container)return;
+
+  // Filtres actuals
+  const filtDateIni=document.getElementById('r4-date-ini')?.value||'';
+  const filtDateFi=document.getElementById('r4-date-fi')?.value||'';
+  const filtArea=document.getElementById('r4-area')?.value||'';
+  const filtDeleg=document.getElementById('r4-deleg')?.value||'';
+  const filtResp=document.getElementById('r4-resp')?.value||'';
+  const filtVia=document.getElementById('r4-via')?.value||'';
+  const sortCol=window._r4SortCol||'data';
+  const sortDir=window._r4SortDir||'desc';
+
+  // Moviments sense justificant: origen Manual, tipus gast, sense ticketUrl
+  let movs=(DB.moviments||[]).filter(m=>
+    m.origen==='Manual' && m.tipus==='gast' &&
+    (!m.ticketUrl||m.ticketUrl==='') &&
+    (m.anyFiscal||'')=== af
+  );
+
+  // Filtres
+  if(filtDateIni) movs=movs.filter(m=>m.data>=filtDateIni);
+  if(filtDateFi)  movs=movs.filter(m=>m.data<=filtDateFi);
+  if(filtArea)    movs=movs.filter(m=>m.areaId===filtArea);
+  if(filtDeleg)   movs=movs.filter(m=>m.delegacioId===filtDeleg);
+  if(filtResp)    movs=movs.filter(m=>(m.responsableEmail||'').toLowerCase().includes(filtResp.toLowerCase())||(m.responsable||'').toLowerCase().includes(filtResp.toLowerCase()));
+  if(filtVia)     movs=movs.filter(m=>m.via===filtVia);
+
+  // Ordenació
+  movs.sort((a,b)=>{
+    let va=a[sortCol]||'', vb=b[sortCol]||'';
+    if(sortCol==='import'){va=parseFloat(va)||0;vb=parseFloat(vb)||0;}
+    if(va<vb)return sortDir==='asc'?-1:1;
+    if(va>vb)return sortDir==='asc'?1:-1;
+    return 0;
+  });
+
+  // Totals
+  const totalImport=movs.reduce((s,m)=>s+(parseFloat(m.import)||0),0);
+  const totalGast=(DB.moviments||[]).filter(m=>m.anyFiscal===af&&m.tipus==='gast'&&m.origen==='Manual').reduce((s,m)=>s+(parseFloat(m.import)||0),0);
+  const pct=totalGast>0?Math.round(totalImport/totalGast*100):0;
+
+  // Àrees i delegacions per filtres
+  const arees=DB.config.areas||[];
+  const delegs=DB.config.delegacions||[];
+  const vies=['Efectiu','TPV','01 Banc','02 Banc'];
+
+  const thStyle=(col)=>'style="cursor:pointer;white-space:nowrap;padding:8px 10px;font-size:12px;text-align:left;border-bottom:1px solid var(--border)"';
+  const arrow=(col)=>sortCol===col?(sortDir==='asc'?' ↑':' ↓'):'';
+
+  let html='<div class="card" style="margin-bottom:12px">';
+  // Totals
+  html+='<div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px">';
+  html+='<div style="background:var(--bg2);border-radius:var(--r);padding:10px 16px;flex:1;min-width:120px"><div style="font-size:11px;color:var(--text3);margin-bottom:2px">Despeses sense justificant</div><div style="font-size:20px;font-weight:700;color:var(--red)">'+movs.length+'</div></div>';
+  html+='<div style="background:var(--bg2);border-radius:var(--r);padding:10px 16px;flex:1;min-width:120px"><div style="font-size:11px;color:var(--text3);margin-bottom:2px">Import total</div><div style="font-size:20px;font-weight:700;color:var(--red)">'+fmtD(totalImport)+'</div></div>';
+  html+='<div style="background:var(--bg2);border-radius:var(--r);padding:10px 16px;flex:1;min-width:120px"><div style="font-size:11px;color:var(--text3);margin-bottom:2px">% sobre despeses manuals</div><div style="font-size:20px;font-weight:700;color:'+(pct>20?'var(--red)':'var(--amber)')+'">'+pct+'%</div></div>';
+  html+='</div>';
+
+  // Filtres
+  html+='<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;align-items:flex-end">';
+  html+='<div class="field"><label style="font-size:11px">Des de</label><input type="date" id="r4-date-ini" value="'+filtDateIni+'" onchange="renderReport4()" style="font-size:13px"></div>';
+  html+='<div class="field"><label style="font-size:11px">Fins a</label><input type="date" id="r4-date-fi" value="'+filtDateFi+'" onchange="renderReport4()" style="font-size:13px"></div>';
+  html+='<div class="field"><label style="font-size:11px">Àrea</label><select id="r4-area" onchange="renderReport4()" style="font-size:13px"><option value="">Totes</option>'+arees.map(a=>'<option value="'+a.id+'"'+(filtArea===a.id?' selected':'')+'>'+a.name+'</option>').join('')+'</select></div>';
+  html+='<div class="field"><label style="font-size:11px">Delegació</label><select id="r4-deleg" onchange="renderReport4()" style="font-size:13px"><option value="">Totes</option>'+delegs.map(d=>'<option value="'+d.id+'"'+(filtDeleg===d.id?' selected':'')+'>'+d.name+'</option>').join('')+'</select></div>';
+  html+='<div class="field"><label style="font-size:11px">Via</label><select id="r4-via" onchange="renderReport4()" style="font-size:13px"><option value="">Totes</option>'+vies.map(v=>'<option value="'+v+'"'+(filtVia===v?' selected':'')+'>'+v+'</option>').join('')+'</select></div>';
+  html+='<div class="field"><label style="font-size:11px">Responsable</label><input type="text" id="r4-resp" value="'+filtResp+'" placeholder="Cerca..." oninput="renderReport4()" style="font-size:13px;width:120px"></div>';
+  html+='<button class="btn" onclick="exportRep4CSV()" style="font-size:13px;margin-left:auto"><i class="ti ti-download"></i> CSV</button>';
+  html+='</div>';
+
+  if(movs.length===0){
+    html+='<div style="text-align:center;padding:32px;color:var(--text3)"><i class="ti ti-check" style="font-size:32px;color:var(--green)"></i><div style="margin-top:8px">Cap despesa sense justificant</div></div>';
+    html+='</div>';
+    container.innerHTML=html;
+    return;
+  }
+
+  // Taula
+  html+='<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:13px">';
+  html+='<thead><tr style="background:var(--bg2)">';
+  const cols=[
+    {k:'data',label:'Data'},
+    {k:'responsable',label:'Responsable'},
+    {k:'areaNom',label:'Àrea'},
+    {k:'delegacioNom',label:'Delegació'},
+    {k:'eventNom',label:'Event'},
+    {k:'concepte',label:'Concepte'},
+    {k:'import',label:'Import'},
+    {k:'via',label:'Via'},
+    {k:'ticketMotiu',label:'Motiu excepció'},
+  ];
+  cols.forEach(c=>{
+    html+='<th '+thStyle(c.k)+' onclick="r4Sort(''+c.k+'')">'+c.label+arrow(c.k)+'</th>';
+  });
+  html+='</tr></thead><tbody>';
+  movs.forEach(m=>{
+    const sensejust=m.ticketMotiu&&m.ticketMotiu.trim();
+    html+='<tr style="border-bottom:0.5px solid var(--border)">';
+    html+='<td style="padding:7px 10px;white-space:nowrap">'+m.data+'</td>';
+    html+='<td style="padding:7px 10px">'+( m.responsable||m.responsableEmail||'')+'</td>';
+    html+='<td style="padding:7px 10px">'+( m.areaNom||'')+'</td>';
+    html+='<td style="padding:7px 10px">'+( m.delegacioNom||'')+'</td>';
+    html+='<td style="padding:7px 10px">'+( m.eventNom||'—')+'</td>';
+    html+='<td style="padding:7px 10px">'+( m.concepte||'')+'</td>';
+    html+='<td style="padding:7px 10px;text-align:right;color:var(--red);font-weight:500;white-space:nowrap">'+fmtD(m.import)+'</td>';
+    html+='<td style="padding:7px 10px">'+( m.via||'')+'</td>';
+    html+='<td style="padding:7px 10px;font-size:12px;color:var(--text2)">'+( sensejust?'<span class="pill p-warn">'+m.ticketMotiu+'</span>':'<span class="pill p-gray">sense motiu</span>')+'</td>';
+    html+='</tr>';
+  });
+  html+='<tr style="background:var(--bg2);font-weight:700"><td colspan="6" style="padding:8px 10px">TOTAL</td>';
+  html+='<td style="padding:8px 10px;text-align:right;color:var(--red)">'+fmtD(totalImport)+'</td><td colspan="2"></td></tr>';
+  html+='</tbody></table></div>';
+  html+='</div>';
+  container.innerHTML=html;
+}
+
+function r4Sort(col){
+  if(window._r4SortCol===col){
+    window._r4SortDir=window._r4SortDir==='asc'?'desc':'asc';
+  }else{
+    window._r4SortCol=col;
+    window._r4SortDir='asc';
+  }
+  renderReport4();
+}
+
+function exportRep4CSV(){
+  const af=getAnyFiscal();
+  const movs=(DB.moviments||[]).filter(m=>m.origen==='Manual'&&m.tipus==='gast'&&(!m.ticketUrl||m.ticketUrl==='')&&(m.anyFiscal||'')===af);
+  const cap=['Data','Responsable','Area','Delegacio','Event','Concepte','Import','Via','Motiu excepcio'];
+  const rows=movs.map(m=>[m.data,m.responsable||m.responsableEmail||'',m.areaNom||'',m.delegacioNom||'',m.eventNom||'',m.concepte||'',m.import,m.via||'',m.ticketMotiu||'']);
+  const csv=[cap,...rows].map(r=>r.map(v=>'"'+(String(v).replace(/"/g,'""'))+'"').join(',')).join('\n');
+  const a=document.createElement('a');
+  a.href='data:text/csv;charset=utf-8,\uFEFF'+encodeURIComponent(csv);
+  a.download='sense_justificant_'+af.replace('/','_')+'.csv';
+  a.click();
+}
+
 
 // ─── FI REPORTS ─────────────────────────────────────────────────────────────
 
