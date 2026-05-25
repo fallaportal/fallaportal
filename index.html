@@ -274,7 +274,7 @@ tr:hover td{background:var(--bg2)}
     <div class="login-logo">Falla <span>Portal</span></div>
     <div class="login-sub">Sistema de gestió financera</div>
     <div class="login-fiscal">Any fiscal 26/27 · Abr 2026 – Mar 2027</div>
-    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v2.1.32</div>
+    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v2.1.33</div>
     <button class="btn-google" onclick="signIn()">
       <svg viewBox="0 0 24 24" width="20" height="20"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
       Entrar amb Google
@@ -316,7 +316,7 @@ tr:hover td{background:var(--bg2)}
     <div class="sb-bottom">
       <div class="sync-ind"><div class="sync-dot" id="sync-dot"></div><span id="sync-text">Sincronitzat</span></div>
       <button class="btn-logout" onclick="signOut()"><i class="ti ti-logout" style="font-size:14px"></i> Tancar sessió</button>
-      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v2.1.32</div>
+      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v2.1.33</div>
     </div>
   </div>
 
@@ -362,7 +362,7 @@ tr:hover td{background:var(--bg2)}
             <span id="mov-data-label">Data</span>
           </div>
           <div class="mov-import-box">
-            <input type="text" id="mov-import" placeholder="0,00" inputmode="decimal" pattern="[0-9]*[.,]?[0-9]*" oninput="checkMovReady()">
+            <input type="text" id="mov-import" placeholder="0,00" inputmode="decimal" pattern="[0-9]*[.,]?[0-9]*" oninput="checkMovReady();updateMovTicketUI()">
             <span style="font-size:26px;font-weight:700;color:var(--text3);margin-left:4px;pointer-events:none">€</span>
           </div>
         </div>
@@ -396,7 +396,16 @@ tr:hover td{background:var(--bg2)}
         </div>
         <div id="mov-extra" style="display:none">
           <div class="mov-field" style="margin-top:8px"><label>Notes</label><textarea id="mov-notes" rows="2" style="resize:none"></textarea></div>
-          <div class="mov-field"><label>Justificant <span class="opt-label">(foto/PDF)</span></label><input type="file" id="mov-photo" accept="image/*,application/pdf" style="font-size:13px"></div>
+          <div class="mov-field" id="mov-ticket-field">
+            <label id="mov-ticket-label">Ticket o albaran <span class="opt-label" id="mov-ticket-opt">(opcional)</span></label>
+            <input type="file" id="mov-photo" accept="image/*,application/pdf" style="font-size:13px" onchange="onMovPhotoChange()">
+            <div id="mov-sense-just-wrap" style="margin-top:8px;display:none">
+              <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer">
+                <input type="checkbox" id="mov-sense-just" onchange="onSenseJustChange()"> Sense justificant
+              </label>
+              <textarea id="mov-sense-just-motiu" rows="2" placeholder="Motiu obligatori (ex: sense rebut, transferència bancària...)" style="display:none;margin-top:6px;resize:none;font-size:13px;width:100%;box-sizing:border-box"></textarea>
+            </div>
+          </div>
         </div>
         <button class="btn" id="btn-registrar" onclick="confirmRegistrar()" style="width:100%;padding:14px;font-size:16px;margin-top:8px;border-radius:var(--r);display:none;background:var(--gray,#555);color:#fff;opacity:0.6;cursor:not-allowed" disabled>
           <i class="ti ti-check"></i> Registrar moviment
@@ -942,6 +951,7 @@ tr:hover td{background:var(--bg2)}
       <div id="cfg-bancs" class="hidden"></div>
       <div id="cfg-rols" class="hidden"></div>
       <div id="cfg-regles" class="hidden"></div>
+      <div id="cfg-justificants" class="hidden"></div>
       <div id="cfg-usuaris" class="hidden"></div>
       <div style="border-top:1px solid var(--border);margin-top:28px;padding-top:20px">
         <div style="font-size:12px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:14px"><i class="ti ti-calendar" style="font-size:14px;margin-right:4px"></i>Gestió d'exercicis fiscals</div>
@@ -2125,7 +2135,8 @@ async function save(key){
         {clau:'anyFiscal',valor:DB.config.anyFiscal||'26/27'},
         {clau:'exercicis',valor:JSON.stringify(DB.config.exercicis||[])},
         {clau:'estats_exercicis',valor:JSON.stringify(DB.config.estats_exercicis||{})},
-        {clau:'fappPassiu',valor:JSON.stringify(DB.config.fappPassiu||{})}
+        {clau:'fappPassiu',valor:JSON.stringify(DB.config.fappPassiu||{})},
+        {clau:'justificant',valor:JSON.stringify(DB.config.justificant||{mode:'mai',llindar:0})}
       ];
       await writeTab(TABS.config_ext.name,TABS.config_ext.headers,cfgRows);
     }
@@ -2351,6 +2362,7 @@ async function loadFromSheets(){
     if(cfgMap.exercicis){try{DB.config.exercicis=JSON.parse(cfgMap.exercicis);}catch(e){}}
     if(cfgMap.estats_exercicis){try{DB.config.estats_exercicis=JSON.parse(cfgMap.estats_exercicis);}catch(e){}}
     if(cfgMap.fappPassiu){try{const fp=JSON.parse(cfgMap.fappPassiu);if(fp&&fp.total)DB.config.fappPassiu=fp;}catch(e){}}
+    if(cfgMap.justificant){try{DB.config.justificant=JSON.parse(cfgMap.justificant);}catch(e){}}
   }
 }
 
@@ -2525,6 +2537,7 @@ function setMovType(t){
     if(btn)btn.innerHTML=label;
   });
   checkMovReady();
+  updateMovTicketUI();
 }
 
 function setVia(v){
@@ -2585,6 +2598,7 @@ function confirmRegistrar(){
   const imp=parseFloat((document.getElementById('mov-import')?.value||'0').replace(',','.'));
   const deleg=document.getElementById('mov-deleg')?.value||'';
   if(!imp||!deleg){showToast('Omple import i delegació',true);return;}
+  if(!validarJustificant())return;
   // Opció C: validar data dins rang any fiscal per a rols area/delegat
   if(!perm('viewAll')){
     const dataVal=document.getElementById('mov-data')?.value||'';
@@ -4599,6 +4613,7 @@ function renderConfig(){
     {id:'bancs',label:'Bancs'},
     {id:'rols',label:'Mestre de Rols'},
     {id:'regles',label:'Regles CSV'},
+    {id:'justificants',label:'Justificants'},
     ...(canUsers?[{id:'usuaris',label:'Usuaris'}]:[])
   ];
   const tabsBtns=tabs.map(function(t,i){
@@ -4611,14 +4626,14 @@ function renderConfig(){
 
 function showCfgTab(tab){
   window._activeCfgTab=tab;
-  ['areas','events','bancs','rols','regles','usuaris'].forEach(function(t){
+  ['areas','events','bancs','rols','regles','justificants','usuaris'].forEach(function(t){
     const el=document.getElementById('cfg-'+t);
     const btn=document.getElementById('cfg-tab-'+t);
     if(el)el.classList.toggle('hidden',t!==tab);
     if(btn)btn.className='btn'+(t===tab?' btn-primary':'');
   });
   const renders={areas:renderCfgAreas,events:renderCfgEvents,bancs:renderCfgBancs,
-    rols:renderCfgRols,regles:renderCfgRegles,usuaris:renderCfgUsuaris};
+    rols:renderCfgRols,regles:renderCfgRegles,justificants:renderCfgJustificants,usuaris:renderCfgUsuaris};
   try{(renders[tab]||function(){})();}catch(e){console.error('Error renderCfg '+tab,e);}
 }
 
@@ -5697,6 +5712,44 @@ function openModalTancarExercici(){
   save('config').catch(function(e){showToast('Error: '+e.message,true);});
 }
 
+function renderCfgJustificants(){
+  const cfg=DB.config.justificant||{mode:'mai',llindar:0};
+  const canEdit=perm('canConfig');
+  let html='<div class="card"><div class="card-title"><i class="ti ti-receipt"></i> Configuració de Justificants</div>';
+  html+='<p style="font-size:13px;color:var(--text2);margin-bottom:16px">Defineix quan cal adjuntar un ticket o albaran en registrar una despesa.</p>';
+  html+='<div class="mov-field"><label>Mode d'obligatorietat</label>';
+  html+='<select id="just-mode" onchange="onJustModeChange()" '+(canEdit?'':'disabled')+'>';
+  html+='<option value="mai"'+(cfg.mode==='mai'?' selected':'')+'>Mai (sempre opcional)</option>';
+  html+='<option value="sempre"'+(cfg.mode==='sempre'?' selected':'')+'>Sempre (obligatori, amb excepció justificada)</option>';
+  html+='<option value="import"'+(cfg.mode==='import'?' selected':'')+'>A partir d'un import (obligatori si supera el llindar)</option>';
+  html+='</select></div>';
+  html+='<div id="just-llindar-wrap" style="'+(cfg.mode==='import'?'':'display:none')+'">';
+  html+='<div class="mov-field"><label>Import mínim (€)</label>';
+  html+='<input type="number" id="just-llindar" min="0" step="1" value="'+(cfg.llindar||50)+'" style="font-size:16px" '+(canEdit?'':'disabled')+'></div>';
+  html+='</div>';
+  if(canEdit){
+    html+='<button class="btn btn-primary" style="margin-top:12px" onclick="saveJustificantConfig()"><i class="ti ti-check"></i> Guardar configuració</button>';
+  }
+  html+='</div>';
+  document.getElementById('cfg-justificants').innerHTML=html;
+}
+
+function onJustModeChange(){
+  const mode=document.getElementById('just-mode')?.value;
+  const wrap=document.getElementById('just-llindar-wrap');
+  if(wrap)wrap.style.display=mode==='import'?'block':'none';
+}
+
+function saveJustificantConfig(){
+  const mode=document.getElementById('just-mode')?.value||'mai';
+  const llindar=parseFloat(document.getElementById('just-llindar')?.value)||0;
+  if(!DB.config)DB.config={};
+  DB.config.justificant={mode,llindar};
+  saveCache();
+  save('config_ext').catch(function(e){showToast('Error guardant: '+e.message,true);});
+  showToast('Configuració de justificants guardada');
+}
+
 function renderCfgUsuaris(){
   const ROL_LABELS={'president':'President','treasury':'Tresoreria','area':'Resp. d\'Area','delegat':'Resp. Delegacio','board':'Junta'};
   const ROL_COLORS={'president':'p-purple','treasury':'p-info','area':'p-ok','delegat':'p-warn','board':'p-gray'};
@@ -6423,6 +6476,81 @@ function toggleMovExtra(){
   if(ch)ch.style.transform=open?'rotate(0deg)':'rotate(90deg)';
 }
 
+function getJustMode(){
+  const cfg=DB.config.justificant||{};
+  return {mode:cfg.mode||'mai', llindar:parseFloat(cfg.llindar)||0};
+}
+
+function updateMovTicketUI(){
+  const esDespesa=movType==='gast';
+  const imp=parseFloat((document.getElementById('mov-import')||{}).value)||0;
+  const {mode,llindar}=getJustMode();
+  const ticketField=document.getElementById('mov-ticket-field');
+  const ticketOpt=document.getElementById('mov-ticket-opt');
+  const senseWrap=document.getElementById('mov-sense-just-wrap');
+  if(!ticketField)return;
+  let obligatori=false;
+  if(esDespesa){
+    if(mode==='sempre')obligatori=true;
+    else if(mode==='import'&&imp>=llindar&&llindar>0)obligatori=true;
+  }
+  if(obligatori){
+    ticketOpt.textContent='(obligatori)';
+    ticketOpt.style.color='var(--red)';
+    senseWrap.style.display='block';
+  }else{
+    ticketOpt.textContent='(opcional)';
+    ticketOpt.style.color='';
+    senseWrap.style.display='none';
+    const cb=document.getElementById('mov-sense-just');
+    if(cb)cb.checked=false;
+    const mot=document.getElementById('mov-sense-just-motiu');
+    if(mot)mot.style.display='none';
+  }
+  if(obligatori){
+    const el=document.getElementById('mov-extra');
+    const ch=document.getElementById('mov-extra-ch');
+    if(el&&el.style.display!=='block'){el.style.display='block';if(ch)ch.style.transform='rotate(90deg)';}
+  }
+}
+
+function onMovPhotoChange(){
+  const cb=document.getElementById('mov-sense-just');
+  if(cb&&cb.checked){cb.checked=false;onSenseJustChange();}
+}
+
+function onSenseJustChange(){
+  const cb=document.getElementById('mov-sense-just');
+  const mot=document.getElementById('mov-sense-just-motiu');
+  const photo=document.getElementById('mov-photo');
+  if(!cb||!mot)return;
+  mot.style.display=cb.checked?'block':'none';
+  if(cb.checked&&photo)photo.value='';
+}
+
+function validarJustificant(){
+  const esDespesa=movType==='gast';
+  const imp=parseFloat((document.getElementById('mov-import')||{}).value)||0;
+  const {mode,llindar}=getJustMode();
+  let obligatori=false;
+  if(esDespesa){
+    if(mode==='sempre')obligatori=true;
+    else if(mode==='import'&&imp>=llindar&&llindar>0)obligatori=true;
+  }
+  if(!obligatori)return true;
+  const photo=document.getElementById('mov-photo');
+  const cb=document.getElementById('mov-sense-just');
+  const mot=document.getElementById('mov-sense-just-motiu');
+  const tePhoto=photo&&photo.files&&photo.files.length>0;
+  const senseJust=cb&&cb.checked;
+  const teMotiu=mot&&mot.value.trim().length>0;
+  if(tePhoto)return true;
+  if(senseJust&&teMotiu)return true;
+  if(senseJust&&!teMotiu){showToast('Has d'indicar el motiu per no adjuntar justificant',true);return false;}
+  showToast('Cal adjuntar el ticket o albaran',true);
+  return false;
+}
+
 function openModalUsuari(id){
   var uid=id||null;
   var u=uid?(DB.config.usuaris||[]).find(function(x){return x.id===uid;}):null;
@@ -6720,7 +6848,7 @@ function processImportFile(file,zona){
 }
 
 // ============================================================================
-// DETECCIÓ DE DUPLICATS FALLES.APP (v2.1.32)
+// DETECCIÓ DE DUPLICATS FALLES.APP (v2.1.33)
 // ============================================================================
 // Usa el mateix sistema de bankHash que els bancs.
 // Hash: fontImport|data|import_2dec|concepte_normalitzat
