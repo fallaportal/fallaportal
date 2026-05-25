@@ -274,7 +274,7 @@ tr:hover td{background:var(--bg2)}
     <div class="login-logo">Falla <span>Portal</span></div>
     <div class="login-sub">Sistema de gestió financera</div>
     <div class="login-fiscal">Any fiscal 26/27 · Abr 2026 – Mar 2027</div>
-    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v2.1.29</div>
+    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v2.1.30</div>
     <button class="btn-google" onclick="signIn()">
       <svg viewBox="0 0 24 24" width="20" height="20"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
       Entrar amb Google
@@ -316,7 +316,7 @@ tr:hover td{background:var(--bg2)}
     <div class="sb-bottom">
       <div class="sync-ind"><div class="sync-dot" id="sync-dot"></div><span id="sync-text">Sincronitzat</span></div>
       <button class="btn-logout" onclick="signOut()"><i class="ti ti-logout" style="font-size:14px"></i> Tancar sessió</button>
-      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v2.1.29</div>
+      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v2.1.30</div>
     </div>
   </div>
 
@@ -1886,7 +1886,7 @@ function buildNav(){
   let html='<div class="nav-sec">Principal</div>';
   html+='<div class="nav-item active" onclick="showPage(\'dashboard\')"><i class="ti ti-home"></i> Dashboard</div>';
   if(can.canRegister)html+='<div class="nav-item" onclick="showPage(\'moviments\')"><i class="ti ti-plus"></i> Nou moviment</div>';
-  if(can.canFons)html+='<div class="nav-item" onclick="showPage(\'lliurament\')"><i class="ti ti-arrow-down-left"></i> Fons delegats</div>';
+  if(can.canFons||can.canRegister)html+='<div class="nav-item" onclick="showPage(\'lliurament\')"><i class="ti ti-arrow-down-left"></i> Fons delegats</div>';
   html+='<div class="nav-item" onclick="showPage(\'tancament\')"><i class="ti ti-lock"></i> Caixa d\'Event</div>';
   html+='<div class="nav-sec">Gestió</div>';
   html+='<div class="nav-item" onclick="showPage(\'pressupostos-edit\')"><i class="ti ti-chart-bar"></i> Pressupostos</div>';
@@ -1895,7 +1895,7 @@ function buildNav(){
   if(can.canImport)html+='<div class="nav-item" onclick="showPage(\'importacio\')"><i class="ti ti-upload"></i> Importar CSV</div>';
   html+='<div class="nav-sec">Reportes</div>';
   html+='<div class="nav-item" onclick="showPage(\'resultats\')"><i class="ti ti-file-text"></i> Estat de Resultats</div>';
-  html+='<div class="nav-item" onclick="showPage(\'flux\')"><i class="ti ti-arrows-exchange"></i> Flux d\'Efectiu</div>';
+  if(perm('viewAll'))html+='<div class="nav-item" onclick="showPage(\'flux\')"><i class="ti ti-arrows-exchange"></i> Flux d\'Efectiu</div>';
   html+='<div class="nav-item" onclick="showPage(\'reports\')"><i class="ti ti-chart-dots"></i> Reports</div>';
   if(can.canConfig){
     html+='<div class="nav-sec">Sistema</div>';
@@ -1915,7 +1915,7 @@ function buildMobMenu(){
   html+=`<div onclick="showPageMob('historial','');closeMobMenu()" style="${s}"><i class="ti ti-list" style="${ic}"></i> Historial</div>`;
   html+=`<div onclick="showPageMob('pressupostos-edit','');closeMobMenu()" style="${s}"><i class="ti ti-chart-bar" style="${ic}"></i> Pressupostos</div>`;
   html+=`<div onclick="showPageMob('resultats','');closeMobMenu()" style="${s}"><i class="ti ti-file-text" style="${ic}"></i> Estat de Resultats</div>`;
-  html+=`<div onclick="showPageMob('flux','');closeMobMenu()" style="${s}"><i class="ti ti-arrows-exchange" style="${ic}"></i> Flux d'Efectiu</div>`;
+  if(can.viewAll)html+=`<div onclick="showPageMob('flux','');closeMobMenu()" style="${s}"><i class="ti ti-arrows-exchange" style="${ic}"></i> Flux d'Efectiu</div>`;
   html+=`<div onclick="showPageMob('reports','');closeMobMenu()" style="${s}"><i class="ti ti-chart-dots" style="${ic}"></i> Reports</div>`;
   if(can.canImport)html+=`<div onclick="showPageMob('fallesapp','');closeMobMenu()" style="${s}"><i class="ti ti-device-mobile" style="${ic}"></i> Falles.app</div>`;
   if(can.canImport)html+=`<div onclick="showPageMob('importacio','');closeMobMenu()" style="${s}"><i class="ti ti-upload" style="${ic}"></i> Importar CSV</div>`;
@@ -2737,7 +2737,12 @@ function renderHistorial(){
   DB.config.areas.filter(a=>myArees.includes(a.id)).forEach(a=>{
     const o=document.createElement('option');o.value=a.id;o.textContent=a.name;areaSel.appendChild(o);
   });
-  areaSel.value=curArea;
+  // E6: si no hi ha àrea seleccionada i l'usuari no té viewAll, preseleccionar la primera àrea del scope
+  if(!curArea&&!perm('viewAll')&&myArees.length===1){
+    areaSel.value=myArees[0];
+  }else{
+    areaSel.value=curArea;
+  }
   // Delegacions
   const delegSel=document.getElementById('hist-deleg');
   const curDeleg=delegSel.value;
@@ -2947,6 +2952,34 @@ function renderFons(){
       renderFonsEvents()+
       (delegats.length?delegats.map(function(u){return renderFonsCard(u);}).join(''):'<div class="card"><div style="color:var(--text3)">No hi ha delegats configurats.</div></div>');
     populateDelegatSelects();
+  }else if(getRol()==='area'){
+    // Responsable d'àrea: veu fons de tots els delegats de les seues delegacions
+    const myDelegsF=getMyDelegacions();
+    const af=getAnyFiscal();
+    const delegats=(DB.config.usuaris||[]).filter(function(u){
+      if(u.rol==='noauth')return false;
+      // Usuari assignat a alguna delegació del meu scope via directiva
+      const assigns=getDirectivaAny(af);
+      return assigns.some(function(a){
+        return a.tipus==='delegacio'&&myDelegsF.includes(a.id)&&a.userId===u.id;
+      });
+    }).sort(function(a,b){return a.nom.localeCompare(b.nom,'ca');});
+    var totFA=delegats.reduce(function(s,u){
+      var fu=(DB.fons||[]).filter(function(f){return(!f.anyFiscal||f.anyFiscal===af)&&(f.delegId===u.id||(f.delegEmail||'').toLowerCase()===(u.email||'').toLowerCase());});
+      var r=fu.filter(function(f){return f.tipus==='lliurament';}).reduce(function(s2,f){return s2+f.import;},0);
+      var g=fu.filter(function(f){return f.tipus==='gast_fons';}).reduce(function(s2,f){return s2+f.import;},0);
+      var d=fu.filter(function(f){return f.tipus==='devolucio';}).reduce(function(s2,f){return s2+f.import;},0);
+      var a=fu.filter(function(f){return f.tipus==='avanc';}).reduce(function(s2,f){return s2+f.import;},0);
+      var ri=fu.filter(function(f){return f.tipus==='reintegrament';}).reduce(function(s2,f){return s2+f.import;},0);
+      return s+(r-g-d-a+ri);
+    },0);
+    var cTA=totFA>0?'var(--green)':totFA<0?'var(--red)':'var(--text2)';
+    c.innerHTML=
+      '<div style="display:flex;align-items:center;justify-content:space-between;background:var(--bg);border:0.5px solid var(--border);border-radius:var(--rl);padding:16px 20px;margin-bottom:14px">'+
+        '<div><div style="font-size:13px;color:var(--text2)">Fons en mans dels delegats de la teva àrea</div>'+
+        '<div style="font-size:11px;color:var(--text3)">Any fiscal '+af+'</div></div>'+
+        '<div style="text-align:right"><div style="font-size:26px;font-weight:700;color:'+cTA+'">'+fmtD(totFA)+'</div></div></div>'+
+      (delegats.length?delegats.map(function(u){return renderFonsCard(u);}).join(''):'<div class="card"><div style="color:var(--text3)">No hi ha delegats assignats a les teves delegacions.</div></div>');
   }else{
     const email=currentUser?.email;
     const rebuts=(DB.fons||[]).filter(f=>f.delegEmail===email&&f.tipus==='lliurament').reduce((s,f)=>s+f.import,0);
@@ -3147,8 +3180,8 @@ async function saveDevolucio(){
 let tancEventId=null;
 
 function renderTancamentList(){
-  showTancTab('obrir');
   populateTancSelectors();
+  showTancTab(perm('canFons')||perm('canConfig')?'obrir':'tancar');
 }
 
 function showTancTab(tab){
@@ -6673,7 +6706,7 @@ function processImportFile(file,zona){
 }
 
 // ============================================================================
-// DETECCIÓ DE DUPLICATS FALLES.APP (v2.1.29)
+// DETECCIÓ DE DUPLICATS FALLES.APP (v2.1.30)
 // ============================================================================
 // Usa el mateix sistema de bankHash que els bancs.
 // Hash: fontImport|data|import_2dec|concepte_normalitzat
@@ -7451,12 +7484,16 @@ function renderReport1(){
 
   // Enriquir amb dades d'event
   const myDelegsR1=getMyDelegacions();
+  const myEmailR1=(currentUser?.email||'').toLowerCase();
   const eventsScope=(DB.config&&DB.config.events)||[];
   const rows=tancaments.filter(t=>{
     if((t.anyFiscal||af)!==afSel)return false;
     if(perm('viewAll'))return true;
+    // Inclou: events de les seves delegacions O tancaments registrats per ell
     const ev=eventsScope.find(e=>e.id===t.eventId);
-    return ev&&myDelegsR1.includes(ev.delegId);
+    const esDelseu=ev&&myDelegsR1.includes(ev.delegId);
+    const elHaTancat=(t.registratPer||'').toLowerCase()===myEmailR1;
+    return esDelseu||elHaTancat;
   }).map(t=>{
     const ev=events.find(e=>e.id===t.eventId)||{};
     const respUsuari=(DB.config.usuaris||[]).find(u=>(u.email||'').toLowerCase()===(t.registratPer||'').toLowerCase());
