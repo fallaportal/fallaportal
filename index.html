@@ -274,7 +274,7 @@ tr:hover td{background:var(--bg2)}
     <div class="login-logo">Falla <span>Portal</span></div>
     <div class="login-sub">Sistema de gestió financera</div>
     <div class="login-fiscal">Any fiscal 26/27 · Abr 2026 – Mar 2027</div>
-    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v2.1.21</div>
+    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v2.1.22</div>
     <button class="btn-google" onclick="signIn()">
       <svg viewBox="0 0 24 24" width="20" height="20"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
       Entrar amb Google
@@ -316,7 +316,7 @@ tr:hover td{background:var(--bg2)}
     <div class="sb-bottom">
       <div class="sync-ind"><div class="sync-dot" id="sync-dot"></div><span id="sync-text">Sincronitzat</span></div>
       <button class="btn-logout" onclick="signOut()"><i class="ti ti-logout" style="font-size:14px"></i> Tancar sessió</button>
-      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v2.1.21</div>
+      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v2.1.22</div>
     </div>
   </div>
 
@@ -1429,7 +1429,7 @@ const CLIENT_ID='762692298201-gnhlho2ob1fb77s6uoevocji8r6afssm.apps.googleuserco
 const SCOPES='https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile';
 const SHEET_ID='1SUeIZbZN1kUxt5nNRkEVLZI__eHecYv4JZE5QNuGaQ0';
 const TABS={
-  moviments:{name:'01 Moviments',headers:['id','data','tipus','via','areaId','areaNom','delegacioId','delegacioNom','eventId','eventNom','concepte','establiment','responsable','responsableEmail','import','notes','anyFiscal','origenFons','fontImport']},
+  moviments:{name:'01 Moviments',headers:['id','data','tipus','via','areaId','areaNom','delegacioId','delegacioNom','eventId','eventNom','concepte','establiment','responsable','responsableEmail','import','notes','anyFiscal','origenFons','fontImport','bankHash']},
   fons:{name:'02 Fons',headers:['id','data','tipus','delegId','delegEmail','import','nota','registratPer','anyFiscal','movimentId','eventTancamentId']},
   tancaments:{name:'03 Tancaments',headers:['eventId','eventNom','data','efectiu','tpv','canvi','pagaments','tancat','estat','fonsId','concepte','registratPer','anyFiscal']},
   arees:{name:'04 Arees',headers:['id','nom','responsable']},
@@ -6549,6 +6549,39 @@ function processImportFile(file,zona){
   }
 }
 
+// ============================================================================
+// DETECCIÓ DE DUPLICATS BANCARIS (v2.1.22)
+// ============================================================================
+// Calcula una empremta determinista per a un moviment bancari.
+// Components: bancId + data (DD/MM/AAAA) + import amb 2 decimals + concepte normalitzat.
+function _calcBankHash(bancId,data,imp,concepte){
+  const conceptNorm=(concepte||'').trim().toLowerCase().replace(/\s+/g,' ');
+  const impStr=(Math.round((parseFloat(imp)||0)*100)/100).toFixed(2);
+  return (bancId||'')+'|'+(data||'')+'|'+impStr+'|'+conceptNorm;
+}
+// Classifica un moviment del XLS contra DB.moviments existents:
+//   'nou'             → cap moviment al banc amb mateixa data + import
+//   'duplicat_segur'  → existeix moviment amb hash idèntic
+//   'possible'        → mateix banc + data + import però concepte diferent
+function _classifyDuplicate(banc,data,imp,concepte){
+  const impAbs=Math.abs(parseFloat(imp)||0);
+  const bancCodi=banc.codi;
+  const hashNou=_calcBankHash(banc.id,data,impAbs,concepte);
+  // Cerca per coincidència de banc+data+import
+  const candidats=(DB.moviments||[]).filter(function(m){
+    if(m.via!==bancCodi)return false;
+    if(m.data!==data)return false;
+    const mImp=Math.abs(parseFloat(m.import)||0);
+    if(Math.abs(mImp-impAbs)>0.005)return false;
+    return true;
+  });
+  if(candidats.length===0)return {tipus:'nou',hash:hashNou,match:null};
+  // Algun candidat té hash exacte?
+  const exacte=candidats.find(function(m){return m.bankHash===hashNou;});
+  if(exacte)return {tipus:'duplicat_segur',hash:hashNou,match:exacte};
+  return {tipus:'possible',hash:hashNou,match:candidats[0]};
+}
+
 // Parser unificat XLS/XLSX — detecta banc per IBAN i format per la capçalera
 function processXLSBanc(arrayBuffer,zona){
   try{
@@ -6718,6 +6751,14 @@ function processXLSBanc(arrayBuffer,zona){
 
     if(!moviments.length){showToast('No s\'han trobat moviments al fitxer.',true);return;}
 
+    // Classificar cada moviment contra DB.moviments existents (detecció duplicats)
+    moviments.forEach(function(m){
+      const cls=_classifyDuplicate(bancTrobat,m.data,Math.abs(m.import),m._concepteOriginal||m.concepte);
+      m._dupTipus=cls.tipus;       // 'nou' | 'possible' | 'duplicat_segur'
+      m._bankHash=cls.hash;
+      m._dupMatch=cls.match;       // referència al moviment existent (si n'hi ha)
+    });
+
     // Intentar assignació automàtica per regles de mapeig
     const assignats=aplicarReglesImportacio(moviments,bancTrobat);
 
@@ -6760,32 +6801,107 @@ function aplicarReglesImportacio(moviments,banc){
 }
 
 function mostrarPreviewImportacio(zona,moviments,assignats,banc,compteDetectat,formatBanc){
-  const totIng=moviments.filter(function(m){return m.import>0;}).reduce(function(s,m){return s+m.import;},0);
-  const totGast=moviments.filter(function(m){return m.import<0;}).reduce(function(s,m){return s+m.import;},0);
-  const nAssignats=assignats.filter(function(m){return m.areaId;}).length;
-  const nExcepcions=assignats.filter(function(m){return!m.areaId;}).length;
+  // Comptadors per estat de duplicat
+  const nDupSegur=assignats.filter(m=>m._dupTipus==='duplicat_segur').length;
+  const nPossible=assignats.filter(m=>m._dupTipus==='possible').length;
+  const nNous=assignats.filter(m=>m._dupTipus==='nou'||!m._dupTipus).length;
+
+  // Per defecte: nous=importar, possibles=importar (ambre, l'usuari pot desmarcar),
+  // duplicats_segurs=NO importar (l'usuari pot marcar manualment si vol forçar)
+  assignats.forEach(function(m){
+    if(m._dupTipus==='duplicat_segur')m._importar=false;
+    else m._importar=true;
+  });
+
+  const totIng=moviments.filter(m=>m.import>0&&m._dupTipus!=='duplicat_segur').reduce((s,m)=>s+m.import,0);
+  const totGast=moviments.filter(m=>m.import<0&&m._dupTipus!=='duplicat_segur').reduce((s,m)=>s+m.import,0);
+  // Excepcions = només nous/possibles sense àrea (no comptem duplicats segurs)
+  const nAssignats=assignats.filter(m=>m.areaId&&m._dupTipus!=='duplicat_segur').length;
+  const nExcepcions=assignats.filter(m=>!m.areaId&&m._dupTipus!=='duplicat_segur').length;
+  const totalImportables=nNous+nPossible;
 
   let html='<div class="card" style="margin-top:12px">';
-  html+='<div class="card-title"><i class="ti ti-check" style="color:var(--green)"></i> '+moviments.length+' moviments detectats</div>';
+  html+='<div class="card-title"><i class="ti ti-check" style="color:var(--green)"></i> '+moviments.length+' moviments al fitxer</div>';
+
   // Resum
   html+='<div style="background:var(--bg2);border-radius:var(--r);padding:10px 12px;font-size:13px;margin-bottom:12px">';
   html+='<div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="color:var(--text2)">Banc</span><strong>'+banc.nom+'</strong></div>';
   if(compteDetectat)html+='<div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="color:var(--text2)">IBAN</span><span style="font-family:monospace;font-size:11px">'+compteDetectat+'</span></div>';
   html+='<div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="color:var(--text2)">Format</span><span>'+formatBanc+'</span></div>';
-  html+='<div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="color:var(--text2)">Ingressos</span><span style="color:var(--green)">+'+fmtD(totIng)+'</span></div>';
-  html+='<div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="color:var(--text2)">Pagaments</span><span style="color:var(--red)">'+fmtD(totGast)+'</span></div>';
-  html+='<div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="color:var(--text2)">Assignats automàticament</span><span style="color:var(--green);font-weight:500">'+nAssignats+' de '+moviments.length+'</span></div>';
+  // Resum duplicats
+  html+='<div style="border-top:0.5px solid var(--border);margin-top:6px;padding-top:6px"></div>';
+  html+='<div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="color:var(--text2)"><i class="ti ti-circle-check" style="color:var(--green)"></i> Nous a importar</span><span style="color:var(--green);font-weight:500">'+nNous+'</span></div>';
+  if(nPossible>0){
+    html+='<div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="color:var(--text2)"><i class="ti ti-alert-triangle" style="color:var(--amber)"></i> Possibles duplicats</span><span style="color:var(--amber);font-weight:500">'+nPossible+'</span></div>';
+  }
+  if(nDupSegur>0){
+    html+='<div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="color:var(--text2)"><i class="ti ti-copy" style="color:var(--text3)"></i> Ja existents al sistema</span><span style="color:var(--text3);font-weight:500">'+nDupSegur+'</span></div>';
+  }
+  html+='<div style="border-top:0.5px solid var(--border);margin-top:6px;padding-top:6px"></div>';
+  html+='<div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="color:var(--text2)">Ingressos (no duplicats)</span><span style="color:var(--green)">+'+fmtD(totIng)+'</span></div>';
+  html+='<div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="color:var(--text2)">Pagaments (no duplicats)</span><span style="color:var(--red)">'+fmtD(totGast)+'</span></div>';
+  html+='<div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="color:var(--text2)">Assignats automàticament</span><span style="color:var(--green);font-weight:500">'+nAssignats+' de '+totalImportables+'</span></div>';
   if(nExcepcions>0){
     html+='<div style="display:flex;justify-content:space-between"><span style="color:var(--text2)">Excepcions a revisar</span><span style="color:var(--amber);font-weight:500">'+nExcepcions+'</span></div>';
   }
   html+='</div>';
 
-  // Llista excepcions
+  // SECCIÓ 1: DUPLICATS SEGURS — col·lapsable, no es marquen per defecte
+  if(nDupSegur>0){
+    html+='<div style="margin-bottom:12px;border:0.5px solid var(--border);border-radius:var(--r);overflow:hidden">';
+    html+='<div onclick="document.getElementById(\'dup-segur-'+zona+'\').style.display=document.getElementById(\'dup-segur-'+zona+'\').style.display===\'none\'?\'block\':\'none\'" style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--bg2);cursor:pointer;font-size:13px">';
+    html+='<i class="ti ti-copy" style="color:var(--text3)"></i>';
+    html+='<span style="flex:1;font-weight:500">Ja existents al sistema ('+nDupSegur+')</span>';
+    html+='<span style="font-size:11px;color:var(--text3)">Click per veure/amagar</span>';
+    html+='</div>';
+    html+='<div id="dup-segur-'+zona+'" style="display:none">';
+    assignats.forEach(function(m,idx){
+      if(m._dupTipus!=='duplicat_segur')return;
+      html+='<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-top:0.5px solid var(--border);font-size:12px;opacity:.7">';
+      html+='<input type="checkbox" id="imp-'+zona+'-'+idx+'" onchange="toggleImportar('+zona+','+idx+',this.checked)" style="cursor:pointer">';
+      html+='<div style="flex:1">';
+      html+='<div style="font-weight:500">'+m.data+' · '+esc((m.concepte||'').substring(0,55))+(m.concepte&&m.concepte.length>55?'…':'')+'</div>';
+      html+='<div style="font-size:10px;color:var(--text3)">Ja importat anteriorment</div>';
+      html+='</div>';
+      html+='<span style="color:'+(m.import>0?'var(--green)':'var(--red)')+';font-weight:500">'+(m.import>0?'+':'')+fmtD(m.import)+'</span>';
+      html+='</div>';
+    });
+    html+='<div style="padding:8px 12px;background:var(--bg2);font-size:11px;color:var(--text3)"><i class="ti ti-info-circle"></i> Marca la casella només si vols forçar la re-importació (no recomanat)</div>';
+    html+='</div></div>';
+  }
+
+  // SECCIÓ 2: POSSIBLES DUPLICATS — visible per defecte, marcat per defecte
+  if(nPossible>0){
+    html+='<div style="margin-bottom:12px;border:0.5px solid var(--amber);border-radius:var(--r);overflow:hidden">';
+    html+='<div style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--amber-bg);font-size:13px">';
+    html+='<i class="ti ti-alert-triangle" style="color:var(--amber)"></i>';
+    html+='<span style="flex:1;font-weight:500;color:var(--amber-text)">Possibles duplicats ('+nPossible+')</span>';
+    html+='<span style="font-size:11px;color:var(--amber-text)">Mateixa data i import, concepte diferent</span>';
+    html+='</div>';
+    html+='<div>';
+    assignats.forEach(function(m,idx){
+      if(m._dupTipus!=='possible')return;
+      const matchData=m._dupMatch?(m._dupMatch.concepte||''):'';
+      html+='<div style="padding:8px 12px;border-top:0.5px solid var(--border);font-size:12px">';
+      html+='<div style="display:flex;align-items:center;gap:8px">';
+      html+='<input type="checkbox" id="imp-'+zona+'-'+idx+'" checked onchange="toggleImportar('+zona+','+idx+',this.checked)" style="cursor:pointer">';
+      html+='<div style="flex:1">';
+      html+='<div style="font-weight:500">'+m.data+' · '+esc((m.concepte||'').substring(0,55))+(m.concepte&&m.concepte.length>55?'…':'')+'</div>';
+      if(matchData)html+='<div style="font-size:10px;color:var(--text3)">Existent: '+esc(matchData.substring(0,55))+(matchData.length>55?'…':'')+'</div>';
+      html+='</div>';
+      html+='<span style="color:'+(m.import>0?'var(--green)':'var(--red)')+';font-weight:500">'+(m.import>0?'+':'')+fmtD(m.import)+'</span>';
+      html+='</div></div>';
+    });
+    html+='</div></div>';
+  }
+
+  // SECCIÓ 3: EXCEPCIONS (només per nous/possibles SENSE àrea i marcats per importar)
   if(nExcepcions>0){
     html+='<div style="font-size:13px;font-weight:500;margin-bottom:8px;color:var(--amber)"><i class="ti ti-alert-triangle"></i> Moviments sense àrea assignada — revisa i assigna:</div>';
     html+='<div id="excepcions-'+zona+'" style="display:flex;flex-direction:column;gap:6px;margin-bottom:12px">';
     assignats.forEach(function(m,idx){
       if(m.areaId)return;
+      if(m._dupTipus==='duplicat_segur')return; // no oferir excepció per duplicats segurs
       const areaOpts=(DB.config.areas||[]).map(function(a){
         return '<option value="'+a.id+'">'+a.name+'</option>';
       }).join('');
@@ -6804,7 +6920,7 @@ function mostrarPreviewImportacio(zona,moviments,assignats,banc,compteDetectat,f
       html+='</select>';
       html+='</div>';
       html+='<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">';
-      html+='<input id="exc-conc-'+zona+'-'+idx+'" type="text" placeholder="Concepte (opcional, per defecte el del banc)" value="'+m.concepte+'" style="font-size:12px;padding:4px 8px;flex:1" oninput="assignarExcepcioConcepte('+zona+','+idx+',this.value)">';
+      html+='<input id="exc-conc-'+zona+'-'+idx+'" type="text" placeholder="Concepte (opcional, per defecte el del banc)" value="'+esc(m.concepte)+'" style="font-size:12px;padding:4px 8px;flex:1" oninput="assignarExcepcioConcepte('+zona+','+idx+',this.value)">';
       html+='<button class="btn" style="font-size:11px;padding:4px 8px" onclick="crearReglaDesdeExcepcio('+zona+','+idx+')" title="Crea regla automàtica per concepte">+ Regla</button>';
       html+='<button class="btn" style="font-size:11px;padding:4px 8px;color:var(--text3)" onclick="ignorarExcepcio('+zona+','+idx+')">Ignorar</button>';
       html+='</div></div>';
@@ -6813,10 +6929,21 @@ function mostrarPreviewImportacio(zona,moviments,assignats,banc,compteDetectat,f
   }
 
   html+='<div style="display:flex;gap:8px;flex-wrap:wrap">';
-  html+='<button class="btn btn-primary" data-zona="'+zona+'" onclick="importarXLSZona(parseInt(this.dataset.zona))"><i class="ti ti-check"></i> Importar '+moviments.length+' moviments</button>';
+  html+='<button class="btn btn-primary" data-zona="'+zona+'" onclick="importarXLSZona(parseInt(this.dataset.zona))"><i class="ti ti-check"></i> Importar (<span id="btn-imp-count-'+zona+'">'+(nNous+nPossible)+'</span> moviments)</button>';
   html+='<button class="btn" onclick="cancelCSVImport('+zona+')"><i class="ti ti-x"></i> Cancel·lar</button>';
   html+='</div></div>';
   document.getElementById('csv-preview-'+zona).innerHTML=html;
+}
+
+// Activar/desactivar la importació d'una línia (per checkbox)
+function toggleImportar(zona,idx,checked){
+  const assignats=window['_xlsAssignats'+zona];
+  if(!assignats)return;
+  assignats[idx]._importar=checked;
+  // Actualitzar el comptador del botó
+  const total=assignats.filter(function(m){return m._importar;}).length;
+  const span=document.getElementById('btn-imp-count-'+zona);
+  if(span)span.textContent=total;
 }
 
 // Assignar àrea a una excepció des del preview
@@ -6916,8 +7043,13 @@ async function importarXLSZona(zona){
   const af=getAnyFiscal();
   let importats=0;
   let excepcions=0;
+  let omesos=0;
   moviments.forEach(function(m){
     if(m._ignorar)return;
+    // Respectar la decisió de l'usuari sobre duplicats (checkbox)
+    if(m._importar===false){omesos++;return;}
+    // Hash determinista (recalcula per si l'usuari ha canviat el concepte a l'excepció)
+    const hashFinal=m._bankHash||_calcBankHash(banc.id,m.data,Math.abs(m.import),m._concepteOriginal||m.concepte);
     DB.moviments.push({
       id:'m'+Date.now()+Math.random(),anyFiscal:af,
       tipus:m.import>0?'ing':'gast',
@@ -6932,6 +7064,7 @@ async function importarXLSZona(zona){
       import:Math.abs(m.import),
       notes:'Importat '+banc.nom+(m.categoria?' ['+m.categoria+']':''),
       fontImport:'xls_'+banc.id,
+      bankHash:hashFinal,
       assignatPer:m.assignatPer||'manual'
     });
     importats++;
@@ -6939,6 +7072,7 @@ async function importarXLSZona(zona){
   });
   saveCache();
   let msg=importats+' moviments importats de '+banc.nom;
+  if(omesos>0)msg+=' · '+omesos+' duplicats omesos';
   if(excepcions>0)msg+=' ('+excepcions+' sense àrea — assigna\'ls des de l\'historial)';
   showToast(msg);
   save('moviments').catch(function(e){showToast('Error: '+e.message,true);});
