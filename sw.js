@@ -1,4 +1,4 @@
-// Falla Portal — Service Worker v3.0.0 Emilio
+// Falla Portal — Service Worker v3.0.0 Emilio Grau
 const BUILD_VERSION = '300';
 const CACHE_NAME = 'falla-portal-v' + BUILD_VERSION;
 const BASE = '/fallaportal';
