@@ -274,7 +274,7 @@ tr:hover td{background:var(--bg2)}
     <div class="login-logo">Falla <span>Portal</span></div>
     <div class="login-sub">Sistema de gestió financera</div>
     <div class="login-fiscal">Any fiscal 26/27 · Abr 2026 – Mar 2027</div>
-    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v2.1.57</div>
+    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v2.1.58</div>
     <button class="btn-google" onclick="signIn()">
       <svg viewBox="0 0 24 24" width="20" height="20"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
       Entrar amb Google
@@ -316,7 +316,7 @@ tr:hover td{background:var(--bg2)}
     <div class="sb-bottom">
       <div class="sync-ind"><div class="sync-dot" id="sync-dot"></div><span id="sync-text">Sincronitzat</span></div>
       <button class="btn-logout" onclick="signOut()"><i class="ti ti-logout" style="font-size:14px"></i> Tancar sessió</button>
-      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v2.1.57</div>
+      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v2.1.58</div>
     </div>
   </div>
 
@@ -503,6 +503,21 @@ tr:hover td{background:var(--bg2)}
                   <i class="ti ti-plus"></i> Afegir
                 </button>
               </div>
+            </div>
+            <!-- Retirada d'efectiu -->
+            <div style="padding:0 4px;margin-top:10px">
+              <div style="font-size:10px;color:var(--text3);text-align:center;margin-bottom:4px;text-transform:uppercase;letter-spacing:.05em">Retirada d'efectiu</div>
+              <div style="display:flex;gap:8px">
+                <div class="mov-import-box" style="flex:1;border-color:var(--red)">
+                  <input type="text" id="tanc-retirada-import" placeholder="0,00" inputmode="decimal" style="font-size:20px;color:var(--red)">
+                  <span style="font-size:18px;font-weight:700;color:var(--red);margin-left:4px">€</span>
+                </div>
+                <button onclick="retirarEfectiu()" style="height:56px;padding:0 16px;background:var(--red);color:#fff;border:none;border-radius:var(--r);font-weight:600;cursor:pointer;font-size:14px;white-space:nowrap;flex-shrink:0">
+                  <i class="ti ti-arrow-up"></i> Retirar
+                </button>
+              </div>
+              <input type="text" id="tanc-retirada-nota" placeholder="Nota (opcional)" style="width:100%;margin-top:6px;font-size:13px;border:0.5px solid var(--border);border-radius:var(--r);padding:8px 10px;background:var(--bg);color:var(--text);box-sizing:border-box">
+              <div id="tanc-retirades-hist" style="display:none;margin-top:10px;padding-top:10px;border-top:0.5px solid var(--border);font-size:13px"></div>
             </div>
           </div>
           <!-- Imports tancament -->
@@ -3509,6 +3524,7 @@ function onTancTancarChange(){
   if(notesRow)notesRow.style.display='block';
   if(btnTancar)btnTancar.style.display='block';
   if(resumEl){resumEl.style.color='var(--text3)';resumEl.textContent='Introdueix l\'efectiu comptat i els pagaments realitzats';}
+  renderTancRetirades(val);
   updateTancResum();
 }
 
@@ -3526,10 +3542,11 @@ function updateTancResum(){
   const val=document.getElementById('tanc-tancar-sel')?.value;
   if(!val)return;
   const canvi=getTancCanviTotal(val);
+  const retirades=getTancRetirades(val);
   const ef=parseFloat((document.getElementById('tanc-efectiu')?.value||'0').replace(',','.'))||0;
   const tpv=parseFloat((document.getElementById('tanc-tpv')?.value||'0').replace(',','.'))||0;
   const pag=parseFloat((document.getElementById('tanc-pagaments')?.value||'0').replace(',','.'))||0;
-  const netEf=ef-canvi;
+  const netEf=ef-canvi+retirades;
   const total=netEf+tpv-pag;
   const resumEl=document.getElementById('tanc-resum');
   if(!resumEl)return;
@@ -3538,10 +3555,27 @@ function updateTancResum(){
   resumEl.innerHTML=
     '<div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="color:var(--text2)">Efectiu comptat</span><span style="color:var(--green)">+'+fmtD(ef)+'</span></div>'+
     '<div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="color:var(--text2)">− Canvi inicial</span><span style="color:var(--text2)">−'+fmtD(canvi)+'</span></div>'+
+    (retirades>0?'<div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="color:var(--text2)">+ Retirades</span><span style="color:var(--green)">+'+fmtD(retirades)+'</span></div>':'')+
     '<div style="display:flex;justify-content:space-between;margin-bottom:8px;padding-bottom:8px;border-bottom:0.5px solid var(--border)"><span style="font-weight:500">= Ingrés net efectiu</span><span style="font-weight:600;color:'+(netEf>=0?'var(--green)':'var(--red)')+'">'+fmtS(netEf)+'</span></div>'+
     (tpv>0?'<div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="color:var(--text2)">Vendes TPV</span><span>+'+fmtD(tpv)+'</span></div>':'')+
     (pag>0?'<div style="display:flex;justify-content:space-between;margin-bottom:8px;padding-bottom:8px;border-bottom:0.5px solid var(--border)"><span style="color:var(--text2)">− Pagaments</span><span style="color:var(--red)">−'+fmtD(pag)+'</span></div>':'')+
     '<div style="display:flex;justify-content:space-between;font-weight:700;font-size:15px"><span>Resultat net</span><span style="color:'+(total>=0?'var(--green)':'var(--red)')+'">'+fmtS(Math.round(total*100)/100)+'</span></div>';
+}
+
+function renderTancRetirades(evId){
+  const histEl=document.getElementById('tanc-retirades-hist');
+  if(!histEl)return;
+  const retirades=(DB.moviments||[]).filter(m=>m.fontImport==='retirada_caixa'&&m.eventId===evId);
+  if(!retirades.length){histEl.style.display='none';histEl.innerHTML='';return;}
+  const total=retirades.reduce((s,m)=>s+m.import,0);
+  histEl.style.display='block';
+  histEl.innerHTML=
+    '<div style="font-size:11px;color:var(--text3);margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em">Retirades anteriors</div>'+
+    retirades.map(m=>'<div style="display:flex;justify-content:space-between;margin-bottom:3px;font-size:13px">'+
+      '<span style="color:var(--text2)">'+m.data+(m.notes?' · '+m.notes:'')+'</span>'+
+      '<span style="color:var(--red);font-weight:500">−'+fmtD(m.import)+'</span></div>').join('')+
+    '<div style="display:flex;justify-content:space-between;margin-top:6px;padding-top:6px;border-top:0.5px solid var(--border);font-weight:600;font-size:13px">'+
+      '<span>Total retirat</span><span style="color:var(--red)">−'+fmtD(total)+'</span></div>';
 }
 
 function getTancEstat(evId){
@@ -3552,6 +3586,41 @@ function getTancEstat(evId){
 
 function getTancCanviTotal(evId){
   return (DB.fons||[]).filter(f=>f.eventTancamentId===evId&&f.tipus==='event_canvi').reduce((s,f)=>s+f.import,0);
+}
+
+function getTancRetirades(evId){
+  return (DB.moviments||[]).filter(m=>m.fontImport==='retirada_caixa'&&m.eventId===evId).reduce((s,m)=>s+m.import,0);
+}
+
+async function retirarEfectiu(){
+  const val=document.getElementById('tanc-tancar-sel')?.value;
+  if(!val){showToast('Selecciona un event',true);return;}
+  const tc=(DB.tancaments||{})[val];
+  if(!tc||tc.estat!=='obert'){showToast('L\'event no està obert',true);return;}
+  const imp=parseFloat((document.getElementById('tanc-retirada-import')?.value||'0').replace(',','.'))||0;
+  if(!imp||imp<=0){showToast('Introdueix un import vàlid',true);return;}
+  const nota=document.getElementById('tanc-retirada-nota')?.value.trim()||'';
+  const af=getAnyFiscal();
+  const areaId=document.getElementById('tanc-area')?.value||'';
+  const delegId=document.getElementById('tanc-deleg')?.value||'';
+  const area=(DB.config.areas||[]).find(a=>a.id===areaId);
+  const deleg=(DB.config.delegacions||[]).find(d=>d.id===delegId);
+  const evNom=tc.eventNom||tc.concepte||val;
+  DB.moviments.push({
+    id:'m'+Date.now(),anyFiscal:af,tipus:'ing',via:'Efectiu',
+    areaId,areaNom:area?.name||'',delegacioId:delegId,delegacioNom:deleg?.name||'',
+    eventId:val,eventNom:evNom,
+    concepte:'Retirada efectiu · '+evNom,establiment:'',
+    data:today(),responsable:currentUser?.name||'',responsableEmail:currentUser?.email||'',
+    import:imp,notes:nota,fontImport:'retirada_caixa',origen:'Manual',ticketUrl:'',ticketMotiu:''
+  });
+  saveCache();
+  save('moviments').catch(e=>showToast('Error guardant: '+e.message,true));
+  showToast('Retirada de '+fmtD(imp)+' registrada');
+  if(document.getElementById('tanc-retirada-import'))document.getElementById('tanc-retirada-import').value='';
+  if(document.getElementById('tanc-retirada-nota'))document.getElementById('tanc-retirada-nota').value='';
+  renderTancRetirades(val);
+  updateTancResum();
 }
 
 function getTancNomEvent(){
@@ -7006,7 +7075,7 @@ function processImportFile(file,zona){
 }
 
 // ============================================================================
-// DETECCIÓ DE DUPLICATS FALLES.APP (v2.1.57)
+// DETECCIÓ DE DUPLICATS FALLES.APP (v2.1.58)
 // ============================================================================
 // Usa el mateix sistema de bankHash que els bancs.
 // Hash: fontImport|data|import_2dec|concepte_normalitzat
