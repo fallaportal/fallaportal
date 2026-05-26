@@ -274,7 +274,7 @@ tr:hover td{background:var(--bg2)}
     <div class="login-logo">Falla <span>Portal</span></div>
     <div class="login-sub">Sistema de gestió financera</div>
     <div class="login-fiscal">Any fiscal 26/27 · Abr 2026 – Mar 2027</div>
-    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v2.1.45</div>
+    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v2.1.46</div>
     <button class="btn-google" onclick="signIn()">
       <svg viewBox="0 0 24 24" width="20" height="20"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
       Entrar amb Google
@@ -316,7 +316,7 @@ tr:hover td{background:var(--bg2)}
     <div class="sb-bottom">
       <div class="sync-ind"><div class="sync-dot" id="sync-dot"></div><span id="sync-text">Sincronitzat</span></div>
       <button class="btn-logout" onclick="signOut()"><i class="ti ti-logout" style="font-size:14px"></i> Tancar sessió</button>
-      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v2.1.45</div>
+      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v2.1.46</div>
     </div>
   </div>
 
@@ -395,16 +395,13 @@ tr:hover td{background:var(--bg2)}
           <i class="ti ti-chevron-right" id="mov-extra-ch"></i> Notes i justificant
         </div>
         <div id="mov-extra" style="display:none">
-          <div class="mov-field" style="margin-top:8px"><label>Notes</label><textarea id="mov-notes" rows="2" style="resize:none"></textarea></div>
           <div class="mov-field" id="mov-ticket-field">
             <label id="mov-ticket-label">Ticket o albaran <span class="opt-label" id="mov-ticket-opt">(opcional)</span></label>
             <input type="file" id="mov-photo" accept="image/*,application/pdf" style="font-size:13px" onchange="onMovPhotoChange()">
-            <div id="mov-sense-just-wrap" style="margin-top:8px;display:none">
-              <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer">
-                <input type="checkbox" id="mov-sense-just" onchange="onSenseJustChange()"> Sense justificant
-              </label>
-              <textarea id="mov-sense-just-motiu" rows="2" placeholder="Motiu obligatori (ex: sense rebut, transferència bancària...)" style="display:none;margin-top:6px;resize:none;font-size:13px;width:100%;box-sizing:border-box"></textarea>
-            </div>
+          </div>
+          <div class="mov-field" style="margin-top:8px">
+            <label id="mov-notes-label">Notes <span class="opt-label" id="mov-notes-opt">(opcional)</span></label>
+            <textarea id="mov-notes" rows="2" style="resize:none" placeholder=""></textarea>
           </div>
         </div>
         <button class="btn" id="btn-registrar" onclick="confirmRegistrar()" style="width:100%;padding:14px;font-size:16px;margin-top:8px;border-radius:var(--r);display:none;background:var(--gray,#555);color:#fff;opacity:0.6;cursor:not-allowed" disabled>
@@ -2762,7 +2759,7 @@ async function doRegistrarMoviment(imp,areaId,area,delegId,deleg,event,eventId,u
     import:Math.abs(imp),notes:document.getElementById('mov-notes').value,
     origenFons:usaFons===true?'fons_lliurats':usaFons==='avanc'?'avanc':'caixa',
     origen:'Manual',ticketUrl:'',
-    ticketMotiu:(document.getElementById('mov-sense-just')?.checked?document.getElementById('mov-sense-just-motiu')?.value.trim()||'':'')
+    ticketMotiu:(()=>{const {mode,llindar}=getJustMode();const photo=document.getElementById('mov-photo');const tePhoto=photo&&photo.files&&photo.files.length>0;const obligatori=movType==='gast'&&(mode==='sempre'||(mode==='import'&&Math.abs(imp)>=llindar&&llindar>0));if(obligatori&&!tePhoto)return document.getElementById('mov-notes')?.value.trim()||'';return '';})()
   };
   DB.moviments.push(mov);
 
@@ -2812,10 +2809,6 @@ async function doRegistrarMoviment(imp,areaId,area,delegId,deleg,event,eventId,u
   // Reset justificant
   const photoEl=document.getElementById('mov-photo');
   if(photoEl)photoEl.value='';
-  const cbEl=document.getElementById('mov-sense-just');
-  if(cbEl)cbEl.checked=false;
-  const motiuEl=document.getElementById('mov-sense-just-motiu');
-  if(motiuEl){motiuEl.value='';motiuEl.style.display='none';}
   updateMovTicketUI();
 }
 
@@ -6613,46 +6606,46 @@ function updateMovTicketUI(){
   const {mode,llindar}=getJustMode();
   const ticketField=document.getElementById('mov-ticket-field');
   const ticketOpt=document.getElementById('mov-ticket-opt');
-  const senseWrap=document.getElementById('mov-sense-just-wrap');
+  const notesLabel=document.getElementById('mov-notes-label');
+  const notesOpt=document.getElementById('mov-notes-opt');
+  const notesTA=document.getElementById('mov-notes');
   if(!ticketField)return;
   let obligatori=false;
   if(esDespesa){
     if(mode==='sempre')obligatori=true;
     else if(mode==='import'&&imp>=llindar&&llindar>0)obligatori=true;
   }
+  const photo=document.getElementById('mov-photo');
+  const tePhoto=photo&&photo.files&&photo.files.length>0;
   if(obligatori){
     ticketOpt.textContent='(obligatori)';
     ticketOpt.style.color='var(--red)';
-    senseWrap.style.display='block';
-  }else{
-    ticketOpt.textContent='(opcional)';
-    ticketOpt.style.color='';
-    senseWrap.style.display='none';
-    const cb=document.getElementById('mov-sense-just');
-    if(cb)cb.checked=false;
-    const mot=document.getElementById('mov-sense-just-motiu');
-    if(mot)mot.style.display='none';
-  }
-  if(obligatori){
+    // Si no hi ha foto, el camp notes és el motiu excepció (obligatori)
+    if(!tePhoto){
+      if(notesLabel)notesLabel.childNodes[0].textContent='Motiu excepció ';
+      if(notesOpt){notesOpt.textContent='(obligatori)';notesOpt.style.color='var(--red)';}
+      if(notesTA)notesTA.placeholder='Per què no s\'adjunta justificant? (ex: sense rebut, transferència...)';
+    }else{
+      if(notesLabel)notesLabel.childNodes[0].textContent='Notes ';
+      if(notesOpt){notesOpt.textContent='(opcional)';notesOpt.style.color='';}
+      if(notesTA)notesTA.placeholder='';
+    }
     const el=document.getElementById('mov-extra');
     const ch=document.getElementById('mov-extra-ch');
     if(el&&el.style.display!=='block'){el.style.display='block';if(ch)ch.style.transform='rotate(90deg)';}
+  }else{
+    ticketOpt.textContent='(opcional)';
+    ticketOpt.style.color='';
+    if(notesLabel)notesLabel.childNodes[0].textContent='Notes ';
+    if(notesOpt){notesOpt.textContent='(opcional)';notesOpt.style.color='';}
+    if(notesTA)notesTA.placeholder='';
   }
 }
 
 function onMovPhotoChange(){
-  const cb=document.getElementById('mov-sense-just');
-  if(cb&&cb.checked){cb.checked=false;onSenseJustChange();}
+  updateMovTicketUI();
 }
 
-function onSenseJustChange(){
-  const cb=document.getElementById('mov-sense-just');
-  const mot=document.getElementById('mov-sense-just-motiu');
-  const photo=document.getElementById('mov-photo');
-  if(!cb||!mot)return;
-  mot.style.display=cb.checked?'block':'none';
-  if(cb.checked&&photo)photo.value='';
-}
 
 function validarJustificant(){
   const esDespesa=movType==='gast';
@@ -6665,15 +6658,12 @@ function validarJustificant(){
   }
   if(!obligatori)return true;
   const photo=document.getElementById('mov-photo');
-  const cb=document.getElementById('mov-sense-just');
-  const mot=document.getElementById('mov-sense-just-motiu');
+  const notes=document.getElementById('mov-notes');
   const tePhoto=photo&&photo.files&&photo.files.length>0;
-  const senseJust=cb&&cb.checked;
-  const teMotiu=mot&&mot.value.trim().length>0;
   if(tePhoto)return true;
-  if(senseJust&&teMotiu)return true;
-  if(senseJust&&!teMotiu){showToast('Has d\'indicar el motiu per no adjuntar justificant',true);return false;}
-  showToast('Cal adjuntar el ticket o albaran',true);
+  const motiu=notes&&notes.value.trim().length>0;
+  if(motiu)return true;
+  showToast('Cal adjuntar el ticket o indicar el motiu al camp Notes',true);
   return false;
 }
 
@@ -6974,7 +6964,7 @@ function processImportFile(file,zona){
 }
 
 // ============================================================================
-// DETECCIÓ DE DUPLICATS FALLES.APP (v2.1.45)
+// DETECCIÓ DE DUPLICATS FALLES.APP (v2.1.46)
 // ============================================================================
 // Usa el mateix sistema de bankHash que els bancs.
 // Hash: fontImport|data|import_2dec|concepte_normalitzat
