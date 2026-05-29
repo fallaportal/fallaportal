@@ -314,7 +314,7 @@ tr:hover td{background:var(--bg2)}
     <div class="login-logo">Falla <span>Portal</span></div>
     <div class="login-sub">Sistema de gestió financera</div>
     <div class="login-fiscal">Any fiscal 26/27 · Abr 2026 – Mar 2027</div>
-    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v3.0.13-dev</div>
+    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v3.0.14-dev</div>
     <button class="btn-google" onclick="signIn()">
       <svg viewBox="0 0 24 24" width="20" height="20"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
       Entrar amb Google
@@ -356,7 +356,7 @@ tr:hover td{background:var(--bg2)}
     <div class="sb-bottom">
       <div class="sync-ind"><div class="sync-dot" id="sync-dot"></div><span id="sync-text">Sincronitzat</span></div>
       <button class="btn-logout" onclick="signOut()"><i class="ti ti-logout" style="font-size:14px"></i> Tancar sessió</button>
-      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v3.0.13-dev</div>
+      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v3.0.14-dev</div>
     </div>
   </div>
 
@@ -998,6 +998,7 @@ tr:hover td{background:var(--bg2)}
       <div id="cfg-bancs" class="hidden"></div>
       <div id="cfg-rols" class="hidden"></div>
       <div id="cfg-moduls" class="hidden"></div>
+      <div id="cfg-reports" class="hidden"></div>
       <div id="cfg-regles" class="hidden"></div>
       <div id="cfg-justificants" class="hidden"></div>
       <div id="cfg-usuaris" class="hidden"></div>
@@ -1542,7 +1543,30 @@ function getRoles(){
   return DEFAULT_ROLES;
 }
 
-// MÒDULS — llista de tots els mòduls de navegació
+// REPORTS — definició de tots els reports disponibles
+const REPORTS_DEF=[
+  {id:'r1',icon:'ti-lock',          label:'Tancaments caixa'},
+  {id:'r2',icon:'ti-arrow-down-left',label:'Fons lliurats'},
+  {id:'r3',icon:'ti-calendar-event', label:'Resultat per event'},
+  {id:'r4',icon:'ti-receipt-off',    label:'Sense justificant'}
+];
+
+function getDefaultReportVis(){
+  const vis={};
+  Object.keys(DEFAULT_ROLES).filter(function(r){return r!=='noauth';}).forEach(function(rolId){
+    vis[rolId]={};
+    REPORTS_DEF.forEach(function(r){
+      vis[rolId][r.id]={visible:true};
+    });
+  });
+  return vis;
+}
+
+function getReportVis(){
+  const v=DB.config.reportVis||{};
+  if(Object.keys(v).length>0)return v;
+  return getDefaultReportVis();
+}
 const MODULS_DEF=[
   {id:'dashboard',        label:'Dashboard',         labelCurt:'Inici',      icon:'ti-home',            page:'dashboard',         seccio:'Principal'},
   {id:'moviments',        label:'Nou moviment',       labelCurt:'Moviment',   icon:'ti-plus',            page:'moviments',         seccio:'Principal'},
@@ -1671,7 +1695,7 @@ let DB={
       {id:'b3',codi:'Efectiu',nom:'Caixa efectiu',tipus:'cash'},
       {id:'b4',codi:'TPV',nom:'TPV targetes',tipus:'tpv'}
     ],
-    usuaris:[],anyFiscal:'',exercicis:[],directiva:{},estats_exercicis:{},rols:{},modulVis:{}
+    usuaris:[],anyFiscal:'',exercicis:[],directiva:{},estats_exercicis:{},rols:{},modulVis:{},reportVis:{}
   },
   moviments:[],fons:[],tancaments:{},pres_plans:[],pres_config:{any:'',estat:'obert',bloquejatPer:'',bloquejatEmail:'',data:''},pres_historial:[],regles:[]
 };
@@ -2289,7 +2313,8 @@ async function save(key){
         {clau:'fappPassiu',valor:JSON.stringify(DB.config.fappPassiu||{})},
         {clau:'justificant',valor:JSON.stringify(DB.config.justificant||{mode:'mai',llindar:0})},
         {clau:'drive_folders',valor:JSON.stringify(DB.config.drive_folders||{})},
-        {clau:'modulVis',valor:JSON.stringify(DB.config.modulVis||{})}
+        {clau:'modulVis',valor:JSON.stringify(DB.config.modulVis||{})},
+        {clau:'reportVis',valor:JSON.stringify(DB.config.reportVis||{})}
       ];
       await writeTab(TABS.config_ext.name,TABS.config_ext.headers,cfgRows);
     }
@@ -2568,6 +2593,7 @@ async function loadFromSheets(){
     if(cfgMap.justificant){try{DB.config.justificant=JSON.parse(cfgMap.justificant);}catch(e){}}
     if(cfgMap.drive_folders){try{DB.config.drive_folders=JSON.parse(cfgMap.drive_folders);}catch(e){}}
     if(cfgMap.modulVis){try{DB.config.modulVis=JSON.parse(cfgMap.modulVis);}catch(e){}}
+    if(cfgMap.reportVis){try{DB.config.reportVis=JSON.parse(cfgMap.reportVis);}catch(e){}}
   }
 }
 
@@ -4950,6 +4976,7 @@ function renderConfig(){
     {id:'bancs',label:'Bancs'},
     {id:'rols',label:'Mestre de Rols'},
     {id:'moduls',label:'Mòduls'},
+    {id:'reports',label:'Reports'},
     {id:'regles',label:'Regles CSV'},
     {id:'justificants',label:'Justificants'},
     ...(canUsers?[{id:'usuaris',label:'Usuaris'}]:[])
@@ -4964,14 +4991,14 @@ function renderConfig(){
 
 function showCfgTab(tab){
   window._activeCfgTab=tab;
-  ['areas','events','bancs','rols','moduls','regles','justificants','usuaris'].forEach(function(t){
+  ['areas','events','bancs','rols','moduls','reports','regles','justificants','usuaris'].forEach(function(t){
     const el=document.getElementById('cfg-'+t);
     const btn=document.getElementById('cfg-tab-'+t);
     if(el)el.classList.toggle('hidden',t!==tab);
     if(btn)btn.className='btn'+(t===tab?' btn-primary':'');
   });
   const renders={areas:renderCfgAreas,events:renderCfgEvents,bancs:renderCfgBancs,
-    rols:renderCfgRols,moduls:renderCfgModuls,regles:renderCfgRegles,justificants:renderCfgJustificants,usuaris:renderCfgUsuaris};
+    rols:renderCfgRols,moduls:renderCfgModuls,reports:renderCfgReports,regles:renderCfgRegles,justificants:renderCfgJustificants,usuaris:renderCfgUsuaris};
   try{(renders[tab]||function(){})();}catch(e){console.error('Error renderCfg '+tab,e);}
 }
 
@@ -6348,6 +6375,82 @@ async function resetModulVis(){
   showToast('Valors per defecte restaurats');
   renderCfgModuls();
   buildNav();
+}
+
+function renderCfgReports(){
+  const canEdit=perm('canConfig');
+  const rols=getRoles();
+  const vis=getReportVis();
+  const rolIds=Object.keys(rols).filter(function(r){return r!=='noauth';});
+
+  let html='';
+  html+='<div class="info-box" style="margin-bottom:14px"><i class="ti ti-info-circle" style="flex-shrink:0"></i>';
+  html+='<div>Controla quins informes pot veure cada rol dins del mòdul Reports. ';
+  html+='El rol <strong>President</strong> sempre veu tots els informes.</div></div>';
+
+  html+='<div class="card" style="padding:0;overflow:auto"><table style="min-width:500px">';
+  html+='<thead><tr><th style="min-width:180px">Informe</th>';
+  rolIds.forEach(function(rid){
+    const r=rols[rid];
+    const locked=rid==='president';
+    html+='<th style="text-align:center;padding:6px 8px;border-left:1px solid var(--border)">';
+    html+='<span class="pill '+(r.color||'p-gray')+'" style="font-size:11px">'+r.label+'</span>';
+    if(locked)html+='<div style="font-size:10px;color:var(--text3);margin-top:2px">sempre tot</div>';
+    html+='</th>';
+  });
+  html+='</tr></thead><tbody>';
+
+  REPORTS_DEF.forEach(function(rep){
+    html+='<tr>';
+    html+='<td style="padding:8px 10px;font-size:13px"><i class="ti '+rep.icon+'" style="margin-right:6px;color:var(--text3)"></i>'+rep.label+'</td>';
+    rolIds.forEach(function(rid){
+      const locked=rid==='president';
+      const rv=(vis[rid]||{});
+      const v=rv[rep.id]||{visible:true};
+      const checked=locked?true:!!v.visible;
+      const attr=locked||!canEdit?'disabled':'data-rol="'+rid+'" data-rid="'+rep.id+'" onchange="toggleReportVis(this)"';
+      html+='<td style="text-align:center;border-left:1px solid var(--border)">';
+      html+='<input type="checkbox"'+(checked?' checked':'')+' '+attr+' style="width:16px;height:16px;'+(locked||!canEdit?'opacity:.4':'cursor:pointer')+'">';
+      html+='</td>';
+    });
+    html+='</tr>';
+  });
+
+  html+='</tbody></table></div>';
+  if(canEdit){
+    html+='<div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">';
+    html+='<button class="btn btn-primary" onclick="saveReportVis()"><i class="ti ti-device-floppy"></i> Guardar canvis</button>';
+    html+='<button class="btn" onclick="resetReportVis()"><i class="ti ti-refresh"></i> Restaurar valors per defecte</button>';
+    html+='</div>';
+  }
+  document.getElementById('cfg-reports').innerHTML=html;
+}
+
+function toggleReportVis(cb){
+  const rid=cb.getAttribute('data-rol');
+  const repId=cb.getAttribute('data-rid');
+  if(!DB.config.reportVis)DB.config.reportVis=getDefaultReportVis();
+  if(!DB.config.reportVis[rid])DB.config.reportVis[rid]={};
+  DB.config.reportVis[rid][repId]={visible:cb.checked};
+  saveCache();
+}
+
+async function saveReportVis(){
+  if(!DB.config.reportVis)DB.config.reportVis=getDefaultReportVis();
+  try{
+    await save('config_ext');
+    showToast('Visibilitat de reports guardada');
+    renderReports();
+  }catch(e){showToast('Error guardant: '+e.message,true);}
+}
+
+async function resetReportVis(){
+  if(!confirm('Restaurar els valors per defecte de visibilitat de reports?'))return;
+  DB.config.reportVis=getDefaultReportVis();
+  saveCache();
+  await save('config_ext');
+  showToast('Valors per defecte restaurats');
+  renderCfgReports();
 }
 
 async function togglePerm(cb){
@@ -8107,20 +8210,27 @@ function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').
 var _repTab='r1'; // tab activa per defecte
 
 function renderReports(){
-  // Tabs
-  const tabs=[
-    {id:'r1',icon:'ti-lock',label:'Tancaments caixa'},
-    {id:'r2',icon:'ti-arrow-down-left',label:'Fons lliurats'},
-    {id:'r3',icon:'ti-calendar-event',label:'Resultat per event'},
-    {id:'r4',icon:'ti-receipt-off',label:'Sense justificant'},
-  ];
+  const rol=getRol();
+  const vis=getReportVis();
+  const rolVis=vis[rol]||{};
+  // Filtrar tabs visibles per aquest rol
+  const tabs=REPORTS_DEF.filter(function(t){
+    if(rol==='president')return true;
+    const v=rolVis[t.id];
+    return v?v.visible!==false:true;
+  });
   const bar=document.getElementById('rep-tabs-bar');
   if(bar){
     bar.innerHTML=tabs.map(t=>'<button onclick="repTab(\''+t.id+'\')" id="repbtn-'+t.id+'" style="padding:6px 14px;border-radius:20px;border:none;cursor:pointer;font-size:13px;font-weight:500;display:flex;align-items:center;gap:6px;background:'+(_repTab===t.id?'var(--red)':'var(--bg2)')+';color:'+(_repTab===t.id?'#fff':'var(--text2)')+'"><i class=\"ti '+t.icon+'\"></i>'+t.label+'</button>').join('');
   }
   const sub=document.getElementById('rep-sub');
   if(sub)sub.textContent='Informes operacionals';
-  repTab(_repTab,true);
+  // Si el tab actiu no és visible, saltar al primer disponible
+  if(tabs.length>0&&!tabs.find(function(t){return t.id===_repTab;})){
+    _repTab=tabs[0].id;
+  }
+  if(tabs.length>0)repTab(_repTab,true);
+  else if(sub)sub.textContent='No hi ha informes disponibles per al teu rol.';
 }
 
 function repTab(id,noRender){
