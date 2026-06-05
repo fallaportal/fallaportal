@@ -314,7 +314,7 @@ tr:hover td{background:var(--bg2)}
     <div class="login-logo">Falla <span>Portal</span></div>
     <div class="login-sub">Sistema de gestió financera</div>
     <div class="login-fiscal">Any fiscal 26/27 · Abr 2026 – Mar 2027</div>
-    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v4.0.6</div>
+    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v4.0.7</div>
     <button class="btn-google" onclick="signIn()">
       <svg viewBox="0 0 24 24" width="20" height="20"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
       Entrar amb Google
@@ -356,7 +356,7 @@ tr:hover td{background:var(--bg2)}
     <div class="sb-bottom">
       <div class="sync-ind"><div class="sync-dot" id="sync-dot"></div><span id="sync-text">Sincronitzat</span></div>
       <button class="btn-logout" onclick="signOut()"><i class="ti ti-logout" style="font-size:14px"></i> Tancar sessió</button>
-      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v4.0.6</div>
+      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v4.0.7</div>
     </div>
   </div>
 
@@ -624,6 +624,20 @@ tr:hover td{background:var(--bg2)}
         <select id="dir-any" onchange="renderDirectiva()" style="font-size:14px;padding:6px 10px;border-radius:var(--r);border:0.5px solid var(--border2);background:var(--bg);color:var(--text)"></select>
       </div>
       <div id="directiva-container"></div>
+    </div>
+
+    <!-- Modal confirmació genèric -->
+    <div id="modal-confirm-gen" class="modal-overlay">
+      <div class="modal" style="max-width:420px">
+        <div class="modal-inner">
+          <div class="modal-title" id="modal-gen-title">Confirmar</div>
+          <p id="modal-gen-msg" style="margin:12px 0 20px;color:var(--text2);font-size:14px"></p>
+          <div style="display:flex;gap:8px;justify-content:flex-end">
+            <button class="btn" onclick="closeModal('modal-confirm-gen')">Cancel·lar</button>
+            <button class="btn btn-primary" id="modal-gen-ok" onclick="closeModal('modal-confirm-gen')">Confirmar</button>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- Modal confirmació moviment -->
@@ -1624,8 +1638,13 @@ function getDefaultModulVis(){
 // Retorna la visibilitat activa (del Sheet si n'hi ha, per defecte si no)
 function getModulVis(){
   const v=DB.config.modulVis||{};
-  if(Object.keys(v).length>0)return v;
-  return getDefaultModulVis();
+  if(Object.keys(v).length===0)return getDefaultModulVis();
+  // Assegurar que tots els rols actuals existeixen
+  const def=getDefaultModulVis();
+  Object.keys(def).forEach(function(rid){
+    if(!v[rid])v[rid]=def[rid];
+  });
+  return v;
 }
 
 let tokenClient=null,accessToken=null,currentUser=null,_tokenTimer=null;
@@ -2243,6 +2262,13 @@ async function bgRefresh(){
 // MODAL
 function openModal(id){const el=document.getElementById(id);if(el)el.classList.add('open');}
 function closeModal(id){const el=document.getElementById(id);if(el)el.classList.remove('open');}
+function showConfirm(msg,onOk,title){
+  document.getElementById('modal-gen-title').textContent=title||'Confirmar';
+  document.getElementById('modal-gen-msg').textContent=msg;
+  const btn=document.getElementById('modal-gen-ok');
+  btn.onclick=function(){closeModal('modal-confirm-gen');onOk();};
+  openModal('modal-confirm-gen');
+}
 function toggleDeleg(bid){const b=document.getElementById(bid);if(b){b.classList.toggle('open');const h=b.previousElementSibling;if(h){const ch=h.querySelector('.chevron');if(ch)ch.classList.toggle('open');}}}
 function toggleDelegClick(el){const bid=el.getAttribute('data-bid');if(bid)toggleDeleg(bid);}
 
@@ -2358,6 +2384,7 @@ async function save(key){
         {clau:'justificant',valor:JSON.stringify(DB.config.justificant||{mode:'mai',llindar:0})},
         {clau:'drive_folders',valor:JSON.stringify(DB.config.drive_folders||{})},
         {clau:'modulVis',valor:JSON.stringify(DB.config.modulVis||{})},
+        {clau:'modulVisDef',valor:JSON.stringify(DB.config.modulVisDef||{})},
         {clau:'reportVis',valor:JSON.stringify(DB.config.reportVis||{})}
       ];
       await writeTab(TABS.config_ext.name,TABS.config_ext.headers,cfgRows);
@@ -2637,6 +2664,7 @@ async function loadFromSheets(){
     if(cfgMap.justificant){try{DB.config.justificant=JSON.parse(cfgMap.justificant);}catch(e){}}
     if(cfgMap.drive_folders){try{DB.config.drive_folders=JSON.parse(cfgMap.drive_folders);}catch(e){}}
     if(cfgMap.modulVis){try{DB.config.modulVis=JSON.parse(cfgMap.modulVis);}catch(e){}}
+    if(cfgMap.modulVisDef){try{DB.config.modulVisDef=JSON.parse(cfgMap.modulVisDef);}catch(e){}}
     if(cfgMap.reportVis){try{DB.config.reportVis=JSON.parse(cfgMap.reportVis);}catch(e){}}
   }
 }
@@ -6353,6 +6381,7 @@ function renderCfgModuls(){
   if(canEdit){
     html+='<div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">';
     html+='<button class="btn btn-primary" onclick="saveModulVis()"><i class="ti ti-device-floppy"></i> Guardar canvis</button>';
+    html+='<button class="btn" onclick="saveModulVisDef()"><i class="ti ti-bookmark"></i> Guardar com a valors per defecte</button>';
     html+='<button class="btn" onclick="resetModulVis()"><i class="ti ti-refresh"></i> Restaurar valors per defecte</button>';
     html+='</div>';
   }
@@ -6368,6 +6397,7 @@ function toggleModulVis(cb){
   if(!DB.config.modulVis[rid][mid])DB.config.modulVis[rid][mid]={desktop:false,barra:false,mes:false};
   DB.config.modulVis[rid][mid][plat]=cb.checked;
   saveCache();
+  renderCfgModuls();
 }
 
 function toggleModulVisBarra(cb){
@@ -6414,13 +6444,23 @@ async function saveModulVis(){
 }
 
 async function resetModulVis(){
-  if(!confirm('Restaurar els valors per defecte de visibilitat de mòduls?'))return;
-  DB.config.modulVis=getDefaultModulVis();
-  saveCache();
-  await save('config_ext');
-  showToast('Valors per defecte restaurats');
-  renderCfgModuls();
-  buildNav();
+  showConfirm('Restaurar els valors per defecte de visibilitat de mòduls?',async function(){
+    DB.config.modulVis=DB.config.modulVisDef?JSON.parse(JSON.stringify(DB.config.modulVisDef)):getDefaultModulVis();
+    saveCache();
+    await save('config_ext');
+    showToast('Valors per defecte restaurats');
+    renderCfgModuls();
+    buildNav();
+  },'Restaurar valors per defecte');
+}
+
+async function saveModulVisDef(){
+  showConfirm('Guardar la configuració actual com a nous valors per defecte?',async function(){
+    DB.config.modulVisDef=JSON.parse(JSON.stringify(DB.config.modulVis||getDefaultModulVis()));
+    saveCache();
+    await save('config_ext');
+    showToast('Valors per defecte guardats');
+  },'Guardar com a valors per defecte');
 }
 
 function renderCfgReports(){
