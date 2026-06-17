@@ -316,7 +316,7 @@ tr:hover td{background:var(--bg2)}
     <div class="login-logo">Falla <span>Portal</span></div>
     <div class="login-sub">Sistema de gestió financera</div>
     <div class="login-fiscal">Any fiscal 26/27 · Abr 2026 – Mar 2027</div>
-    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v4.0.21</div>
+    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v4.0.23</div>
     <button class="btn-google" onclick="signIn()">
       <svg viewBox="0 0 24 24" width="20" height="20"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
       Entrar amb Google
@@ -358,7 +358,7 @@ tr:hover td{background:var(--bg2)}
     <div class="sb-bottom">
       <div class="sync-ind" style="display:flex;align-items:center;justify-content:space-between"><div style="display:flex;align-items:center;gap:6px"><div class="sync-dot" id="sync-dot"></div><span id="sync-text">Sincronitzat</span></div><button onclick="manualRefresh()" title="Actualitzar dades" style="background:none;border:none;cursor:pointer;padding:2px 4px;color:var(--text2);font-size:14px;line-height:1"><i class="ti ti-refresh"></i></button></div>
       <button class="btn-logout" onclick="signOut()"><i class="ti ti-logout" style="font-size:14px"></i> Tancar sessió</button>
-      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v4.0.21</div>
+      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v4.0.23</div>
     </div>
   </div>
 
@@ -1007,6 +1007,7 @@ tr:hover td{background:var(--bg2)}
       <div class="page-sub" id="sub-configuracio">Manteniment de dades i gestió d'exercicis</div>
       <div style="font-size:12px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px"><i class="ti ti-settings" style="font-size:14px;margin-right:4px"></i>Manteniment</div>
       <div style="display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap" id="cfg-tabs-bar"></div>
+      <div id="cfg-exercicis" class="hidden"></div>
       <div id="cfg-areas" class="hidden"></div>
       <div id="cfg-events" class="hidden"></div>
       <div id="cfg-bancs" class="hidden"></div>
@@ -1017,10 +1018,6 @@ tr:hover td{background:var(--bg2)}
       <div id="cfg-regles" class="hidden"></div>
       <div id="cfg-justificants" class="hidden"></div>
       <div id="cfg-usuaris" class="hidden"></div>
-      <div style="border-top:1px solid var(--border);margin-top:28px;padding-top:20px">
-        <div style="font-size:12px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:14px"><i class="ti ti-calendar" style="font-size:14px;margin-right:4px"></i>Gestió d'exercicis fiscals</div>
-        <div id="cfg-exercicis-container"></div>
-      </div>
     </div>
   </div>
 </div>
@@ -1837,7 +1834,7 @@ function canviarExercici(any,silent){
       pressupostos:renderPressupostosEdit,'pressupostos-edit':renderPressupostosEdit,
       lliurament:renderFons,tancament:renderTancamentList,
       resultats:renderResultats,flux:renderFlux,
-      configuracio:function(){renderCfgExercicis();showCfgTab(window._activeCfgTab||'areas');},
+      configuracio:function(){showCfgTab(window._activeCfgTab||'exercicis');},
       fallesapp:initFappDates,importacio:initCSVDates};
     if(renders[id])renders[id]();
   }
@@ -5157,6 +5154,7 @@ function importarCSV(){showToast('Disponible quan tingueu els formats CSV reals 
 function renderConfig(){
   const canUsers=perm('canUsers');
   const tabs=[
+    {id:'exercicis',label:'Exercicis'},
     {id:'areas',label:'Àrees'},
     {id:'events',label:'Events'},
     {id:'bancs',label:'Bancs'},
@@ -5172,19 +5170,18 @@ function renderConfig(){
     return '<button class="btn'+(i===0?' btn-primary':'')+'" id="cfg-tab-'+t.id+'" data-tab="'+t.id+'" onclick="showCfgTab(this.dataset.tab)">'+t.label+'</button>';
   }).join('');
   document.getElementById('cfg-tabs-bar').innerHTML=tabsBtns;
-  showCfgTab('areas');
-  renderCfgExercicis();
+  showCfgTab('exercicis');
 }
 
 function showCfgTab(tab){
   window._activeCfgTab=tab;
-  ['areas','events','bancs','rols','moduls','reports','regles','justificants','usuaris','log'].forEach(function(t){
+  ['exercicis','areas','events','bancs','rols','moduls','reports','regles','justificants','usuaris','log'].forEach(function(t){
     const el=document.getElementById('cfg-'+t);
     const btn=document.getElementById('cfg-tab-'+t);
     if(el)el.classList.toggle('hidden',t!==tab);
     if(btn)btn.className='btn'+(t===tab?' btn-primary':'');
   });
-  const renders={areas:renderCfgAreas,events:renderCfgEvents,bancs:renderCfgBancs,
+  const renders={exercicis:renderCfgExercicis,areas:renderCfgAreas,events:renderCfgEvents,bancs:renderCfgBancs,
     rols:renderCfgRols,moduls:renderCfgModuls,reports:renderCfgReports,regles:renderCfgRegles,justificants:renderCfgJustificants,usuaris:renderCfgUsuaris,log:renderCfgLog};
   try{(renders[tab]||function(){})();}catch(e){console.error('Error renderCfg '+tab,e);}
 }
@@ -5997,7 +5994,7 @@ async function deleteRegla(id){
 }
 
 function renderCfgExercicis(){
-  const container=document.getElementById('cfg-exercicis-container');
+  const container=document.getElementById('cfg-exercicis');
   if(!container){console.warn('cfg-exercicis-container no trobat');return;}
   const canDo=perm('canConfig');
   const exercicis=DB.config.exercicis||['26/27'];
@@ -6041,6 +6038,9 @@ function renderCfgExercicis(){
       if(isActiu&&!tancat){
         html+='<button class="btn" style="font-size:12px;padding:3px 8px;color:var(--amber)" onclick="openModalTancarExercici()"><i class="ti ti-lock"></i> Tancar</button>';
       }
+      if(tancat){
+        html+='<button class="btn" style="font-size:12px;padding:3px 8px;color:var(--green)" data-any="'+e+'" onclick="reobrirExercici(this.dataset.any)"><i class="ti ti-lock-open"></i> Reobrir</button>';
+      }
       html+='<button class="btn" style="font-size:12px;padding:3px 8px" data-any="'+e+'" onclick="editarExercici(this.dataset.any)"><i class="ti ti-edit"></i></button>';
       if(!isActiu){
         html+='<button class="btn" style="font-size:12px;padding:3px 8px;margin-right:2px" title="Backup JSON" data-any="'+e+'" onclick="exportSnapshotExercici(this.dataset.any)"><i class="ti ti-download"></i></button>';
@@ -6054,6 +6054,17 @@ function renderCfgExercicis(){
   container.innerHTML=html;
 }
 
+function reobrirExercici(any){
+  if(!confirm("Reobrir l'exercici "+any+"? Tornara a estar en estat Obert."))return;
+  if(!DB.config.estats_exercicis)DB.config.estats_exercicis={};
+  if(!DB.config.estats_exercicis[any])DB.config.estats_exercicis[any]={};
+  DB.config.estats_exercicis[any].tancat=false;
+  DB.config.estats_exercicis[any].dataTancament='';
+  save('config_ext').catch(function(e){showToast('Error: '+e.message,true);});
+  saveCache();
+  renderCfgExercicis();
+  showToast('Exercici '+any+' reobert');
+}
 function updateDataObertura(any,valor){
   if(!DB.config.estats_exercicis)DB.config.estats_exercicis={};
   if(!DB.config.estats_exercicis[any])DB.config.estats_exercicis[any]={tancat:false,dataTancament:''};
@@ -6823,11 +6834,17 @@ function initBonifSelectors(){
   (DB.config.areas||[]).forEach(function(a){
     areaSel.innerHTML+='<option value="'+a.id+'">'+a.id+' · '+a.name+'</option>';
   });
-  // Per defecte: '01' Administració i Secretaria / '0102' Tresoreria
+  // Per defecte: '01' Administracio i Secretaria
   areaSel.value='01';
-  onBonifAreaChange();
+  // Omplir delegacions i seleccionar '0102' Tresoreria per defecte
   const delegSel=document.getElementById('fapp-bonif-deleg');
-  if(delegSel)delegSel.value='0102';
+  if(delegSel){
+    delegSel.innerHTML='<option value="">— Sense delegació —</option>';
+    (DB.config.delegacions||[]).filter(function(d){return d.areaId==='01';}).forEach(function(d){
+      delegSel.innerHTML+='<option value="'+d.id+'">'+d.id+' · '+d.name+'</option>';
+    });
+    delegSel.value='0102';
+  }
 }
 async function registrarBonificacio(){
   const imp=parseFloat(document.getElementById('fapp-bonif-import').value)||0;
