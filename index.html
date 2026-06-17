@@ -148,7 +148,8 @@ input[type=checkbox]{accent-color:var(--green)}
 .modal-inner{padding:22px;overflow-y:auto;flex:1}.modal-footer{display:flex;justify-content:flex-end;gap:8px;padding:14px 22px;border-top:0.5px solid var(--border);background:var(--bg);border-radius:0 0 var(--rl) var(--rl);flex-shrink:0}
 .modal-title{font-size:17px;font-weight:500;margin-bottom:18px}
 .toast{position:fixed;bottom:24px;right:24px;padding:10px 16px;background:var(--green);color:#fff;border-radius:var(--r);font-size:13px;z-index:300;display:none;align-items:center;gap:8px;max-width:340px}
-.toast.show{display:flex}.toast.error{background:var(--red)}
+.toast.show{display:flex}.toast.error{background:var(--red)}.toast.pending{background:#555}.toast.warn{background:var(--amber,#B45309)}
+.toast-retry{background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:4px;padding:3px 10px;font-size:12px;cursor:pointer;margin-left:4px;white-space:nowrap}
 .pill{font-size:11px;padding:3px 9px;border-radius:10px}
 .p-ok{background:var(--green-bg);color:var(--green-text)}
 .p-warn{background:var(--amber-bg);color:var(--amber-text)}
@@ -316,7 +317,7 @@ tr:hover td{background:var(--bg2)}
     <div class="login-logo">Falla <span>Portal</span></div>
     <div class="login-sub">Sistema de gestió financera</div>
     <div class="login-fiscal">Any fiscal 26/27 · Abr 2026 – Mar 2027</div>
-    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v4.0.23</div>
+    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v4.0.24</div>
     <button class="btn-google" onclick="signIn()">
       <svg viewBox="0 0 24 24" width="20" height="20"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
       Entrar amb Google
@@ -358,7 +359,7 @@ tr:hover td{background:var(--bg2)}
     <div class="sb-bottom">
       <div class="sync-ind" style="display:flex;align-items:center;justify-content:space-between"><div style="display:flex;align-items:center;gap:6px"><div class="sync-dot" id="sync-dot"></div><span id="sync-text">Sincronitzat</span></div><button onclick="manualRefresh()" title="Actualitzar dades" style="background:none;border:none;cursor:pointer;padding:2px 4px;color:var(--text2);font-size:14px;line-height:1"><i class="ti ti-refresh"></i></button></div>
       <button class="btn-logout" onclick="signOut()"><i class="ti ti-logout" style="font-size:14px"></i> Tancar sessió</button>
-      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v4.0.23</div>
+      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v4.0.24</div>
     </div>
   </div>
 
@@ -1485,7 +1486,7 @@ tr:hover td{background:var(--bg2)}
   </div>
 </div>
 
-<div class="toast" id="toast"></div>
+<div class="toast" id="toast"><span id="toast-msg"></span><button class="toast-retry" id="toast-retry" style="display:none" onclick="toastRetry()">Reintentar</button></div>
 
 <script>
 const CLIENT_ID='762692298201-gnhlho2ob1fb77s6uoevocji8r6afssm.apps.googleusercontent.com';
@@ -1739,8 +1740,76 @@ const fmtDt=function(v){
 
 function showToast(msg,err=false){
   const t=document.getElementById('toast');
-  t.textContent=msg;t.className='toast show'+(err?' error':'');
-  setTimeout(()=>t.classList.remove('show'),3500);
+  const msgEl=document.getElementById('toast-msg');
+  const retryBtn=document.getElementById('toast-retry');
+  if(msgEl)msgEl.textContent=msg; else t.textContent=msg;
+  if(retryBtn)retryBtn.style.display='none';
+  t.className='toast show'+(err?' error':'');
+  clearTimeout(t._hideTimer);
+  t._hideTimer=setTimeout(()=>t.classList.remove('show'),3500);
+}
+function showToastPersistent(msg,cls){
+  const t=document.getElementById('toast');
+  const msgEl=document.getElementById('toast-msg');
+  const retryBtn=document.getElementById('toast-retry');
+  if(msgEl)msgEl.textContent=msg; else t.textContent=msg;
+  if(retryBtn)retryBtn.style.display='none';
+  t.className='toast show '+(cls||'pending');
+  clearTimeout(t._hideTimer);
+}
+function showToastRetry(msg,retryCb){
+  const t=document.getElementById('toast');
+  const msgEl=document.getElementById('toast-msg');
+  const retryBtn=document.getElementById('toast-retry');
+  if(msgEl)msgEl.textContent=msg; else t.textContent=msg;
+  t.className='toast show error';
+  clearTimeout(t._hideTimer);
+  if(retryBtn){retryBtn.style.display='inline-block';t._retryCb=retryCb;}
+  t._hideTimer=setTimeout(()=>t.classList.remove('show'),8000);
+}
+function toastRetry(){
+  const t=document.getElementById('toast');
+  const retryBtn=document.getElementById('toast-retry');
+  if(retryBtn)retryBtn.style.display='none';
+  if(t._retryCb)t._retryCb();
+}
+async function saveWithToast(key,msgOk){
+  showToastPersistent('Guardant...');
+  try{
+    await save(key);
+    showToast(msgOk||'Guardat ✓');
+  }catch(e1){
+    showToastPersistent('Error de connexió, reintentant en 5s...','warn');
+    await new Promise(function(r){setTimeout(r,5000);});
+    try{
+      await save(key);
+      showToast(msgOk||'Guardat ✓');
+    }catch(e2){
+      showToastRetry('Error guardant: '+e2.message,function(){saveWithToast(key,msgOk);});
+    }
+  }
+}
+async function saveMultiWithToast(saves,msgOk){
+  // saves = array de {key} o funcions async
+  showToastPersistent('Guardant...');
+  async function execSaves(){
+    await Promise.all(saves.map(function(s){
+      return typeof s==='function'?s():save(s);
+    }));
+  }
+  try{
+    await execSaves();
+    showToast(msgOk||'Guardat ✓');
+  }catch(e1){
+    showToastPersistent('Error de connexió, reintentant en 5s...','warn');
+    await new Promise(function(r){setTimeout(r,5000);});
+    try{
+      await execSaves();
+      showToast(msgOk||'Guardat ✓');
+    }catch(e2){
+      showToastRetry('Error guardant: '+e2.message,function(){saveMultiWithToast(saves,msgOk);});
+    }
+  }
 }
 function setSyncing(b,silent){
   document.getElementById('sync-dot').className='sync-dot'+(b?' syncing':'');
@@ -3130,7 +3199,7 @@ async function doRegistrarMoviment(imp,areaId,area,delegId,deleg,event,eventId,u
 
   saveCache();
   const origenLabel=usaFons===true?' (fons lliurats)':usaFons==='avanc'?' (avançament personal)':'';
-  showToast('Registrat: '+(movType==='ing'?'+':'-')+fmtD(imp)+origenLabel);
+  
 
   // Pujar ticket a Drive si n'hi ha
   const photoFile=document.getElementById('mov-photo')?.files?.[0];
@@ -3142,14 +3211,14 @@ async function doRegistrarMoviment(imp,areaId,area,delegId,deleg,event,eventId,u
       const idx=DB.moviments.findIndex(function(m){return m.id===mov.id;});
       if(idx>=0)DB.moviments[idx].ticketUrl=url;
       saveCache();
-      saveMoviment(mov).catch(function(e){showToast('Error guardant a Sheets: '+e.message,true);});
+      saveWithToast('moviments','Moviment registrat ✓');
       showToast('Ticket pujat correctament');
     }).catch(function(e){
       showToast('Error pujant ticket: '+e.message,true);
       saveMoviment(mov).catch(function(e2){showToast('Error guardant a Sheets: '+e2.message,true);});
     });
   }else{
-    saveMoviment(mov).catch(function(e){showToast('Error guardant a Sheets: '+e.message,true);});
+    saveWithToast('moviments','Moviment registrat ✓');
   }
   ['mov-import','mov-establiment','mov-notes','mov-concept'].forEach(function(id){
     document.getElementById(id).value='';
@@ -3253,7 +3322,7 @@ async function deleteMoviment(id){
   }else{
     showToast('Moviment eliminat');
   }
-  save('moviments').catch(function(e){showToast('Error guardant: '+e.message,true);});
+  saveWithToast('moviments','Moviment eliminat ✓');
 }
 
 let _editMovId=null;
@@ -3343,7 +3412,7 @@ async function saveEditMov(){
   closeModal('modal-edit-mov');
   filterHist();
   showToast(fonsMod?'Moviment i fons lliurat actualitzats':'Moviment actualitzat');
-  save('moviments').catch(function(e){showToast('Error: '+e.message,true);});
+  saveWithToast('moviments','Moviment actualitzat ✓');
 }
 
 let _histSort={col:'data',dir:-1}; // -1=desc, 1=asc
@@ -3616,7 +3685,7 @@ async function deleteFons(id){
     saveCache();renderFons();
     showToast('Lliurament eliminat');
   }
-  save('fons').catch(function(e){showToast('Error: '+e.message,true);});
+  saveWithToast('fons','Fons registrat ✓');
 }
 
 function populateDelegatSelects(){
@@ -4141,18 +4210,13 @@ async function executarTancament(){
     anyFiscal:af,movimentId:'',eventTancamentId:evId};
   DB.fons.push(fDevol);
   saveCache();
-  showToast('Caixa tancada · Resultat: '+fmtD(ef+retirades-canvi+tpv-pag));
   ['tanc-efectiu','tanc-tpv','tanc-pagaments','tanc-notes'].forEach(id=>{
     const el=document.getElementById(id);if(el)el.value='';
   });
   populateTancSelectors();
   document.getElementById('tanc-tancar-sel').value='';
   onTancTancarChange();
-  await Promise.all([
-    save('tancaments').catch(e=>showToast('Error tancaments: '+e.message,true)),
-    save('moviments').catch(e=>showToast('Error moviments: '+e.message,true)),
-    saveFons(fDevol).catch(e=>showToast('Error fons: '+e.message,true))
-  ]);
+  await saveMultiWithToast(['tancaments','moviments',function(){return saveFons(fDevol);}],'Caixa tancada ✓');
   if(document.getElementById('page-lliurament')?.classList.contains('active'))renderFons();
 }
 
@@ -4208,18 +4272,13 @@ async function tancarEvent(){
     anyFiscal:af,movimentId:'',eventTancamentId:evId};
   DB.fons.push(fDevol);
   saveCache();
-  showToast('Caixa tancada · Resultat: '+fmtD(netEfectiu+tpv-pag));
   ['tanc-efectiu','tanc-tpv','tanc-pagaments','tanc-notes'].forEach(id=>{
     const el=document.getElementById(id);if(el)el.value='';
   });
   populateTancSelectors();
   document.getElementById('tanc-tancar-sel').value='';
   onTancTancarChange();
-  await Promise.all([
-    save('tancaments').catch(e=>showToast('Error tancaments: '+e.message,true)),
-    save('moviments').catch(e=>showToast('Error moviments: '+e.message,true)),
-    saveFons(fDevol).catch(e=>showToast('Error fons: '+e.message,true))
-  ]);
+  await saveMultiWithToast(['tancaments','moviments',function(){return saveFons(fDevol);}],'Caixa tancada ✓');
   if(document.getElementById('page-lliurament')?.classList.contains('active'))renderFons();
 }
 
@@ -4236,15 +4295,10 @@ async function eliminarEventObert(){
   DB.moviments=(DB.moviments||[]).filter(m=>!((m.fontImport==='tancament'||m.fontImport==='retirada_caixa')&&m.eventId===val));
   delete DB.tancaments[val];
   saveCache();
-  showToast('Caixa eliminada');
   populateTancSelectors();
   document.getElementById('tanc-tancar-sel').value='';
   onTancTancarChange();
-  await Promise.all([
-    save('tancaments').catch(e=>showToast('Error: '+e.message,true)),
-    save('fons').catch(e=>showToast('Error fons: '+e.message,true)),
-    save('moviments').catch(e=>showToast('Error moviments: '+e.message,true))
-  ]);
+  await saveMultiWithToast(['tancaments','fons','moviments'],'Caixa eliminada ✓');
   if(document.getElementById('page-lliurament')?.classList.contains('active'))renderFons();
 }
 
@@ -4781,7 +4835,7 @@ async function _finalitzarSavePres(missatge){
   closeModal('modal-pres');
   renderPressupostosEdit();
   showToast(missatge);
-  save('pres_plans').catch(e=>showToast('Error guardant: '+e.message,true));
+  saveWithToast('pres_plans','Pressupost guardat ✓');
 }
 
 // Wrapper per al botó d'editar — extreu data-* i obre el modal en mode edició
