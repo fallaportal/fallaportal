@@ -317,7 +317,7 @@ tr:hover td{background:var(--bg2)}
     <div class="login-logo">Falla <span>Portal</span></div>
     <div class="login-sub">Sistema de gestió financera</div>
     <div class="login-fiscal">Any fiscal 26/27 · Abr 2026 – Mar 2027</div>
-    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v4.0.40</div>
+    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v4.0.44</div>
     <button class="btn-google" onclick="signIn()">
       <svg viewBox="0 0 24 24" width="20" height="20"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
       Entrar amb Google
@@ -359,7 +359,7 @@ tr:hover td{background:var(--bg2)}
     <div class="sb-bottom">
       <div class="sync-ind" style="display:flex;align-items:center;justify-content:space-between"><div style="display:flex;align-items:center;gap:6px"><div class="sync-dot" id="sync-dot"></div><span id="sync-text">Sincronitzat</span></div><button onclick="manualRefresh()" title="Actualitzar dades" style="background:none;border:none;cursor:pointer;padding:2px 4px;color:var(--text2);font-size:14px;line-height:1"><i class="ti ti-refresh"></i></button></div>
       <button class="btn-logout" onclick="signOut()"><i class="ti ti-logout" style="font-size:14px"></i> Tancar sessió</button>
-      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v4.0.40</div>
+      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v4.0.44</div>
     </div>
   </div>
 
@@ -1493,7 +1493,7 @@ const CLIENT_ID='762692298201-gnhlho2ob1fb77s6uoevocji8r6afssm.apps.googleuserco
 const SCOPES='https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile';
 const SHEET_ID='1SUeIZbZN1kUxt5nNRkEVLZI__eHecYv4JZE5QNuGaQ0';
 const TABS={
-  moviments:{name:'01 Moviments',headers:['id','data','tipus','via','areaId','areaNom','delegacioId','delegacioNom','eventId','eventNom','concepte','establiment','responsable','responsableEmail','import','notes','anyFiscal','origenFons','fontImport','bankHash','origen','ticketUrl','ticketMotiu']},
+  moviments:{name:'01 Moviments',headers:['id','data','tipus','via','areaId','areaNom','delegacioId','delegacioNom','eventId','eventNom','concepte','establiment','responsable','responsableEmail','import','notes','anyFiscal','origenFons','fontImport','bankHash','origen','ticketUrl','ticketMotiu','conciliacio']},
   fons:{name:'02 Fons',headers:['id','data','tipus','delegId','delegEmail','import','nota','registratPer','anyFiscal','movimentId','eventTancamentId']},
   tancaments:{name:'03 Tancaments',headers:['eventId','eventNom','data','efectiu','tpv','canvi','pagaments','tancat','estat','fonsId','concepte','registratPer','anyFiscal']},
   arees:{name:'04 Arees',headers:['id','nom','responsable']},
@@ -1791,6 +1791,13 @@ function toastRetry(){
   if(t._retryCb)t._retryCb();
 }
 async function saveWithToast(key,msgOk){
+  // Si les dades no s'han carregat, reintentar no arregla res: o be falla igual,
+  // o be entremig arriba una carrega bona que substitueix DB i fa desapareixer
+  // el que s'acaba d'introduir mentre es mostra "Guardat". Millor avisar i parar.
+  if(!dadesCarregades){
+    showToast('No s\'ha guardat: les dades encara no s\'han carregat. Recarrega la pagina i torna a introduir-ho.',true);
+    return;
+  }
   showToastPersistent('Guardant...');
   try{
     await save(key);
@@ -1808,6 +1815,10 @@ async function saveWithToast(key,msgOk){
 }
 async function saveMultiWithToast(saves,msgOk){
   // saves = array de {key} o funcions async
+  if(!dadesCarregades){
+    showToast('No s\'ha guardat: les dades encara no s\'han carregat. Recarrega la pagina i torna a introduir-ho.',true);
+    return;
+  }
   showToastPersistent('Guardant...');
   async function execSaves(){
     await Promise.all(saves.map(function(s){
@@ -2311,6 +2322,9 @@ const REFRESH_MIN_GAP=30*1000;   // mínim 30s entre refrescos per canvi de pàg
 const REFRESH_AUTO_MS=5*60*1000; // refresc automàtic cada 5 minuts
 
 async function bgRefresh(){
+  // No recarreguem mentre s'esta escrivint al full: el swap substituiria
+  // DB.moviments i s'enduria el que encara no s'ha guardat.
+  if(_desantAraMateix>0)return;
   const now=Date.now();
   if(now-_lastRefresh<REFRESH_MIN_GAP)return;
   _lastRefresh=now;
@@ -2384,6 +2398,7 @@ async function sheetsReq(method,url,body){
 function signOutWithMsg(msg){
   if(accessToken)google.accounts.oauth2.revoke(accessToken,function(){});
   accessToken=null;currentUser=null;
+  dadesCarregades=false;
   if(pollingInterval){clearInterval(pollingInterval);pollingInterval=null;}
   try{localStorage.removeItem(CACHE_KEY);}catch(e){}
   document.getElementById('app').classList.add('hidden');
@@ -2399,14 +2414,17 @@ function sheetRangeUrl(n,c){return encodeURIComponent(sheetRange(n,c));}
 function sheetTabUrl(n){const name=n.includes(' ')?("'"+n+"'"):n;return encodeURIComponent(name);}
 
 async function readTab(tabName){
-  try{
-    const r=await sheetsReq('GET',SHEETS_API+'/values/'+sheetTabUrl(tabName));
-    if(!r.values||r.values.length<2)return[];
-    const headers=r.values[0];
-    return r.values.slice(1).filter(function(row){return row.some(function(c){return c;});}).map(function(row){
-      const obj={};headers.forEach(function(h,i){obj[h]=row[i]||'';});return obj;
-    });
-  }catch(e){console.warn('readTab error '+tabName,e);return[];}
+  // Una lectura fallida (xarxa, quota 429, 5xx) ha de propagar l'error.
+  // Abans es tornava [] i loadFromSheets no podia distingir una pestanya buida
+  // d'una lectura fallida: DB quedava a zero i el desat seguent reescrivia el
+  // full sencer amb dades incompletes. Els que criden loadFromSheets ja tenen
+  // .catch() que restaura l'estat anterior.
+  const r=await sheetsReq('GET',SHEETS_API+'/values/'+sheetTabUrl(tabName));
+  if(!r.values||r.values.length<2)return[];
+  const headers=r.values[0];
+  return r.values.slice(1).filter(function(row){return row.some(function(c){return c;});}).map(function(row){
+    const obj={};headers.forEach(function(h,i){obj[h]=row[i]||'';});return obj;
+  });
 }
 
 function calcSaldoDelegat(fonsArr){
@@ -2504,7 +2522,23 @@ function updateLastGoodCfgExt(){
   if(DB.config.anyFiscal)_lastGoodCfgExt.anyFiscal=DB.config.anyFiscal;
 }
 
+// Fins que loadFromSheets() no ha acabat be almenys una vegada, DB no reflecteix
+// el contingut del full. Com que save() reescriu pestanyes senceres, guardar en
+// eixe estat esborraria del full tot el que DB encara no havia arribat a llegir.
+let dadesCarregades=false;
+
+// Nombre d'escriptures al full en curs. Mentre n'hi haja alguna, els refrescos
+// en segon pla s'han d'esperar: si recarreguen enmig d'un guardat, substitueixen
+// DB.moviments pel que hi ha al full i se n'enduen el que encara no s'ha escrit.
+let _desantAraMateix=0;
+
 async function save(key){
+  if(!dadesCarregades){
+    showToast('Les dades no s\'han carregat be. Recarrega la pagina abans de guardar res.',true);
+    throw new Error('Dades no carregades: save(\''+key+'\') bloquejat');
+  }
+  _desantAraMateix++;
+  try{
   setSyncing(true,true);
   try{
     if(key==='config'){
@@ -2565,8 +2599,17 @@ async function save(key){
     else if(key==='pres_plans'){await writeTab(t.name,t.headers,DB.pres_plans);}
     else if(key==='pres_config'){await writeTab(t.name,t.headers,[DB.pres_config]);}
     else if(key==='pres_historial'){await writeTab(t.name,t.headers,DB.pres_historial);}
-  }catch(e){showToast('Error guardant: '+e.message,true);setSyncing(false,true);return;}
+  }catch(e){
+    showToast('Error guardant: '+e.message,true);
+    setSyncing(false,true);
+    // PROPAGUEM l'error. Abans es feia return, i qui cridava no podia saber que
+    // havia fallat: saveWithToast arribava igualment a la linia de l'exit i
+    // l'usuari veia "Moviment registrat" encara que el full haguera rebutjat
+    // l'escriptura. La confirmacio ha de dependre del resultat real.
+    throw e;
+  }
   setSyncing(false,true);
+  }finally{ _desantAraMateix--; }
 }
 
 // ─── GOOGLE DRIVE — TICKETS ──────────────────────────────────────────────────
@@ -2746,6 +2789,8 @@ async function loadFromSheets(){
     }
     return{...r,import:Math.abs(parseFloat(r.import)||0),data:dataFmt};
   });
+  // La migració del camp conciliacio es fa més avall, quan DB.config.bancs ja
+  // està carregat des del full (vegeu el bloc just abans del swap atòmic).
   const fonsRows=await readTab(TABS.fons.name);
   const _newFons=fonsRows.map(function(r){return{...r,import:parseFloat(r.import)||0};});
   const tancRows=await readTab(TABS.tancaments.name);
@@ -2807,7 +2852,10 @@ async function loadFromSheets(){
   if(!DB.regles.length){
     DB.regles=getDefaultRegles();
     // Migrar automàticament al Sheets (pestanya 13 Regles CSV buida → populem)
-    save('regles').catch(function(e){console.warn('No s\'han pogut migrar les regles per defecte:',e);});
+    // writeTab directe en lloc de save(): aixo passa enmig de la carrega, quan
+    // dadesCarregades encara es false. Es segur perque nomes escriu si la
+    // pestanya esta buida i el contingut son les regles per defecte.
+    writeTab(TABS.regles.name,TABS.regles.headers,DB.regles).catch(function(e){console.warn('No s\'han pogut migrar les regles per defecte:',e);});
   }
   const rolsRows=await readTab(TABS.rols.name);
   if(rolsRows.length>0){
@@ -2840,13 +2888,26 @@ async function loadFromSheets(){
     if(cfgMap.drive_folders){try{DB.config.drive_folders=JSON.parse(cfgMap.drive_folders);}catch(e){}}
     // Actualitzar snapshot de valors bons per a protecció defensiva
     updateLastGoodCfgExt();
-  // Swap atòmic: ara que tot está carregat, assignem a DB de cop
-  DB.moviments=_newMoviments;
-  DB.fons=_newFons;
-  DB.tancaments=_newTancaments;
     if(cfgMap.modulVis){try{DB.config.modulVis=JSON.parse(cfgMap.modulVis);}catch(e){}}
     if(cfgMap.reportVis){try{DB.config.reportVis=JSON.parse(cfgMap.reportVis);}catch(e){}}
   }
+  // Migració automàtica: assignar conciliacio als moviments que no en tenen.
+  // Ha d'anar DESPRÉS de carregar DB.config.bancs des del full: si es fa abans,
+  // els bancs donats d'alta a Configuració encara no hi són i els seus moviments
+  // es marquen 'no_aplica' en lloc de 'pendent'. Com que després només es toquen
+  // els que no tenen el camp, l'error es quedaria per sempre.
+  _newMoviments.forEach(function(m){
+    if(!m.conciliacio)m.conciliacio=calcConciliacio(m.via,m.origen);
+  });
+  // Swap atòmic: ara que tot està carregat, assignem a DB de cop.
+  // Ha d'anar FORA del if(cfgExtRows.length>0): si la pestanya 00 Config està
+  // buida, el swap no s'executava i DB quedava a zero encara que el full
+  // tinguera moviments. El desat seguent els esborrava del full.
+  DB.moviments=_newMoviments;
+  DB.fons=_newFons;
+  DB.tancaments=_newTancaments;
+  // A partir d'aci DB reflecteix el full: ja es pot guardar sense perill.
+  dadesCarregades=true;
 }
 
 
@@ -3015,8 +3076,26 @@ function updateDashboardSilent(){
 // MOVIMENT
 let movType='gast',movVia='Efectiu';
 
+// Converteix el text d'un camp d'import a numero. Accepta el format d'aci
+// (1.234,56) i tambe el format amb punt decimal (1234.56). Torna NaN si el text
+// no es un import valid, de manera que els ||0 de sempre continuen funcionant.
+// Abans es feia parseFloat(txt.replace(',','.')), que nomes substitueix la
+// PRIMERA coma: "1.234,56" es convertia en "1.234.56" i parseFloat tornava
+// 1.234 euros en lloc de 1234,56 euros.
+function parseImport(txt){
+  let s=String(txt==null?'':txt).replace(/[\s €]/g,'');
+  if(!s)return NaN;
+  const comes=(s.match(/,/g)||[]).length;
+  const punts=(s.match(/\./g)||[]).length;
+  if(comes>1)return NaN;                          // 12,5,5 no es un import
+  if(comes===1)s=s.replace(/\./g,'').replace(',','.');  // punts = milers
+  else if(punts>1)s=s.replace(/\./g,'');          // 1.234.567 = milers
+  if(!/^-?\d+(\.\d+)?$/.test(s))return NaN;
+  return parseFloat(s);
+}
+
 function checkMovReady(){
-  const imp=parseFloat((document.getElementById('mov-import')?.value||'0').replace(',','.'));
+  const imp=parseImport(document.getElementById('mov-import')?.value);
   const deleg=document.getElementById('mov-deleg')?.value||'';
   const concepte=(document.getElementById('mov-concept')?.value||'').trim();
   const ready=imp>0&&deleg!==''&&concepte!=='';
@@ -3101,7 +3180,7 @@ function getAnyFiscalRang(af){
 }
 
 function confirmRegistrar(){
-  const imp=parseFloat((document.getElementById('mov-import')?.value||'0').replace(',','.'));
+  const imp=parseImport(document.getElementById('mov-import')?.value);
   const deleg=document.getElementById('mov-deleg')?.value||'';
   if(!imp||!deleg){showToast('Omple import i delegació',true);return;}
   if(!validarJustificant())return;
@@ -3140,8 +3219,7 @@ function confirmRegistrar(){
 }
 
 async function registrarMoviment(){
-  const rawImp=document.getElementById('mov-import').value.replace(',','.');
-  const imp=parseFloat(rawImp);
+  const imp=parseImport(document.getElementById('mov-import').value);
   if(!imp||imp<=0){showToast('Introdueix un import valid',true);return;}
   const areaId=document.getElementById('mov-area').value;
   const delegId=document.getElementById('mov-deleg').value;
@@ -3201,6 +3279,18 @@ async function confirmarMovimentFons(usaFons){
   await doRegistrarMoviment(imp,areaId,area,delegId,deleg,event,eventId,u,af,usaFons);
 }
 
+function calcConciliacio(via, origen){
+  // Moviments d'efectiu: no aplica conciliació bancària
+  if(!via||via==='Efectiu')return'no_aplica';
+  // Moviments importats directament del CSV bancari: ja confirmats pel banc
+  if(origen==='CSV')return'conciliat';
+  // Moviments bancaris registrats manualment: pendents de confirmació CSV
+  const bancCodis=(DB.config.bancs||[]).filter(function(b){return b.tipus==='bank';}).map(function(b){return b.codi;});
+  if(bancCodis.includes(via))return'pendent';
+  // Resta (TPV, Virtual, App, etc.): no aplica
+  return'no_aplica';
+}
+
 async function doRegistrarMoviment(imp,areaId,area,delegId,deleg,event,eventId,u,af,usaFons){
   const mov={
     id:genId('m'),anyFiscal:af,tipus:movType,via:movVia,
@@ -3212,7 +3302,7 @@ async function doRegistrarMoviment(imp,areaId,area,delegId,deleg,event,eventId,u
     responsable:u?.nom||currentUser?.name||'',responsableEmail:currentUser?.email||'',
     import:Math.abs(imp),notes:document.getElementById('mov-notes').value,
     origenFons:usaFons===true?'fons_lliurats':usaFons==='avanc'?'avanc':'caixa',
-    origen:'Manual',ticketUrl:'',
+    origen:'Manual',ticketUrl:'',conciliacio:calcConciliacio(movVia,'Manual'),
     ticketMotiu:(()=>{const {mode,llindar}=getJustMode();const photo=document.getElementById('mov-photo');const tePhoto=photo&&photo.files&&photo.files.length>0;const obligatori=movType==='gast'&&(mode==='sempre'||(mode==='import'&&Math.abs(imp)>=llindar&&llindar>0));if(obligatori&&!tePhoto)return document.getElementById('mov-notes')?.value.trim()||'';return '';})()
   };
   DB.moviments.push(mov);
@@ -3241,19 +3331,38 @@ async function doRegistrarMoviment(imp,areaId,area,delegId,deleg,event,eventId,u
   // Pujar ticket a Drive si n'hi ha
   const photoFile=document.getElementById('mov-photo')?.files?.[0];
   if(photoFile){
-    showToast('Pujant ticket...');
-    _driveUploadTicket(photoFile, mov.id, af).then(function(url){
-      mov.ticketUrl=url;
-      // Actualitzar a DB
-      const idx=DB.moviments.findIndex(function(m){return m.id===mov.id;});
-      if(idx>=0)DB.moviments[idx].ticketUrl=url;
+    // ORDRE IMPORTANT: primer guardem la despesa al full, i NOMES despres pugem
+    // la foto. Al reves, la despesa nomes vivia en memoria mentre durava la
+    // pujada (desenes de segons amb una foto de mobil i mala cobertura) i
+    // qualsevol refresc en segon pla substituia DB.moviments i se l'enduia,
+    // mentre l'usuari veia "Moviment registrat".
+    // Aixi el pitjor cas passa a ser "despesa guardada sense justificant", que
+    // es veu a l'informe de despeses sense justificant i te arreglo.
+    try{
+      await save('moviments');
+    }catch(e){
+      // La despesa es queda a DB amb el mateix id: reintentar NO duplica,
+      // perque writeTab reescriu la pestanya sencera a partir de l'array.
+      showToastRetry('No s\'ha registrat la despesa i el justificant no s\'ha pujat. Comprova l\'historial abans de tornar a introduir-la.',
+        function(){saveWithToast('moviments','Despesa registrada ✓ — adjunta el justificant editant-la');});
+      return;
+    }
+    showToast('Despesa registrada. Pujant el justificant...');
+    try{
+      const url=await _driveUploadTicket(photoFile, mov.id, af);
+      let idx=DB.moviments.findIndex(function(m){return m.id===mov.id;});
+      if(idx<0){
+        // No hauria de passar ara que guardem abans, pero si passa no ho callem.
+        console.warn('La despesa '+mov.id+' no era a DB despres de pujar el justificant; reafegida.');
+        DB.moviments.push(mov);idx=DB.moviments.length-1;
+      }
+      DB.moviments[idx].ticketUrl=url;
       saveCache();
-      saveWithToast('moviments','Moviment registrat ✓');
-      showToast('Ticket pujat correctament');
-    }).catch(function(e){
-      showToast('Error pujant ticket: '+e.message,true);
-      saveMoviment(mov).catch(function(e2){showToast('Error guardant a Sheets: '+e2.message,true);});
-    });
+      await save('moviments');
+      showToast('Despesa i justificant guardats ✓');
+    }catch(e){
+      showToast('La despesa SI que esta guardada, pero el justificant no s\'ha pujat: '+e.message+'. Edita la despesa per adjuntar-lo.',true);
+    }
   }else{
     saveWithToast('moviments','Moviment registrat ✓');
   }
@@ -3935,7 +4044,7 @@ function updateTancDataLabel(){
 }
 
 function updateObrirResum(){
-  const canvi=parseFloat((document.getElementById('tanc-canvi')?.value||'0').replace(',','.'))||0;
+  const canvi=parseImport(document.getElementById('tanc-canvi')?.value)||0;
   const resumEl=document.getElementById('obrir-resum');
   if(!resumEl)return;
   if(!canvi){
@@ -4004,9 +4113,9 @@ function updateTancResum(){
   if(!val)return;
   const canvi=getTancCanviTotal(val);
   const retirades=getTancRetirades(val);
-  const ef=parseFloat((document.getElementById('tanc-efectiu')?.value||'0').replace(',','.'))||0;
-  const tpv=parseFloat((document.getElementById('tanc-tpv')?.value||'0').replace(',','.'))||0;
-  const pag=parseFloat((document.getElementById('tanc-pagaments')?.value||'0').replace(',','.'))||0;
+  const ef=parseImport(document.getElementById('tanc-efectiu')?.value)||0;
+  const tpv=parseImport(document.getElementById('tanc-tpv')?.value)||0;
+  const pag=parseImport(document.getElementById('tanc-pagaments')?.value)||0;
   const netEf=ef-canvi+retirades;
   const total=netEf+tpv-pag;
   const resumEl=document.getElementById('tanc-resum');
@@ -4058,7 +4167,7 @@ async function retirarEfectiu(){
   if(!val){showToast('Selecciona un event',true);return;}
   const tc=(DB.tancaments||{})[val];
   if(!tc||tc.estat!=='obert'){showToast('L\'event no està obert',true);return;}
-  const imp=parseFloat((document.getElementById('tanc-retirada-import')?.value||'0').replace(',','.'))||0;
+  const imp=parseImport(document.getElementById('tanc-retirada-import')?.value)||0;
   if(!imp||imp<=0){showToast('Introdueix un import vàlid',true);return;}
   const nota=document.getElementById('tanc-retirada-nota')?.value.trim()||'';
   const af=getAnyFiscal();
@@ -4101,7 +4210,7 @@ function getTancNomEvent(){
 async function obrirEvent(){
   const val=document.getElementById('tanc-obrir-sel').value;
   if(!val){showToast('Selecciona un event',true);return;}
-  const canvi=parseFloat((document.getElementById('tanc-canvi')?.value||'0').replace(',','.'))||0;
+  const canvi=parseImport(document.getElementById('tanc-canvi')?.value)||0;
   if(!canvi||canvi<=0){showToast('El canvi inicial és obligatori',true);return;}
   if(val==='_sense_event'){
     const dataInput=document.getElementById('tanc-data-input')?.value;
@@ -4151,7 +4260,7 @@ async function afegirCanviEvent(){
   if(!val){showToast('Selecciona un event obert',true);return;}
   const tc=(DB.tancaments||{})[val];
   if(!tc||tc.estat!=='obert'){showToast('L\'event no està obert',true);return;}
-  const canviAdicional=parseFloat((document.getElementById('tanc-canvi-add')?.value||'0').replace(',','.'))||0;
+  const canviAdicional=parseImport(document.getElementById('tanc-canvi-add')?.value)||0;
   if(!canviAdicional||canviAdicional<=0){showToast('Introdueix el canvi addicional',true);return;}
   const af=getAnyFiscal();
   const fonsId=genId('fc');
@@ -4178,9 +4287,9 @@ function mostrarConfirmTancar(){
   const tc=(DB.tancaments||{})[val];
   if(!tc||tc.estat!=='obert'){showToast('Nomes es poden tancar events oberts',true);return;}
   const canvi=getTancCanviTotal(val);
-  const ef=parseFloat((document.getElementById('tanc-efectiu')?.value||'0').replace(',','.'))||0;
-  const tpv=parseFloat((document.getElementById('tanc-tpv')?.value||'0').replace(',','.'))||0;
-  const pag=parseFloat((document.getElementById('tanc-pagaments')?.value||'0').replace(',','.'))||0;
+  const ef=parseImport(document.getElementById('tanc-efectiu')?.value)||0;
+  const tpv=parseImport(document.getElementById('tanc-tpv')?.value)||0;
+  const pag=parseImport(document.getElementById('tanc-pagaments')?.value)||0;
   if(!ef&&!tpv&&!pag){showToast('Introdueix almenys un import',true);return;}
   const retirades=getTancRetirades(val);
   const netEf=ef-canvi;
@@ -4211,9 +4320,9 @@ async function executarTancament(){
   const tc=(DB.tancaments||{})[val];
   if(!tc||tc.estat!=='obert')return;
   const canvi=getTancCanviTotal(val);
-  const ef=parseFloat((document.getElementById('tanc-efectiu')?.value||'0').replace(',','.'))||0;
-  const tpv=parseFloat((document.getElementById('tanc-tpv')?.value||'0').replace(',','.'))||0;
-  const pag=parseFloat((document.getElementById('tanc-pagaments')?.value||'0').replace(',','.'))||0;
+  const ef=parseImport(document.getElementById('tanc-efectiu')?.value)||0;
+  const tpv=parseImport(document.getElementById('tanc-tpv')?.value)||0;
+  const pag=parseImport(document.getElementById('tanc-pagaments')?.value)||0;
   const areaId=document.getElementById('tanc-area')?.value||'';
   const delegId=document.getElementById('tanc-deleg')?.value||'';
   const notes=document.getElementById('tanc-notes')?.value||'';
@@ -4272,9 +4381,9 @@ async function tancarEvent(){
   const tc=(DB.tancaments||{})[val];
   if(!tc||tc.estat!=='obert'){showToast('Nomes es poden tancar events oberts',true);return;}
   const canvi=getTancCanviTotal(val);
-  const ef=parseFloat((document.getElementById('tanc-efectiu')?.value||'0').replace(',','.'))||0;
-  const tpv=parseFloat((document.getElementById('tanc-tpv')?.value||'0').replace(',','.'))||0;
-  const pag=parseFloat((document.getElementById('tanc-pagaments')?.value||'0').replace(',','.'))||0;
+  const ef=parseImport(document.getElementById('tanc-efectiu')?.value)||0;
+  const tpv=parseImport(document.getElementById('tanc-tpv')?.value)||0;
+  const pag=parseImport(document.getElementById('tanc-pagaments')?.value)||0;
   if(!ef&&!tpv&&!pag){showToast('Introdueix almenys un import',true);return;}
   const areaId=document.getElementById('tanc-area')?.value||'';
   const delegId=document.getElementById('tanc-deleg')?.value||'';
@@ -4940,8 +5049,7 @@ async function bloquejarPres(){
   DB.pres_historial.push({data:today(),accio:'bloquejat',any:afBloq,usuari:u?.nom||'',email:u?.email||'',motiu});
   saveCache();
   renderPressupostosEdit();
-  showToast('Pressupost bloquejat i aprovat');
-  save('pres_config');save('pres_historial');
+  saveMultiWithToast(['pres_config','pres_historial'],'Pressupost bloquejat i aprovat');
 }
 
 async function desbloquejarpres(){
@@ -4952,8 +5060,7 @@ async function desbloquejarpres(){
   DB.pres_historial.push({data:today(),accio:'desbloquejat',any:afDesbloq,usuari:u?.nom||'',email:u?.email||'',motiu});
   saveCache();
   renderPressupostosEdit();
-  showToast('Pressupost desbloquejat');
-  save('pres_config');save('pres_historial');
+  saveMultiWithToast(['pres_config','pres_historial'],'Pressupost desbloquejat');
 }
 
 // RESULTATS
@@ -6988,6 +7095,7 @@ async function registrarBonificacio(){
 function signOut(){
   if(accessToken)google.accounts.oauth2.revoke(accessToken,function(){});
   accessToken=null;currentUser=null;
+  dadesCarregades=false;
   if(pollingInterval){clearInterval(pollingInterval);pollingInterval=null;}
   try{localStorage.removeItem(CACHE_KEY);}catch(e){}
   document.getElementById('app').classList.add('hidden');
@@ -7064,6 +7172,7 @@ function startPolling(){
   if(pollingInterval)clearInterval(pollingInterval);
   pollingInterval=setInterval(function(){
     if(!accessToken)return;
+    if(_desantAraMateix>0)return;   // no recarregar enmig d'un guardat
     setSyncing(true,true);
     // Guardar snapshot per evitar UI buida durant la càrrega
     const _snapMovs=DB.moviments?[...DB.moviments]:[];
@@ -8428,7 +8537,7 @@ async function importarXLSZona(zona){
       fontImport:'xls_'+banc.id,
       bankHash:hashFinal,
       assignatPer:m.assignatPer||'manual',
-      origen:'CSV',ticketUrl:'',ticketMotiu:''
+      origen:'CSV',ticketUrl:'',ticketMotiu:'',conciliacio:'conciliat'
     });
     importats++;
     if(!m.areaId)excepcions++;
