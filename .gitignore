@@ -1,0 +1,15 @@
+# Datos financieros locales (extractos bancarios, plantillas de subida) — nunca al repo
+Book1.xlsx
+Book2.xlsx
+Moviments_compte_*.xlsx
+Moviments_compte_*.xls
+movimientos.xlsx
+eventos entradas portal*.csv
+
+# Versiones de trabajo locales, no publicadas
+index1.html
+index2.html
+index_2.html
+
+# Herramientas locales de Claude Code
+.claude/
