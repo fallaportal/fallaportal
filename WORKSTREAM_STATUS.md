@@ -1,13 +1,33 @@
 # Work Stream Status — Falla Portal
-## Snapshot Date: 2026-07-29
-## Versió en producció: v4.0.44 (pujada a GitHub Pages al final d'aquesta sessió)
+## Snapshot Date: 2026-09-16
+## Versió en producció: v4.0.44 (sense canvis d'app aquesta sessió — sessió d'infraestructura de repositori)
 
 > **Context de calendari**: període vacacional, ús baix de l'eina. Bon moment per a
 > canvis estructurals i per a la decisió pendent del Service Worker.
 
 ---
 
-### Completat aquesta sessió — WS-INTEGRITAT (nou)
+### Completat aquesta sessió (2026-09-16) — Infraestructura de repositori
+
+**Objective**: Aquesta carpeta local no era un repositori git (mai s'havia inicialitzat)
+i els documents de continuïtat (aquest fitxer inclòs) no s'havien pujat mai a GitHub.
+
+**Fet**:
+  - `git init` + `origin = https://github.com/fallaportal/fallaportal.git` (branca `main`).
+  - Reconciliació: `index.html`, `sw.js`, `dev.html`, `manifest.json` i les icones ja
+    eren idèntics byte a byte al remot — cap divergència real de contingut.
+  - `CLAUDE.md` nou (D-018): documenta el projecte i el protocol d'inici/tancament
+    de sessió (`git pull` a l'inici, `git push` confirmat abans de donar la sessió
+    per tancada).
+  - `.gitignore`: exclou els extractes bancaris i CSV locals (`Moviments_compte_*`,
+    `movimientos.xlsx`, `Book1/2.xlsx`, `eventos entradas portal*.csv`) — mai al repo.
+  - Pujats per primera vegada: `DOMAIN_KNOWLEDGE.md`, `DECISION_LOG.md`, aquest fitxer,
+    `CONVENTIONS.md`, `FDD_FALLA_PORTAL.md`, `TDD_FALLA_PORTAL.md`.
+**Verificat**: `git log origin/main -1` coincideix amb el `HEAD` local després del push.
+
+---
+
+### Completat 2026-07-29 — WS-INTEGRITAT (nou)
 
 **Objective**: Que l'eina done certesa. Un usuari no expert no ha de poder generar
 dades inconsistents sense adonar-se'n, i la confirmació que veu ha de ser certa.

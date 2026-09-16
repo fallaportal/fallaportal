@@ -166,3 +166,24 @@ canvi en el desplegament que ha d'anar a soles (deute tècnic #14, encara obert)
   - Risc acceptat conscientment: qui escriga `1.234` volent dir 1.234 € registrarà 1,23 €. El parapet és el modal de confirmació, que mostra l'import ja interpretat.
   - `1e3` passa a rebutjar-se (abans donava 1.000 €).
   - Els imports negatius, el zero i el text ja es bloquejaven i continuen bloquejant-se.
+
+---
+
+### D-018: Repositori git local inexistent — inicialització i protocol de sincronització
+**Date**: 2026-09-16
+**Status**: Active
+**Context**: La carpeta local no havia sigut mai un repositori git. Els documents de
+continuïtat (aquest fitxer inclòs) existien només en local des del 2026-07-29 i mai
+s'havien pujat. `index.html`, `sw.js`, `dev.html`, `manifest.json` i les icones sí
+eren idèntics byte a byte al remot `fallaportal/fallaportal` — no hi havia divergència
+de contingut real, només absència d'historial git local.
+**Decision**: `git init` + `origin` cap a `fallaportal/fallaportal` (branca `main`).
+Afegit `CLAUDE.md` amb un protocol explícit: qualsevol sessió (local o web) ha de
+començar amb `git pull`, i el tancament de sessió no es dona per fet fins que
+`git push` es confirma (`git log origin/main -1` == `HEAD` local) — no n'hi ha prou
+amb el commit local. Raó: com els documents de continuïtat es reescriuen sencers a
+cada tancament (no per línies), la primera divergència real produiria un conflicte
+de fitxer complet, no una fusió trivial.
+**Consequences**: Els extractes bancaris i CSV locals (`Moviments_compte_*`,
+`movimientos.xlsx`, `Book1/2.xlsx`, `eventos entradas portal*.csv`) queden exclosos
+via `.gitignore` — mai han d'acabar al repo públic.
