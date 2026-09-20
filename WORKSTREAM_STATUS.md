@@ -1,13 +1,35 @@
 # Work Stream Status — Falla Portal
-## Snapshot Date: 2026-09-16
-## Versió en producció: v4.0.44 (sense canvis d'app aquesta sessió — sessió d'infraestructura de repositori)
+## Snapshot Date: 2026-09-20
+## Versió en producció: v4.0.46
 
 > **Context de calendari**: període vacacional, ús baix de l'eina. Bon moment per a
 > canvis estructurals i per a la decisió pendent del Service Worker.
 
 ---
 
-### Completat aquesta sessió (2026-09-16) — Infraestructura de repositori
+### Completat aquesta sessió (2026-09-20) — Fix delegat incorrecte a Fons delegats
+
+**Objective**: Emilio reportava que en crear un lliurament de fons, encara triant un
+altre delegat al modal, sempre es guardava el primer (Antonio Javier) — calia
+esborrar-lo i tornar-ho a fer per a que quedara bé la segona vegada.
+
+**Fet**: Vegeu D-019 (`DECISION_LOG.md`). `populateDelegatSelects()` ara preserva el
+`value` seleccionat en reconstruir el `<select>`, evitant que el refresc en segon pla
+de `bgRefresh()` esborre la selecció de l'usuari mentre el modal de lliurament o
+devolució està obert. Reproduït i verificat en execució (Regla 5) abans i després del
+canvi.
+
+**Revisat i descartat**: Emilio també sospitava del mateix bug a "Nou moviment"
+(ingrés/despesa). Revisió exhaustiva (codi + execució, pagament banc i efectiu, amb
+refresc en segon pla forçat): els selectors d'Àrea/Delegació d'eixa pantalla només es
+construeixen una vegada a `initApp()` i no formen part del mapa de re-render de
+`bgRefresh()`, així que no pateixen el mateix problema. **No s'hi ha tocat res.**
+
+**Bump de versió**: v4.0.45 → v4.0.46 (Regla 1).
+
+---
+
+### Completat 2026-09-16 — Infraestructura de repositori
 
 **Objective**: Aquesta carpeta local no era un repositori git (mai s'havia inicialitzat)
 i els documents de continuïtat (aquest fitxer inclòs) no s'havien pujat mai a GitHub.

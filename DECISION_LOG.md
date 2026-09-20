@@ -187,3 +187,33 @@ de fitxer complet, no una fusió trivial.
 **Consequences**: Els extractes bancaris i CSV locals (`Moviments_compte_*`,
 `movimientos.xlsx`, `Book1/2.xlsx`, `eventos entradas portal*.csv`) queden exclosos
 via `.gitignore` — mai han d'acabar al repo públic.
+
+---
+
+### D-019: populateDelegatSelects() preserva la selecció en reconstruir el `<select>`
+**Date**: 2026-09-20
+**Status**: Active
+**Context**: En crear un lliurament o una devolució de fons, l'usuari triava un
+delegat diferent del primer de la llista, però el que es guardava sempre era el
+primer (Antonio Javier) — i esborrant i tornant-ho a fer immediatament després,
+sí que es guardava el delegat correcte. Causa: `showPage()` dispara `bgRefresh()`
+a cada canvi de pàgina (vegeu Established Facts, `DOMAIN_KNOWLEDGE.md`), que en
+acabar la càrrega real de Sheets torna a cridar `renderFons()` si la pàgina
+"Fons delegats" és l'activa. `renderFons()` crida `populateDelegatSelects()`,
+que reconstruïa `sel.innerHTML` dels `<select id="ll-delegat">` i
+`id="dev-delegat"` sense recordar el `value` seleccionat, així que si l'usuari
+havia obert el modal i triat un delegat abans que acabara eixa recàrrega (normal,
+la crida a Sheets triga uns segons), la selecció es perdia silenciosament i
+tornava a la primera opció — sense cap indici visual evident per a l'usuari.
+Reproduït en viu (mock de xarxa + esdeveniments reals de `<select>`):
+seleccionar `u2`, tornar a cridar `populateDelegatSelects()` (simulant el
+refresc en segon pla) deixava `sel.value` a `u1` altra vegada.
+**Decision**: `populateDelegatSelects()` guarda `sel.value` abans de reconstruir
+les opcions i el restaura si el delegat encara existeix a la llista.
+**Consequences**:
+  - Cobreix alhora `modal-lliurament` i `modal-devolucio`, que comparteixen la
+    funció.
+  - S'ha revisat expressament la pantalla "Nou moviment" (Àrea/Delegació) i el
+    modal d'edició de moviment: cap dels dos pateix el mateix problema, perquè
+    els seus selectors només es construeixen una vegada a `initApp()` i no
+    formen part del mapa de re-render de `bgRefresh()`. No s'hi ha tocat res.
