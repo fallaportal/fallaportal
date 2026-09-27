@@ -1,6 +1,6 @@
 # Work Stream Status — Falla Portal
 ## Snapshot Date: 2026-09-27
-## Versió en producció: v4.0.47
+## Versió en producció: v4.0.48
 
 > **Context de calendari**: període vacacional, ús baix de l'eina. Bon moment per a
 > canvis estructurals i per a la decisió pendent del Service Worker.
@@ -31,6 +31,11 @@ Després ve la Fase 0 (auditoria i inventari).
     xarxa, bàner des del polling, canvi de compte en renovar i entrada des de One Tap.
     També s'ha comprovat la vista mòbil.
   - **Pendent**: que Emilio ho prove en producció amb OAuth real (popup, `hint`).
+- **v4.0.48, revisió d'integritat del canvi de login** (D-020, apartat "Revisió"):
+  - L'expulsió antiga protegia de rebot contra truncar el full quan `readTab`
+    s'empassava errors. Hui eixa protecció ja la cobreixen D-003 i D-016.
+  - Trobat i corregit un risc nou de la v4.0.47: guardats en cua durant la caducitat
+    amb còpies de `DB` desfasades. Reproduït abans i verificat després.
 
 ---
 

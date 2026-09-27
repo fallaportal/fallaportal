@@ -137,6 +137,9 @@ Totes les pestanyes es llegeixen en temporals. L'assignació a `DB` es fa al fin
     espera (`esperarToken()`). Un toc renova el token amb `hint` i els guardats
     continuen.
   - Mai es crida `oauth2.revoke()`. Un error de xarxa no tanca la sessió.
+  - **[CRÍTIC] `save()` i `writeTab()` esperen el token ABANS de fer la còpia de `DB`**
+    (v4.0.48). Un 401 en un `PUT`/`clear` llança `code:'AUTH'` i `save()` es refà
+    sencer. No s'ha de reenviar mai un cos de `writeTab` construït abans d'esperar.
 - **Autorització**: per email contra `DB.config.usuaris`.
   `it.fallaportal@gmail.com` → `treasury`. `08 Usuaris` buida → el primer que entre
   rep `president`.

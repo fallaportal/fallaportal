@@ -253,6 +253,30 @@ zero clics requereix refresh token, és a dir, Supabase Auth (D-021).
   - **No provat amb OAuth real**: el popup, `hint` i `error_callback` no es poden
     provar a `localhost`. Emilio ho ha de provar en producció.
 
+**Revisió d'integritat (2026-09-27, v4.0.48)**: Emilio va preguntar si el comportament
+antic tenia un motiu d'integritat de dades. No hi ha cap decisió ni comentari que el
+justifique. Però:
+  - L'expulsió en cas d'error de xarxa o 401 (`signOutWithMsg`) va entrar a la v4.0.9
+    (commit `ade2907`, 2026-06-13), **en el mateix canvi que el polling cada 30 s**.
+  - En eixe moment `readTab()` s'empassava els errors i tornava `[]`. Un tall de xarxa
+    durant el polling deixava `DB` buit, i el guardat següent truncava el full.
+    Expulsar l'usuari tallava eixa cadena: era una **protecció d'integritat de fet**,
+    no documentada.
+  - Des de v4.0.42–44 eixa protecció la cobreixen `readTab` propagant errors, el swap
+    atòmic i `dadesCarregades` (D-003, D-016). Verificat: amb un tall a la recàrrega,
+    `DB` queda intacte i el guardat següent no trunca.
+
+**Risc nou trobat en la v4.0.47 i corregit a la v4.0.48**:
+  - `writeTab` construïa la còpia de `DB` **abans** d'esperar el token. Si es feien dos
+    guardats mentre el token estava caducat, en renovar-lo eixien alhora amb còpies
+    diferents. Si la més antiga arribava l'última, trepitjava la nova.
+  - **Reproduït**: el moviment B es guardava amb "✓" però no quedava al full.
+  - **Correcció**: `save()` i `writeTab()` esperen el token **abans** de fer la còpia.
+    Un 401 en un `PUT`/`clear` ja no es reenvia amb el cos antic: llança `code:'AUTH'`
+    i `save()` es refà sencer amb les dades del moment.
+  - **Verificat**: la mateixa seqüència deixa A i B al full, i el 401 enmig d'una
+    reescriptura també.
+
 ---
 
 ### D-021: Migració a Supabase, mantenint GitHub Pages
