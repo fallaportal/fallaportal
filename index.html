@@ -3639,6 +3639,11 @@ function filterHist(){
 }
 
 // FONS DELEGATS
+let fonsCardExpanded={};
+function toggleFonsCard(uid){
+  fonsCardExpanded[uid]=!fonsCardExpanded[uid];
+  renderFons();
+}
 function renderFons(){
   const c=document.getElementById('fons-view');
   if(perm('canFons')&&perm('viewAll')){
@@ -3790,8 +3795,9 @@ function renderFonsCard(u){
       '</div>';
     }).join('')+
     '</div>':'';
+  const expanded=!!fonsCardExpanded[u.id];
   return'<div class="card" style="margin-bottom:10px">'+
-    '<div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">'+
+    '<div style="display:flex;align-items:center;gap:12px;cursor:pointer" data-uid="'+u.id+'" onclick="toggleFonsCard(this.dataset.uid)">'+
       '<div class="fons-av">'+ini+'</div>'+
       '<div style="flex:1"><div style="font-weight:500">'+u.nom+'</div>'+
         '<div style="font-size:11px;color:var(--text2)">'+(u.arees||[]).map(function(id){const a=DB.config.areas.find(function(x){return x.id===id;});return a?a.name:id;}).join(', ')+'</div>'+
@@ -3800,14 +3806,19 @@ function renderFonsCard(u){
         '<div style="font-size:18px;font-weight:500;color:'+(saldo<0?'var(--red)':saldo===0?'var(--text2)':'var(--green)')+'">'+fmt(Math.abs(saldo))+'</div>'+
         '<div style="font-size:10px;color:var(--text3)">'+(saldo<0?'excedit':saldo===0?'liquidat':'disponible')+'</div>'+
       '</div>'+
+      '<i class="ti '+(expanded?'ti-chevron-up':'ti-chevron-down')+'" style="color:var(--text3);font-size:16px"></i>'+
     '</div>'+
+    (expanded?(
+    '<div style="margin-top:10px">'+
     '<div style="height:5px;background:var(--border);border-radius:3px;overflow:hidden;margin-bottom:8px">'+
       '<div style="height:100%;border-radius:3px;width:'+pct+'%;background:'+(pct>=100?'var(--red)':pct>=75?'var(--amber)':'var(--green)')+'"></div>'+
     '</div>'+
     '<div style="display:flex;gap:6px">'+
-      '<button class="btn" style="font-size:12px" data-uid="'+u.id+'" onclick="openLliuramentFor(this.dataset.uid)"><i class="ti ti-plus"></i> Lliurar fons</button>'+
-      '<button class="btn" style="font-size:12px" data-uid="'+u.id+'" onclick="openDevolucioFor(this.dataset.uid)"><i class="ti ti-corner-down-left"></i> Devolució</button>'+
-    +(saldo<0?'<button class="btn" style="font-size:12px;border-color:var(--amber);color:var(--amber)" data-uid="'+u.id+'" onclick="openReintegramentFor(this.dataset.uid)"><i class="ti ti-coin"></i> Reintegrament</button>':'')+'</div>'+histHtml+
+      '<button class="btn" style="font-size:12px" data-uid="'+u.id+'" onclick="event.stopPropagation();openLliuramentFor(this.dataset.uid)"><i class="ti ti-plus"></i> Lliurar fons</button>'+
+      '<button class="btn" style="font-size:12px" data-uid="'+u.id+'" onclick="event.stopPropagation();openDevolucioFor(this.dataset.uid)"><i class="ti ti-corner-down-left"></i> Devolució</button>'+
+    (saldo<0?'<button class="btn" style="font-size:12px;border-color:var(--amber);color:var(--amber)" data-uid="'+u.id+'" onclick="event.stopPropagation();openReintegramentFor(this.dataset.uid)"><i class="ti ti-coin"></i> Reintegrament</button>':'')+'</div>'+histHtml+
+    '</div>'
+    ):'')+
   '</div>';
 }
 
