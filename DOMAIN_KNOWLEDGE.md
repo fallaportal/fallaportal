@@ -67,7 +67,15 @@
 
 ### Established Facts
 
-- **Versió en producció actual**: v4.0.44 (BUILD_VERSION `4044`) [TIME-SENSITIVE: 2026-07-29]
+- **Versió en producció actual**: v4.0.48 (BUILD_VERSION `4048`) [TIME-SENSITIVE: 2026-09-27]
+- **La caducitat del token de Google no tanca la sessió** [v4.0.47–48, D-020]:
+  - Apareix un bàner i els guardats esperen el token nou.
+  - `save()`/`writeTab()` esperen **abans** de fer la còpia de `DB`.
+  - Mai es revoca el consentiment de Google.
+- **Migració a Supabase planificada** (D-021, `PLA_MIGRACIO_SUPABASE.md`):
+  - Entrada per email amb codi, sense Google.
+  - El hosting continua a GitHub Pages.
+  - Propera fase: F0.
 - Un sol fitxer `index.html` de ~9.400 línies. Sense bundler ni framework.
 - Google Sheets és l'única base de dades. No hi ha backend propi.
 - **`readTab()` propaga els errors** [v4.0.42]. Abans tornava `[]` i convertia un tall de xarxa en pèrdua de dades.
