@@ -131,7 +131,12 @@ Totes les pestanyes es llegeixen en temporals. L'assignació a `DB` es fa al fin
 
 ### Security & Constraints
 
-- **Auth**: OAuth implicit. `accessToken` en memòria. Un 401 força re-autenticació.
+- **Auth** (v4.0.47, D-020):
+  - OAuth implícit amb GIS. `accessToken` i `tokenExpiresAt` en memòria.
+  - Quan el token caduca o arriba un 401, apareix `#reauth-banner` i `sheetsReq()`
+    espera (`esperarToken()`). Un toc renova el token amb `hint` i els guardats
+    continuen.
+  - Mai es crida `oauth2.revoke()`. Un error de xarxa no tanca la sessió.
 - **Autorització**: per email contra `DB.config.usuaris`.
   `it.fallaportal@gmail.com` → `treasury`. `08 Usuaris` buida → el primer que entre
   rep `president`.

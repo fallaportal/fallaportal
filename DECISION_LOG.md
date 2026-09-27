@@ -217,3 +217,53 @@ les opcions i el restaura si el delegat encara existeix a la llista.
     modal d'edició de moviment: cap dels dos pateix el mateix problema, perquè
     els seus selectors només es construeixen una vegada a `initApp()` i no
     formen part del mapa de re-render de `bgRefresh()`. No s'hi ha tocat res.
+
+---
+
+### D-020: La caducitat del token de Google no tanca la sessió
+**Date**: 2026-09-27 (v4.0.47)
+**Status**: Active (transitòria fins a la migració a Supabase, D-021)
+**Context**: Emilio reportava que l'entrada demanava massa clics. Causes trobades al codi:
+  - `signOut()` i l'antiga `signOutWithMsg()` cridaven `google.accounts.oauth2.revoke()`,
+    que esborra el consentiment de l'usuari: cada entrada tornava a passar per la
+    pantalla completa de permisos.
+  - El token dura ~1 h i no es renovava; el primer 401 expulsava l'usuari.
+  - Qualsevol error de xarxa també l'expulsava i li esborrava la caché.
+  - `disableAutoSelect()` en cada caducitat desactivava l'entrada automàtica de One Tap.
+  - No es passava l'email com a `hint`, i eixia el selector de compte.
+  - One Tap obria el popup d'OAuth sense gest de l'usuari, i el navegador el bloquejava.
+**Decision**:
+  - Mai revocar.
+  - Guardar `tokenExpiresAt`. Quan el token caduca o arriba un 401, apareix
+    `#reauth-banner` i les escriptures esperen (`esperarToken()`). Un toc a
+    "Continuar" demana el token amb `hint` i `prompt:''`, i els guardats pendents
+    continuen amb el token nou.
+  - Si en renovar entra un altre compte, es tanca la sessió i els guardats pendents
+    es rebutgen, perquè `_desantAraMateix` no quede bloquejat.
+  - Els errors de xarxa es propaguen sense tancar la sessió.
+  - L'últim email es guarda a `localStorage` (`fp_last_email`) com a `hint`; s'esborra
+    amb "Tancar sessió".
+**Alternatives Considered**: Renovació totalment silenciosa. No és possible amb el
+model de token de GIS sense backend: el popup necessita un gest de l'usuari. Arribar a
+zero clics requereix refresh token, és a dir, Supabase Auth (D-021).
+**Consequences**:
+  - Un toc per hora d'ús, en lloc de login complet amb permisos.
+  - El polling mostra el bàner sol quan detecta la caducitat.
+  - La recepta de verificació ha d'assignar `tokenExpiresAt` (`.claude/skills/verify`).
+  - **No provat amb OAuth real**: el popup, `hint` i `error_callback` no es poden
+    provar a `localhost`. Emilio ho ha de provar en producció.
+
+---
+
+### D-021: Migració a Supabase, mantenint GitHub Pages
+**Date**: 2026-09-27
+**Status**: Proposed — aprovat en principi; el pla està pendent de revisió amb Emilio
+**Context**: Emilio ja té compte de Supabase. Motivacions:
+  - Sessions persistents.
+  - Control d'accessos al servidor: hui cada usuari és editor del full i els rols només
+    es comproven en JS.
+  - Acabar amb la família de riscos de `writeTab` (D-003, D-013–D-016).
+**Decision**: Migrar a Supabase (Postgres + Auth + Storage). El hosting continua a
+GitHub Pages (Vercel descartat). Una setmana de congelació d'ús per al tall. S'aprofita
+per incorporar millores estructurals. Pla detallat a `PLA_MIGRACIO_SUPABASE.md`.
+**Consequences**: Supersedirà D-002 i D-008 quan es faça el tall.

@@ -34,6 +34,7 @@ fitxer i el continuity set (§2) sencer** abans de tocar res.
 | `CONVENTIONS.md` | Preferències de comunicació, convencions tècniques, anti-patrons. |
 | `FDD_FALLA_PORTAL.md` | Disseny funcional. |
 | `TDD_FALLA_PORTAL.md` | Disseny tècnic. |
+| `PLA_MIGRACIO_SUPABASE.md` | Pla de migració a Supabase (WS-SUPABASE, D-021): fases, model i esforç, seguiment. |
 
 Mai crear duplicats paral·lels (com `index1.html`, `index2.html` — ja n'hi ha i cal
 evitar que se'n generen més sense necessitat). Les actualitzacions són

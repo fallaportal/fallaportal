@@ -1,13 +1,40 @@
 # Work Stream Status — Falla Portal
-## Snapshot Date: 2026-09-20
-## Versió en producció: v4.0.46
+## Snapshot Date: 2026-09-27
+## Versió en producció: v4.0.47
 
 > **Context de calendari**: període vacacional, ús baix de l'eina. Bon moment per a
 > canvis estructurals i per a la decisió pendent del Service Worker.
 
 ---
 
-### Completat aquesta sessió (2026-09-20) — Fix delegat incorrecte a Fons delegats
+### Actiu — WS-SUPABASE (nou, 2026-09-27)
+
+**Objective**: Migrar de Google Sheets + OAuth de Google a Supabase sense perdre dades
+ni funcionalitats, amb els accessos controlats al servidor (RLS). El hosting es queda a
+GitHub Pages. Decisió D-021.
+**Current State**: Pla redactat a `PLA_MIGRACIO_SUPABASE.md`, **pendent de revisar amb
+Emilio**. La propera sessió comença per eixa revisió i per les decisions de la §9 del pla.
+Després ve la Fase 0 (auditoria i inventari).
+**Blockers**: Respostes d'Emilio a la §9 del pla.
+
+---
+
+### Completat 2026-09-27 — Login amb menys clics (v4.0.47) i targetes plegables
+
+- **Fons delegats**: cada targeta de delegat es plega i només mostra nom i saldo. Es
+  desplega en tocar-la. També es va corregir un `0` espuri al costat del botó
+  Devolució (`+ +(...)`). Publicat com a `c9906d3`, sense bump de versió; el bump
+  queda inclòs a v4.0.47.
+- **Login**: vegeu D-020. La caducitat del token ja no tanca la sessió: un bàner
+  demana un toc i els guardats esperen. Mai es revoca el consentiment.
+  - Verificat en execució amb 6 escenaris: caducitat amb guardat pendent, 401, tall de
+    xarxa, bàner des del polling, canvi de compte en renovar i entrada des de One Tap.
+    També s'ha comprovat la vista mòbil.
+  - **Pendent**: que Emilio ho prove en producció amb OAuth real (popup, `hint`).
+
+---
+
+### Completat 2026-09-20 — Fix delegat incorrecte a Fons delegats
 
 **Objective**: Emilio reportava que en crear un lliurament de fons, encara triant un
 altre delegat al modal, sempre es guardava el primer (Antonio Javier) — calia
