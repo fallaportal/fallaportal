@@ -1,5 +1,5 @@
 # Pla de migració a Supabase — Falla Portal
-## Redactat: 2026-09-27 · Estat: aprovat en principi, pendent de les respostes de §9
+## Redactat: 2026-09-27 · Estat: revisat amb Emilio; decisions principals preses (§9). Comença la Fase 0.
 ## Decisió associada: D-021 (`DECISION_LOG.md`)
 
 Aquest document es llig sense context previ. Cada sessió de la migració comença
@@ -37,6 +37,9 @@ La migració està feta quan es complixen tots aquests criteris:
   quan la Fase 6 està tancada, no abans.
 - **Els permisos es repliquen 1:1**: primer es reprodueix exactament el que fa l'app hui.
   Qualsevol canvi de permisos és una decisió a part, registrada al `DECISION_LOG`.
+- **Format del full congelat durant la preparació**: mentre duren les Fases 0–6, no es
+  canvien pestanyes ni columnes a l'app actual, perquè l'script de migració depén
+  d'eixe format. Les correccions que s'hi facen s'anoten a §11.
 
 ---
 
@@ -44,7 +47,7 @@ La migració està feta quan es complixen tots aquests criteris:
 
 | Àmbit | Hui | Després |
 |---|---|---|
-| Entrada | Token de Google d'1 h; renovació amb un toc (v4.0.47) | Supabase Auth amb Google (només email i perfil); sessió persistent amb refresh token |
+| Entrada | Token de Google d'1 h; renovació amb un toc (v4.0.48) | Supabase Auth per **email amb codi de 6 xifres** (sense Google); sessió persistent amb refresh token; alta pública desactivada |
 | Autorització | Rols comprovats en JS; tots els usuaris són editors del full | RLS a Postgres; el full deixa d'estar compartit |
 | Escriptura | `writeTab` reescriu la pestanya sencera | insert/update/delete per fila |
 | Proteccions contra truncar el full | Swap atòmic, `dadesCarregades`, `_desantAraMateix`, snapshots (D-003, D-013–D-016) | Innecessàries: desapareixen |
@@ -100,6 +103,10 @@ Cada fase indica el model i l'esforç recomanats (vegeu §8).
   local (fora del repo, via `.gitignore`). Un script local detecta tipus reals, camps
   buits, `id` duplicats, fons orfes, dates mal formades i imports no numèrics.
 - **Informe d'anomalies**: què es corregeix durant la migració i què es descarta.
+- **Proteccions implícites**: comportaments que protegeixen les dades sense estar
+  documentats. Exemple: l'expulsió per error de xarxa de la v4.0.9 evitava truncar el
+  full (D-020, "Revisió"). Per a cadascuna es decideix si Supabase la fa innecessària
+  o si cal replicar-la.
 - **Model**: Opus 5.5 · **high**. Agents Explore per als inventaris de codi.
 - **Sessions**: 1–2. **Sortida**: inventari i informe revisats per Emilio.
 
@@ -111,16 +118,30 @@ Cada fase indica el model i l'esforç recomanats (vegeu §8).
 - **Model**: Opus 5.5 · **xhigh**. Revisió final de les polítiques: Opus 5.5 · **max**.
 - **Sessions**: 1–2. **Sortida**: tests de RLS en verd a `dev`.
 
-### Fase 2 — Entorn dev i autenticació
+### Fase 2 — Entorn dev i autenticació per email
+Decisió d'Emilio (2026-09-27): **entrada per email, sense Google**.
+- **Mètode**: codi de 6 xifres (OTP) que l'usuari escriu a l'app. **No enllaç màgic**:
+  a iOS, l'enllaç del correu s'obri a Safari i no dins de la PWA instal·lada, i la
+  sessió quedaria fora de l'app.
+- **Només membres**:
+  - Alta pública desactivada a Supabase.
+  - Els usuaris es donen d'alta des de la llista `usuaris`, amb el rol assignat
+    (`canUsers`).
+  - Un email que no hi és no rep cap codi.
 - **Emilio**:
-  - Crea `dev` i `prod` en una regió de la UE.
-  - Crea un client OAuth de Google nou, només amb email i perfil. Amb només scopes bàsics
-    no cal el procés de verificació de Google. El passa a "In production".
-  - El configura com a proveïdor a Supabase, amb URLs de redirecció per a GitHub Pages i
-    `localhost`.
-- **Claude**: entrada amb `supabase-js`, sessió persistent, pantalla `noauth`, tancar
-  sessió.
-- **Novetat**: per primera vegada es podrà provar el login real en local.
+  - Crea `dev` i `prod` en una regió de la UE. `prod` en pla de pagament; `dev` pot ser
+    gratuït.
+  - Configura un **SMTP propi** (p. ex. un proveïdor d'enviament transaccional, o el
+    compte de la falla). El correu per defecte de Supabase és només per a proves i té
+    límits d'enviament molt baixos.
+  - Revisa la plantilla del correu del codi, en valencià.
+- **Claude**: pantalla d'entrada (email → codi), sessió persistent, pantalla `noauth`,
+  tancar sessió. Es lleva tot el codi de Google Identity (GIS, One Tap, `tokenClient`,
+  D-020).
+- **Conseqüències**:
+  - Desapareixen el client OAuth de Google, el mode "Testing", el scope `drive` i la
+    caducitat cada 7 dies.
+  - Per primera vegada es podrà provar el login real en local.
 - **Model**: Sonnet 5 · **high**. **Sessions**: 1.
 
 ### Fase 3 — Capa de dades
@@ -139,8 +160,15 @@ Cada fase indica el model i l'esforç recomanats (vegeu §8).
 ### Fase 4 — Justificants a Storage
 - Bucket privat `justificants/{anyFiscal}/{movId}.{ext}`, polítiques per rol, URL
   signada en obrir el justificant.
-- Justificants antics: es queden a Drive o es migren (decisió a §9).
-- **Model**: Sonnet 5 · **medium**. **Sessions**: 1.
+- **Justificants antics: es migren a Storage** (decisió d'Emilio, 2026-09-27):
+  - Script local que llig `ticketUrl` de cada moviment, baixa el fitxer de Drive amb el
+    token d'Emilio i el puja a `justificants/{anyFiscal}/{movId}.{ext}`.
+  - Actualitza la referència del moviment.
+  - Informe final: pujats, no trobats i orfes a Drive sense moviment (deute tècnic #2).
+    Els orfes no es pugen: es llisten perquè Emilio decidisca.
+  - Quan tot està verificat, es retira l'accés "qualsevol amb l'enllaç" dels fitxers de
+    Drive. **No s'esborren**: queden com a còpia.
+- **Model**: Sonnet 5 · **high** (per l'script de migració de fitxers). **Sessions**: 1–2.
 
 ### Fase 5 — Script de migració i assajos
 - Script local que llig l'export `.xlsx`, transforma les dades (dates, imports,
@@ -214,7 +242,7 @@ Totes aquestes comprovacions s'automatitzen dins de l'script de la Fase 5:
 | 1 Esquema i RLS | Opus 5.5 | xhigh (revisió final: max) |
 | 2 Auth i entorn dev | Sonnet 5 | high |
 | 3 Capa de dades | Sonnet 5 / Opus 5.5 per a les parts delicades | high |
-| 4 Storage | Sonnet 5 | medium |
+| 4 Storage i migració de justificants | Sonnet 5 | high |
 | 5 Script de migració | Opus 5.5 | high |
 | 6 Acceptació | Sonnet 5 / Opus 5.5 per a discrepàncies | high |
 | 7 Tall | Opus 5.5 | high |
@@ -230,23 +258,27 @@ Totes aquestes comprovacions s'automatitzen dins de l'script de la Fase 5:
 
 ---
 
-## 9. Decisions pendents d'Emilio (abans de la Fase 1)
+## 9. Decisions d'Emilio
 
-1. Algú treballa directament al Google Sheet o hi té informes connectats?
-2. **Pla de Supabase**: el gratuït pausa els projectes inactius i té còpies de seguretat
-   limitades. Per a dades financeres es recomana el de pagament almenys per a `prod`.
-   Comprova les condicions actuals al teu compte.
-3. Regió: UE (recomanat, per protecció de dades dels membres).
-4. Justificants antics: es queden a Drive o es migren a Storage?
-5. Entrada: només Google, o també enllaç màgic per email per a qui no tinga compte de Google?
-6. Permisos: replicar exactament els actuals (recomanat) o canviar-ne algun?
+**Preses el 2026-09-27:**
+1. **Ningú treballa directament al Google Sheet**: només l'app. No cal cap export
+   permanent; el full queda com a arxiu de només lectura.
+2. **Supabase de pagament per a `prod`**; `dev` pot ser gratuït.
+3. **Justificants antics: es migren a Storage** (Fase 4).
+4. **Entrada per email, sense Google**: codi de 6 xifres (Fase 2).
+
+**Pendents** (s'assumix el valor recomanat si no es diu res):
+5. Regió: UE.
+6. Permisos: replicar exactament els actuals.
 7. `index1.html`, `index2.html`, `index_2.html` i `dev.html`: es poden esborrar?
+   **No s'esborren sense confirmació explícita.**
+8. SMTP: quin proveïdor o compte envia els codis (necessari per a la Fase 2).
 
 ---
 
 ## 10. Calendari orientatiu
 
-De 9 a 14 sessions en total:
+De 9 a 15 sessions en total:
 
 | Fase | Sessions |
 |---|---|
@@ -254,7 +286,7 @@ De 9 a 14 sessions en total:
 | F1 Esquema i RLS | 1–2 |
 | F2 Auth i entorn dev | 1 |
 | F3 Capa de dades | 2–3 |
-| F4 Storage | 1 |
+| F4 Storage i justificants antics | 1–2 |
 | F5 Script de migració | 1 |
 | F6 Acceptació | 1–2 |
 | F7 Tall | 1–2 |

@@ -290,4 +290,14 @@ justifique. Però:
 **Decision**: Migrar a Supabase (Postgres + Auth + Storage). El hosting continua a
 GitHub Pages (Vercel descartat). Una setmana de congelació d'ús per al tall. S'aprofita
 per incorporar millores estructurals. Pla detallat a `PLA_MIGRACIO_SUPABASE.md`.
-**Consequences**: Supersedirà D-002 i D-008 quan es faça el tall.
+**Decisions d'Emilio en revisar el pla (2026-09-27)**:
+  - Ningú treballa directament al full; només l'app.
+  - Supabase de pagament per a `prod`.
+  - Els justificants antics es migren a Storage.
+  - **Entrada per email amb codi de 6 xifres, sense Google.** El codi es tria en lloc
+    de l'enllaç màgic perquè a iOS l'enllaç s'obri fora de la PWA.
+  - Alta pública desactivada.
+  - Cal un SMTP propi.
+**Consequences**:
+  - Supersedirà D-002, D-008 i D-020 quan es faça el tall. Sense Google desapareixen el
+    client OAuth, el mode "Testing" i el scope `drive`.

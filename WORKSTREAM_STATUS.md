@@ -12,10 +12,17 @@
 **Objective**: Migrar de Google Sheets + OAuth de Google a Supabase sense perdre dades
 ni funcionalitats, amb els accessos controlats al servidor (RLS). El hosting es queda a
 GitHub Pages. Decisió D-021.
-**Current State**: Pla redactat a `PLA_MIGRACIO_SUPABASE.md`, **pendent de revisar amb
-Emilio**. La propera sessió comença per eixa revisió i per les decisions de la §9 del pla.
-Després ve la Fase 0 (auditoria i inventari).
-**Blockers**: Respostes d'Emilio a la §9 del pla.
+**Current State**: Pla a `PLA_MIGRACIO_SUPABASE.md`, **revisat amb Emilio el
+2026-09-27**. Decisions preses:
+  - Ningú treballa directament al full.
+  - Supabase de pagament per a `prod`.
+  - Els justificants antics es migren.
+  - Entrada per email amb codi, sense Google.
+
+**Propera sessió**: Fase 0 (auditoria i inventari). Model Opus 5.5, esforç high.
+**Blockers**:
+  - Cap per a la Fase 0.
+  - Per a la Fase 2 cal triar l'SMTP (§9.8 del pla).
 
 ---
 
