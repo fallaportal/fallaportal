@@ -337,7 +337,7 @@ tr:hover td{background:var(--bg2)}
     <div class="login-logo">Falla <span>Portal</span></div>
     <div class="login-sub">Sistema de gestió financera</div>
     <div class="login-fiscal">Any fiscal 26/27 · Abr 2026 – Mar 2027</div>
-    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v4.0.53</div>
+    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v4.0.54</div>
     <button class="btn-google" onclick="signIn()">
       <svg viewBox="0 0 24 24" width="20" height="20"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
       Entrar amb Google
@@ -379,7 +379,7 @@ tr:hover td{background:var(--bg2)}
     <div class="sb-bottom">
       <div class="sync-ind" style="display:flex;align-items:center;justify-content:space-between"><div style="display:flex;align-items:center;gap:6px"><div class="sync-dot" id="sync-dot"></div><span id="sync-text">Sincronitzat</span></div><button onclick="manualRefresh()" title="Actualitzar dades" style="background:none;border:none;cursor:pointer;padding:2px 4px;color:var(--text2);font-size:14px;line-height:1"><i class="ti ti-refresh"></i></button></div>
       <button class="btn-logout" onclick="signOut()"><i class="ti ti-logout" style="font-size:14px"></i> Tancar sessió</button>
-      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v4.0.53</div>
+      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v4.0.54</div>
     </div>
   </div>
 
@@ -1205,7 +1205,7 @@ tr:hover td{background:var(--bg2)}
     <div class="field-row">
       <div class="field">
         <label>Font de dades</label>
-        <select id="mr-font">
+        <select id="mr-font" onchange="previewRegla()">
           <option value="01 Banc">01 Banc (CaixaBank)</option>
           <option value="02 Banc">02 Banc (Caixa Popular)</option>
           <option value="app">app (falles.app)</option>
@@ -1219,7 +1219,17 @@ tr:hover td{background:var(--bg2)}
     </div>
     <div class="field">
       <label>Patrons <span style="color:var(--text3);font-size:12px">(paraules separades per comes)</span></label>
-      <input type="text" id="mr-patrons" placeholder="p.e. HIDRAQUA,HIDRAQUA GENERAL">
+      <input type="text" id="mr-patrons" placeholder="p.e. HIDRAQUA,HIDRAQUA GENERAL" oninput="previewRegla()">
+      <div id="mr-patro-btns" style="display:none;gap:6px;flex-wrap:wrap;margin-top:6px"></div>
+      <div id="mr-preview" style="font-size:12px;color:var(--text2);margin-top:6px"></div>
+    </div>
+    <div class="field">
+      <label>S'aplica a</label>
+      <select id="mr-movtype" onchange="previewRegla()">
+        <option value="auto">Pagaments i ingressos</option>
+        <option value="gast">Només pagaments</option>
+        <option value="ing">Només ingressos</option>
+      </select>
     </div>
     <div class="field">
       <label>Tipus de regla</label>
@@ -5916,12 +5926,94 @@ function applyRegles(concepte,font){
   return null;
 }
 
+// ── Regles de mapeig: casament, ordre i patrons suggerits ───────────────────
+function _reglaPatrons(r){
+  // Separadors: coma, punt i coma o salt de línia (una "PR.DE;" amb punt i coma no casava mai amb res)
+  return String(r.patrons||'').split(/[,;\n]/).map(function(p){return p.trim().toLowerCase();}).filter(Boolean);
+}
+// Avisos d'una regla que probablement farà coses no previstes
+function _avisosRegla(r){
+  const avisos=[];
+  const patrons=_reglaPatrons(r);
+  if(patrons.some(function(p){return p.replace(/\s/g,'').length<5;}))
+    avisos.push('Patró molt curt: pot casar amb moviments no previstos');
+  if(r.tipus==='auto'&&/\d{4,}/.test(r.concepte||''))
+    avisos.push('El concepte té un número: tots els moviments que casen es renomenen així');
+  const clau=patrons.slice().sort().join('|');
+  const repetida=(DB.regles||[]).some(function(o){
+    return o.id!==r.id&&(o.font||'')===(r.font||'')&&o.activa&&_reglaPatrons(o).slice().sort().join('|')===clau;
+  });
+  if(repetida)avisos.push('Hi ha una altra regla amb el mateix patró');
+  return avisos;
+}
+// imp amb signe: >0 ingrés, <0 pagament. movtype 'gast'/'ing' limita el sentit; 'auto' o buit = tots dos.
+function _reglaCasa(r,concepte,imp){
+  if(r.movtype==='gast'&&imp>0)return false;
+  if(r.movtype==='ing'&&imp<0)return false;
+  const c=String(concepte||'').toLowerCase();
+  return _reglaPatrons(r).some(function(p){return c.includes(p);});
+}
+// Per prioritat; a igualtat, guanya la regla amb el patró més llarg (el més específic).
+function _ordenarRegles(llista){
+  const pr=function(r){const n=parseInt(r.prioritat);return isNaN(n)?99:n;};
+  const llarg=function(r){return Math.max(0,...(_reglaPatrons(r).map(function(p){return p.length;})));};
+  return llista.slice().sort(function(a,b){return pr(a)-pr(b)||llarg(b)-llarg(a);});
+}
+// Part estable d'un text del banc: treu els números que canvien cada vegada
+// (xec, remesa, data de la venda del TPV...). "DETIR190221507" -> "DETIR", "WEB367893310 0706" -> "WEB".
+function _partEstable(text,maxParaules){
+  const tokens=String(text||'').split(/\s+/).map(function(t){
+    return t.replace(/\d{3,}.*$/,'').replace(/^\d+$/,'').replace(/^[·\-–:.,]+|[·\-–:.,]+$/g,'');
+  }).filter(function(t){return t.length>1;});
+  return tokens.slice(0,maxParaules||3).join(' ').substring(0,40).trim();
+}
+function _suggerirPatrons(m){
+  const base=m._conceptePropi!==undefined?m._conceptePropi:m.concepte;
+  const nomes=_partEstable(base,3);
+  const mes=_partEstable(m.masDades,3);
+  return{
+    moviment:nomes||String(base||'').substring(0,40),
+    masDades:mes,
+    tots:(nomes&&mes?nomes+' · '+mes:(nomes||mes))||String(base||'').substring(0,40)
+  };
+}
+// Mostra a la modal quants moviments casaria la regla (d'aquest fitxer i de l'historial)
+function previewRegla(){
+  const el=document.getElementById('mr-preview');
+  if(!el)return;
+  const patrons=document.getElementById('mr-patrons').value;
+  if(!patrons.trim()){el.innerHTML='';return;}
+  const r={patrons:patrons,movtype:document.getElementById('mr-movtype').value};
+  const font=document.getElementById('mr-font').value;
+  const zona=window._reglaFromZona;
+  const fitxer=(zona!==undefined&&zona!==null&&window['_xlsRows'+zona])||[];
+  const banc=window['_xlsBanc'+zona];
+  const delFitxer=fitxer.filter(function(m){return _reglaCasa(r,m.concepte,m.import);});
+  const historial=(DB.moviments||[]).filter(function(m){
+    return(font===''||m.via===font)&&_reglaCasa(r,m.concepte,m.tipus==='ing'?1:-1);
+  });
+  const exemples=Array.from(new Set(delFitxer.concat(historial).map(function(m){
+    return String(m._conceptePropi!==undefined?m._conceptePropi:m.concepte||'').substring(0,38);
+  }))).slice(0,6);
+  let html='Casa amb <strong>'+delFitxer.length+'</strong> moviments d\'aquest fitxer i <strong>'+historial.length+'</strong> de l\'historial';
+  if(exemples.length)html+=': <span style="color:var(--text3)">'+exemples.map(esc).join(' · ')+(delFitxer.length+historial.length>exemples.length?'…':'')+'</span>';
+  if(!delFitxer.length&&!historial.length)html+=' <span style="color:var(--amber)">— no casa amb res</span>';
+  el.innerHTML=html;
+}
+
 let editReglaId=null;
 
 function renderCfgRegles(){
   const canEdit=perm('canConfig');
-  const fonts=['01 Banc','02 Banc','app',''];
-  const fontLabels={'01 Banc':'CaixaBank','02 Banc':'Caixa Popular','app':'falles.app','':'Tots els bancs'};
+  // Tots els bancs configurats, no només els 4 de sempre (si no, les regles d'un altre banc quedaven ocultes)
+  const fontLabels={'app':'falles.app','':'Tots els bancs'};
+  const fonts=[];
+  (DB.config.bancs||[]).forEach(function(b){
+    if(b.tipus==='cash'||!b.codi)return;
+    fonts.push(b.codi);fontLabels[b.codi]=b.nom+' ('+b.codi+')';  // amb el codi, perquè hi ha dos "Caixabank"
+  });
+  fonts.push('app','');
+  (DB.regles||[]).forEach(function(r){if(!fonts.includes(r.font||''))fonts.push(r.font||'');});
   let html='';
 
   // Info box
@@ -5956,6 +6048,9 @@ function renderCfgRegles(){
             (r.delegacioNom?r.delegacioNom:'')+
             (r.concepte?' · '+r.concepte:'')+'</div>';
         }
+        _avisosRegla(r).forEach(function(a){
+          html+='<div style="font-size:11px;color:var(--amber);margin-top:2px"><i class="ti ti-alert-triangle"></i> '+esc(a)+'</div>';
+        });
         html+='</div>';
         html+='<span class="pill '+tipusColor+'">'+TIPUS_REGLA[r.tipus]+'</span>';
         if(canEdit){
@@ -6198,13 +6293,33 @@ async function executarCopyPres(){
   await save('pres_plans');
 }
 
+// Omple el desplegable de font amb tots els bancs configurats (abans només n'hi havia 4 de fixos:
+// una regla d'un altre banc es guardava amb font buida, és a dir, aplicada a TOTS els bancs).
+function _omplirFontsRegla(fontActual){
+  const sel=document.getElementById('mr-font');
+  const opcions=[];
+  (DB.config.bancs||[]).forEach(function(b){
+    if(b.tipus==='cash'||!b.codi)return;
+    opcions.push({v:b.codi,t:b.codi+' ('+b.nom+')'});
+  });
+  opcions.push({v:'app',t:'app (falles.app)'});
+  opcions.push({v:'',t:'Tots els bancs'});
+  if(fontActual!==undefined&&fontActual!==null&&!opcions.some(function(o){return o.v===fontActual;}))
+    opcions.unshift({v:fontActual,t:fontActual});
+  sel.innerHTML=opcions.map(function(o){return'<option value="'+esc(o.v)+'">'+esc(o.t)+'</option>';}).join('');
+}
+
 function openModalRegla(id,font){
   editReglaId=id;
+  window._reglaFromZona=null;
   const r=id?DB.regles.find(x=>x.id===id):null;
   document.getElementById('mr-title').textContent=id?'Editar regla':'Nova regla de mapeig';
+  _omplirFontsRegla(r?r.font:(font||'01 Banc'));
   document.getElementById('mr-font').value=r?r.font:(font||'01 Banc');
   document.getElementById('mr-font').disabled=!!id;
   document.getElementById('mr-patrons').value=r?r.patrons:'';
+  document.getElementById('mr-movtype').value=r&&r.movtype?r.movtype:'auto';
+  document.getElementById('mr-patro-btns').style.display='none';
   document.getElementById('mr-tipus').value=r?r.tipus:'auto';
   document.getElementById('mr-prioritat').value=r?r.prioritat:10;
   document.getElementById('mr-activa').checked=r?r.activa:true;
@@ -6221,6 +6336,7 @@ function openModalRegla(id,font){
     document.getElementById('mr-deleg').value=r.delegacioId||'';
     document.getElementById('mr-concepte').value=r.concepte||'';
   }
+  previewRegla();
   openModal('modal-regla');
 }
 
@@ -6255,7 +6371,8 @@ async function saveRegla(){
     areaNom=area?area.name:'';
     delegacioNom=deleg?deleg.name:'';
   }
-  const regla={id:editReglaId||genId('r'),font,patrons,areaId,areaNom,delegacioId,delegacioNom,concepte,tipus,movtype:'auto',prioritat,activa};
+  const movtype=document.getElementById('mr-movtype').value||'auto';
+  const regla={id:editReglaId||genId('r'),font,patrons,areaId,areaNom,delegacioId,delegacioNom,concepte,tipus,movtype,prioritat,activa};
   if(editReglaId){
     const idx=DB.regles.findIndex(x=>x.id===editReglaId);
     if(idx>=0)DB.regles[idx]=regla;
@@ -6282,6 +6399,7 @@ async function saveRegla(){
         const vell=vellsAssignats[i];
         if(!vell)return;
         if(vell._ignorar)nm._ignorar=true;
+        if(vell._importar!==undefined)nm._importar=vell._importar;
         if(vell.assignatPer==='manual'&&vell.areaId&&nm.assignatPer!=='regla_concepte'){
           nm.areaId=vell.areaId;nm.areaNom=vell.areaNom;
           nm.delegacioId=vell.delegacioId;nm.delegacioNom=vell.delegacioNom;
@@ -8344,20 +8462,16 @@ function processXLSBanc(arrayBuffer,zona){
 // Aplicar regles de mapeig per assignar àrea/delegació automàticament (DB.regles = 13 Regles CSV)
 function aplicarReglesImportacio(moviments,banc){
   const bancCodi=String(banc.codi||'').trim().toLowerCase();
-  const regles=(DB.regles||[]).filter(function(r){
+  const regles=_ordenarRegles((DB.regles||[]).filter(function(r){
     if(!r.activa)return false;
     if(r.tipus==='ignore')return false;
     const fontR=String(r.font||'').trim().toLowerCase();
     // font buida = tots els bancs; si té font, ha de coincidir amb banc.codi
     return !fontR||fontR===bancCodi;
-  }).sort(function(a,b){return(parseInt(a.prioritat)||99)-(parseInt(b.prioritat)||99);});
+  }));
 
   return moviments.map(function(m){
-    const regla=regles.find(function(r){
-      if(!r.patrons)return false;
-      const patrons=String(r.patrons).split(',').map(function(p){return p.trim().toLowerCase();});
-      return patrons.some(function(p){return p&&m.concepte.toLowerCase().includes(p);});
-    });
+    const regla=regles.find(function(r){return _reglaCasa(r,m.concepte,m.import);});
     if(regla)return{...m,areaId:regla.areaId||'',areaNom:regla.areaNom||'',
       delegacioId:regla.delegacioId||'',delegacioNom:regla.delegacioNom||'',
       concepte:regla.concepte||m.concepte,assignatPer:'regla_concepte'};
@@ -8374,6 +8488,7 @@ function mostrarPreviewImportacio(zona,moviments,assignats,banc,compteDetectat,f
   // Per defecte: nous=importar, possibles=importar (ambre, l'usuari pot desmarcar),
   // duplicats_segurs=NO importar (l'usuari pot marcar manualment si vol forçar)
   assignats.forEach(function(m){
+    if(m._importar!==undefined)return;  // conserva la decisió de l'usuari (p.ex. en crear una regla)
     if(m._dupTipus==='duplicat_segur')m._importar=false;
     else m._importar=true;
   });
@@ -8595,25 +8710,47 @@ function crearReglaDesdeExcepcio(zona,idx){
   const m=assignats[idx];
   if(!m.areaId){showToast('Primer assigna una àrea a aquest moviment',true);return;}
 
-  // Patrons: primeres 3 paraules del concepte original del banc
-  const concepteOriginal=m._concepteOriginal||m.concepte;
-  const patronsSuggerit=concepteOriginal.split(' ').slice(0,3).join(' ').substring(0,40);
-  // Concepte: el que l'usuari ha escrit al camp
+  // Patrons: part estable del text del banc (sense números de xec, remesa, data...)
+  const sug=_suggerirPatrons(m);
+  // Concepte: només va a la regla si l'usuari l'ha canviat. Si no, cada moviment futur conserva el seu
+  // (abans la regla guardava el text exacte d'aquest moviment, amb els seus números, per a tots).
   const inputEl=document.getElementById('exc-conc-'+zona+'-'+idx);
-  const concepteFinal=inputEl?inputEl.value.trim()||m.concepte:m.concepte;
+  const concepteBanc=m._conceptePropi!==undefined
+    ?m._conceptePropi+(m.masDades?' · '+m.masDades:'')
+    :(m._concepteOriginal||'');
+  const valorInput=inputEl?inputEl.value.trim():'';
+  const concepteFinal=valorInput&&valorInput!==concepteBanc?valorInput:'';
 
   // Guardar referència a la zona per refrescar després de guardar
   window._reglaFromZona=zona;
+  window._reglaMov=m;
 
   // Obrir modal pre-omplert
   editReglaId=null;
   document.getElementById('mr-title').textContent='Nova regla de mapeig';
+  _omplirFontsRegla(banc.codi||'01 Banc');
   document.getElementById('mr-font').value=banc.codi||'01 Banc';
   document.getElementById('mr-font').disabled=true; // fixat al banc del fitxer
-  document.getElementById('mr-patrons').value=patronsSuggerit;
+  document.getElementById('mr-patrons').value=sug.tots;
+  document.getElementById('mr-movtype').value=m.import>0?'ing':'gast'; // per defecte, només el mateix sentit
   document.getElementById('mr-tipus').value='auto';
-  document.getElementById('mr-prioritat').value=(DB.regles.length+1)*10;
+  // Prioritat: si ja hi ha una regla que casa amb este moviment, la nova passa per davant
+  const casen=_ordenarRegles((DB.regles||[]).filter(function(r){
+    return r.activa&&(!r.font||r.font===banc.codi)&&_reglaCasa(r,m.concepte,m.import);
+  }));
+  const maxPr=Math.max(0,...((DB.regles||[]).map(function(r){return parseInt(r.prioritat)||0;})));
+  document.getElementById('mr-prioritat').value=casen.length
+    ?Math.max(1,(parseInt(casen[0].prioritat)||99)-1)
+    :maxPr+10;
   document.getElementById('mr-activa').checked=true;
+  // Botons per triar què s'usa com a patró
+  const btns=document.getElementById('mr-patro-btns');
+  const opcions=[['Moviment',sug.moviment],['Més dades',sug.masDades],['Moviment + Més dades',sug.tots]]
+    .filter(function(o,i,arr){return o[1]&&arr.findIndex(function(x){return x[1]===o[1];})===i;});
+  btns.innerHTML=opcions.map(function(o,i){
+    return'<button type="button" class="btn" style="font-size:11px;padding:3px 8px" data-patro="'+esc(o[1])+'" onclick="document.getElementById(\'mr-patrons\').value=this.dataset.patro;previewRegla()">'+esc(o[0])+': <span style="font-family:monospace">'+esc(o[1])+'</span></button>';
+  }).join('');
+  btns.style.display=opcions.length>1?'flex':'none';
   updateMrTipus();
   // Omplir àrees i pre-seleccionar
   const mrArea=document.getElementById('mr-area');
@@ -8625,6 +8762,7 @@ function crearReglaDesdeExcepcio(zona,idx){
   onMrAreaChange();
   document.getElementById('mr-deleg').value=m.delegacioId||'';
   document.getElementById('mr-concepte').value=concepteFinal;
+  previewRegla();
   openModal('modal-regla');
 }
 

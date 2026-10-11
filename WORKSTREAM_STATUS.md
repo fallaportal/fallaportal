@@ -1,6 +1,6 @@
 # Work Stream Status — Falla Portal
 ## Snapshot Date: 2026-10-11
-## Versió en producció: v4.0.53
+## Versió en producció: v4.0.54
 
 > **Context de calendari**: període vacacional, ús baix de l'eina. Bon moment per a
 > canvis estructurals i per a la decisió pendent del Service Worker.
@@ -23,6 +23,35 @@ GitHub Pages. Decisió D-021.
 **Blockers**:
   - Cap per a la Fase 0.
   - Per a la Fase 2 cal triar l'SMTP (§9.8 del pla).
+
+---
+
+### Completat 2026-10-11 — Regles de mapeig de la importació (v4.0.54)
+
+- **Problemes trobats** (comprovats amb l'extracte real i la pestanya "13 Regles CSV"):
+  1. El patró suggerit eren les 3 primeres paraules del concepte, amb números que canvien
+     (`CARG.CHEQUE 364929`, `WEB367893310 0706`, `DETIR190221507`): 49 de 90 patrons no
+     casaven mai amb l'extracte següent.
+  2. La regla guardava com a concepte el text exacte del moviment (amb els seus números) i
+     renomenava així tots els moviments futurs que casaven.
+  3. El desplegable "Font de dades" només tenia 4 opcions: una regla creada des d'un altre banc
+     (p. ex. 03 Banc) es guardava amb font buida, és a dir, per a tots els bancs.
+  4. Les regles noves anaven a l'última prioritat i una regla genèrica anterior les ombrejava.
+  5. `movtype` es guardava sempre com "auto" i el casament l'ignorava; "PR.DE;" amb punt i coma
+     no casava mai; Configuració → Regles només mostrava 4 bancs; crear una regla reiniciava
+     les caselles "s'importarà / s'ometrà".
+- **Canvi**: patró suggerit sense números (`_suggerirPatrons`) amb botons Moviment / Més dades /
+  tots dos; previsualització de quants moviments casa la regla (fitxer i historial); el concepte
+  només s'hi guarda si l'usuari l'ha canviat; desplegable amb tots els bancs; prioritat per
+  davant de la regla que ja casava; a igualtat de prioritat guanya el patró més llarg;
+  `movtype` respectat (el sentit del moviment que genera la regla); separadors `,` `;` i salt
+  de línia; avisos a la llista de regles (patró curt, número al concepte, regla repetida).
+- **Pendent per a Emilio** (a Configuració → Regles, ara marcat amb avisos): esborrar
+  `r1791710077609_d3ck` ("PR.DE;", duplicada de `r1791710527127_ei5b`), buidar el concepte de
+  `PR.DE` i `DETIR` (diuen `PR.DE190221507` i `DETIR190221507`) i allargar `RAMS` (p. ex. `RAMS CRIDA`).
+- **Revisar**: en la neteja del 01 Banc es van conservar les còpies antigues; en 20 de 50 parelles
+  l'àrea era diferent de la de les regles noves (TPV, WiFi COM.T i aigua van a 07 segons les
+  regles noves i a 01 a les còpies antigues). Decidir quina és la correcta.
 
 ---
 
