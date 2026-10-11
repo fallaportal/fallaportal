@@ -123,6 +123,8 @@ input[type=checkbox]{accent-color:var(--green)}
 .imp-row input[type=checkbox]{width:18px;height:18px;padding:0;flex:none;cursor:pointer;margin:0}
 .imp-row .imp-main{flex:1;min-width:0}
 .imp-row .imp-title{font-weight:500;overflow-wrap:anywhere}
+.imp-mas{font-size:12px;color:var(--text);margin-top:2px;overflow-wrap:anywhere}
+.imp-mas span{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--text3);margin-right:4px}
 .imp-row .imp-sub{font-size:11px;color:var(--text3);margin-top:2px;overflow-wrap:anywhere}
 .imp-row .imp-amt{font-weight:600;white-space:nowrap;text-align:right}
 .imp-row .imp-state{font-size:11px;font-weight:600;padding:2px 8px;border-radius:10px;white-space:nowrap;background:var(--green-bg);color:var(--green-text)}
@@ -335,7 +337,7 @@ tr:hover td{background:var(--bg2)}
     <div class="login-logo">Falla <span>Portal</span></div>
     <div class="login-sub">Sistema de gestió financera</div>
     <div class="login-fiscal">Any fiscal 26/27 · Abr 2026 – Mar 2027</div>
-    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v4.0.49</div>
+    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v4.0.50</div>
     <button class="btn-google" onclick="signIn()">
       <svg viewBox="0 0 24 24" width="20" height="20"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
       Entrar amb Google
@@ -377,7 +379,7 @@ tr:hover td{background:var(--bg2)}
     <div class="sb-bottom">
       <div class="sync-ind" style="display:flex;align-items:center;justify-content:space-between"><div style="display:flex;align-items:center;gap:6px"><div class="sync-dot" id="sync-dot"></div><span id="sync-text">Sincronitzat</span></div><button onclick="manualRefresh()" title="Actualitzar dades" style="background:none;border:none;cursor:pointer;padding:2px 4px;color:var(--text2);font-size:14px;line-height:1"><i class="ti ti-refresh"></i></button></div>
       <button class="btn-logout" onclick="signOut()"><i class="ti ti-logout" style="font-size:14px"></i> Tancar sessió</button>
-      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v4.0.49</div>
+      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v4.0.50</div>
     </div>
   </div>
 
@@ -6350,8 +6352,9 @@ function renderCfgExercicis(){
         html+='<button class="btn" style="font-size:12px;padding:3px 8px;color:var(--green)" data-any="'+e+'" onclick="reobrirExercici(this.dataset.any)"><i class="ti ti-lock-open"></i> Reobrir</button>';
       }
       html+='<button class="btn" style="font-size:12px;padding:3px 8px" data-any="'+e+'" onclick="editarExercici(this.dataset.any)"><i class="ti ti-edit"></i></button>';
+      // El backup és de només lectura: també es pot descarregar de l'exercici actiu
+      html+='<button class="btn" style="font-size:12px;padding:3px 8px;margin-right:2px" title="Backup JSON" data-any="'+e+'" onclick="exportSnapshotExercici(this.dataset.any)"><i class="ti ti-download"></i></button>';
       if(!isActiu){
-        html+='<button class="btn" style="font-size:12px;padding:3px 8px;margin-right:2px" title="Backup JSON" data-any="'+e+'" onclick="exportSnapshotExercici(this.dataset.any)"><i class="ti ti-download"></i></button>';
         html+='<button class="btn" style="font-size:12px;padding:3px 8px" data-any="'+e+'" onclick="eliminarExercici(this.dataset.any)"><i class="ti ti-trash"></i></button>';
       }
       html+='</td>';
@@ -8216,6 +8219,14 @@ function processXLSBanc(arrayBuffer,zona){
       if(colData<0)colData=0; if(colConcepte<0)colConcepte=2; if(colImport<0)colImport=3;
     }
 
+    // Les capçaleres manen sobre la disposició fixa: "Més dades" / "Mas Datos" pot
+    // vindre en qualsevol posició i amb o sense accent segons l'exportació del banc.
+    const headerNorm=headerArr.map(function(c){return c.normalize('NFD').replace(/[̀-ͯ]/g,'');});
+    const iMesDades=headerNorm.findIndex(function(c){return c.includes('mes dades')||c.includes('mas datos');});
+    if(iMesDades>=0)colConcepte2=iMesDades;
+    const iImport=headerNorm.findIndex(function(c){return c==='import'||c==='importe';});
+    if(iImport>=0)colImport=iImport;
+
     const dataStart=headerRow>=0?headerRow+1:1;
     const moviments=[];
     for(let i=dataStart;i<rows.length;i++){
@@ -8223,10 +8234,13 @@ function processXLSBanc(arrayBuffer,zona){
       if(!row.length)continue;
       let dataVal='';
       let concepte=String(row[colConcepte]||'').trim();
-      // Combinar les dues columnes de concepte si existeixen (CaixaBank)
+      const conceptePropi=concepte;
+      // "Més dades": es guarda a banda per mostrar-la al preview i també s'afegeix al
+      // concepte, perquè les regles de mapeig i l'historial la puguen aprofitar.
+      let masDades='';
       if(colConcepte2>=0&&row[colConcepte2]){
-        const extra=String(row[colConcepte2]).trim();
-        if(extra)concepte=concepte+(concepte?' · ':'')+extra;
+        masDades=String(row[colConcepte2]).trim();
+        if(masDades)concepte=concepte+(concepte?' · ':'')+masDades;
       }
       // Import: pot ser number (raw:true) o string
       const rawImp=row[colImport];
@@ -8289,7 +8303,11 @@ function processXLSBanc(arrayBuffer,zona){
       }
       if(isNaN(imp)||imp===0)continue;
 
-      moviments.push({data:dataVal,concepte,_concepteOriginal:concepte,import:imp});
+      // _concepteOriginal alimenta el hash anti-duplicats: en els formats que no
+      // combinaven "Més dades" es manté el concepte sense ella perquè els moviments
+      // ja importats continuen coincidint.
+      moviments.push({data:dataVal,concepte,_concepteOriginal:isCaixabank?concepte:conceptePropi,
+        _conceptePropi:conceptePropi,masDades,import:imp});
     }
 
     if(!moviments.length){showToast('No s\'han trobat moviments al fitxer.',true);return;}
@@ -8440,9 +8458,11 @@ function mostrarPreviewImportacio(zona,moviments,assignats,banc,compteDetectat,f
       }).join('');
       html+='<div style="background:var(--bg2);border-radius:var(--r);padding:8px 10px;font-size:12px" id="exc-'+zona+'-'+idx+'">';
       html+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">';
-      html+='<span style="font-weight:500">'+m.data+' · '+m.concepte.substring(0,45)+(m.concepte.length>45?'…':'')+'</span>';
+      const concExc=(m._conceptePropi!==undefined?m._conceptePropi:m.concepte)||'';
+      html+='<span style="font-weight:500">'+esc(m.data+' · '+concExc.substring(0,45)+(concExc.length>45?'…':''))+'</span>';
       html+='<span style="color:'+(m.import>0?'var(--green)':'var(--red)')+';font-weight:500">'+(m.import>0?'+':'')+fmtD(m.import)+'</span>';
       html+='</div>';
+      if(m.masDades)html+='<div class="imp-mas" style="margin:-2px 0 6px"><span>Més dades</span> '+esc(m.masDades)+'</div>';
       html+='<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:4px">';
       html+='<select id="exc-area-'+zona+'-'+idx+'" style="font-size:12px;padding:4px 8px;border-radius:var(--r);border:0.5px solid var(--border2);background:var(--bg);color:var(--text);flex:1" onchange="assignarExcepcioArea('+zona+','+idx+',this.value)">';
       html+='<option value="">— Selecciona àrea —</option>'+areaOpts+'</select>';
@@ -8470,11 +8490,12 @@ function mostrarPreviewImportacio(zona,moviments,assignats,banc,compteDetectat,f
 
 // Fila de decisió d'importació: tota la fila és un <label>, i l'estat (S'importarà / S'ometrà) és explícit
 function _impRowHtml(zona,idx,m,checked,sub){
-  const concepte=(m.concepte||'');
+  const concepte=(m._conceptePropi!==undefined?m._conceptePropi:(m.concepte||''));
   let h='<label class="imp-row'+(checked?'':' off')+'" for="imp-'+zona+'-'+idx+'">';
   h+='<input type="checkbox" id="imp-'+zona+'-'+idx+'"'+(checked?' checked':'')+' onchange="toggleImportar('+zona+','+idx+',this.checked)">';
   h+='<div class="imp-main">';
   h+='<div class="imp-title">'+esc(m.data+' · '+concepte.substring(0,55)+(concepte.length>55?'…':''))+'</div>';
+  if(m.masDades)h+='<div class="imp-mas"><span>Més dades</span> '+esc(m.masDades)+'</div>';
   if(sub)h+='<div class="imp-sub">'+esc(sub)+'</div>';
   h+='</div>';
   h+='<span class="imp-amt" style="color:'+(m.import>0?'var(--green)':'var(--red)')+'">'+(m.import>0?'+':'')+fmtD(m.import)+'</span>';

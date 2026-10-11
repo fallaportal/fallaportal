@@ -1,6 +1,6 @@
 # Work Stream Status — Falla Portal
 ## Snapshot Date: 2026-10-11
-## Versió en producció: v4.0.49
+## Versió en producció: v4.0.50
 
 > **Context de calendari**: període vacacional, ús baix de l'eina. Bon moment per a
 > canvis estructurals i per a la decisió pendent del Service Worker.
@@ -23,6 +23,25 @@ GitHub Pages. Decisió D-021.
 **Blockers**:
   - Cap per a la Fase 0.
   - Per a la Fase 2 cal triar l'SMTP (§9.8 del pla).
+
+---
+
+### Completat 2026-10-11 — "Més dades" a la importació i backup de l'exercici actiu (v4.0.50)
+
+- **Importació de moviments**: la columna "Més dades" / "Mas Datos" del banc es detecta
+  per nom de capçalera (sense accents, en qualsevol posició; també l'import per
+  "Import"/"Importe"). Es guarda a `m.masDades` i es mostra en una línia pròpia
+  ("MÉS DADES ...") a les files de duplicats i a les targetes d'excepcions, perquè
+  ajuda a decidir l'àrea. `m.concepte` (regles i moviment guardat) la continua incloent.
+  El hash anti-duplicats (`_concepteOriginal`) no canvia en els formats que no la
+  combinaven, perquè els moviments ja importats continuen coincidint.
+  Provat amb fitxers reals: 150 i 9 moviments, sumes exactes.
+- **Configuració → Exercicis**: el botó "Backup JSON" ara també apareix a l'exercici
+  actiu (abans només als no actius).
+- **Pendent**: Emilio informa que el compte de CaixaBank li desquadra. Cal comparar un
+  backup 26/27 amb els fitxers `Compte 1.xlsx` (…0088726: saldo final 13.723,25 €) i
+  `Compte 2.xlsx` (…0332534: saldo final 0 €). Hipòtesis: possibles duplicats
+  importats amb la UI antiga, o el Compte 2 importat contra el banc equivocat.
 
 ---
 
