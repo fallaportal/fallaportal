@@ -337,7 +337,7 @@ tr:hover td{background:var(--bg2)}
     <div class="login-logo">Falla <span>Portal</span></div>
     <div class="login-sub">Sistema de gestió financera</div>
     <div class="login-fiscal">Any fiscal 26/27 · Abr 2026 – Mar 2027</div>
-    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v4.0.52</div>
+    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v4.0.53</div>
     <button class="btn-google" onclick="signIn()">
       <svg viewBox="0 0 24 24" width="20" height="20"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
       Entrar amb Google
@@ -379,7 +379,7 @@ tr:hover td{background:var(--bg2)}
     <div class="sb-bottom">
       <div class="sync-ind" style="display:flex;align-items:center;justify-content:space-between"><div style="display:flex;align-items:center;gap:6px"><div class="sync-dot" id="sync-dot"></div><span id="sync-text">Sincronitzat</span></div><button onclick="manualRefresh()" title="Actualitzar dades" style="background:none;border:none;cursor:pointer;padding:2px 4px;color:var(--text2);font-size:14px;line-height:1"><i class="ti ti-refresh"></i></button></div>
       <button class="btn-logout" onclick="signOut()"><i class="ti ti-logout" style="font-size:14px"></i> Tancar sessió</button>
-      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v4.0.52</div>
+      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v4.0.53</div>
     </div>
   </div>
 
@@ -6303,94 +6303,6 @@ async function deleteRegla(id){
   save('regles').catch(function(e){console.warn(e);});
 }
 
-// ── Neteja puntual del 01 Banc 26/27 (2026-10-11) ── ELIMINAR després d'usar-la.
-// Els ids vénen de la comparació del backup del 11/10/2026 amb els extractes del banc.
-// La targeta només apareix si TOTS els moviments coincideixen (id, data, import i sentit);
-// un cop aplicada desapareix sola.
-const _NETEJA_CB={
-  af:'26/27',saldoInicialCorrecte:16374.02,saldoBanc:13723.25,manualsPendents:-4331.37,
-  afegir:[{data:'08/07/2026',import:10.89,tipus:'gast',mes:'Asociacion Cultural Falla Portal De Va'},
-          {data:'07/09/2026',import:12,tipus:'gast',mes:'Asociacion Cultural Falla Portal De Va'}],
-  esborrar:[["m1791711505922_wc9t0.5289378597537046","03/06/2026",10.89,"gast"],["m1791711505922_xtle0.021416356890073263","02/06/2026",12,"gast"],["m1791711505922_n2fy0.9151308736140544","01/06/2026",1000,"gast"],["m1791711505922_xyzb0.0007227678805071802","29/05/2026",18.15,"gast"],["m1791711505922_vevv0.849480465523581","28/05/2026",41.25,"ing"],["m1791711505922_x2jt0.19815553548719067","27/05/2026",27.01,"gast"],["m1791711505922_4eo80.09897276622933593","25/05/2026",3025,"gast"],["m1791711505922_4cq90.5411431171539365","19/05/2026",1000,"gast"],["m1791711505922_98pg0.19724794328201567","19/05/2026",675.25,"gast"],["m1791711505922_wyaa0.37757288862356553","15/05/2026",27.62,"gast"],["m1791711505922_5rtt0.7980910370794074","13/05/2026",10231.25,"ing"],["m1791711505922_0xgy0.3262885881957358","13/05/2026",2674.75,"ing"],["m1791711505922_zx420.6098093190268916","12/05/2026",14086.25,"ing"],["m1791711505922_977v0.8449479429863483","12/05/2026",1586,"ing"],["m1791711505922_g2s70.4262089607537314","08/05/2026",107.48,"gast"],["m1791711505922_w5kx0.8159606518273284","08/05/2026",146.22,"gast"],["m1791711505922_472r0.984601913279347","07/05/2026",4.5,"gast"],["m1791711505922_zi860.4877505259118655","07/05/2026",1000,"ing"],["m1791711505922_2m1h0.4312961426960322","06/05/2026",10.89,"gast"],["m1791711505922_c5iu0.18014424022304176","05/05/2026",165,"ing"],["m1791711505922_cn0x0.958387819792126","05/05/2026",14.46,"gast"],["m1791711505922_56d30.9532099287851498","04/05/2026",90.75,"ing"],["m1791711505922_hrt70.9626731704876325","02/05/2026",12,"gast"],["m1791711505922_ypj90.14212502443634178","01/05/2026",1040.6,"gast"],["m1791711505922_bfph0.058077426242187924","30/04/2026",800,"ing"],["m1791711505922_c0vq0.5446803925686959","30/04/2026",4000,"ing"],["m1791711505922_1tci0.8002017245896844","27/04/2026",90.75,"gast"],["m1791711505922_bv0j0.6351129951380886","24/04/2026",3,"gast"],["m1791711505922_l2630.9647425858989014","23/04/2026",561,"gast"],["m1791711505922_43vc0.025319794821990982","22/04/2026",249.45,"gast"],["m1791711505922_buev0.0015490914929057187","17/04/2026",526.35,"gast"],["m1791711505922_gomz0.6780015242051989","15/04/2026",887.45,"gast"],["m1791711505922_b4wx0.6140783046927043","15/04/2026",210.95,"gast"],["m1791711505922_zslp0.1850898844171459","10/04/2026",113.97,"gast"],["m1791711505922_dkct0.7065915472651154","09/04/2026",3000,"gast"],["m1791711505922_9om90.10319088227368545","08/04/2026",217.8,"gast"],["m1791711505922_7nhj0.2511203179385494","08/04/2026",1954.9,"gast"],["m1791711505922_t45z0.4700412664226665","08/04/2026",10476.24,"gast"],["m1791711505922_kh5w0.15160146346599868","08/04/2026",9118.22,"gast"],["m1791711505922_40ki0.7093027134173178","08/04/2026",20000,"ing"],["m1791711505922_gqnu0.3628286604932116","08/04/2026",14.46,"gast"],["m1791711505922_tc7y0.051986979828458124","08/04/2026",4.68,"gast"],["m1791711505922_y9j10.5681311178806101","07/04/2026",1640.25,"gast"],["m1791711505922_yhb60.1419515737678081","07/04/2026",1263.68,"gast"],["m1791711505922_d6hh0.589251694972031","07/04/2026",185.14,"gast"],["m1791711505922_33gg0.045413580066656745","04/04/2026",10.89,"gast"],["m1791711505922_qaum0.15916927364354816","03/04/2026",55,"gast"],["m1791711505922_7ddi0.684227059238984","03/04/2026",55,"ing"],["m1791711505922_1c6y0.8909793388205297","02/04/2026",1952.24,"gast"],["m1791711505922_w2ga0.43664713158051605","01/04/2026",949.85,"gast"]],
-  mourePerTPV:[["m1791710443132_3kmw0.44949568931847184","07/09/2026",12,"ing"],["m1791710443132_ae0a0.22032082665907393","02/09/2026",12,"gast"],["m1791710443132_hyi40.23285786985702828","04/08/2026",12.71,"ing"],["m1791710443132_ycen0.3640392126810892","03/08/2026",0.71,"gast"],["m1791710443132_70tb0.07918899379654976","02/08/2026",12,"gast"],["m1791710443132_1m380.3827456695394974","08/07/2026",10.89,"ing"],["m1791710443132_f89c0.7466280933076391","03/07/2026",10.89,"gast"],["m1791710443132_k5fd0.40119499083528465","02/07/2026",24,"ing"],["m1791710443132_cgts0.43934737249760747","02/07/2026",24,"gast"]],
-  // La compra del pa (6/6) apuntada a mà i el reemborsament a Càndid (11/6, banc) són la mateixa despesa.
-  duplicatManual:["m1780869244578","06/06/2026",65.76,"gast"],
-  reanomena:{id:"m1791711505922_4wi40.08526756725707074",data:"11/06/2026",concepte:"Compra del pa, bolses i salses"}
-};
-// Comprova el pla contra les dades actuals SENSE tocar res.
-function _netejaCbPla(){
-  const P=_NETEJA_CB;
-  const no=function(motiu){return{ok:false,motiu:motiu};};
-  if(getAnyFiscal()!==P.af)return no('Exercici actiu diferent de '+P.af);
-  const sg=function(m){return(m.tipus==='ing'?1:-1)*(parseFloat(m.import)||0);};
-  const r2=function(x){return Math.round(x*100)/100;};
-  const byId=new Map(DB.moviments.map(function(m){return[m.id,m];}));
-  const troba=function(d){
-    const m=byId.get(d[0]);
-    return m&&m.via==='01 Banc'&&m.data===d[1]&&m.tipus===d[3]&&Math.abs((parseFloat(m.import)||0)-d[2])<0.005?m:null;
-  };
-  const del=P.esborrar.concat([P.duplicatManual]).map(troba);
-  const mov=P.mourePerTPV.map(troba);
-  if(del.some(function(m){return!m;})||mov.some(function(m){return!m;}))return no('Els moviments no coincideixen (ja aplicat?)');
-  const ren=byId.get(P.reanomena.id);
-  if(!ren||ren.via!=='01 Banc'||ren.data!==P.reanomena.data)return no('Falta el moviment que s\'ha de conservar');
-  const perCompte=(DB.config.bancs||[]).filter(function(b){return String(b.compte||'').replace(/\s/g,'').includes('0332534');});
-  let tpv=perCompte.length===1?perCompte[0]:null;
-  if(!tpv){const t=(DB.config.bancs||[]).filter(function(b){return b.tipus==='tpv';});if(t.length===1)tpv=t[0];}
-  if(!tpv)return no('No trobe el banc del Compte 2 (TPV)');
-  const b1=(DB.config.bancs||[]).find(function(b){return b.codi==='01 Banc';});
-  const idsMoure=new Set(P.mourePerTPV.map(function(d){return d[0];}));
-  const plantilla=DB.moviments.find(function(m){return!idsMoure.has(m.id)&&m.via==='01 Banc'&&m.concepte==='TRASPASO PROPIO'&&m.areaId==='01'&&m.delegacioId==='0102';});
-  if(!b1||!plantilla)return no('No trobe el 01 Banc o un traspàs de referència');
-  const clau=b1.id+'_'+P.af;
-  const saldoIni=parseFloat((DB.saldos[clau]||{}).saldoInicial);
-  if(isNaN(saldoIni))return no('No trobe el saldo inicial del 01 Banc');
-  const movs01=DB.moviments.filter(function(m){return m.via==='01 Banc'&&m.anyFiscal===P.af;});
-  const actual=r2(saldoIni+movs01.reduce(function(s,m){return s+sg(m);},0));
-  const afegSuma=P.afegir.reduce(function(s,a){return s+(a.tipus==='ing'?1:-1)*a.import;},0);
-  const previst=r2(P.saldoInicialCorrecte+(actual-saldoIni)-del.reduce(function(s,m){return s+sg(m);},0)-mov.reduce(function(s,m){return s+sg(m);},0)+afegSuma);
-  const esperat=r2(P.saldoBanc+P.manualsPendents);
-  if(Math.abs(previst-esperat)>=0.005)return no('El saldo previst ('+previst+') no quadra amb l\'esperat ('+esperat+')');
-  return{ok:true,del:del,mov:mov,ren:ren,tpv:tpv,b1:b1,plantilla:plantilla,clau:clau,actual:actual,previst:previst,movs01:function(){return DB.moviments.filter(function(m){return m.via==='01 Banc'&&m.anyFiscal===P.af;});},sg:sg,r2:r2};
-}
-async function netejaCaixabankPuntual(){
-  const P=_NETEJA_CB;
-  let p;
-  try{p=_netejaCbPla();}catch(e){showToast('Error comprovant la neteja: '+e.message,true);return;}
-  if(!p.ok){showToast('Neteja no disponible: '+p.motiu,true);return;}
-  const resum='Neteja del 01 Banc ('+P.af+')\n\n'+
-    '• S\'esborren '+p.del.length+' moviments duplicats\n'+
-    '• Es mouen '+p.mov.length+' moviments del Compte 2 a "'+p.tpv.nom+'"\n'+
-    '• S\'afegeixen '+P.afegir.length+' traspassos que faltaven\n'+
-    '• El saldo inicial passa a '+fmtD(P.saldoInicialCorrecte)+'\n\n'+
-    'Saldo del 01 Banc: '+fmtD(p.actual)+'  →  '+fmtD(p.previst)+'\n\n'+
-    'Abans es descarregarà una còpia de seguretat. Continuar?';
-  if(!confirm(resum))return;
-  try{
-    exportSnapshotExercici(P.af);
-    await new Promise(function(r){setTimeout(r,800);});
-    const delSet=new Set(P.esborrar.map(function(d){return d[0];}).concat([P.duplicatManual[0]]));
-    for(let i=DB.moviments.length-1;i>=0;i--)if(delSet.has(DB.moviments[i].id))DB.moviments.splice(i,1);
-    p.ren.concepte=P.reanomena.concepte;
-    p.mov.forEach(function(m){m.via=p.tpv.codi;});
-    P.afegir.forEach(function(a){
-      DB.moviments.push(Object.assign({},p.plantilla,{
-        id:genId('m')+Math.random(),via:'01 Banc',anyFiscal:P.af,tipus:a.tipus,data:a.data,import:a.import,concepte:'TRASPASO PROPIO',
-        bankHash:_calcBankHash(p.b1.id,a.data,a.import,'TRASPASO PROPIO · '+a.mes),
-        notes:'Importat Caixabank',fontImport:'xls_b1',origen:'CSV',assignatPer:'manual'}));
-    });
-    DB.saldos[p.clau]=Object.assign({},DB.saldos[p.clau],{saldoInicial:P.saldoInicialCorrecte});
-    saveCache();
-    await save('moviments');
-    await save('saldos');
-    const fi=p.r2(P.saldoInicialCorrecte+p.movs01().reduce(function(s,m){return s+p.sg(m);},0));
-    showToast('Neteja aplicada. Saldo del 01 Banc: '+fmtD(fi));
-    renderCfgExercicis();
-  }catch(e){
-    showToast('Error aplicant la neteja: '+e.message+'. Recarrega i comprova les dades; tens la còpia de seguretat descarregada.',true);
-  }
-}
-
 function renderCfgExercicis(){
   const container=document.getElementById('cfg-exercicis');
   if(!container){console.warn('cfg-exercicis-container no trobat');return;}
@@ -6400,14 +6312,6 @@ function renderCfgExercicis(){
   const estats=DB.config.estats_exercicis||{};
   let html='';
   if(canDo){
-    let netejaCb=null;
-    try{const pn=_netejaCbPla();if(pn.ok)netejaCb=pn;}catch(e){}
-    if(netejaCb){
-      html+='<div style="background:var(--amber-bg);border:1px solid var(--amber);border-radius:var(--r);padding:12px 14px;margin-bottom:16px;color:var(--amber-text);font-size:13px">'+
-        '<div style="font-weight:600;margin-bottom:4px"><i class="ti ti-alert-triangle"></i> Neteja puntual del 01 Banc (26/27)</div>'+
-        '<div style="margin-bottom:10px">Esborra '+netejaCb.del.length+' moviments duplicats, mou '+netejaCb.mov.length+' del Compte 2 al TPV, afegeix '+_NETEJA_CB.afegir.length+' traspassos que faltaven i corregeix el saldo inicial. El saldo del 01 Banc passa de <strong>'+fmtD(netejaCb.actual)+'</strong> a <strong>'+fmtD(netejaCb.previst)+'</strong>. Es descarrega una còpia de seguretat abans d\'aplicar-ho.</div>'+
-        '<button class="btn btn-primary" onclick="netejaCaixabankPuntual()"><i class="ti ti-broom"></i> Revisar i aplicar</button></div>';
-    }
     html+='<div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">';
     html+='<button class="btn btn-primary" onclick="obrirNouExercici()"><i class="ti ti-calendar-plus"></i> Nou exercici</button>';
     html+='<button class="btn" onclick="openModalTancarExercici()" style="color:var(--amber)"><i class="ti ti-lock"></i> Tancar exercici actual</button>';

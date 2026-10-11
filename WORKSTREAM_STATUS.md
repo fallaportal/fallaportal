@@ -1,6 +1,6 @@
 # Work Stream Status — Falla Portal
 ## Snapshot Date: 2026-10-11
-## Versió en producció: v4.0.52
+## Versió en producció: v4.0.53
 
 > **Context de calendari**: període vacacional, ús baix de l'eina. Bon moment per a
 > canvis estructurals i per a la decisió pendent del Service Worker.
@@ -26,18 +26,16 @@ GitHub Pages. Decisió D-021.
 
 ---
 
-### Completat 2026-10-11 — Botó de neteja puntual del 01 Banc (v4.0.52)
+### Completat 2026-10-11 — Neteja del 01 Banc 26/27 aplicada (v4.0.52–v4.0.53)
 
-- **Configuració → Exercicis** mostra una targeta ambre "Neteja puntual del 01 Banc
-  (26/27)" (`_NETEJA_CB`, `_netejaCbPla`, `netejaCaixabankPuntual`) que només apareix si
-  tots els moviments del pla coincideixen amb les dades (id, data, import i sentit).
-  Un cop aplicada desapareix sola. Esborra 50 duplicats de la reimportació, mou 9
-  moviments del Compte 2 al banc TPV, afegeix 2 traspassos que faltaven (−10,89 € i
-  −12,00 €), corregeix el saldo inicial (16.374,02 €) i elimina l'apunt manual de la
-  compra del pa del 6/6 (duplicat del reemborsament a Càndid de l'11/6). Descarrega un
-  backup abans d'escriure. Saldo previst del 01 Banc: 9.391,88 € (13.723,25 € del banc
-  menys 4.331,37 € de despeses manuals del 8/10 que encara no són a l'extracte).
-- **ELIMINAR aquest codi de `index.html` després d'aplicar-lo** (és d'un sol ús).
+- Emilio va aplicar des de Configuració → Exercicis la neteja puntual (50 duplicats de la
+  reimportació i la compra del pa duplicada esborrats, 9 moviments del Compte 2 passats al
+  banc TPV, 2 traspassos afegits, saldo inicial corregit a 16.374,02 €). El codi d'un sol ús
+  s'ha eliminat a la v4.0.53.
+- Saldos resultants confirmats per Emilio: 01 Banc 9.391,88 € (13.723,25 € del banc menys
+  4.331,37 € de despeses manuals del 8/10 pendents d'extracte), TPV 0,00 €, 03 Banc 10.190,87 €.
+- **Pendent per a tancar el quadrament**: extractes actuals de Caixa Popular (02 Banc) i
+  del 03 Banc, recompte físic de l'efectiu i reemborsaments de despeses pagades de la butxaca.
 
 ---
 
