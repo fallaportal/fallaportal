@@ -1,6 +1,6 @@
 # Work Stream Status — Falla Portal
 ## Snapshot Date: 2026-10-11
-## Versió en producció: v4.0.50
+## Versió en producció: v4.0.51
 
 > **Context de calendari**: període vacacional, ús baix de l'eina. Bon moment per a
 > canvis estructurals i per a la decisió pendent del Service Worker.
@@ -23,6 +23,26 @@ GitHub Pages. Decisió D-021.
 **Blockers**:
   - Cap per a la Fase 0.
   - Per a la Fase 2 cal triar l'SMTP (§9.8 del pla).
+
+---
+
+### Completat 2026-10-11 — Detecció de duplicats més estricta (v4.0.51)
+
+- **Causa del desquadrament del 01 Banc (9.737,85 €)**: la reimportació del fitxer
+  del banc va duplicar 50 moviments, perquè les importacions antigues no incloïen
+  "Més dades" al concepte i el hash no coincidia (es marcaven "possibles" i venien
+  marcats per importar). A més, 9 moviments del Compte 2 (TPV, …0332534) es van
+  importar dins del 01 Banc, i faltaven 2 traspassos (−10,89 € el 8/7 i −12,00 € el 7/9).
+  Saldo inicial 26/27 del 01 Banc: 16.374,20 a l'app contra 16.374,02 al banc.
+- **Canvi**: `_classifyDuplicate` ara (1) té en compte el sentit (un ingrés no és
+  duplicat d'un pagament del mateix import) i (2) també reconeix el hash antic, sense
+  "Més dades" (`concepteAlt`). Verificat amb 5 casos.
+- **Pendent**: Emilio ha d'executar `neteja_caixabank.js` (simulacre i després
+  `__neteja.aplicar()`) i comprovar que el saldo del 01 Banc queda a 9.326,12 € (13.723,25 €
+  del banc menys 4.397,13 € de despeses manuals pendents). El script fa un backup
+  abans d'aplicar i la versió corregida (bug de la plantilla de les 2 línies afegides)
+  no s'ha pogut tornar a provar en simulació.
+  Pendent també: revisar la despesa manual "Compra del pa" (6/6, −65,76 €) apuntada al banc.
 
 ---
 
