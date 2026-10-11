@@ -1,6 +1,6 @@
 # Work Stream Status — Falla Portal
-## Snapshot Date: 2026-09-27
-## Versió en producció: v4.0.48
+## Snapshot Date: 2026-10-11
+## Versió en producció: v4.0.49
 
 > **Context de calendari**: període vacacional, ús baix de l'eina. Bon moment per a
 > canvis estructurals i per a la decisió pendent del Service Worker.
@@ -23,6 +23,20 @@ GitHub Pages. Decisió D-021.
 **Blockers**:
   - Cap per a la Fase 0.
   - Per a la Fase 2 cal triar l'SMTP (§9.8 del pla).
+
+---
+
+### Completat 2026-10-11 — Preview d'importació de moviments més clar (v4.0.49)
+
+- **Problema**: a la llista "Possibles duplicats" (i "Ja existents al sistema") de la
+  importació de moviments bancaris, la casella ocupava tota la fila per la regla
+  global `input{width:100%}` i no quedava clar què significava marcar-la.
+- **Canvi**: cada moviment és una fila clicable (`.imp-row`, `_impRowHtml`) amb
+  l'estat explícit "S'importarà" / "S'ometrà" (marcat = importar, desmarcat =
+  ometre), la fila ometuda s'atenua i es ratlla, "Ja al sistema: ..." mostra amb què
+  coincideix, i hi ha botons "Importar tots" / "Ometre tots" (`marcarTotsImportar`).
+  Les altres caselles de l'app ja porten el seu `width` i no estaven afectades.
+- Verificat en execució (escriptori i mòbil 375 px) amb dades simulades.
 
 ---
 

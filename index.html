@@ -117,6 +117,21 @@ input:focus,select:focus,textarea:focus{border-color:var(--blue)}
 .mob-item i{font-size:20px}
 .btn{padding:8px 16px;border-radius:var(--r);border:0.5px solid var(--border2);background:transparent;font-size:14px;color:var(--text);display:inline-flex;align-items:center;gap:6px}
 input[type=checkbox]{accent-color:var(--green)}
+/* Files de decisió d'importació (preview moviments): tota la fila és clicable */
+.imp-row{display:flex;align-items:center;gap:12px;padding:10px 12px;border-top:0.5px solid var(--border);font-size:13px;cursor:pointer;transition:background .12s}
+.imp-row:hover{background:var(--bg2)}
+.imp-row input[type=checkbox]{width:18px;height:18px;padding:0;flex:none;cursor:pointer;margin:0}
+.imp-row .imp-main{flex:1;min-width:0}
+.imp-row .imp-title{font-weight:500;overflow-wrap:anywhere}
+.imp-row .imp-sub{font-size:11px;color:var(--text3);margin-top:2px;overflow-wrap:anywhere}
+.imp-row .imp-amt{font-weight:600;white-space:nowrap;text-align:right}
+.imp-row .imp-state{font-size:11px;font-weight:600;padding:2px 8px;border-radius:10px;white-space:nowrap;background:var(--green-bg);color:var(--green-text)}
+.imp-row.off{opacity:.6}
+.imp-row.off .imp-title{text-decoration:line-through;text-decoration-color:var(--text3)}
+.imp-row.off .imp-state{background:var(--bg2);color:var(--text3)}
+.imp-bulk{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:8px 12px;border-top:0.5px solid var(--border);background:var(--bg2);font-size:12px;color:var(--text2)}
+.imp-bulk .btn{font-size:12px;padding:4px 10px}
+@media(max-width:600px){.imp-row{flex-wrap:wrap;row-gap:6px}.imp-row .imp-main{flex:1 1 calc(100% - 32px)}.imp-row .imp-amt{margin-left:30px}.imp-row .imp-state{margin-left:auto}}
 .btn:hover{background:var(--bg2)}
 .btn-primary{background:var(--green);color:#fff;border-color:var(--green)}.btn-primary:hover{opacity:.9}
 .btn-danger{background:var(--red);color:#fff;border-color:var(--red)}.btn-danger:hover{opacity:.9}
@@ -320,7 +335,7 @@ tr:hover td{background:var(--bg2)}
     <div class="login-logo">Falla <span>Portal</span></div>
     <div class="login-sub">Sistema de gestió financera</div>
     <div class="login-fiscal">Any fiscal 26/27 · Abr 2026 – Mar 2027</div>
-    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v4.0.48</div>
+    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v4.0.49</div>
     <button class="btn-google" onclick="signIn()">
       <svg viewBox="0 0 24 24" width="20" height="20"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
       Entrar amb Google
@@ -362,7 +377,7 @@ tr:hover td{background:var(--bg2)}
     <div class="sb-bottom">
       <div class="sync-ind" style="display:flex;align-items:center;justify-content:space-between"><div style="display:flex;align-items:center;gap:6px"><div class="sync-dot" id="sync-dot"></div><span id="sync-text">Sincronitzat</span></div><button onclick="manualRefresh()" title="Actualitzar dades" style="background:none;border:none;cursor:pointer;padding:2px 4px;color:var(--text2);font-size:14px;line-height:1"><i class="ti ti-refresh"></i></button></div>
       <button class="btn-logout" onclick="signOut()"><i class="ti ti-logout" style="font-size:14px"></i> Tancar sessió</button>
-      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v4.0.48</div>
+      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v4.0.49</div>
     </div>
   </div>
 
@@ -8383,18 +8398,11 @@ function mostrarPreviewImportacio(zona,moviments,assignats,banc,compteDetectat,f
     html+='<span style="font-size:11px;color:var(--text3)">Click per veure/amagar</span>';
     html+='</div>';
     html+='<div id="dup-segur-'+zona+'" style="display:none">';
+    html+='<div style="padding:8px 12px;font-size:12px;color:var(--text2);border-top:0.5px solid var(--border)"><i class="ti ti-info-circle"></i> Aquests moviments ja estan al sistema, per això <strong>s\'ometen</strong>. Marca\'n un només si vols forçar la re-importació (no recomanat).</div>';
     assignats.forEach(function(m,idx){
       if(m._dupTipus!=='duplicat_segur')return;
-      html+='<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-top:0.5px solid var(--border);font-size:12px;opacity:.7">';
-      html+='<input type="checkbox" id="imp-'+zona+'-'+idx+'" onchange="toggleImportar('+zona+','+idx+',this.checked)" style="cursor:pointer">';
-      html+='<div style="flex:1">';
-      html+='<div style="font-weight:500">'+m.data+' · '+esc((m.concepte||'').substring(0,55))+(m.concepte&&m.concepte.length>55?'…':'')+'</div>';
-      html+='<div style="font-size:10px;color:var(--text3)">Ja importat anteriorment</div>';
-      html+='</div>';
-      html+='<span style="color:'+(m.import>0?'var(--green)':'var(--red)')+';font-weight:500">'+(m.import>0?'+':'')+fmtD(m.import)+'</span>';
-      html+='</div>';
+      html+=_impRowHtml(zona,idx,m,false,'Ja importat anteriorment');
     });
-    html+='<div style="padding:8px 12px;background:var(--bg2);font-size:11px;color:var(--text3)"><i class="ti ti-info-circle"></i> Marca la casella només si vols forçar la re-importació (no recomanat)</div>';
     html+='</div></div>';
   }
 
@@ -8406,19 +8414,16 @@ function mostrarPreviewImportacio(zona,moviments,assignats,banc,compteDetectat,f
     html+='<span style="flex:1;font-weight:500;color:var(--amber-text)">Possibles duplicats ('+nPossible+')</span>';
     html+='<span style="font-size:11px;color:var(--amber-text)">Mateixa data i import, concepte diferent</span>';
     html+='</div>';
+    html+='<div style="padding:8px 12px;font-size:12px;color:var(--text2);border-top:0.5px solid var(--border)"><i class="ti ti-info-circle"></i> <strong>Marcat</strong> = és un moviment diferent, <strong>s\'importarà</strong>. <strong>Desmarcat</strong> = és el mateix que ja tens, <strong>s\'ometrà</strong>. Sota cada moviment veus amb quin existent coincideix.</div>';
+    html+='<div class="imp-bulk"><span style="flex:1">Tots a la vegada:</span>';
+    html+='<button class="btn" onclick="marcarTotsImportar('+zona+',\'possible\',true)">Importar tots</button>';
+    html+='<button class="btn" onclick="marcarTotsImportar('+zona+',\'possible\',false)">Ometre tots</button></div>';
     html+='<div>';
     assignats.forEach(function(m,idx){
       if(m._dupTipus!=='possible')return;
       const matchData=m._dupMatch?(m._dupMatch.concepte||''):'';
-      html+='<div style="padding:8px 12px;border-top:0.5px solid var(--border);font-size:12px">';
-      html+='<div style="display:flex;align-items:center;gap:8px">';
-      html+='<input type="checkbox" id="imp-'+zona+'-'+idx+'" checked onchange="toggleImportar('+zona+','+idx+',this.checked)" style="cursor:pointer">';
-      html+='<div style="flex:1">';
-      html+='<div style="font-weight:500">'+m.data+' · '+esc((m.concepte||'').substring(0,55))+(m.concepte&&m.concepte.length>55?'…':'')+'</div>';
-      if(matchData)html+='<div style="font-size:10px;color:var(--text3)">Existent: '+esc(matchData.substring(0,55))+(matchData.length>55?'…':'')+'</div>';
-      html+='</div>';
-      html+='<span style="color:'+(m.import>0?'var(--green)':'var(--red)')+';font-weight:500">'+(m.import>0?'+':'')+fmtD(m.import)+'</span>';
-      html+='</div></div>';
+      const sub=matchData?'Ja al sistema: '+matchData.substring(0,55)+(matchData.length>55?'…':''):'';
+      html+=_impRowHtml(zona,idx,m,true,sub);
     });
     html+='</div></div>';
   }
@@ -8463,15 +8468,49 @@ function mostrarPreviewImportacio(zona,moviments,assignats,banc,compteDetectat,f
   document.getElementById('csv-preview-'+zona).innerHTML=html;
 }
 
+// Fila de decisió d'importació: tota la fila és un <label>, i l'estat (S'importarà / S'ometrà) és explícit
+function _impRowHtml(zona,idx,m,checked,sub){
+  const concepte=(m.concepte||'');
+  let h='<label class="imp-row'+(checked?'':' off')+'" for="imp-'+zona+'-'+idx+'">';
+  h+='<input type="checkbox" id="imp-'+zona+'-'+idx+'"'+(checked?' checked':'')+' onchange="toggleImportar('+zona+','+idx+',this.checked)">';
+  h+='<div class="imp-main">';
+  h+='<div class="imp-title">'+esc(m.data+' · '+concepte.substring(0,55)+(concepte.length>55?'…':''))+'</div>';
+  if(sub)h+='<div class="imp-sub">'+esc(sub)+'</div>';
+  h+='</div>';
+  h+='<span class="imp-amt" style="color:'+(m.import>0?'var(--green)':'var(--red)')+'">'+(m.import>0?'+':'')+fmtD(m.import)+'</span>';
+  h+='<span class="imp-state">'+(checked?'S\'importarà':'S\'ometrà')+'</span>';
+  h+='</label>';
+  return h;
+}
+
 // Activar/desactivar la importació d'una línia (per checkbox)
 function toggleImportar(zona,idx,checked){
   const assignats=window['_xlsAssignats'+zona];
   if(!assignats)return;
   assignats[idx]._importar=checked;
+  const cb=document.getElementById('imp-'+zona+'-'+idx);
+  const row=cb&&cb.closest('.imp-row');
+  if(row){
+    row.classList.toggle('off',!checked);
+    const st=row.querySelector('.imp-state');
+    if(st)st.textContent=checked?'S\'importarà':'S\'ometrà';
+  }
   // Actualitzar el comptador del botó
   const total=assignats.filter(function(m){return m._importar;}).length;
   const span=document.getElementById('btn-imp-count-'+zona);
   if(span)span.textContent=total;
+}
+
+// Marcar/desmarcar en bloc tots els moviments d'un tipus de duplicat
+function marcarTotsImportar(zona,tipus,valor){
+  const assignats=window['_xlsAssignats'+zona];
+  if(!assignats)return;
+  assignats.forEach(function(m,idx){
+    if(m._dupTipus!==tipus)return;
+    const cb=document.getElementById('imp-'+zona+'-'+idx);
+    if(cb)cb.checked=valor;
+    toggleImportar(zona,idx,valor);
+  });
 }
 
 // Assignar àrea a una excepció des del preview
