@@ -1,6 +1,6 @@
 # Work Stream Status — Falla Portal
 ## Snapshot Date: 2026-10-11
-## Versió en producció: v4.0.54
+## Versió en producció: v4.0.55
 
 > **Context de calendari**: període vacacional, ús baix de l'eina. Bon moment per a
 > canvis estructurals i per a la decisió pendent del Service Worker.
@@ -23,6 +23,23 @@ GitHub Pages. Decisió D-021.
 **Blockers**:
   - Cap per a la Fase 0.
   - Per a la Fase 2 cal triar l'SMTP (§9.8 del pla).
+
+---
+
+### Completat 2026-10-11 — Botó puntual de reassignació d'àrees (v4.0.55)
+
+- Configuració → Exercicis mostra una targeta ambre (`_REASSIGNA_AREES`, `_reassignaPla`,
+  `reassignaAreesPuntual`) que canvia l'àrea de 7 apunts: 2 del WiFi (8/4 i 5/5) a
+  07 Logística · Coordinació Tècnica i 5 del TPV (juliol–setembre, banc TPV) a
+  01 Administració · Tresoreria. Només apareix si cada apunt coincideix (id, data, import,
+  sentit i àrea actual); descarrega un backup abans i desapareix en aplicar-se.
+  **ELIMINAR aquest codi de `index.html` després d'aplicar-lo.**
+- Decisions d'Emilio: TPV (manteniment i T.PlanaMyCommerce) → 01 Tresoreria; WiFi COM.T →
+  07 Coordinació Tècnica; aigua → 01 Jurídica i Contractacions; remeses de quotes (FATIR…) →
+  01 Secretaria.
+- **Pendent per a Emilio a Configuració → Regles**: `T.PlanaMyCommerce` i `MANTENIMIENTO TPV`
+  han de passar a 01 Tresoreria (ara diuen 07); esborrar `PR.DE;`; buidar el concepte de `PR.DE`
+  i `DETIR`; allargar `RAMS`. Opcional: regla `FATIR` → 01 Secretaria per a les remeses de quotes.
 
 ---
 
