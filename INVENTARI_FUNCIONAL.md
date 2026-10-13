@@ -169,8 +169,8 @@ justificant, editar, esborrar.
 Quatre zones d'importació de fitxers de la plataforma + bonificacions. Detall a la secció 4.3.
 
 ### 3.9 Importar extracte bancari (8264–8985)
-Fitxers `.xls`/`.xlsx` de Caixabank i Caixa Popular (detecció per IBAN i capçalera) i CSV genèric
-(`;`). Preview amb classificació de duplicats, regles de mapeig, excepcions, creació de regla des
+Fitxers `.xls`/`.xlsx` de Caixabank i Caixa Popular (detecció per IBAN i capçalera). L'importador CSV genèric es va
+retirar a la v4.0.77. Preview amb classificació de duplicats, regles de mapeig, excepcions, creació de regla des
 d'una excepció. Detall a la secció 4.2.
 
 ### 3.10 Estat de Resultats i Flux d'Efectiu (5261–5322)

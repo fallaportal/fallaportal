@@ -137,7 +137,8 @@ al costat de l'export. Aquí només hi ha les conclusions; el repositori és pú
 4. ~~A-02~~: **decidit (D-033)**: el selector és de consulta i per usuari; operar va per la data (D-029). Després del tall.
 5. ~~A-11~~: **corregit a la v4.0.75**: la còpia no sobreescriu un pressupost bloquejat i avisa si el destí té línies; es
    manté l'arredoniment a euros (Emilio). Al model nou, el bloqueig és per exercici (`pressupost_estat`).
-6. A-18: es pot descartar la importació CSV genèrica?
+6. ~~A-18 (CSV genèric)~~: **retirat a la v4.0.77** (Emilio, 2026-10-13). Queden de l'A-18: línies ometudes en silenci i
+   banc per defecte si no es troba l'IBAN (al model nou: `operacions.resum` i IBAN obligatori).
 7. Netejar `index1.html`, `index2.html`, `index_2.html`, `dev.html` (pla §9.7).
 8. ~~A-27~~: **decidit i corregit a la v4.0.67** (Emilio, 2026-10-13): botó puntual per esborrar les 117 recàrregues i la
    importació ja no crea les TPV. Aplicat per Emilio el 2026-10-13; codi puntual eliminat a la v4.0.68.

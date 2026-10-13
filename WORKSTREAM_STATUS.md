@@ -1,6 +1,6 @@
 # Work Stream Status — Falla Portal
 ## Snapshot Date: 2026-10-13
-## Versió en producció: v4.0.76
+## Versió en producció: v4.0.77
 
 > **Context de calendari**: període vacacional, ús baix de l'eina. Bon moment per a
 > canvis estructurals i per a la decisió pendent del Service Worker.
@@ -113,6 +113,11 @@ i amb l'exercici obert (sense avisos).
 desbloquejar-lo abans) i demana confirmació si el destí ja té línies (abans les substituïa sense avisar). L'arredoniment a
 euros es manté (Emilio: els cèntims no importen en un pressupost). Verificat: destí bloquejat, destí buit, destí amb
 línies. La v4.0.76 només corregeix la redacció del singular ("1 línia").
+
+**v4.0.77 (2026-10-13) — fora l'importador CSV genèric (A-18)**: no detectava duplicats, llegia malament els decimals amb
+punt i no s'havia fet servir mai. Ara Importar CSV només admet extractes en Excel (.xls/.xlsx); un altre format mostra
+"Format no admés". Eliminades les dues còpies de les seues funcions. Verificat: un .csv es rebutja i un .xlsx de
+Caixabank es continua llegint (banc per IBAN, 2 moviments).
 
 **Pendents** (res d'això depén de codi):
 1. Extractes actuals: Caixabank ES06 2100 1958 3602 0008 8726 des del 29/9; Caixabank ES56 2100 7990 7413 0059 2938
