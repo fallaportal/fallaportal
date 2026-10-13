@@ -136,7 +136,8 @@ al costat de l'export. Aquí només hi ha les conclusions; el repositori és pú
 7. Netejar `index1.html`, `index2.html`, `index_2.html`, `dev.html` (pla §9.7).
 8. ~~A-27~~: **decidit i corregit a la v4.0.67** (Emilio, 2026-10-13): botó puntual per esborrar les 117 recàrregues i la
    importació ja no crea les TPV. Aplicat per Emilio el 2026-10-13; codi puntual eliminat a la v4.0.68.
-9. A-10: quina data (o període) té el registre de consums sense data? (els 9 moviments amb data d'un altre exercici: D-029)
+9. ~~A-10~~: el registre de consums sense data passa al 31/03/2026 (Emilio, 2026-10-13; botó puntual a la v4.0.71). Els 9
+   moviments amb data d'un altre exercici: D-029.
 10. ~~A-24~~: eren 4 avançaments duplicats d'un delegat; esborrats amb el botó puntual de la v4.0.69 (aplicat per Emilio el
     2026-10-13) i causa corregida a la v4.0.70 (`deleteMoviment` esborra també l'avançament).
 11. **Falles.app: comptar per caixa o per vendes?** Avui l'ingrés és la recàrrega (quan el faller paga) i els consums

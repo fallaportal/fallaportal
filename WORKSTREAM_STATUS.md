@@ -1,6 +1,6 @@
 # Work Stream Status — Falla Portal
 ## Snapshot Date: 2026-10-13
-## Versió en producció: v4.0.70
+## Versió en producció: v4.0.71
 
 > **Context de calendari**: període vacacional, ús baix de l'eina. Bon moment per a
 > canvis estructurals i per a la decisió pendent del Service Worker.
@@ -90,6 +90,11 @@ saldo del delegat +205,82 €; prova negativa). **Aplicat per Emilio el 2026-10-
 **v4.0.70 — causa corregida**: `deleteMoviment` ara també esborra l'avançament associat quan la despesa es va pagar amb
 avançament personal (abans només ho feia amb fons lliurats). Reproduït amb la v4.0.69 (l'avançament quedava) i verificat
 amb la v4.0.70 (s'esborra; fons lliurats i caixa sense canvis).
+
+**v4.0.71 (2026-10-13) — consums sense data (A-10)**: botó puntual a Configuració → Exercicis ("Consums de falles.app sense
+data") que posa el 31/03/2026 al registre "Consums falles.app - Activitats Casal 25/26" (6.928 €), decisió d'Emilio. Només
+apareix si el registre casa (id, sense data, import, via `app`); descarrega còpia abans. Verificat amb dades sintètiques.
+**Pendent**: que Emilio l'aplique i eliminar el codi puntual.
 
 **Pendents** (res d'això depén de codi):
 1. Extractes actuals: Caixabank ES06 2100 1958 3602 0008 8726 des del 29/9; Caixabank ES56 2100 7990 7413 0059 2938
