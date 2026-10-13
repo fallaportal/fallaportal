@@ -130,6 +130,9 @@ confirmar amb `repr()` abans de concloure que hi ha un error de sintaxi.
 16. **NO fer una prova amb la xarxa simulada sense mirar què s'envia al full** (`PUT`, `append`, `clear`) → és l'única
     manera de detectar duplicats o reescriptures inesperades. Una prova que simula `save`/`saveMoviment` no ho veu.
 17. **NO deixar el codi d'un sol ús a producció** → s'elimina amb un commit apart quan l'usuari confirma que l'ha aplicat.
+18. **NO fer el commit si un pas anterior ha fallat** → les edicions amb scripts van en un fitxer (no heretdocs amb
+    cometes) i la cadena és `set -e` / `&&` fins al `git push`. Dues vegades (v4.0.67, v4.0.75) es va publicar el codi
+    sense la documentació perquè l'script de documentació havia fallat i el commit es va executar igualment.
 
 ---
 
