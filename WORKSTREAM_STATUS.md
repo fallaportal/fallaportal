@@ -1,6 +1,6 @@
 # Work Stream Status — Falla Portal
 ## Snapshot Date: 2026-10-13
-## Versió en producció: v4.0.74
+## Versió en producció: v4.0.76
 
 > **Context de calendari**: període vacacional, ús baix de l'eina. Bon moment per a
 > canvis estructurals i per a la decisió pendent del Service Worker.
@@ -108,6 +108,11 @@ Tresoreria (no Junta), amb avís que afecta tothom; un exercici tancat no accept
 importacions (President i Tresoreria poden fer-ho com a excepció confirmant-ho). Verificat amb Tresoreria (cancel·la i
 accepta l'excepció), Responsable d'àrea (bloquejat en registrar, esborrar i obrir caixa), Junta (no pot canviar l'any)
 i amb l'exercici obert (sense avisos).
+
+**v4.0.75–76 (2026-10-13) — còpia de pressupost (A-11)**: no deixa copiar sobre un pressupost bloquejat i aprovat (cal
+desbloquejar-lo abans) i demana confirmació si el destí ja té línies (abans les substituïa sense avisar). L'arredoniment a
+euros es manté (Emilio: els cèntims no importen en un pressupost). Verificat: destí bloquejat, destí buit, destí amb
+línies. La v4.0.76 només corregeix la redacció del singular ("1 línia").
 
 **Pendents** (res d'això depén de codi):
 1. Extractes actuals: Caixabank ES06 2100 1958 3602 0008 8726 des del 29/9; Caixabank ES56 2100 7990 7413 0059 2938

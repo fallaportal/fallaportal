@@ -135,7 +135,8 @@ al costat de l'export. Aquí només hi ha les conclusions; el repositori és pú
    millora (després del tall): eixos apunts del banc queden a 01 Tresoreria sense event, i el resultat de l'event no els inclou.
 3. ~~A-08~~: **decidit (D-032)**: per exercici amb arrossegament automàtic; s'aplica després del tall.
 4. ~~A-02~~: **decidit (D-033)**: el selector és de consulta i per usuari; operar va per la data (D-029). Després del tall.
-5. A-11: còpia de pressupost: centims i bloqueig.
+5. ~~A-11~~: **corregit a la v4.0.75**: la còpia no sobreescriu un pressupost bloquejat i avisa si el destí té línies; es
+   manté l'arredoniment a euros (Emilio). Al model nou, el bloqueig és per exercici (`pressupost_estat`).
 6. A-18: es pot descartar la importació CSV genèrica?
 7. Netejar `index1.html`, `index2.html`, `index_2.html`, `dev.html` (pla §9.7).
 8. ~~A-27~~: **decidit i corregit a la v4.0.67** (Emilio, 2026-10-13): botó puntual per esborrar les 117 recàrregues i la
