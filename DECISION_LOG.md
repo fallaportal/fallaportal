@@ -378,3 +378,25 @@ TPV.
   - Alternatives descartades de moment: millorar la importació CSV (continua manual) i
     Norma 43 de Caixabank empresa (fitxer estructurat, però semiautomàtic). Es poden
     reconsiderar si la prova de concepte falla.
+
+---
+
+### D-024: Registre d'activitat (qui ha fet què) a la migració a Supabase
+**Date**: 2026-10-13
+**Status**: Accepted com a requisit; el disseny es tanca a la Fase 1
+**Context**: Emilio demana "un log de tot el que ha fet cadascú; ara no tenim res, si algú esborra alguna cosa,
+per exemple". Avui no hi ha cap registre: `auditLog()` és codi mort des de la reversió de D-007, la pestanya
+`18 Audit Log` no l'escriu ningú i el "Log" de Configuració només mostra un registre local d'`exercicis` i
+`drive_folders`. Com que `save()` reescriu pestanyes senceres, ni l'historial de versions de Google Sheets pot dir
+amb detall qui ha esborrat una fila (D-002, D-006).
+**Decision**:
+  - `audit_log` per **triggers** a Postgres, a totes les taules de dades, per a insert, update i delete: usuari
+    (`auth.uid` + email), data i hora, taula, id de la fila, valors abans i després (`jsonb`).
+  - Ningú, tampoc `president`, pot modificar ni esborrar el registre (RLS).
+  - Pantalla "Registre d'activitat" per a `president`\|`treasury`, amb filtres per usuari, taula, acció i dates.
+  - Els esborrats es poden **recuperar** a partir del valor "abans" del registre.
+**Consequences**:
+  - No es reimplementa a l'app actual (D-007: el risc de tocar `save()` és més alt que el valor, i la migració ho
+    resol de soldre). Mentrestant: Google Sheets → Fitxer → Historial de versions.
+  - Fa que el registre de la migració (`INVENTARI_FUNCIONAL.md` §8) siga un criteri d'acceptació de la Fase 6.
+

@@ -115,6 +115,16 @@
   duplicats" (mateixa data, import i sentit, concepte diferent) i s'han de deixar desmarcats.
 - **Resultat de l'exercici** (reserves gastades): és la variació de la suma de tots els saldos (a 13/10/2026:
   −40.200,46 €) i només és fiable quan els saldos de tots els comptes estan confirmats.
+- **L'any fiscal actiu és global**: l'escriu qualsevol admin a `00 Config` i tots els usuaris el prenen al refresc.
+- **`bankHash`** = id del banc | data DD/MM/AAAA | import abs amb 2 decimals | concepte normalitzat. No inclou el
+  sentit ni cap ordinal: dues línies idèntiques del mateix dia tenen el mateix hash (no pot ser UNIQUE).
+- Els moviments `via:'app'` (falles.app) no entren a Dashboard, Resultats ni Flux, però sí al pressupost executat.
+- **Tancament de caixa**: el TPV només es desa a `tancaments.tpv`; els moviments que es generen són l'"Efectiu net"
+  i els "Pagaments". Els apunts d'event de `fons` tenen `delegId:'_event'`; els tancaments "sense event" tenen un
+  `eventId` sintètic `_se_…`.
+- **"Tancar exercici" no bloqueja res** (només marca l'estat) i pot no desar-se (A-01 de `INFORME_ANOMALIES_F0.md`).
+- Un banc creat des de la UI té id amb `_` i pot deixar files contaminades a `15 Saldos` (A-03).
+- Documents de la Fase 0: `INVENTARI_FUNCIONAL.md` (acceptació de la Fase 6) i `INFORME_ANOMALIES_F0.md`.
 - Aprovat per Emilio: àrees TPV → 01 Tresoreria, WiFi COM.T → 07 Coordinació Tècnica, aigua → 01 Jurídica i
   Contractacions, remeses de quotes (`FATIR…`) → 01 Secretaria.
 

@@ -35,6 +35,8 @@ fitxer i el continuity set (§2) sencer** abans de tocar res.
 | `FDD_FALLA_PORTAL.md` | Disseny funcional. |
 | `TDD_FALLA_PORTAL.md` | Disseny tècnic. |
 | `PLA_MIGRACIO_SUPABASE.md` | Pla de migració a Supabase (WS-SUPABASE, D-021): fases, model i esforç, seguiment. |
+| `INVENTARI_FUNCIONAL.md` | Inventari de funcionalitats, rols i camins d'escriptura (Fase 0); llista d'acceptació de la Fase 6. |
+| `INFORME_ANOMALIES_F0.md` | Anomalies i proteccions implícites trobades a la Fase 0, amb tractament i decisions pendents. |
 
 Mai crear duplicats paral·lels (com `index1.html`, `index2.html` — ja n'hi ha i cal
 evitar que se'n generen més sense necessitat). Les actualitzacions són

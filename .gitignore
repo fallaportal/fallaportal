@@ -13,3 +13,7 @@ index_2.html
 
 # Herramientas locales de Claude Code
 .claude/
+
+# Export del Google Sheet i informes de perfil de dades (Fase 0 de la migracio): xifres reals, mai al repo
+FallaPortal_export*.xlsx
+*_perfil_dades_*.md

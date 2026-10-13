@@ -19,7 +19,12 @@ GitHub Pages. Decisió D-021.
   - Els justificants antics es migren.
   - Entrada per email amb codi, sense Google.
 
-**Propera sessió**: Fase 0 (auditoria i inventari). Model Opus 5.5, esforç high.
+**Fase 0 en curs (2026-10-13)**: inventari funcional i informe d'anomalies fets a partir de la lectura
+sencera d'`index.html`; script de perfilat de dades escrit i provat amb dades sintètiques.
+**Propera sessió**: (1) Emilio descarrega el full com a `.xlsx` a `FallaPortal_export_<data>.xlsx` (carpeta del
+projecte, ignorat per git); (2) executar `python -I tools/f0_perfil_dades.py <fitxer>` i revisar l'informe;
+(3) verificar A-13 en execució; (4) decisions de `INFORME_ANOMALIES_F0.md` §7, d'una en una. Model Opus 5.5, esforç high.
+**Fet fora de la Fase 0**: nou requisit de registre d'activitat (D-024).
 **Blockers**:
   - Cap per a la Fase 0.
   - Per a la Fase 2 cal triar l'SMTP (§9.8 del pla).

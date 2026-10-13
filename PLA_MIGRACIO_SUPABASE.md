@@ -113,6 +113,13 @@ Cada fase indica el model i l'esforç recomanats (vegeu §8).
 ### Fase 1 — Esquema i seguretat
 - SQL versionat a `supabase/migrations/` (al repo, sense claus).
 - Taules, restriccions, funcions de permisos, polítiques RLS i triggers d'auditoria.
+- **Registre d'activitat (requisit d'Emilio, 2026-10-13, D-024)**: `audit_log` omplit per triggers a
+  totes les taules de dades (insert/update/delete) amb usuari (`auth.uid` + email), data i hora, taula,
+  id de la fila i valors abans/després (`jsonb`). Ningú pot modificar-lo ni esborrar-lo. Pantalla
+  "Registre d'activitat" per a `president`\|`treasury` amb filtres, i recuperació del que s'ha esborrat.
+- **Entrades de la Fase 0** (vegeu `INFORME_ANOMALIES_F0.md`): `bankHash` no pot ser únic (A-04); taula
+  de caixes d'event amb `event_id` nullable (A-05); bloqueig de pressupost per any (A-11); `saldos`
+  amb FK correcta (A-03); data real i `numeric` (A-09, A-10).
 - **Tests de RLS**: per a cada rol, consultes que han de passar i consultes que han de
   fallar, executables contra `dev`.
 - **Model**: Opus 5.5 · **xhigh**. Revisió final de les polítiques: Opus 5.5 · **max**.
@@ -300,7 +307,7 @@ setmanes i després ve la setmana de congelació.
 
 | Fase | Estat | Data | Notes |
 |---|---|---|---|
-| 0 | Pendent | | Comença el 2026-09-28 |
+| 0 | En curs | 2026-10-13 | Fet: `INVENTARI_FUNCIONAL.md`, `INFORME_ANOMALIES_F0.md` (lectura sencera del codi v4.0.66) i `tools/f0_perfil_dades.py` (provat amb un full sintètic). Pendent: Emilio descarrega el full com a `.xlsx` (`FallaPortal_export*.xlsx`, ignorat per git), s'executa el script i es revisa l'informe; verificar en execució A-13 (dashboard per a `area`/`delegat`); decisions de §7 de l'informe. La fase es tanca quan Emilio revisa inventari i informe. |
 | 1 | Pendent | | |
 | 2 | Pendent | | |
 | 3 | Pendent | | |
