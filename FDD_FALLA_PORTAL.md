@@ -1,5 +1,5 @@
 # Functional Design Document — Falla Portal
-## Generated: 2026-07-29 · v4.0.44
+## Generated: 2026-07-29 · Actualitzat: 2026-10-13 · v4.0.78
 
 ---
 
@@ -57,7 +57,8 @@ fotogràfic opcional.
 ---
 
 #### F-02: Importació CSV Bancari (WS-BANK)
-**Description**: Importació d'extractes bancaris. Classificació automàtica per regles.
+**Description**: Importació d'extractes bancaris **en Excel** (.xls/.xlsx; l'importador CSV genèric es va retirar a la
+v4.0.77). Classificació automàtica per regles.
 Detecció de duplicats per `bankHash`, tenint en compte el sentit (un ingrés no és duplicat d'un pagament).
 **Preview** (v4.0.49–50): cada moviment dubtós és una fila clicable amb l'estat explícit "S'importarà" /
 "S'ometrà" (marcat = s'importa) i botons "Importar tots" / "Ometre tots". Es mostra la columna "Més dades" /
@@ -78,6 +79,7 @@ apareix com a "possible duplicat" en importar-lo (cal desmarcar-lo).
   - **Lliurament** i **devolució**: no fan apunt (els diners continuen sent de la caixa de la falla).
   - **Despesa contra fons** i **avançament personal** (el delegat paga de la seua butxaca): fan apunt d'efectiu;
     l'avançament deixa el saldo del delegat en negatiu.
+  - Esborrar una despesa pagada amb fons lliurats o amb avançament esborra també el registre de fons (v4.0.70).
   - **Reintegrament** (la falla torna un avançament; botó visible a la targeta desplegada d'un delegat amb saldo
     negatiu): només puja el saldo, sense apunt.
   - **Origen "Banc"** (lliurament i reintegrament): els diners ixen del banc (xec o transferència) cap a un
@@ -88,14 +90,17 @@ apareix com a "possible duplicat" en importar-lo (cal desmarcar-lo).
 ---
 
 #### F-04: Tancament de Caixa
-**Description**: Registre d'efectiu i TPV recaptat per event. Genera moviments amb
-`fontImport:'tancament'`. Tots els camps d'import usen `parseImport()`.
+**Description**: Caixa d'event: obrir amb canvi, ampliar canvi, retirades d'efectiu i tancament. En tancar, l'efectiu es
+compta **al final, després dels pagaments** fets amb la caixa (v4.0.73): ingrés "Vendes efectiu" = efectiu final +
+pagaments − canvi, i despesa "Pagaments". El TPV no genera moviment (arriba al banc com a "ON <comerç> ddmm").
+Moviments amb `fontImport:'tancament'`. Tots els camps d'import usen `parseImport()`.
 **Status**: Implementat
 
 ---
 
 #### F-05: Pressupostos
-**Description**: Pressupost per àrea/delegació i any fiscal, amb % executat i historial.
+**Description**: Pressupost per àrea/delegació i any fiscal, amb % executat i historial. La còpia entre exercicis no
+sobreescriu un pressupost bloquejat i avisa si el destí ja té línies (v4.0.75).
 **Status**: Implementat
 
 ---
@@ -131,6 +136,9 @@ tickets (consums per event, `via:'app'`, només estadístics) i entrades. Bonifi
 #### F-09: Configuració
 **Description**: Bancs, àrees, delegacions, events, usuaris, regles CSV, justificants,
 carpetes Drive.
+**Exercicis** (v4.0.74): l'any actiu és global i només el canvien President i Tresoreria, amb avís que afecta tothom.
+Un exercici tancat no accepta canvis de moviments, fons, caixes ni importacions; President i Tresoreria poden fer-ho
+com a excepció confirmant-ho.
 **Status**: Implementat
 
 ---
@@ -150,7 +158,7 @@ carpetes Drive.
 Si el pas 8 falla, la despesa queda guardada sense justificant i l'usuari ho sap.
 
 #### Importar CSV bancari
-1. Tresor va a "Importació CSV", tria el banc, arrossega el fitxer
+1. Tresor va a "Importació CSV" i arrossega l'extracte en Excel (el banc es detecta per l'IBAN)
 2. El sistema processa, aplica regles, detecta duplicats
 3. Revisa les excepcions i importa
 

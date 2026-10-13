@@ -299,8 +299,8 @@ setmanes i després ve la setmana de congelació.
 
 | Fase | Estat | Data | Notes |
 |---|---|---|---|
-| 0 | En curs | 2026-10-13 | Fet: `INVENTARI_FUNCIONAL.md`, `INFORME_ANOMALIES_F0.md` (lectura sencera del codi v4.0.66) i `tools/f0_perfil_dades.py` (provat amb un full sintètic). Pendent: Emilio descarrega el full com a `.xlsx` (`FallaPortal_export*.xlsx`, ignorat per git), s'executa el script i es revisa l'informe; verificar en execució A-13 (dashboard per a `area`/`delegat`); decisions de §7 de l'informe. La fase es tanca quan Emilio revisa inventari i informe. |
-| 1 | Pendent | | |
+| 0 | **Fet** | 2026-10-13 | `INVENTARI_FUNCIONAL.md`, `INFORME_ANOMALIES_F0.md` (codi + perfil de les dades reals), `MODEL_DADES.md` (decisions D-026–D-033) i `tools/f0_perfil_dades.py`. Correccions prèvies a l'app actual: v4.0.67–v4.0.78. Oberts sense bloquejar: A-31 (tancaments antics amb pagaments) i caixa vs vendes de falles.app. Tancada per Emilio el 2026-10-13. |
+| 1 | Pendent | | Comença a la propera sessió (Opus 5.5 · xhigh; revisió final de RLS amb max). Entrada: `MODEL_DADES.md`. |
 | 2 | Pendent | | |
 | 3 | Pendent | | |
 | 4 | Pendent | | |
