@@ -142,3 +142,6 @@ al costat de l'export. Aquí només hi ha les conclusions; el repositori és pú
     un deute amb els fallers (passiu del moneder) i l'ingrés és el consum. Canvi de comportament (D-025): s'aplicaria després
     del tall; el model (D-031) admet les dues. Al 25/26 les recàrregues (~152.000 €) i els consums (59.137 €) no lliguen i la
     pestanya de passiu és buida: cal revisar si els consums estan complets.
+    **Estat (2026-10-13)**: Emilio ho vol pensar (la venda és important; els diners de les recàrregues serveixen per
+    comprar el que després es ven; no es porten inventaris). No bloqueja la Fase 0 ni la 1: el model guarda recàrregues,
+    consums i passiu per separat, i qualsevol de les dues lectures es pot calcular després sense perdre res.
