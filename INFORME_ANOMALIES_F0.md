@@ -135,7 +135,7 @@ al costat de l'export. Aquí només hi ha les conclusions; el repositori és pú
 6. A-18: es pot descartar la importació CSV genèrica?
 7. Netejar `index1.html`, `index2.html`, `index_2.html`, `dev.html` (pla §9.7).
 8. ~~A-27~~: **decidit i corregit a la v4.0.67** (Emilio, 2026-10-13): botó puntual per esborrar les 117 recàrregues i la
-   importació ja no crea les TPV. Pendent que Emilio l'aplique i eliminar el codi puntual.
+   importació ja no crea les TPV. Aplicat per Emilio el 2026-10-13; codi puntual eliminat a la v4.0.68.
 9. A-10: quina data (o període) té el registre de consums sense data? (els 9 moviments amb data d'un altre exercici: D-029)
 10. A-24: s'esborren els 4 avançaments orfes?
 11. **Falles.app: comptar per caixa o per vendes?** Avui l'ingrés és la recàrrega (quan el faller paga) i els consums

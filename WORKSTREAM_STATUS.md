@@ -1,6 +1,6 @@
 # Work Stream Status — Falla Portal
 ## Snapshot Date: 2026-10-13
-## Versió en producció: v4.0.67
+## Versió en producció: v4.0.68
 
 > **Context de calendari**: període vacacional, ús baix de l'eina. Bon moment per a
 > canvis estructurals i per a la decisió pendent del Service Worker.
@@ -78,7 +78,8 @@ Confirmats: 01 Banc (extracte al 28/9 + despeses manuals del 8/10) i TPV (0 €)
 ("117 recàrregues TPV de falles.app comptades dues vegades", "Revisar i aplicar") que esborra els 117 apunts "Recàrrega TPV"
 del 01 Banc 25/26 (2.836,50 €), només si casen exactament i l'extracte té els 25 "Ingrés APP" pel mateix total; descarrega
 còpia abans. A més, la importació de transaccions de falles.app ja no crea les recàrregues TPV. Verificat en execució amb
-dades sintètiques (2 escriptures: PUT + clear; proves negatives). **Pendent**: que Emilio l'aplique i eliminar el codi puntual.
+dades sintètiques (2 escriptures: PUT + clear; proves negatives). **Aplicat per Emilio el 2026-10-13; codi puntual eliminat a
+la v4.0.68** (la importació continua sense crear les recàrregues TPV).
 Efecte: el saldo final del 01 Banc 25/26 segons l'app passa de 19.210,51 € a 16.374,01 € (casa amb l'inicial del 26/27).
 
 **Pendents** (res d'això depén de codi):
