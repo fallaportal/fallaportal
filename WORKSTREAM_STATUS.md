@@ -1,6 +1,6 @@
 # Work Stream Status — Falla Portal
 ## Snapshot Date: 2026-10-13
-## Versió en producció: v4.0.60
+## Versió en producció: v4.0.61
 
 > **Context de calendari**: període vacacional, ús baix de l'eina. Bon moment per a
 > canvis estructurals i per a la decisió pendent del Service Worker.
@@ -26,11 +26,12 @@ GitHub Pages. Decisió D-021.
 
 ---
 
-### Completat 2026-10-13 — Xecs del 30/06 (v4.0.60)
+### Completat 2026-10-13 — Xecs del 30/06 (v4.0.61)
 
 - **Què eren els xecs** (segons els tresorers):
   - **364930 (5.750 €)**: 5.500 € d'orquestres (diners donats a Antonio Javier, que va pagar Eventime) i 250 €
-    de seguretat; tot a Festejos i Gastronomia · Música, Ambientació i Audiovisuals (0402).
+    de seguretat (diners donats a Juanjo, que la va pagar); tot a Festejos i Gastronomia · Música, Ambientació i
+    Audiovisuals (0402). Cada part: xec = traspàs banc → caixa + lliurament al delegat + pagament contra fons.
   - **364931 (502 €)**: diners donats a Juanjo, que va pagar el "Generador" en efectiu (despesa del 6/6 ja
     apuntada): traspàs banc → caixa, la despesa estava comptada dues vegades.
   - **364928 (860 €)**: encara no se sap. Una pista: Juanjo va pagar les grues (Monument Gran) però no hi ha

@@ -337,7 +337,7 @@ tr:hover td{background:var(--bg2)}
     <div class="login-logo">Falla <span>Portal</span></div>
     <div class="login-sub">Sistema de gestió financera</div>
     <div class="login-fiscal">Any fiscal 26/27 · Abr 2026 – Mar 2027</div>
-    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v4.0.60</div>
+    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v4.0.61</div>
     <button class="btn-google" onclick="signIn()">
       <svg viewBox="0 0 24 24" width="20" height="20"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
       Entrar amb Google
@@ -379,7 +379,7 @@ tr:hover td{background:var(--bg2)}
     <div class="sb-bottom">
       <div class="sync-ind" style="display:flex;align-items:center;justify-content:space-between"><div style="display:flex;align-items:center;gap:6px"><div class="sync-dot" id="sync-dot"></div><span id="sync-text">Sincronitzat</span></div><button onclick="manualRefresh()" title="Actualitzar dades" style="background:none;border:none;cursor:pointer;padding:2px 4px;color:var(--text2);font-size:14px;line-height:1"><i class="ti ti-refresh"></i></button></div>
       <button class="btn-logout" onclick="signOut()"><i class="ti ti-logout" style="font-size:14px"></i> Tancar sessió</button>
-      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v4.0.60</div>
+      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v4.0.61</div>
     </div>
   </div>
 
@@ -6554,10 +6554,13 @@ async function arreglaXecsJuny(){
   const sel=document.getElementById('xecs-deleg');
   const u=(DB.config.usuaris||[]).find(function(x){return sel&&x.id===sel.value;});
   if(!u){showToast('Tria el delegat que va pagar Eventime (Antonio Javier)',true);return;}
+  const sel2=document.getElementById('xecs-deleg2');
+  const u2=(DB.config.usuaris||[]).find(function(x){return sel2&&x.id===sel2.value;});
+  if(!u2){showToast('Tria el delegat que va pagar la Seguretat (Juanjo)',true);return;}
   const resum='Xecs del 30/06/2026\n\n'+
-    '• Xec 364930 ('+fmtD(5750)+'): es divideix en dues parts.\n'+
-    '   – '+fmtD(5500)+' per a '+u.nom+', que va pagar Eventime (Orquestres): el xec passa a ser un traspàs banc → caixa a Tresoreria, i es simula el lliurament a '+u.nom+' i el seu pagament a Eventime, a '+p.area.name+' · '+p.deleg.name+'.\n'+
-    '   – '+fmtD(250)+' de Seguretat, també a '+p.deleg.name+'.\n'+
+    '• Xec 364930 ('+fmtD(5750)+'): es divideix en dues parts. Cada una passa a ser un traspàs banc → caixa a Tresoreria i se simula el lliurament al delegat i el seu pagament, a '+p.area.name+' · '+p.deleg.name+':\n'+
+    '   – '+fmtD(5500)+' per a '+u.nom+', que va pagar Eventime (Orquestres).\n'+
+    '   – '+fmtD(250)+' per a '+u2.nom+', que va pagar la Seguretat.\n'+
     '• Xec 364931 ('+fmtD(502)+'): traspàs banc → caixa (la despesa del Generador ja està apuntada en efectiu).\n'+
     '• El xec 364928 ('+fmtD(860)+') no es toca.\n\n'+
     'El total del banc no canvia. Abans es descarregarà una còpia de seguretat. Continuar?';
@@ -6568,35 +6571,37 @@ async function arreglaXecsJuny(){
     const x1=p.x1;
     const af=getAnyFiscal();
     const part=P.dividir.parts;
-    // Seguretat (250 €): despesa directa del xec, a Festejos · Música
-    const seguretat=Object.assign({},x1,{id:genId('m')+Math.random(),import:part[1].import,concepte:part[1].concepte,
-      areaId:p.area.id,areaNom:p.area.name,delegacioId:p.deleg.id,delegacioNom:p.deleg.name,
-      bankHash:'',notes:'Part del xec 364930 ('+fmtD(P.dividir.import)+')'});
-    // Orquestres (5.500 €): el xec original es queda com a sortida del banc (el reclassifica el traspàs de baix)
+    // El xec 364930 es parteix en dues files del banc (5.500 i 250 €); cadascuna és un traspàs banc → caixa
+    // i, per a cada part, se simula que el delegat paga el proveïdor amb eixos diners.
+    const x2=Object.assign({},x1,{id:genId('m')+Math.random(),import:part[1].import,bankHash:''});
     x1.import=part[0].import;
-    x1.concepte='Retirada del banc per a '+u.nom+' (xec 364930, Orquestres Eventime)';
-    x1.notes=((x1.notes||'')+' · Part del xec 364930 ('+fmtD(P.dividir.import)+')').replace(/^ · /,'');
-    DB.moviments.push(seguretat);
-    // El delegat paga Eventime amb eixos diners (simulat): lliurament sense apunt + despesa contra fons
-    const despesa={id:genId('m')+Math.random(),anyFiscal:af,tipus:'gast',via:'Efectiu',
-      areaId:p.area.id,areaNom:p.area.name,delegacioId:p.deleg.id,delegacioNom:p.deleg.name,
-      eventId:'',eventNom:'',concepte:'Orquestres (Eventime)',establiment:'Eventime',data:P.data,
-      responsable:u.nom,responsableEmail:u.email||'',import:part[0].import,
-      notes:'Simulat a partir del xec 364930: els diners es van donar a '+u.nom+' per pagar Eventime',
-      origenFons:'fons_lliurats',origen:'Manual',ticketUrl:'',ticketMotiu:'Pagat amb el xec 364930 (sense tiquet)',conciliacio:'no_aplica'};
-    DB.moviments.push(despesa);
+    [x1,x2].forEach(function(m){m.notes=((m.notes||'')+' · Part del xec 364930 ('+fmtD(P.dividir.import)+')').replace(/^ · /,'');});
+    DB.moviments.push(x2);
     if(!DB.fons)DB.fons=[];
     const registrat=currentUser?.name||currentUser?.email||'';
-    const fLliur={id:genId('f'),anyFiscal:af,tipus:'lliurament',delegId:u.id,delegEmail:u.email||'',import:part[0].import,data:P.data,
-      nota:'Orquestres Eventime (xec 364930)',registratPer:registrat,origen:'banc'};
-    const fGast={id:genId('f'),anyFiscal:af,tipus:'gast_fons',delegId:u.id,delegEmail:u.email||'',import:part[0].import,data:P.data,
-      nota:'Orquestres (Eventime)',registratPer:registrat,movimentId:despesa.id};
-    DB.fons.push(fLliur,fGast);
+    const fonsNous=[];
+    const simula=function(bancMov,imp,del,proveidor,concepte){
+      bancMov.concepte='Retirada del banc per a '+del.nom+' (xec 364930, '+concepte+')';
+      const despesa={id:genId('m')+Math.random(),anyFiscal:af,tipus:'gast',via:'Efectiu',
+        areaId:p.area.id,areaNom:p.area.name,delegacioId:p.deleg.id,delegacioNom:p.deleg.name,
+        eventId:'',eventNom:'',concepte:concepte+(proveidor!==concepte?' ('+proveidor+')':''),establiment:proveidor,data:P.data,
+        responsable:del.nom,responsableEmail:del.email||'',import:imp,
+        notes:'Simulat a partir del xec 364930: els diners es van donar a '+del.nom+' per pagar '+proveidor,
+        origenFons:'fons_lliurats',origen:'Manual',ticketUrl:'',ticketMotiu:'Pagat amb el xec 364930 (sense tiquet)',conciliacio:'no_aplica'};
+      DB.moviments.push(despesa);
+      const fL={id:genId('f'),anyFiscal:af,tipus:'lliurament',delegId:del.id,delegEmail:del.email||'',import:imp,data:P.data,
+        nota:concepte+' '+proveidor+' (xec 364930)',registratPer:registrat,origen:'banc'};
+      const fG={id:genId('f'),anyFiscal:af,tipus:'gast_fons',delegId:del.id,delegEmail:del.email||'',import:imp,data:P.data,
+        nota:concepte+(proveidor!==concepte?' ('+proveidor+')':''),registratPer:registrat,movimentId:despesa.id};
+      DB.fons.push(fL,fG);fonsNous.push(fL,fG);
+    };
+    simula(x1,part[0].import,u,'Eventime','Orquestres');
+    simula(x2,part[1].import,u2,'Seguretat','Seguretat');
     // Traspassos banc → caixa (cada crida desa la pestanya sencera, amb tot l'anterior)
     await crearTraspasBancCaixa(part[0].import,P.data,P.bancCodi,x1.id,u.nom,'xec 364930, Orquestres');
+    await crearTraspasBancCaixa(part[1].import,P.data,P.bancCodi,x2.id,u2.nom,'xec 364930, Seguretat');
     await crearTraspasBancCaixa(P.traspas.import,P.data,P.bancCodi,P.traspas.id,'Juanjo (Generador)','xec 364931');
-    await saveFons(fLliur);
-    await saveFons(fGast);
+    for(const f of fonsNous)await saveFons(f);
     showToast('Xecs arreglats');
     renderCfgExercicis();
   }catch(e){
@@ -6618,7 +6623,15 @@ function renderCfgExercicis(){
     if(xecsJ){
       html+='<div style="background:var(--amber-bg);border:1px solid var(--amber);border-radius:var(--r);padding:12px 14px;margin-bottom:16px;color:var(--amber-text);font-size:13px">'+
         '<div style="font-weight:600;margin-bottom:4px"><i class="ti ti-alert-triangle"></i> Xecs del 30/06 (5.750 € i 502 €)</div>'+
-        '<div style="margin-bottom:10px">El xec de 5.750 € es divideix: 5.500 € d\'Orquestres (donats a un delegat que va pagar Eventime: se simula el lliurament i el pagament) i 250 € de Seguretat, tot a Festejos · Música. El de 502 € és un traspàs banc → caixa (la despesa ja està apuntada). El de 860 € no es toca. Es descarrega una còpia de seguretat abans.</div>'+
+        '<div style="margin-bottom:10px">El xec de 5.750 € es divideix en 5.500 € d\'Orquestres (donats a un delegat que va pagar Eventime) i 250 € de Seguretat (donats a un altre delegat): se simula el lliurament i el pagament de cada part, a Festejos · Música. El de 502 € és un traspàs banc → caixa (la despesa ja està apuntada). El de 860 € no es toca. Es descarrega una còpia de seguretat abans.</div>'+
+        '<div style="margin-bottom:10px"><label style="font-size:12px">Delegat que va pagar la Seguretat (250 €):</label> <select id="xecs-deleg2" style="max-width:260px">'+
+          (function(){
+            const us=(DB.config.usuaris||[]).filter(function(x){return x.rol!=='noauth';}).sort(function(a,b){return a.nom.localeCompare(b.nom,'ca');});
+            const norm=function(t){return String(t||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();};
+            const cand=us.filter(function(x){return /juanjo/.test(norm(x.nom));});
+            const pre=cand.length===1?cand[0].id:'';
+            return '<option value="">— Tria —</option>'+us.map(function(x){return'<option value="'+esc(x.id)+'"'+(x.id===pre?' selected':'')+'>'+esc(x.nom)+'</option>';}).join('');
+          })()+'</select></div>'+
         '<div style="margin-bottom:10px"><label style="font-size:12px">Delegat que va pagar Eventime (Orquestres):</label> <select id="xecs-deleg" style="max-width:260px">'+
           (function(){
             const us=(DB.config.usuaris||[]).filter(function(x){return x.rol!=='noauth';}).sort(function(a,b){return a.nom.localeCompare(b.nom,'ca');});
