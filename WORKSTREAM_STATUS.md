@@ -24,7 +24,8 @@ sencera d'`index.html`; script de perfilat de dades escrit i provat amb dades si
 **Propera sessió**: (1) Emilio descarrega el full com a `.xlsx` a `FallaPortal_export_<data>.xlsx` (carpeta del
 projecte, ignorat per git); (2) executar `python -I tools/f0_perfil_dades.py <fitxer>` i revisar l'informe;
 (3) verificar A-13 en execució; (4) decisions de `INFORME_ANOMALIES_F0.md` §7, d'una en una. Model Opus 5.5, esforç high.
-**Fet fora de la Fase 0**: nou requisit de registre d'activitat (D-024).
+**Fet fora de la Fase 0**: nou requisit de registre d'activitat (D-024); enfocament "millorar el model, replicar
+1:1 el comportament" (D-025). Errors evidents corregibles abans a l'app actual: A-09, A-24, A-13 (cal verificar-lo).
 **Blockers**:
   - Cap per a la Fase 0.
   - Per a la Fase 2 cal triar l'SMTP (§9.8 del pla).

@@ -37,6 +37,10 @@ La migració està feta quan es complixen tots aquests criteris:
   quan la Fase 6 està tancada, no abans.
 - **Els permisos es repliquen 1:1**: primer es reprodueix exactament el que fa l'app hui.
   Qualsevol canvi de permisos és una decisió a part, registrada al `DECISION_LOG`.
+- **Millorar el model, replicar el comportament (D-025)**: la migració pot netejar l'esquema (tipus, FK, ids,
+  saldos, caixes d'event, paperera, registre d'activitat) però no canvia xifres, permisos ni fórmules. Els canvis
+  de comportament són decisions a part, després del tall. Els errors evidents (A-09, A-24, A-13) es poden
+  corregir abans a l'app actual.
 - **Format del full congelat durant la preparació**: mentre duren les Fases 0–6, no es
   canvien pestanyes ni columnes a l'app actual, perquè l'script de migració depén
   d'eixe format. Les correccions que s'hi facen s'anoten a §11.

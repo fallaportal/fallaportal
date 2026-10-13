@@ -400,3 +400,25 @@ amb detall qui ha esborrat una fila (D-002, D-006).
     resol de soldre). Mentrestant: Google Sheets → Fitxer → Historial de versions.
   - Fa que el registre de la migració (`INVENTARI_FUNCIONAL.md` §8) siga un criteri d'acceptació de la Fase 6.
 
+---
+
+### D-025: La migració millora el model de dades i replica 1:1 el comportament
+**Date**: 2026-10-13
+**Status**: Accepted (Emilio, 2026-10-13)
+**Context**: La Fase 0 (`INFORME_ANOMALIES_F0.md`) va trobar incoherències de model (tipus, claus, saldos,
+bloqueig de pressupost per any, caixes d'event) i de comportament (tancar exercici, saldo de fons, abast per
+pantalla, TPV del tancament). La Fase 6 compara les xifres de l'app vella i de la nova: si es canvia el
+comportament alhora que es migra, una diferència no es pot atribuir a un error de la migració o a un canvi volgut.
+**Decision**:
+  - **Es millora el model de dades en migrar**: tipus `date` i `numeric`, claus foranes, un sol format d'id,
+    bloqueig de pressupost per any, taula de caixes d'event, saldos inicials ben desats, paperera, registre
+    d'activitat (D-024), escriptura per fila i Realtime. Cap d'això ha de canviar una xifra.
+  - **El comportament i els permisos es repliquen 1:1** (pla §2, decisió 6). Qualsevol canvi de comportament
+    (A-01, A-02, A-08, A-12, A-23 i semblants) és una decisió pròpia d'Emilio, registrada al `DECISION_LOG`, i
+    s'aplica **després del tall**.
+  - **Excepció**: els errors evidents (A-09 `parseFloat`, A-24 fons orfe en esborrar un avançament, A-13 dashboard)
+    es poden corregir abans, a l'app actual.
+  - **Fora d'abast** (fases pròpies): partir `index.html` en mòduls o afegir bundler (D-001), l'algorisme de
+    WS-CONCILIACIÓ i la connexió als bancs (D-023).
+**Consequences**: Les anomalies de `INFORME_ANOMALIES_F0.md` marcades "Replicar" es traslladen tal qual; les de
+"Corregir en migrar" són canvis de model; les de "Decidir" esperen la decisió d'Emilio.
