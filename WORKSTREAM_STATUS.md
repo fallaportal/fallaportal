@@ -1,6 +1,6 @@
 # Work Stream Status — Falla Portal
 ## Snapshot Date: 2026-10-13
-## Versió en producció: v4.0.62
+## Versió en producció: v4.0.63
 
 > **Context de calendari**: període vacacional, ús baix de l'eina. Bon moment per a
 > canvis estructurals i per a la decisió pendent del Service Worker.
@@ -43,6 +43,12 @@ GitHub Pages. Decisió D-021.
   queden a 0 i no hi ha files repetides.
 - **Pendent**: reclassificar el xec 364928 (860 €) quan es confirme què va ser (origen "Banc" del lliurament,
   triant el moviment de l'extracte, si va passar per mans de Juanjo).
+- **Generador MGM (502 €) — v4.0.63**: el xec 364931 va eixir del banc, els diners van passar per Juanjo i va pagar
+  MGM ("Generador", 6/6, Festejos · Dinars, Sopars i Festes, ja apuntat com a caixa). Faltava el rastre als Fons
+  delegats: botó puntual a Configuració → Exercicis (`_GENERADOR_JUANJO`, `_generadorJuanjoPla`,
+  `arreglaGeneradorJuanjo`) que registra el lliurament de 502 € a Juanjo el 6/6 i enllaça el pagament com a despesa
+  contra els seus fons (`origenFons` passa de `caixa` a `fons_lliurats`). L'efectiu i el saldo de Juanjo no canvien.
+  **ELIMINAR aquest codi de `index.html` després d'aplicar-lo.**
 
 ---
 
