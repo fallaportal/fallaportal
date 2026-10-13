@@ -301,3 +301,40 @@ per incorporar millores estructurals. Pla detallat a `PLA_MIGRACIO_SUPABASE.md`.
 **Consequences**:
   - Supersedirà D-002, D-008 i D-020 quan es faça el tall. Sense Google desapareixen el
     client OAuth, el mode "Testing" i el scope `drive`.
+
+---
+
+### D-022: Model comptable dels fons delegats — què genera apunt i què no
+**Date**: 2026-10-13
+**Status**: Accepted
+**Context**: El desquadrament del 01 Banc i de la Caixa efectiu va destapar que el model dels
+fons delegats no estava escrit enlloc i que el codi el contradeia: el botó "Reintegrament"
+creava un segon apunt de despesa per Efectiu (comptava la despesa dues vegades), i a més
+no funcionava mai (el títol del formulari no tenia l'id `ll-title`, així que `openReintegramentFor`
+llançava un error, i el botó de confirmar cridava sempre el lliurament normal). No hi havia
+cap manera d'apuntar diners que ixen del banc cap a un delegat (xec o transferència), de manera que
+el moviment del banc entrava per l'extracte com a despesa i després la despesa real del delegat
+tornava a comptar.
+**Decision** (explicada per Emilio, 2026-10-13):
+  - **Lliurament** de fons a un delegat: **no genera apunt**. Els diners continuen sent de la
+    caixa de la falla; només canvien de mans. Els fons en mans dels delegats compten dins la
+    Caixa efectiu.
+  - **Despesa contra fons lliurats**: genera apunt (efectiu). És la despesa real.
+  - **Devolució** del sobrant: no genera apunt; només ajusta el saldo del delegat.
+  - **Avançament personal** (el delegat paga de la seua butxaca): genera l'apunt d'efectiu i
+    deixa el saldo del delegat en negatiu.
+  - **Reintegrament** (la falla torna un avançament): **no genera apunt** (ja el va fer
+    l'avançament); és un lliurament que s'ofereix quan el saldo és negatiu, amb l'import
+    pendent ja omplit.
+  - **Diners que ixen del banc** (xec o transferència) cap a un delegat, o per a pagar un
+    reintegrament: no són despesa. S'apunta un **traspàs banc → caixa** a Administració i
+    Secretaria · Tresoreria: sortida del banc + entrada a l'efectiu, de manera que el resultat
+    per àrea és zero (la mateixa convenció que el "TRASPASO PROPIO" entre comptes). Si el
+    moviment del banc ja és a l'extracte, es reclassifica a Tresoreria en lloc de duplicar-lo.
+**Consequences**:
+  - El formulari de lliurament i el de reintegrament tenen l'origen "Banc" (`crearTraspasBancCaixa`).
+  - Els xecs 364928, 364929, 364930 i 364931 del 01 Banc (3.000 €, 860 €, 5.750 €, 502 €) estan
+    apuntats com a despesa i sense l'entrada a l'efectiu: cal reclassificar-los quan els tresorers
+    diguen què van ser.
+  - El saldo de la Caixa efectiu només serà fiable després d'això i d'un recompte físic
+    (= caixa física + saldos positius dels delegats).

@@ -337,7 +337,7 @@ tr:hover td{background:var(--bg2)}
     <div class="login-logo">Falla <span>Portal</span></div>
     <div class="login-sub">Sistema de gestió financera</div>
     <div class="login-fiscal">Any fiscal 26/27 · Abr 2026 – Mar 2027</div>
-    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v4.0.56</div>
+    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v4.0.57</div>
     <button class="btn-google" onclick="signIn()">
       <svg viewBox="0 0 24 24" width="20" height="20"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
       Entrar amb Google
@@ -379,7 +379,7 @@ tr:hover td{background:var(--bg2)}
     <div class="sb-bottom">
       <div class="sync-ind" style="display:flex;align-items:center;justify-content:space-between"><div style="display:flex;align-items:center;gap:6px"><div class="sync-dot" id="sync-dot"></div><span id="sync-text">Sincronitzat</span></div><button onclick="manualRefresh()" title="Actualitzar dades" style="background:none;border:none;cursor:pointer;padding:2px 4px;color:var(--text2);font-size:14px;line-height:1"><i class="ti ti-refresh"></i></button></div>
       <button class="btn-logout" onclick="signOut()"><i class="ti ti-logout" style="font-size:14px"></i> Tancar sessió</button>
-      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v4.0.56</div>
+      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v4.0.57</div>
     </div>
   </div>
 
@@ -1074,19 +1074,20 @@ tr:hover td{background:var(--bg2)}
 <div class="modal-overlay" id="modal-lliurament">
   <div class="modal">
   <div class="modal-inner">
-    <div class="modal-title">Nou lliurament de fons</div>
+    <div class="modal-title" id="ll-title">Nou lliurament de fons</div>
     <div class="field"><label>Delegat receptor</label><select id="ll-delegat"></select></div>
-    <div class="field"><label>Origen dels fons</label><select id="ll-origen" onchange="onLliuramentOrigenChange()"><option value="caixa">Caixa de la Falla (no genera moviment)</option><option value="tercer">Ingrés de tercer (genera moviment d'ingrés automàtic)</option></select></div>
+    <div class="field"><label>Origen dels fons</label><select id="ll-origen" onchange="onLliuramentOrigenChange()"><option value="caixa">Caixa de la Falla (no genera moviment)</option><option value="banc">Banc: xec o transferència (traspàs banc → caixa, no és despesa)</option><option value="tercer">Ingrés de tercer (genera moviment d'ingrés automàtic)</option></select></div>
+    <div id="ll-banc-fields" style="display:none"><div class="info-box"><i class="ti ti-info-circle"></i> Els diners ixen del banc. S'apunta un traspàs a <strong>Administració · Tresoreria</strong>: sortida del banc i entrada a la caixa en efectiu per l'import. No compta com a despesa: la despesa serà el que pague després el delegat.</div><div class="field-row"><div class="field"><label>Banc</label><select id="ll-banc" onchange="refrescaMovBancLliurament()"></select></div></div><div class="field"><label>Moviment del banc</label><select id="ll-banc-mov"></select></div></div>
     <div id="ll-tercer-fields" style="display:none"><div class="info-box"><i class="ti ti-info-circle"></i> Es creara un moviment d ingres.</div><div class="field-row"><div class="field"><label>Area</label><select id="ll-area" onchange="onLlAreaChange()"></select></div><div class="field"><label>Delegacio</label><select id="ll-deleg-dest"></select></div></div><div class="field"><label>Concepte</label><input type="text" id="ll-concepte" placeholder="Patrocini..."></div><div class="field"><label>Via</label><select id="ll-via"><option value="Efectiu">Efectiu</option><option value="01 Banc">Caixabank</option><option value="02 Banc">Caixa Popular</option><option value="TPV">TPV</option></select></div></div>
     <div class="field-row">
-      <div class="field"><label>Import (€)</label><input type="number" id="ll-import" min="0" step="0.01"></div>
+      <div class="field"><label>Import (€)</label><input type="number" id="ll-import" min="0" step="0.01" oninput="refrescaMovBancLliurament()"></div>
       <div class="field"><label>Data</label><input type="date" id="ll-data"></div>
     </div>
     <div class="field"><label>Nota</label><input type="text" id="ll-nota" placeholder="p.e. Fons per a la Festa Cloenda"></div>
     </div>
   <div class="modal-footer">
-      <button class="btn" onclick="closeModal('modal-lliurament')">Cancel·lar</button>
-      <button class="btn btn-primary" onclick="saveLliurament()">Confirmar lliurament</button>
+      <button class="btn" onclick="tancarModalLliurament()">Cancel·lar</button>
+      <button class="btn btn-primary" onclick="saveLliuramentOrReintegrament()">Confirmar</button>
     </div>
   </div>
 </div>
@@ -3751,7 +3752,7 @@ function renderFons(){
         '<div style="text-align:right"><div style="font-size:26px;font-weight:700;color:'+cT+'">'+fmtD(totF)+'</div>'+
         '<div style="font-size:11px;color:'+cT+'">'+(totF>0?'pendents de justificar':totF<0?'la falla deu als delegats':'tot liquidat')+'</div></div></div>'+
       '<div style="display:flex;gap:8px;margin-bottom:14px">'+
-        '<button class="btn btn-primary" onclick="openModal(\'modal-lliurament\')"><i class="ti ti-plus"></i> Nou lliurament</button>'+
+        '<button class="btn btn-primary" onclick="openLliuramentFor(\'\')"><i class="ti ti-plus"></i> Nou lliurament</button>'+
         '<button class="btn" onclick="openModal(\'modal-devolucio\')"><i class="ti ti-corner-down-left"></i> Registrar devolució</button>'+
       '</div>'+
       renderFonsEvents()+
@@ -3941,10 +3942,89 @@ function populateDelegatSelects(){
   });
 }
 
-function openLliuramentFor(uid){populateDelegatSelects();document.getElementById('ll-delegat').value=uid;openModal('modal-lliurament');}
+// Deixa el formulari de lliurament com a "Nou lliurament" (també després d'un Reintegrament cancel·lat)
+function resetModalLliurament(){
+  window._pendingReintegrament=false;
+  const t=document.getElementById('ll-title');if(t)t.textContent='Nou lliurament de fons';
+  document.getElementById('ll-delegat').disabled=false;
+  const o=document.getElementById('ll-origen');
+  o.value='caixa';
+  [...o.options].forEach(function(op){op.hidden=false;op.disabled=false;});
+  document.getElementById('ll-import').value='';
+  document.getElementById('ll-nota').value='';
+  document.getElementById('ll-data').value=todayISO();
+  onLliuramentOrigenChange();
+}
+function tancarModalLliurament(){resetModalLliurament();closeModal('modal-lliurament');}
+function openLliuramentFor(uid){
+  populateDelegatSelects();
+  resetModalLliurament();
+  if(uid)document.getElementById('ll-delegat').value=uid;
+  openModal('modal-lliurament');
+}
+// Moviments del banc ja importats (pagaments de l'import indicat) que poden ser l'origen del lliurament
+function refrescaMovBancLliurament(){
+  const sel=document.getElementById('ll-banc-mov');
+  if(!sel)return;
+  const banc=(document.getElementById('ll-banc')||{}).value;
+  const imp=parseFloat(document.getElementById('ll-import').value)||0;
+  let html='<option value="">Crear-lo ara (encara no és a l\'extracte)</option>';
+  if(banc&&imp>0){
+    (DB.moviments||[]).filter(function(m){
+      return m.via===banc&&m.tipus==='gast'&&Math.abs((parseFloat(m.import)||0)-imp)<0.005;
+    }).sort(function(a,b){return String(b.data).split('/').reverse().join('').localeCompare(String(a.data).split('/').reverse().join(''));})
+    .slice(0,12).forEach(function(m){
+      html+='<option value="'+esc(m.id)+'">Ja a l\'extracte: '+esc(m.data)+' · '+esc(String(m.concepte||'').substring(0,34))+' · '+esc(m.areaNom||'sense àrea')+'</option>';
+    });
+  }
+  sel.innerHTML=html;
+}
+// Traspàs banc → caixa (sense despesa): sortida del banc + entrada a l'efectiu, a Administració · Tresoreria.
+// Si el moviment del banc ja és a l'extracte, es reclassifica a Tresoreria en lloc de crear-ne un de nou.
+function crearTraspasBancCaixa(imp,data,bancCodi,movExistentId,nomDelegat,motiu){
+  const area=(DB.config.areas||[]).find(function(a){return a.id==='01';})||(DB.config.areas||[])[0]||{};
+  const deleg=(DB.config.delegacions||[]).find(function(d){return d.id==='0102';})||(DB.config.delegacions||[])[0]||{};
+  const af=getAnyFiscal();
+  const nou=function(tipus,via,concepte,d){
+    return{id:genId('m')+Math.random(),anyFiscal:af,tipus:tipus,via:via,
+      areaId:area.id||'',areaNom:area.name||'',delegacioId:deleg.id||'',delegacioNom:deleg.name||'',
+      eventId:'',eventNom:'',concepte:concepte,establiment:'',data:d,
+      responsable:currentUser?.name||'',responsableEmail:currentUser?.email||'',
+      import:imp,notes:'Traspàs banc → caixa per a '+nomDelegat,origenFons:'banc_caixa',
+      origen:'Manual',ticketUrl:'',ticketMotiu:'',conciliacio:calcConciliacio(via,'Manual')};
+  };
+  let bancMov=movExistentId?(DB.moviments||[]).find(function(m){return m.id===movExistentId;}):null;
+  if(bancMov){
+    bancMov.areaId=area.id||'';bancMov.areaNom=area.name||'';
+    bancMov.delegacioId=deleg.id||'';bancMov.delegacioNom=deleg.name||'';
+    bancMov.notes=((bancMov.notes||'')+' · Traspàs a caixa per a '+nomDelegat).replace(/^ · /,'');
+    saveMoviment(bancMov).catch(function(e){console.warn(e);});
+  }else{
+    bancMov=nou('gast',bancCodi,'Retirada del banc per a '+nomDelegat+(motiu?' ('+motiu+')':''),data);
+    DB.moviments.push(bancMov);
+    saveMoviment(bancMov).catch(function(e){console.warn(e);});
+  }
+  const efectiu=nou('ing','Efectiu','Entrada de diners del banc per a '+nomDelegat+(motiu?' ('+motiu+')':''),bancMov.data||data);
+  DB.moviments.push(efectiu);
+  saveMoviment(efectiu).catch(function(e){console.warn(e);});
+  return{banc:bancMov,efectiu:efectiu};
+}
 function openDevolucioFor(uid){populateDelegatSelects();document.getElementById('dev-delegat').value=uid;openModal('modal-devolucio');}
 
-function onLliuramentOrigenChange(){var o=document.getElementById("ll-origen");var tf=document.getElementById("ll-tercer-fields");if(tf)tf.style.display=(o&&o.value==="tercer")?"block":"none";if(o&&o.value==="tercer"){var as=document.getElementById("ll-area");if(as&&as.options.length===0){DB.config.areas.forEach(function(a){var op=document.createElement("option");op.value=a.id;op.textContent=a.id+" "+a.name;as.appendChild(op);});onLlAreaChange();}}}
+function onLliuramentOrigenChange(){var o=document.getElementById("ll-origen");var tf=document.getElementById("ll-tercer-fields");if(tf)tf.style.display=(o&&o.value==="tercer")?"block":"none";
+  var bf=document.getElementById("ll-banc-fields");
+  if(bf){
+    bf.style.display=(o&&o.value==="banc")?"block":"none";
+    if(o&&o.value==="banc"){
+      var sb=document.getElementById("ll-banc");
+      if(sb&&!sb.options.length){
+        (DB.config.bancs||[]).filter(function(b){return b.tipus==="bank";}).forEach(function(b){
+          var op=document.createElement("option");op.value=b.codi;op.textContent=b.nom+" ("+b.codi+")";sb.appendChild(op);
+        });
+      }
+      refrescaMovBancLliurament();
+    }
+  }if(o&&o.value==="tercer"){var as=document.getElementById("ll-area");if(as&&as.options.length===0){DB.config.areas.forEach(function(a){var op=document.createElement("option");op.value=a.id;op.textContent=a.id+" "+a.name;as.appendChild(op);});onLlAreaChange();}}}
 function onLlAreaChange(){var aId=(document.getElementById("ll-area")||{}).value;var ds=document.getElementById("ll-deleg-dest");if(!ds)return;ds.innerHTML="";DB.config.delegacions.filter(function(d){return d.areaId===aId;}).forEach(function(d){var op=document.createElement("option");op.value=d.id;op.textContent=d.id+" "+d.name;ds.appendChild(op);});}
 async function saveLliurament(){
   var delegId=document.getElementById("ll-delegat").value;
@@ -3970,9 +4050,15 @@ async function saveLliurament(){
     DB.moviments.push(mov);
     saveMoviment(mov).catch(function(e){console.warn(e);});
     showToast("Lliurament + ingres: "+fmtD(imp));
+  }else if(origen==="banc"){
+    var bancCodi=(document.getElementById("ll-banc")||{}).value;
+    if(!bancCodi){DB.fons.pop();showToast("Tria el banc d'origen",true);return;}
+    crearTraspasBancCaixa(imp,data,bancCodi,(document.getElementById("ll-banc-mov")||{}).value,u?u.nom:"",nota);
+    showToast("Lliurament + traspàs banc → caixa: "+fmtD(imp));
   }else{
     showToast("Lliurament: "+fmtD(imp));
   }
+  resetModalLliurament();
   saveCache();
   closeModal("modal-lliurament");renderFons();
   saveFons(fItem).catch(function(e){showToast("Error: "+e.message,true);});
@@ -5280,12 +5366,12 @@ const MANUAL={
     <p style="color:var(--text2);line-height:1.6;margin-bottom:12px">Controla els diners de la Falla en mans dels responsables.</p>
     <div style="font-size:13px;line-height:1.8">
       <div style="font-weight:500;margin-bottom:6px">Cicle complet:</div>
-      <div>1. <strong>Tresoreria lliura fons</strong> → botó "Nou lliurament"</div>
+      <div>1. <strong>Tresoreria lliura fons</strong> → botó "Nou lliurament". Si els diners ixen del banc (xec o transferència), tria origen "Banc"</div>
       <div>2. <strong>El delegat gasta</strong> → Nou moviment → Efectiu → "Fons lliurats"</div>
       <div>3. <strong>Saldo</strong> = fons rebuts − despeses amb fons − devolucions</div>
       <div>4. <strong>Devolució del sobrant</strong> → botó "Registrar devolució"</div>
       <div>5. <strong>Avançament personal</strong> → el delegat paga de la seua butxaca; saldo negatiu</div>
-      <div>6. <strong>Reintegrament</strong> → la falla torna els diners avançats</div>
+      <div>6. <strong>Reintegrament</strong> → la falla torna els diners avançats. No genera apunt (ja el va fer l'avançament). Si es paga pel banc, tria origen "Banc": s'apunta el traspàs banc → caixa</div>
       <div style="font-weight:500;margin:10px 0 6px">Indicadors visuals:</div>
       <div>• Barra verda → normal · Barra taronja → >75% gastat · Barra roja → avançament personal</div>
     </div>`,
@@ -7758,68 +7844,60 @@ function openReintegramentFor(userId){
   const fonsArr=(DB.fons||[]).filter(function(f){
     return(f.anyFiscal===af||!f.anyFiscal)&&(f.delegId===u.id||(f.delegEmail||'').toLowerCase()===(u.email||'').toLowerCase());
   });
-  const rebuts=fonsArr.filter(function(f){return f.tipus==='lliurament';}).reduce(function(s,f){return s+f.import;},0);
-  const gastFons=fonsArr.filter(function(f){return f.tipus==='gast_fons';}).reduce(function(s,f){return s+f.import;},0);
-  const devol=fonsArr.filter(function(f){return f.tipus==='devolucio';}).reduce(function(s,f){return s+f.import;},0);
-  const avanc=fonsArr.filter(function(f){return f.tipus==='avanc';}).reduce(function(s,f){return s+f.import;},0);
-  const deute=Math.abs(rebuts-gastFons-devol-avanc);
-  // Reutilitzar modal de lliurament amb títol diferent
+  const suma=function(tipus){return fonsArr.filter(function(f){return tipus.includes(f.tipus);}).reduce(function(s,f){return s+f.import;},0);};
+  // Mateixa fórmula que el saldo de la targeta del delegat
+  const saldo=suma(['lliurament','regularitzacio'])+suma(['reintegrament'])-suma(['gast_fons'])-suma(['devolucio'])-suma(['avanc']);
+  const deute=saldo<0?-saldo:0;
+  populateDelegatSelects();
+  resetModalLliurament();
+  // Reutilitza el formulari de lliurament amb un altre títol; "Ingrés de tercer" no té sentit ací
   document.getElementById('ll-title').textContent='Reintegrament a '+u.nom;
   document.getElementById('ll-delegat').value=u.id;
   document.getElementById('ll-delegat').disabled=true;
+  const tercer=[...document.getElementById('ll-origen').options].find(function(o){return o.value==='tercer';});
+  if(tercer){tercer.hidden=true;tercer.disabled=true;}
   document.getElementById('ll-import').value=deute>0?deute.toFixed(2):'';
   document.getElementById('ll-nota').value='Reintegrament avançament personal';
-  document.getElementById('ll-data').value=todayISO();
-  // Marcar com a reintegrament
   window._pendingReintegrament=true;
   openModal('modal-lliurament');
 }
 
 async function saveLliuramentOrReintegrament(){
   if(window._pendingReintegrament){
-    window._pendingReintegrament=false;
     await saveReintegrament();
   }else{
     await saveLliurament();
   }
 }
 
+// Reintegrament = la falla torna els diners que un delegat va avançar. NO genera apunt de despesa:
+// l'apunt ja el va fer l'avançament. Només puja el saldo del delegat. Si es paga pel banc, s'apunta
+// el traspàs banc → caixa (la caixa ja havia baixat quan es va fer l'avançament).
 async function saveReintegrament(){
   const delegId=document.getElementById('ll-delegat').value;
   const imp=parseFloat(document.getElementById('ll-import').value);
   if(!imp||imp<=0){showToast('Import invàlid',true);return;}
+  const origen=(document.getElementById('ll-origen')||{}).value||'caixa';
   const u=DB.config.usuaris.find(function(x){return x.id===delegId;});
+  const data=fmtDateInput(document.getElementById('ll-data').value)||today();
+  if(origen==='banc'&&!(document.getElementById('ll-banc')||{}).value){showToast("Tria el banc d'origen",true);return;}
   if(!DB.fons)DB.fons=[];
   const fItem={
     id:genId('f'),anyFiscal:getAnyFiscal(),tipus:'reintegrament',
-    delegId,delegEmail:u?.email||'',import:imp,
-    data:fmtDateInput(document.getElementById('ll-data').value)||today(),
+    delegId,delegEmail:u?.email||'',import:imp,data:data,
     nota:document.getElementById('ll-nota').value||'Reintegrament avançament',
-    registratPer:currentUser?.name||currentUser?.email||''
+    registratPer:currentUser?.name||currentUser?.email||'',origen:origen
   };
   DB.fons.push(fItem);
-  // També generar moviment d'ingrés (la falla rep els diners que avançà el faller)
-  const area=DB.config.areas[0];
-  const deleg=DB.config.delegacions[0];
-  const mov={
-    id:genId('m'),anyFiscal:getAnyFiscal(),tipus:'gast',via:'Efectiu',
-    areaId:area?.id||'',areaNom:area?.name||'',
-    delegacioId:deleg?.id||'',delegacioNom:deleg?.name||'',
-    eventId:'',eventNom:'',
-    concepte:'Reintegrament avançament a '+u?.nom,
-    establiment:'',data:fItem.data,
-    responsable:currentUser?.name||'',responsableEmail:currentUser?.email||'',
-    import:imp,notes:'Reintegrament fons delegats',origenFons:'reintegrament'
-  };
-  DB.moviments.push(mov);
+  if(origen==='banc'){
+    crearTraspasBancCaixa(imp,data,document.getElementById('ll-banc').value,
+      document.getElementById('ll-banc-mov').value,u?u.nom:'','reintegrament');
+  }
   saveCache();
-  document.getElementById('ll-delegat').disabled=false;
-  document.getElementById('ll-title').textContent='Nou lliurament';
-  closeModal('modal-lliurament');
-  showToast('Reintegrament de '+fmtD(imp)+' registrat');
+  tancarModalLliurament();
+  showToast('Reintegrament de '+fmtD(imp)+' registrat'+(origen==='banc'?' (traspàs banc → caixa apuntat)':''));
   renderFons();
   saveFons(fItem).catch(function(e){console.warn(e);});
-  saveMoviment(mov).catch(function(e){console.warn(e);});
 }
 
 function toggleMovExtra(){

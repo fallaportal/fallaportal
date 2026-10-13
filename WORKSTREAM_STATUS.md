@@ -1,6 +1,6 @@
 # Work Stream Status — Falla Portal
 ## Snapshot Date: 2026-10-13
-## Versió en producció: v4.0.56
+## Versió en producció: v4.0.57
 
 > **Context de calendari**: període vacacional, ús baix de l'eina. Bon moment per a
 > canvis estructurals i per a la decisió pendent del Service Worker.
@@ -26,6 +26,24 @@ GitHub Pages. Decisió D-021.
 
 ---
 
+### Completat 2026-10-13 — Fons delegats: Reintegrament arreglat i origen "Banc" (v4.0.57)
+
+- Model comptable dels fons delegats documentat a **D-022**.
+- **Reintegrament**: funciona (abans donava error en obrir-se) i ja no genera un segon apunt de
+  despesa; només puja el saldo del delegat. La targeta del delegat és plegable i el botó només
+  es veu desplegada i amb saldo negatiu.
+- **Origen "Banc"** al lliurament i al reintegrament (`crearTraspasBancCaixa`): sortida del banc +
+  entrada a l'efectiu a Tresoreria, sense despesa; si el moviment ja és a l'extracte se'n pot
+  triar un i es reclassifica a Tresoreria en lloc de duplicar-lo.
+- Cancel·lar el formulari el deixa com a "Nou lliurament" (abans un Reintegrament cancel·lat
+  convertia el lliurament següent en reintegrament).
+- **Pendent**: reclassificar els xecs 364928 (860 €), 364929 (3.000 €, 16/9), 364930 (5.750 €) i
+  364931 (502 €) un cop els tresorers diguen si van ser retirades per a la caixa/delegats o
+  pagaments a proveïdors; el de 3.000 € ja és clar (despesa comptada dues vegades amb el
+  pagament d'Alario del 26/9). Després, recompte físic de l'efectiu.
+
+---
+
 ### Completat 2026-10-13 — Reassignació d'àrees aplicada i botó eliminat (v4.0.56)
 
 - Emilio va aplicar la reassignació (2 apunts del WiFi a 07 Coordinació Tècnica i 5 del TPV
@@ -44,10 +62,7 @@ GitHub Pages. Decisió D-021.
   pel banc: són la diferència entre el saldo de l'app (9.391,88 €) i l'extracte (13.723,25 €).
   En importar un extracte posterior al 8/10 apareixeran com a "possibles duplicats": cal deixar-les
   desmarcades (s'ometran).
-- **Disseny pendent de decidir**: (1) eliminar o substituir el botó "Reintegrament" (crea un segon
-  apunt per Efectiu, contradiu el model; mai s'ha usat) per "Pagar avançament" amb opció caixa o
-  banc; (2) com tractar diners que ixen del banc cap a un delegat i que aquest paga a proveïdors
-  (traspàs banc → caixa a Tresoreria + lliurament sense apunt + despesa del delegat).
+- Disseny dels fons delegats (Reintegrament i diners del banc cap a un delegat): resolt a v4.0.57 (D-022).
 
 ---
 
