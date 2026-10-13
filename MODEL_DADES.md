@@ -287,7 +287,7 @@ parelles de data i import), importacions (`fontImport` + dia de creació de l'id
 - Registre d'activitat i recuperació del que s'ha esborrat.
 
 ## 8. Decisions obertes del model (d'una en una)
-1. **Operacions**: s'adopta la taula `operacions` (recomanat) o només claus foranes directes?
+1. ~~**Operacions**~~ — **Decidit (D-027, 2026-10-13)**: s'adopta la taula `operacions`.
 2. **Esborrar**: esborrat real + recuperació des de `audit_log` (recomanat, més simple) o "paperera" amb
    `esborrat_at` a cada taula?
 3. **`exercici_id` dels moviments**: es conserva el desat (recomanat per a 1:1) i una vista avisa dels que no casen amb la data.

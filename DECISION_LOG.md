@@ -437,3 +437,21 @@ Falles dins del mateix exercici.
   - Cap canvi a les dades: els 9 moviments del 20–31/03/2026 continuen al 25/26.
   - Al model nou (`MODEL_DADES.md`) les dates d'inici i fi es desen a cada exercici en lloc d'estar fixes al codi.
 
+---
+
+### D-027: Taula `operacions` per agrupar el que crea cada acció
+**Date**: 2026-10-13
+**Status**: Accepted (Emilio)
+**Context**: Avui una acció de l'usuari crea diversos registres sense vincle comú (traspàs banc → caixa: 2 moviments
++ 1 fons; tancament: 2 moviments + 1 fons; despesa amb fons: 1 moviment + 1 fons; importació: N moviments). Esborrar-ne
+un deixa la resta: hi ha 4 avançaments orfes a les dades reals (A-24), i reobrir una caixa esborra moviments per
+coincidència de text (`fontImport` + `eventId`).
+**Decision**: Al model de Supabase (`MODEL_DADES.md` §4.2), la taula `operacions` agrupa tot el que crea una acció
+(`moviments`, `fons`, `caixa_canvis`, `fallesapp_passiu` hi tenen `operacio_id`). Alternativa descartada: només claus
+foranes directes (no cobreix traspassos, tancaments ni importacions).
+**Consequences**:
+  - Esborrar o desfer una acció l'esborra sencera; es pot desfer una importació completa.
+  - El registre d'activitat (D-024) inclou `operacio_id`.
+  - En migrar es reconstrueixen les operacions que les dades permeten (despeses amb fons, tancaments, traspassos,
+    importacions); la resta queden com a `migracio`.
+
