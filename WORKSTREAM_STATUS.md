@@ -1,6 +1,6 @@
 # Work Stream Status — Falla Portal
 ## Snapshot Date: 2026-10-13
-## Versió en producció: v4.0.61
+## Versió en producció: v4.0.62
 
 > **Context de calendari**: període vacacional, ús baix de l'eina. Bon moment per a
 > canvis estructurals i per a la decisió pendent del Service Worker.
@@ -26,7 +26,7 @@ GitHub Pages. Decisió D-021.
 
 ---
 
-### Completat 2026-10-13 — Xecs del 30/06 (v4.0.61)
+### Completat 2026-10-13 — Xecs del 30/06 aplicats i botó eliminat (v4.0.61–v4.0.62)
 
 - **Què eren els xecs** (segons els tresorers):
   - **364930 (5.750 €)**: 5.500 € d'orquestres (diners donats a Antonio Javier, que va pagar Eventime) i 250 €
@@ -37,25 +37,28 @@ GitHub Pages. Decisió D-021.
   - **364928 (860 €)**: encara no se sap. Una pista: Juanjo va pagar les grues (Monument Gran) però no hi ha
     cap altre apunt de 860 €. No tocar fins que es confirme.
   - 364929 (3.000 €): ja arreglat.
-- **Botó puntual** a Configuració → Exercicis (`_XECS_JUNY`, `_xecsJunyPla`, `arreglaXecsJuny`): divideix el
-  364930, simula el lliurament a Antonio Javier (desplegable per triar el delegat) i el pagament a Eventime
-  (lliurament sense apunt + despesa contra fons), i afegeix l'entrada de 502 € a l'efectiu. Verificat: el total
-  del banc no canvia, el saldo del delegat queda a 0 i no hi ha files repetides. **ELIMINAR aquest codi de
-  `index.html` després d'aplicar-lo.**
+- **Aplicat per Emilio** amb un botó puntual (dividir el 364930, simular el lliurament i el pagament de cada part a
+  Festejos · Música i afegir l'entrada de 502 € a l'efectiu). El codi d'un sol ús s'ha eliminat a v4.0.62: ja no
+  queda cap botó puntual a l'app. Verificat abans d'aplicar-lo: el total del banc no canvia, els saldos dels delegats
+  queden a 0 i no hi ha files repetides.
+- **Pendent**: reclassificar el xec 364928 (860 €) quan es confirme què va ser (origen "Banc" del lliurament,
+  triant el moviment de l'extracte, si va passar per mans de Juanjo).
 
 ---
 
 ### Estat financer 2026-10-13 (resultat de l'exercici 26/27 fins ara)
 
-- **Resultat = −40.702,46 €**: la suma de tots els saldos ha baixat de 88.362,68 € (1/4/2026: 01 Banc
-  16.374,02 + 02 Banc 23.941,79 + Efectiu 17.856,00 + TPV 0 + 03 Banc 30.190,87) a 47.660,22 € (01 Banc
-  9.391,88 + 02 Banc 23.941,79 + Efectiu 4.135,68 + TPV 0 + 03 Banc 10.190,87). Es gasta de les reserves.
+- **Resultat = −40.702,46 €** (abans dels xecs del 30/06) i **−40.200,46 €** un cop aplicats: la suma de tots els
+  saldos ha baixat de 88.362,68 € (1/4/2026: 01 Banc 16.374,02 + 02 Banc 23.941,79 + Efectiu 17.856,00 + TPV 0 +
+  03 Banc 30.190,87) a 48.162,22 € (01 Banc 9.391,88 + 02 Banc 23.941,79 + Efectiu 4.637,68 + TPV 0 + 03 Banc
+  10.190,87). Es gasta de les reserves.
 - **Confiança dels saldos**: només 01 Banc (9.391,88 €, quadrat amb l'extracte al 28/9 + despeses manuals del
   8/10) i TPV (0 €) estan confirmats. 02 Banc (sense cap moviment a 26/27; l'últim extracte és del 3/5), 03 Banc
   (extracte del 18/5) i l'efectiu (aproximat, sense recompte) sumen 38.268,34 €, el 80 % del total, i no estan
   confirmats.
-- **Si els xecs 364928, 364930 i 364931 (860 + 5.750 + 502 = 7.112 €) eren retirades per a la caixa**, el resultat
-  passaria a −33.590,46 €; si eren pagaments a proveïdors, no canvia.
+- **Només queda sense classificar el xec 364928 (860 €)**: si és un traspàs banc → caixa (diners per a Juanjo),
+  el resultat millorarà fins a −39.340,46 € (i la despesa de les grues hauria d'estar apuntada a Monument Gran);
+  si va ser un pagament directe, no canvia.
 
 ---
 
