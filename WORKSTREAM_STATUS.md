@@ -1,6 +1,6 @@
 # Work Stream Status — Falla Portal
-## Snapshot Date: 2026-10-11
-## Versió en producció: v4.0.55
+## Snapshot Date: 2026-10-13
+## Versió en producció: v4.0.56
 
 > **Context de calendari**: període vacacional, ús baix de l'eina. Bon moment per a
 > canvis estructurals i per a la decisió pendent del Service Worker.
@@ -26,20 +26,28 @@ GitHub Pages. Decisió D-021.
 
 ---
 
-### Completat 2026-10-11 — Botó puntual de reassignació d'àrees (v4.0.55)
+### Completat 2026-10-13 — Reassignació d'àrees aplicada i botó eliminat (v4.0.56)
 
-- Configuració → Exercicis mostra una targeta ambre (`_REASSIGNA_AREES`, `_reassignaPla`,
-  `reassignaAreesPuntual`) que canvia l'àrea de 7 apunts: 2 del WiFi (8/4 i 5/5) a
-  07 Logística · Coordinació Tècnica i 5 del TPV (juliol–setembre, banc TPV) a
-  01 Administració · Tresoreria. Només apareix si cada apunt coincideix (id, data, import,
-  sentit i àrea actual); descarrega un backup abans i desapareix en aplicar-se.
-  **ELIMINAR aquest codi de `index.html` després d'aplicar-lo.**
-- Decisions d'Emilio: TPV (manteniment i T.PlanaMyCommerce) → 01 Tresoreria; WiFi COM.T →
-  07 Coordinació Tècnica; aigua → 01 Jurídica i Contractacions; remeses de quotes (FATIR…) →
-  01 Secretaria.
+- Emilio va aplicar la reassignació (2 apunts del WiFi a 07 Coordinació Tècnica i 5 del TPV
+  a 01 Tresoreria) i el codi d'un sol ús s'ha eliminat. Ja no queda cap botó puntual a l'app.
+- Decisions: TPV → 01 Tresoreria; WiFi COM.T → 07 Coordinació Tècnica; aigua → 01 Jurídica i
+  Contractacions; remeses de quotes (FATIR…) → 01 Secretaria.
 - **Pendent per a Emilio a Configuració → Regles**: `T.PlanaMyCommerce` i `MANTENIMIENTO TPV`
-  han de passar a 01 Tresoreria (ara diuen 07); esborrar `PR.DE;`; buidar el concepte de `PR.DE`
-  i `DETIR`; allargar `RAMS`. Opcional: regla `FATIR` → 01 Secretaria per a les remeses de quotes.
+  a 01 Tresoreria; esborrar `PR.DE;`; buidar el concepte de `PR.DE` i `DETIR`; allargar `RAMS`;
+  opcional regla `FATIR` → 01 Secretaria.
+- **Pendents oberts** (vegeu més avall): extractes actuals de Caixa Popular, 03 Banc i 01 Banc des
+  del 28/9; recompte físic de l'efectiu (= caixa física + 3.290,01 € en mans dels delegats);
+  xecs 364928 (860 €), 364930 (5.750 €) i 364931 (502 €) del 01 Banc, i el de 3.000 € del 16/9
+  (despesa comptada dues vegades: xec a Monument Gran + pagament d'Alario del 26/9);
+  avançament pendent d'A. Alario (40 €).
+- **Les despeses manuals del 8/10** (Gorres negres 4.116,42 € i Filament 3D 214,95 €) es van pagar
+  pel banc: són la diferència entre el saldo de l'app (9.391,88 €) i l'extracte (13.723,25 €).
+  En importar un extracte posterior al 8/10 apareixeran com a "possibles duplicats": cal deixar-les
+  desmarcades (s'ometran).
+- **Disseny pendent de decidir**: (1) eliminar o substituir el botó "Reintegrament" (crea un segon
+  apunt per Efectiu, contradiu el model; mai s'ha usat) per "Pagar avançament" amb opció caixa o
+  banc; (2) com tractar diners que ixen del banc cap a un delegat i que aquest paga a proveïdors
+  (traspàs banc → caixa a Tresoreria + lliurament sense apunt + despesa del delegat).
 
 ---
 
