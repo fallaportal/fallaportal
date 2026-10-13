@@ -1,6 +1,6 @@
 # Work Stream Status — Falla Portal
 ## Snapshot Date: 2026-10-13
-## Versió en producció: v4.0.63
+## Versió en producció: v4.0.64
 
 > **Context de calendari**: període vacacional, ús baix de l'eina. Bon moment per a
 > canvis estructurals i per a la decisió pendent del Service Worker.
@@ -48,7 +48,7 @@ GitHub Pages. Decisió D-021.
   delegats: botó puntual a Configuració → Exercicis (`_GENERADOR_JUANJO`, `_generadorJuanjoPla`,
   `arreglaGeneradorJuanjo`) que registra el lliurament de 502 € a Juanjo el 6/6 i enllaça el pagament com a despesa
   contra els seus fons (`origenFons` passa de `caixa` a `fons_lliurats`). L'efectiu i el saldo de Juanjo no canvien.
-  **ELIMINAR aquest codi de `index.html` després d'aplicar-lo.**
+  Emilio ho va aplicar i el codi d'un sol ús s'ha eliminat a v4.0.64: ja no queda cap botó puntual a l'app.
 
 ---
 

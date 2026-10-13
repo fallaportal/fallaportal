@@ -337,7 +337,7 @@ tr:hover td{background:var(--bg2)}
     <div class="login-logo">Falla <span>Portal</span></div>
     <div class="login-sub">Sistema de gestió financera</div>
     <div class="login-fiscal">Any fiscal 26/27 · Abr 2026 – Mar 2027</div>
-    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v4.0.63</div>
+    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v4.0.64</div>
     <button class="btn-google" onclick="signIn()">
       <svg viewBox="0 0 24 24" width="20" height="20"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
       Entrar amb Google
@@ -379,7 +379,7 @@ tr:hover td{background:var(--bg2)}
     <div class="sb-bottom">
       <div class="sync-ind" style="display:flex;align-items:center;justify-content:space-between"><div style="display:flex;align-items:center;gap:6px"><div class="sync-dot" id="sync-dot"></div><span id="sync-text">Sincronitzat</span></div><button onclick="manualRefresh()" title="Actualitzar dades" style="background:none;border:none;cursor:pointer;padding:2px 4px;color:var(--text2);font-size:14px;line-height:1"><i class="ti ti-refresh"></i></button></div>
       <button class="btn-logout" onclick="signOut()"><i class="ti ti-logout" style="font-size:14px"></i> Tancar sessió</button>
-      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v4.0.63</div>
+      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v4.0.64</div>
     </div>
   </div>
 
@@ -6517,57 +6517,6 @@ async function deleteRegla(id){
   save('regles').catch(function(e){console.warn(e);});
 }
 
-// ── Generador MGM, 502 € (2026-10-13) ── ELIMINAR després d'usar-lo.
-// El pagament "Generador" (6/6, MGM, Juanjo) està apuntat com a caixa. Es dóna de baixa com a "caixa" i es
-// registra el lliurament de 502 € a Juanjo (6/6) i el pagament contra els seus fons; el xec 364931 ja ha reposat
-// la caixa. L'efectiu no canvia: només es crea el rastre als Fons delegats.
-const _GENERADOR_JUANJO={af:'26/27',movId:'m1783967762846_2li6',data:'06/06/2026',import:502};
-function _generadorJuanjoPla(){
-  const P=_GENERADOR_JUANJO;
-  if(getAnyFiscal()!==P.af)return{ok:false};
-  const m=(DB.moviments||[]).find(function(x){return x.id===P.movId;});
-  if(!m||m.via!=='Efectiu'||m.tipus!=='gast'||m.data!==P.data||Math.abs((parseFloat(m.import)||0)-P.import)>=0.005)return{ok:false};
-  if(m.origenFons!=='caixa')return{ok:false};                                             // ja enllaçat a fons
-  if((DB.fons||[]).some(function(f){return f.movimentId===P.movId;}))return{ok:false};    // ja té un registre de fons
-  return{ok:true,m:m};
-}
-async function arreglaGeneradorJuanjo(){
-  const P=_GENERADOR_JUANJO;
-  let p;
-  try{p=_generadorJuanjoPla();}catch(e){showToast('Error comprovant: '+e.message,true);return;}
-  if(!p.ok){showToast('No disponible (ja aplicat o les dades han canviat)',true);return;}
-  const sel=document.getElementById('gen-deleg');
-  const u=(DB.config.usuaris||[]).find(function(x){return sel&&x.id===sel.value;});
-  if(!u){showToast('Tria el delegat (Juanjo)',true);return;}
-  const resum='Generador MGM, '+fmtD(P.import)+' ('+P.data+')\n\n'+
-    '• Es registra un lliurament de '+fmtD(P.import)+' a '+u.nom+', el '+P.data+' (sense apunt).\n'+
-    '• El pagament "Generador" passa a ser despesa contra els fons de '+u.nom+'.\n'+
-    '• El saldo de '+u.nom+' no canvia (rep '+fmtD(P.import)+' i els gasta) i la Caixa efectiu tampoc.\n\n'+
-    'Abans es descarregarà una còpia de seguretat. Continuar?';
-  if(!confirm(resum))return;
-  try{
-    exportSnapshotExercici(P.af);
-    await new Promise(function(r){setTimeout(r,800);});
-    const af=getAnyFiscal();
-    const registrat=currentUser?.name||currentUser?.email||'';
-    const fL={id:genId('f'),anyFiscal:af,tipus:'lliurament',delegId:u.id,delegEmail:u.email||'',import:P.import,data:P.data,
-      nota:'Generador MGM (xec 364931 va reposar la caixa)',registratPer:registrat,origen:'caixa'};
-    const fG={id:genId('f'),anyFiscal:af,tipus:'gast_fons',delegId:u.id,delegEmail:u.email||'',import:P.import,data:P.data,
-      nota:'Generador (MGM)',registratPer:registrat,movimentId:P.movId};
-    if(!DB.fons)DB.fons=[];
-    DB.fons.push(fL,fG);
-    p.m.origenFons='fons_lliurats';
-    saveCache();
-    await save('moviments');   // es modifica un moviment existent: cal reescriure la pestanya (no afegir fila)
-    await saveFons(fL);
-    await saveFons(fG);
-    showToast('Generador registrat als fons de '+u.nom);
-    renderCfgExercicis();
-  }catch(e){
-    showToast('Error aplicant el canvi: '+e.message+'. Recarrega i comprova; tens la còpia de seguretat descarregada.',true);
-  }
-}
-
 function renderCfgExercicis(){
   const container=document.getElementById('cfg-exercicis');
   if(!container){console.warn('cfg-exercicis-container no trobat');return;}
@@ -6577,22 +6526,6 @@ function renderCfgExercicis(){
   const estats=DB.config.estats_exercicis||{};
   let html='';
   if(canDo){
-    let genJ=null;
-    try{const pg=_generadorJuanjoPla();if(pg.ok)genJ=pg;}catch(e){}
-    if(genJ){
-      html+='<div style="background:var(--amber-bg);border:1px solid var(--amber);border-radius:var(--r);padding:12px 14px;margin-bottom:16px;color:var(--amber-text);font-size:13px">'+
-        '<div style="font-weight:600;margin-bottom:4px"><i class="ti ti-alert-triangle"></i> Generador MGM (502 €) sense rastre als Fons delegats</div>'+
-        '<div style="margin-bottom:10px">Es registra un lliurament de 502 € a Juanjo el 6/6 i el pagament «Generador» passa a ser despesa contra els seus fons. El saldo de Juanjo i la Caixa efectiu no canvien. Es descarrega una còpia de seguretat abans.</div>'+
-        '<div style="margin-bottom:10px"><label style="font-size:12px">Delegat:</label> <select id="gen-deleg" style="max-width:260px">'+
-          (function(){
-            const us=(DB.config.usuaris||[]).filter(function(x){return x.rol!=='noauth';}).sort(function(a,b){return a.nom.localeCompare(b.nom,'ca');});
-            const norm=function(t){return String(t||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();};
-            const cand=us.filter(function(x){return /juanjo/.test(norm(x.nom));});
-            const pre=cand.length===1?cand[0].id:'';
-            return '<option value="">— Tria —</option>'+us.map(function(x){return'<option value="'+esc(x.id)+'"'+(x.id===pre?' selected':'')+'>'+esc(x.nom)+'</option>';}).join('');
-          })()+'</select></div>'+
-        '<button class="btn btn-primary" onclick="arreglaGeneradorJuanjo()"><i class="ti ti-arrows-exchange"></i> Revisar i aplicar</button></div>';
-    }
     html+='<div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">';
     html+='<button class="btn btn-primary" onclick="obrirNouExercici()"><i class="ti ti-calendar-plus"></i> Nou exercici</button>';
     html+='<button class="btn" onclick="openModalTancarExercici()" style="color:var(--amber)"><i class="ti ti-lock"></i> Tancar exercici actual</button>';
