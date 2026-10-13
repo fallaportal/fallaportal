@@ -82,7 +82,7 @@ si es pot editar, `modificat_at`/`modificat_per`; no es repeteixen a cada taula.
 | Columna | Tipus | Notes |
 |---|---|---|
 | `id` | text PK | `'25/26'`; `CHECK (id ~ '^\d{2}/\d{2}$')` |
-| `data_inici`, `data_fi` | date | 01/04 – 31/03, calculades |
+| `data_inici`, `data_fi` | date | **configurables per exercici** (avui el codi té 01/04–31/03 fix en 4 llocs i ignora la `data_obertura`); pendent de confirmar si la falla comença el 01/04 o el 20/03 |
 | `data_obertura` | date | |
 | `tancat` | boolean | A-01: es desa de veritat; **no bloqueja res** fins que Emilio ho decidisca |
 | `data_tancament` | date | |
