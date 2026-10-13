@@ -455,3 +455,17 @@ foranes directes (no cobreix traspassos, tancaments ni importacions).
   - En migrar es reconstrueixen les operacions que les dades permeten (despeses amb fons, tancaments, traspassos,
     importacions); la resta queden com a `migracio`.
 
+---
+
+### D-028: Esborrat real, recuperació des del registre d'activitat
+**Date**: 2026-10-13
+**Status**: Accepted (Emilio)
+**Context**: Cal poder recuperar el que algú esborra (D-024). Alternatives: (a) esborrat real i restauració des de
+`audit_log`, que ja guarda la fila abans d'esborrar-la; (b) paperera amb `esborrat_at` a cada taula.
+**Decision**: (a). Les files s'esborren de veritat; la pantalla "Registre d'activitat" permet restaurar una fila (o
+una operació sencera, D-027) a partir del valor "abans".
+**Consequences**:
+  - Cap consulta, informe ni política RLS ha de filtrar esborrats: un esborrat no pot tornar a sumar per oblit.
+  - La restauració ha de comprovar que les claus foranes encara existeixen (p. ex. la delegació) i avisar si no.
+  - `audit_log` no es pot esborrar ni modificar per ningú (RLS), perquè és l'única còpia del que s'ha esborrat.
+

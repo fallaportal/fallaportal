@@ -288,8 +288,7 @@ parelles de data i import), importacions (`fontImport` + dia de creació de l'id
 
 ## 8. Decisions obertes del model (d'una en una)
 1. ~~**Operacions**~~ — **Decidit (D-027, 2026-10-13)**: s'adopta la taula `operacions`.
-2. **Esborrar**: esborrat real + recuperació des de `audit_log` (recomanat, més simple) o "paperera" amb
-   `esborrat_at` a cada taula?
+2. ~~**Esborrar**~~ — **Decidit (D-028, 2026-10-13)**: esborrat real i recuperació des de `audit_log`; sense paperera.
 3. **`exercici_id` dels moviments**: es conserva el desat (recomanat per a 1:1) i una vista avisa dels que no casen amb la data.
 4. **Responsable dels moviments importats**: avui és qui importa; es manté (1:1)?
 5. **Consums de falles.app** (§4.5): taula pròpia, fora del llibre major (recomanat), o compte `app` exclòs dels informes?
