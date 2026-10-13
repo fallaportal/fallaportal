@@ -21,9 +21,14 @@ GitHub Pages. Decisió D-021.
 
 **Fase 0 en curs (2026-10-13)**: inventari funcional i informe d'anomalies fets a partir de la lectura
 sencera d'`index.html`; script de perfilat de dades escrit i provat amb dades sintètiques.
-**Propera sessió**: (1) Emilio descarrega el full com a `.xlsx` a `FallaPortal_export_<data>.xlsx` (carpeta del
+**Fet el 2026-10-13 (tarda)**: perfil de les dades reals (export del mateix dia) incorporat a `INFORME_ANOMALIES_F0.md`
+§5 (troballes noves A-27 recàrregues TPV duplicades, A-28, A-29); model de dades nou a `MODEL_DADES.md` (a petició
+d'Emilio: l'esborrany per pestanyes no estava ben pensat).
+**Abans** (ja fet): (1) Emilio descarrega el full com a `.xlsx` a `FallaPortal_export_<data>.xlsx` (carpeta del
 projecte, ignorat per git); (2) executar `python -I tools/f0_perfil_dades.py <fitxer>` i revisar l'informe;
-(3) verificar A-13 en execució; (4) decisions de `INFORME_ANOMALIES_F0.md` §7, d'una en una. Model Opus 5.5, esforç high.
+(3) verificar A-13 en execució; (4) decisions de `INFORME_ANOMALIES_F0.md` §7, d'una en una.
+**Propera sessió**: Emilio revisa `MODEL_DADES.md` i respon les decisions del seu §8 i de l'informe §7 (d'una en una);
+verificar A-13 en execució. Amb això es tanca la Fase 0 i comença la Fase 1. Model Opus 5.5, esforç high.
 **Fet fora de la Fase 0**: nou requisit de registre d'activitat (D-024); enfocament "millorar el model, replicar
 1:1 el comportament" (D-025). Errors evidents corregibles abans a l'app actual: A-09, A-24, A-13 (cal verificar-lo).
 **Blockers**:

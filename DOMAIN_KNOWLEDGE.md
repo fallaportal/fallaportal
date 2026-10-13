@@ -118,7 +118,11 @@
 - **L'any fiscal actiu és global**: l'escriu qualsevol admin a `00 Config` i tots els usuaris el prenen al refresc.
 - **`bankHash`** = id del banc | data DD/MM/AAAA | import abs amb 2 decimals | concepte normalitzat. No inclou el
   sentit ni cap ordinal: dues línies idèntiques del mateix dia tenen el mateix hash (no pot ser UNIQUE).
-- Els moviments `via:'app'` (falles.app) no entren a Dashboard, Resultats ni Flux, però sí al pressupost executat.
+- **Falles.app** (sense decisió escrita; reconstruït el 2026-10-13): les **recàrregues** (efectiu i TPV) i les
+  devolucions són apunts reals; els **consums per event** es pugen amb `via:'app'` només per atribuir ingressos als
+  events (r3) i no entren a Dashboard, Resultats ni Flux (ja van entrar com a recàrrega); la **bonificació** dels
+  moneders és una despesa `via:'Virtual'` que sí compta. Les recàrregues TPV al 01 Banc del 25/26 probablement
+  dupliquen la liquidació de l'extracte (A-27).
 - **Tancament de caixa**: el TPV només es desa a `tancaments.tpv`; els moviments que es generen són l'"Efectiu net"
   i els "Pagaments". Els apunts d'event de `fons` tenen `delegId:'_event'`; els tancaments "sense event" tenen un
   `eventId` sintètic `_se_…`.

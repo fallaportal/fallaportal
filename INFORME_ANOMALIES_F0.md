@@ -1,5 +1,5 @@
 # Informe d'anomalies i proteccions implícites — Fase 0
-## Redactat: 2026-10-13 · Base: `index.html` v4.0.66 · Estat: part de codi completa; part de dades pendent de l'export del full
+## Redactat: 2026-10-13 · Base: `index.html` v4.0.66 i export del full del 2026-10-13 · Estat: complet, pendent de revisió d'Emilio
 
 Aquest document es llig sense context previ. Recull el que la lectura del codi ha trobat que **afecta la
 migració a Supabase** (`PLA_MIGRACIO_SUPABASE.md`, Fase 0). No s'ha tocat cap línia de l'app.
@@ -89,23 +89,30 @@ Comportaments que protegeixen les dades sense que ningú els tinga com a "funcio
 
 ---
 
-## 5. Perfil de les dades reals (pendent)
-Necessita l'export del full. Procediment i script: `tools/f0_perfil_dades.py` (vegeu la capçalera).
-El que ha de respondre:
-1. Files per pestanya i camps buits per columna.
-2. `id` duplicats (A-15) i formats d'id.
-3. Dates mal formades o en format ISO; imports no numèrics o negatius.
-4. `anyFiscal` buit o amb format no `XX/YY` (A-10).
-5. Referències penjants: moviments → àrea/delegació/event/banc, fons → moviment/usuari, tancaments → event,
-   pressupost → delegació/event, assignacions → usuari (A-14, A-24, A-05).
-6. `bankHash` repetits i moviments sense hash (A-04).
-7. `15 Saldos` amb ids contaminats (A-03).
-8. `00 Config`: `estats_exercicis` (A-01), `exercicis`, `anyFiscal`.
-9. `pres_plans` amb la mateixa clau natural duplicada; `Varis` negatius.
-10. Valors reals de `tipus`, `via`, `origen`, `origenFons`, `fontImport`, `conciliacio`, `estat`.
-11. Sumes per any × tipus × via (base de la validació de §6 del pla).
+## 5. Perfil de les dades reals (export del 2026-10-13)
+Script: `python -I tools/f0_perfil_dades.py <export.xlsx>`. L'informe complet (amb xifres) queda **fora del repo**,
+al costat de l'export. Aquí només hi ha les conclusions; el repositori és públic.
 
----
+**Volum**: 922 moviments (684 del 25/26, 238 del 26/27), 86 fons, 5 tancaments, 23 events, 7 àrees, 30 delegacions,
+5 bancs, 16 usuaris, 62 assignacions, 11 línies de pressupost (només 26/27), 24 regles, 8 saldos inicials.
+`11`/`12` Pressupostos i `16 Fapp Passiu` són buides (mai s'ha bloquejat un pressupost). Hi ha pestanyes antigues
+(`15 Fapp Passiu`, `08 Regles Import`, `17 Moduls`, `18 Audit Log`).
+
+| # | Resultat amb dades reals |
+|---|---|
+| A-01 | `25/26` consta **tancat** des del 17/06/2026 i es va desar bé. Cap moviment del 25/26 creat després del tancament. El risc de no desar-se queda latent; el de no bloquejar, confirmat al codi. |
+| A-03 | **No passa a les dades**: el 03 Banc té un id sense `_` (`b1779146131300`). Queda com a risc latent per a bancs nous. |
+| A-04 | **Confirmat**: 17 `bankHash` repetits en 43 moviments, tots legítims (p. ex. quatre traspassos de 25 € el mateix dia; un càrrec i la seua devolució de 12 € el mateix dia, 6 casos amb ingrés i pagament). `UNIQUE` impossible. |
+| A-05 | **Confirmat**: 4 dels 5 tancaments són "sense event" (`_se_…`) i 5 moviments apunten a eixos ids. |
+| A-07 | **Confirmat**: 62 de 86 registres de fons tenen un nom a `registratPer`. |
+| A-10 | **Confirmat**: 1 moviment **sense data** (consums falles.app del 25/26, 6.928 €) i **9 moviments del 25/26 amb data del 26/27** (7 de l'extracte del 02 Banc d'abril de 2026 i 2 d'efectiu de maig de 2026); compten a l'exercici tancat. |
+| A-15 | Cap id duplicat. Quatre formats; el 82 % (`m<ms><random>`, amb punt) ve de la càrrega massiva del 25/05/2026 (682 moviments del 25/26 creats en el mateix mil·lisegon). |
+| A-23 | El TPV declarat als tancaments suma 1.407 € (un event) i no és a cap moviment. |
+| A-24 | **Confirmat**: 4 avançaments d'un mateix delegat (205,82 € en total, 26/27) apunten a moviments esborrats. El seu saldo de fons està desquadrat en eixe import. |
+| **A-27 (nou)** | **117 moviments "Recàrrega TPV" de falles.app** (25/26, 2.836,50 €, origen `App`, via **01 Banc**) estan `pendent` de conciliar per sempre. El saldo final del 01 Banc 25/26 segons l'app (19.210,51 €) supera el saldo inicial real del 26/27 (16.374,02 €) en **2.836,49 €**: [Probable] estan **comptats dues vegades** (falles.app i la liquidació de l'extracte). Infla els ingressos del 25/26. |
+| **A-28 (nou)** | L'Efectiu del 25/26 no té saldo inicial i acaba amb 149.774,20 € (gairebé només recàrregues de falles.app); el del 26/27 comença amb 17.856 € aproximats. **La continuïtat de saldos entre exercicis no és fiable per a l'efectiu**: la validació de la Fase 6 ha de comparar per exercici, no arrossegar saldos. |
+| **A-29 (nou)** | El 01 Banc 26/27 a l'export dona **9.141,88 €**; `WORKSTREAM_STATUS` diu 9.391,88 € (250 € de diferència). Cal saber si l'export és d'abans o de després de l'última correcció. |
+| Altres | 02 Banc sense IBAN a la configuració (risc A-18); el camp IBAN de l'Efectiu diu "Aproximat"; 1 moviment amb `areaNom` antic (sense accent); `modulVis` i `fappPassiu` buits (s'usen els valors per defecte); usuari de proves "Emilio Proves" (`area`); el compte `it.fallaportal` té fila amb rol `president` (la fila mana sobre el valor fix `treasury`). |
 
 ## 6. Requisit nou: registre d'activitat (Emilio, 2026-10-13)
 "Un log de tot el que ha fet cadascú; ara no tenim res, si algú esborra alguna cosa, per exemple."
@@ -127,3 +134,6 @@ El que ha de respondre:
 5. A-11: còpia de pressupost: centims i bloqueig.
 6. A-18: es pot descartar la importació CSV genèrica?
 7. Netejar `index1.html`, `index2.html`, `index_2.html`, `dev.html` (pla §9.7).
+8. A-27: les recàrregues TPV de falles.app al 01 Banc del 25/26 estan duplicades? (afecta el resultat del 25/26).
+9. A-10: quina data té el moviment de consums sense data, i els 9 moviments del 25/26 amb data del 26/27 es queden on són?
+10. A-24: s'esborren els 4 avançaments orfes?

@@ -68,30 +68,17 @@ mòduls, algorisme de WS-CONCILIACIÓ, informes R5–R8, OCR de factures.
 
 ---
 
-## 4. Esquema proposat (esborrany; es tanca a la Fase 1)
+## 4. Esquema
 
-| Pestanya actual | Taula | Notes |
-|---|---|---|
-| `00 Config` | `config` | clau + valor `jsonb` |
-| `01 Moviments` | `moviments` | FK a `arees`, `delegacions`, `events` |
-| `02 Fons` | `fons` | `moviment_id` FK opcional |
-| `03 Tancaments` | `tancaments` | |
-| `04 Arees` / `05 Delegacions` / `06 Events` | `arees` / `delegacions` / `events` | jerarquia amb FK |
-| `07 Bancs` + `15 Saldos` | `bancs` + `saldos_inicials` | |
-| `08 Regles Import` / `13 Regles CSV` | `regles_import` / `regles_csv` | la Fase 0 confirma si `08 Regles Import` encara s'usa |
-| `08 Usuaris` | `usuaris` | email únic + `auth_user_id` |
-| `09 Usuaris Assignacions` | `assignacions` | usuari × (àrea\|delegació) × any fiscal |
-| `10`/`11`/`12` Pressupostos | `pres_plans` / `pres_config` / `pres_historial` | |
-| `14 Rols` / `17 Moduls` | `rols` / `moduls_visibilitat` | |
-| `16 Fapp Passiu` | `fapp_passiu` | |
-| `18 Audit Log` | — | es descarta; la nova `audit_log` s'omple per triggers |
+El model de dades és a **`MODEL_DADES.md`** (2026-10-13). Substitueix l'esborrany anterior, que copiava una taula per
+pestanya i en traslladava els defectes. Resum: comptes en lloc de `via` de text, `operacions` que agrupen el que crea
+cada acció, caixes d'event i els seus canvis fora de `fons`, justificants en taula pròpia, bloqueig de pressupost per
+exercici, permisos de mòduls i reports en taules, `audit_log` (D-024), vistes per als càlculs i una vista amb la forma
+antiga dels moviments per a la UI. Es conserven els `id` actuals. Les decisions obertes són al seu §8.
 
-- **Es conserven els `id` actuals** (`m1785311891715_kwq1`…) com a clau primària.
-  Així continuen valent els noms dels justificants i els enllaços `fons.movimentId`.
-- **RLS**: funcions SQL `rol_actual()` i `delegacions_meues(any_fiscal)` (security
-  definer) que lligen `usuaris` + `assignacions` + `rols`. Les polítiques repliquen
-  `perm()`, `getMyArees()` i `getMyDelegacions()`. Un email que no és a `usuaris`
-  (`noauth`) no veu cap fila. `board` només pot llegir.
+- **RLS**: funcions SQL `rol_actual()` i `delegacions_meues(any_fiscal)` (security definer) que lligen `usuaris` +
+  `directiva` + `rols`. Les polítiques repliquen `perm()`, `getMyArees()` i `getMyDelegacions()` (D-025: 1:1). Un
+  email que no és a `usuaris` (`noauth`) no veu cap fila. `board` només pot llegir.
 
 ---
 
