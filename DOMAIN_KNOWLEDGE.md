@@ -67,7 +67,7 @@
 
 ### Established Facts
 
-- **Versió en producció actual**: v4.0.64 (BUILD_VERSION `4064`) [TIME-SENSITIVE: 2026-10-13]
+- **Versió en producció actual**: v4.0.65 (BUILD_VERSION `4065`) [TIME-SENSITIVE: 2026-10-13]
 - **La caducitat del token de Google no tanca la sessió** [v4.0.47–48, D-020]:
   - Apareix un bàner i els guardats esperen el token nou.
   - `save()`/`writeTab()` esperen **abans** de fer la còpia de `DB`.

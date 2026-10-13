@@ -1,6 +1,6 @@
 # Work Stream Status — Falla Portal
 ## Snapshot Date: 2026-10-13
-## Versió en producció: v4.0.64
+## Versió en producció: v4.0.65
 
 > **Context de calendari**: període vacacional, ús baix de l'eina. Bon moment per a
 > canvis estructurals i per a la decisió pendent del Service Worker.
@@ -41,8 +41,12 @@ GitHub Pages. Decisió D-021.
   Festejos · Música i afegir l'entrada de 502 € a l'efectiu). El codi d'un sol ús s'ha eliminat a v4.0.62: ja no
   queda cap botó puntual a l'app. Verificat abans d'aplicar-lo: el total del banc no canvia, els saldos dels delegats
   queden a 0 i no hi ha files repetides.
-- **Pendent**: reclassificar el xec 364928 (860 €) quan es confirme què va ser (origen "Banc" del lliurament,
-  triant el moviment de l'extracte, si va passar per mans de Juanjo).
+- **Xec 364928 (860 €) — v4.0.65**: els tresorers confirmen que els diners van eixir del banc cap a la caixa i
+  d'allà es va pagar Manuel Neteja (Festejos · Dinars, Sopars i Festes), sense delegat pel mig. Botó puntual a
+  Configuració → Exercicis (`_XEC_860`, `_xec860Pla`, `arreglaXec860`): el xec és traspàs banc → caixa (entrada de
+  860 € a l'efectiu) i s'apunta el pagament en efectiu "Manuel Neteja" (data 10/07 per defecte; es pot canviar a
+  l'Historial). El banc i l'efectiu no canvien. **ELIMINAR aquest codi de `index.html` després d'aplicar-lo.**
+  Amb això, els quatre xecs (364928, 364929, 364930 i 364931) queden classificats.
 - **Generador MGM (502 €) — v4.0.63**: el xec 364931 va eixir del banc, els diners van passar per Juanjo i va pagar
   MGM ("Generador", 6/6, Festejos · Dinars, Sopars i Festes, ja apuntat com a caixa). Faltava el rastre als Fons
   delegats: botó puntual a Configuració → Exercicis (`_GENERADOR_JUANJO`, `_generadorJuanjoPla`,
