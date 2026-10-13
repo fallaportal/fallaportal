@@ -109,7 +109,7 @@ al costat de l'export. Aquí només hi ha les conclusions; el repositori és pú
 | A-15 | Cap id duplicat. Quatre formats; el 82 % (`m<ms><random>`, amb punt) ve de la càrrega massiva del 25/05/2026 (682 moviments del 25/26 creats en el mateix mil·lisegon). |
 | A-23 | El TPV declarat als tancaments suma 1.407 € (un event) i no és a cap moviment. |
 | A-24 | **Confirmat**: 4 avançaments d'un mateix delegat (205,82 € en total, 26/27) apunten a moviments esborrats. El seu saldo de fons està desquadrat en eixe import. |
-| **A-27 (nou)** | **117 moviments "Recàrrega TPV" de falles.app** (25/26, 2.836,50 €, origen `App`, via **01 Banc**) estan `pendent` de conciliar per sempre. El saldo final del 01 Banc 25/26 segons l'app (19.210,51 €) supera el saldo inicial real del 26/27 (16.374,02 €) en **2.836,49 €**: [Probable] estan **comptats dues vegades** (falles.app i la liquidació de l'extracte). Infla els ingressos del 25/26. |
+| **A-27 (nou)** | **Confirmat [Segur]**: les **117 recàrregues TPV** que la importació de falles.app va posar al 01 Banc el 25/26 (2.836,50 €, origen `App`, `pendent`) **ja són a l'extracte** com a **25 apunts "Ingrés APP"** que sumen exactament 2.836,50 € (la plataforma les liquida agrupades). Estan **comptades dues vegades**: inflen els ingressos del 25/26 i el saldo final del 01 Banc 25/26 en 2.836,50 € (la diferència de 2.836,49 € amb el saldo inicial real del 26/27). Al 26/27 no n'hi ha. A més, `importarFappTrans` les tornaria a crear en la propera importació. |
 | **A-28 (nou)** | L'Efectiu del 25/26 no té saldo inicial i acaba amb 149.774,20 € (gairebé només recàrregues de falles.app); el del 26/27 comença amb 17.856 € aproximats. **La continuïtat de saldos entre exercicis no és fiable per a l'efectiu**: la validació de la Fase 6 ha de comparar per exercici, no arrossegar saldos. |
 | **A-29 (nou)** | El 01 Banc 26/27 a l'export dona **9.141,88 €**; `WORKSTREAM_STATUS` diu 9.391,88 € (250 € de diferència). Cal saber si l'export és d'abans o de després de l'última correcció. |
 | Altres | 02 Banc sense IBAN a la configuració (risc A-18); el camp IBAN de l'Efectiu diu "Aproximat"; 1 moviment amb `areaNom` antic (sense accent); `modulVis` i `fappPassiu` buits (s'usen els valors per defecte); usuari de proves "Emilio Proves" (`area`); el compte `it.fallaportal` té fila amb rol `president` (la fila mana sobre el valor fix `treasury`). |
@@ -134,6 +134,11 @@ al costat de l'export. Aquí només hi ha les conclusions; el repositori és pú
 5. A-11: còpia de pressupost: centims i bloqueig.
 6. A-18: es pot descartar la importació CSV genèrica?
 7. Netejar `index1.html`, `index2.html`, `index_2.html`, `dev.html` (pla §9.7).
-8. A-27: les recàrregues TPV de falles.app al 01 Banc del 25/26 estan duplicades? (afecta el resultat del 25/26).
-9. A-10: quina data té el moviment de consums sense data, i els 9 moviments del 25/26 amb data del 26/27 es queden on són?
+8. A-27 (confirmat): s'esborren les 117 recàrregues TPV duplicades del 25/26 (o passen a estadística) i la importació deixa de crear-les?
+9. A-10: quina data (o període) té el registre de consums sense data? (els 9 moviments amb data d'un altre exercici: D-029)
 10. A-24: s'esborren els 4 avançaments orfes?
+11. **Falles.app: comptar per caixa o per vendes?** Avui l'ingrés és la recàrrega (quan el faller paga) i els consums
+    només són estadística, de manera que els Resultats no mostren vendes per event ni per àrea. Alternativa: la recàrrega és
+    un deute amb els fallers (passiu del moneder) i l'ingrés és el consum. Canvi de comportament (D-025): s'aplicaria després
+    del tall; el model (D-031) admet les dues. Al 25/26 les recàrregues (~152.000 €) i els consums (59.137 €) no lliguen i la
+    pestanya de passiu és buida: cal revisar si els consums estan complets.
