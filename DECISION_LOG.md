@@ -520,3 +520,20 @@ dades. Les recàrregues, devolucions i bonificacions sí que són apunts reals i
 llegeix moviments + consums i dona el mateix. Els consums deixen de sortir a l'Historial de moviments i es veuen a la
 pantalla de Falles.app.
 
+---
+
+### D-032: Saldo de fons dels delegats per exercici, amb arrossegament automàtic
+**Date**: 2026-10-13
+**Status**: Accepted (Emilio); s'aplica després del tall (D-025)
+**Context**: El saldo de fons d'un delegat es calcula amb fórmules diferents segons la pantalla (A-08): amb o sense filtre
+d'exercici, amb o sense regularitzacions, per email exacte o per usuari. Amb les dades del 2026-10-13 totes donen el
+mateix, però la pràctica és tindre un saldo per exercici i traspassar-lo a mà al següent amb una "devolució" a
+l'exercici vell i un "lliurament" al nou (p. ex. 2.577 € el 02/06/2026, "Moviment al nou any fiscal 26/27").
+**Decision**: Saldo de fons d'un delegat = **saldo arrossegat de l'exercici anterior** + lliuraments + regularitzacions +
+reintegraments − despeses amb fons − devolucions − avançaments **de l'exercici**. Una sola definició (vista
+`v_saldo_fons_delegat`) per a totes les pantalles i informes. El delegat s'identifica per usuari, no per email (A-30).
+**Consequences**:
+  - Ja no cal fer el traspàs a mà. Els traspassos manuals que ja hi ha no es dupliquen: la devolució redueix el saldo
+    final de l'exercici vell i el lliurament el suma al nou.
+  - Fins al tall, l'app actual continua amb les seues fórmules; la Fase 6 compara amb les xifres per exercici.
+

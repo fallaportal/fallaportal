@@ -260,7 +260,7 @@ v4.0.67 les recàrregues TPV ja no es posen al llibre (entren pel banc, A-27).
 | `v_moviments_app` | La forma antiga del moviment (`via`, `origen`, `fontImport`, `origenFons`, `areaNom`, `ticketUrl`…) per a la UI de la Fase 3 |
 | `v_saldo_comptes` | Saldo inicial de l'exercici + ingressos − despeses per compte (inventari §5.1) |
 | `v_caixes` | Canvi total, retirades i resultat net de cada caixa (inventari §5.6–5.7) |
-| `v_saldo_fons_delegat` | Saldo de fons per delegat i exercici. **Fins que Emilio decidisca A-08, la UI continua amb les seues fórmules** |
+| `v_saldo_fons_delegat` | Saldo de fons per delegat i exercici = saldo arrossegat de l'exercici anterior + moviments de fons de l'exercici (D-032). Una sola definició per a totes les pantalles |
 | `v_pressupost_execucio` | Pla vs executat per delegació |
 
 ---
