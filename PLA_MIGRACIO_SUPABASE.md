@@ -268,8 +268,9 @@ Totes aquestes comprovacions s'automatitzen dins de l'script de la Fase 5:
 **Pendents** (s'assumix el valor recomanat si no es diu res):
 5. Regió: UE.
 6. Permisos: replicar exactament els actuals.
-7. `index1.html`, `index2.html`, `index_2.html` i `dev.html`: es poden esborrar?
-   **No s'esborren sense confirmació explícita.**
+7. ~~`dev.html`~~: **esborrat del repositori el 2026-10-13** (Emilio): era la v3.0.15 publicada a GitHub Pages i escrivia
+   al full real amb codi anterior a les correccions de pèrdua de dades. `index1.html`, `index2.html` i `index_2.html` només
+   són a l'ordinador d'Emilio (ignorats per git); els pot esborrar ell.
 8. SMTP: quin proveïdor o compte envia els codis (necessari per a la Fase 2).
 
 ---

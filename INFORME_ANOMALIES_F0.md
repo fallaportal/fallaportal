@@ -56,7 +56,8 @@ Tractament proposat: **Corregir ara** (a l'app actual, abans de migrar), **Corre
   `cancelCSVImport`, `importarCSVZona`, `importarCSVZonaBtn` (8907–8985 mortes; actives 8991–9089).
 - Pestanyes: `08 Regles Import` (substituïda per `13`), `17 Moduls` (`modulVis` viu a `00 Config`),
   `18 Audit Log` (res l'escriu).
-- Fitxers: `index1.html`, `index2.html`, `index_2.html`, `dev.html` (pendent de confirmació, pla §9.7).
+- Fitxers: `dev.html` esborrat del repositori el 2026-10-13 (estava publicat i escrivia al full real amb la v3.0.15);
+  `index1.html`, `index2.html`, `index_2.html` només són locals.
 
 ---
 
@@ -139,7 +140,7 @@ al costat de l'export. Aquí només hi ha les conclusions; el repositori és pú
    manté l'arredoniment a euros (Emilio). Al model nou, el bloqueig és per exercici (`pressupost_estat`).
 6. ~~A-18 (CSV genèric)~~: **retirat a la v4.0.77** (Emilio, 2026-10-13). Queden de l'A-18: línies ometudes en silenci i
    banc per defecte si no es troba l'IBAN (al model nou: `operacions.resum` i IBAN obligatori).
-7. Netejar `index1.html`, `index2.html`, `index_2.html`, `dev.html` (pla §9.7).
+7. ~~Neteja~~: `dev.html` esborrat del repositori (2026-10-13); les còpies `index1/2/_2.html` són locals.
 8. ~~A-27~~: **decidit i corregit a la v4.0.67** (Emilio, 2026-10-13): botó puntual per esborrar les 117 recàrregues i la
    importació ja no crea les TPV. Aplicat per Emilio el 2026-10-13; codi puntual eliminat a la v4.0.68.
 9. ~~A-10~~: el registre de consums sense data passa al 31/03/2026 (Emilio, 2026-10-13; aplicat amb el botó puntual de la v4.0.71, eliminat a la v4.0.72). Els 9

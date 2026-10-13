@@ -119,6 +119,9 @@ punt i no s'havia fet servir mai. Ara Importar CSV només admet extractes en Exc
 "Format no admés". Eliminades les dues còpies de les seues funcions. Verificat: un .csv es rebutja i un .xlsx de
 Caixabank es continua llegint (banc per IBAN, 2 moviments).
 
+**2026-10-13 — `dev.html` esborrat del repositori**: era la v3.0.15 publicada a `fallaportal.github.io/fallaportal/dev.html`
+i qualsevol que hi entrara escrivia al full real amb codi anterior a D-013–D-016.
+
 **Pendents** (res d'això depén de codi):
 1. Extractes actuals: Caixabank ES06 2100 1958 3602 0008 8726 des del 29/9; Caixabank ES56 2100 7990 7413 0059 2938
    des de l'1/4; Caixa Popular ES82 3159 0076 6426 7219 1729 des de l'1/4; Caixabank TPV ES60 2100 7990 7802 0033 2534
