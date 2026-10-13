@@ -134,7 +134,7 @@ al costat de l'export. Aquí només hi ha les conclusions; el repositori és pú
    "ON 367893310 ddmm" (Festa de Cloenda 2026: 40,50 + 1.366,50 = 1.407,00 €). Crear-ne moviment el duplicaria. Pendent de
    millora (després del tall): eixos apunts del banc queden a 01 Tresoreria sense event, i el resultat de l'event no els inclou.
 3. ~~A-08~~: **decidit (D-032)**: per exercici amb arrossegament automàtic; s'aplica després del tall.
-4. A-02: l'any actiu continua sent global?
+4. ~~A-02~~: **decidit (D-033)**: el selector és de consulta i per usuari; operar va per la data (D-029). Després del tall.
 5. A-11: còpia de pressupost: centims i bloqueig.
 6. A-18: es pot descartar la importació CSV genèrica?
 7. Netejar `index1.html`, `index2.html`, `index_2.html`, `dev.html` (pla §9.7).

@@ -246,7 +246,8 @@ efectiu i als comptes bancaris (liquidacions "Ingrés APP", ingressos d'efectiu 
 v4.0.67 les recàrregues TPV ja no es posen al llibre (entren pel banc, A-27).
 
 ### 4.6 Sistema
-**`config`**: `clau text PK`, `valor jsonb`. Queden: `exercici_actiu` (global, 1:1 A-02) i `justificant`
+**`config`**: `clau text PK`, `valor jsonb`. Queden: `exercici_actiu` (només l'exercici obert per defecte; el selector és
+de consulta i per usuari, D-033) i `justificant`
 (`{mode, llindar}`). `drive_folders` desapareix (Storage).
 **`audit_log`** (D-024): `id bigserial`, `at timestamptz`, `usuari_id`, `email`, `taula`, `fila_id`, `accio`
 (`insert`/`update`/`delete`), `abans jsonb`, `despres jsonb`, `operacio_id`. Només lectura per a

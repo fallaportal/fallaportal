@@ -537,3 +537,20 @@ reintegraments − despeses amb fons − devolucions − avançaments **de l'exe
     final de l'exercici vell i el lliurament el suma al nou.
   - Fins al tall, l'app actual continua amb les seues fórmules; la Fase 6 compara amb les xifres per exercici.
 
+---
+
+### D-033: L'any seleccionat és per a veure, per usuari; no decideix on s'opera
+**Date**: 2026-10-13
+**Status**: Accepted (Emilio); s'aplica després del tall (D-025)
+**Context**: Avui l'any fiscal actiu és una dada global (A-02): quan President o Tresoreria canvien l'any al selector,
+es desa a `00 Config` i tots els usuaris hi passen al refresc següent, i els moviments nous van a eixe any, encara que
+estiga tancat.
+**Decision** (Emilio: "cada usuari tria l'any que vol veure, però no amb el que vol operar"):
+  - El selector d'any és **de consulta i per usuari**: només canvia el que veu qui el toca. Per defecte, l'exercici obert
+    actual. Només el poden canviar els rols que ja poden ara (`viewAll`\|`canConfig`).
+  - **Operar no depén de l'any seleccionat**: l'exercici d'un registre ve de la seua data (D-029), i escriure en un
+    exercici tancat requereix l'excepció amb motiu.
+  - `config.exercici_actiu` es manté només com a "exercici obert per defecte".
+**Consequences**: Supersedeix el tractament "replicar" d'A-02. Desapareix el risc que una consulta d'un exercici antic
+envie els moviments dels altres a eixe exercici.
+
