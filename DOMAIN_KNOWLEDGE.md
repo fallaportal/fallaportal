@@ -68,7 +68,7 @@ Cremà (19/03) i el 31/03 serveixen per liquidar els pendents de Falles dins del
 
 ### Established Facts
 
-- **Versió en producció actual**: v4.0.72 (BUILD_VERSION `4072`) [TIME-SENSITIVE: 2026-10-13]
+- **Versió en producció actual**: v4.0.73 (BUILD_VERSION `4073`) [TIME-SENSITIVE: 2026-10-13]
 - **La caducitat del token de Google no tanca la sessió** [v4.0.47–48, D-020]:
   - Apareix un bàner i els guardats esperen el token nou.
   - `save()`/`writeTab()` esperen **abans** de fer la còpia de `DB`.
@@ -130,6 +130,10 @@ Cremà (19/03) i el 31/03 serveixen per liquidar els pendents de Falles dins del
 - **Tancament de caixa**: el TPV només es desa a `tancaments.tpv`; els moviments que es generen són l'"Efectiu net"
   i els "Pagaments". Els apunts d'event de `fons` tenen `delegId:'_event'`; els tancaments "sense event" tenen un
   `eventId` sintètic `_se_…`.
+- **Tancament de caixa (des de la v4.0.73)**: l'efectiu es compta **al final, després dels pagaments** fets amb diners de
+  la caixa. Moviments: ingrés "Vendes efectiu" = efectiu final + pagaments − canvi; despesa "Pagaments"; si l'efectiu
+  final + pagaments no arriba al canvi, despesa "Desquadrament caixa". Les retirades ja són ingressos a part. El canvi
+  no és moviment (torna a la caixa de la falla). `tancaments.efectiu` = efectiu abans de pagar (final + pagaments).
 - **TPV de les caixes d'event**: les vendes amb targeta arriben al 01 Banc per l'extracte com a "ON 367893310 ddmm"
   (número de comerç del TPV; ddmm = dia de la venda). Per això el tancament no en crea moviment (A-23). Eixos apunts es
   classifiquen a 01 Tresoreria sense event.

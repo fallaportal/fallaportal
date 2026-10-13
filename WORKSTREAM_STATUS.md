@@ -1,6 +1,6 @@
 # Work Stream Status — Falla Portal
 ## Snapshot Date: 2026-10-13
-## Versió en producció: v4.0.72
+## Versió en producció: v4.0.73
 
 > **Context de calendari**: període vacacional, ús baix de l'eina. Bon moment per a
 > canvis estructurals i per a la decisió pendent del Service Worker.
@@ -96,12 +96,22 @@ data") que posa el 31/03/2026 al registre "Consums falles.app - Activitats Casal
 apareix si el registre casa (id, sense data, import, via `app`); descarrega còpia abans. Verificat amb dades sintètiques.
 **Aplicat per Emilio el 2026-10-13; codi puntual eliminat a la v4.0.72.**
 
+**v4.0.73 (2026-10-13) — tancament de caixa: l'efectiu es compta al final (A-31)**: els pagaments d'un event es fan amb
+diners de la caixa, però el formulari no deia si l'efectiu es comptava abans o després de pagar; si era després, l'app
+restava els pagaments dues vegades i la Caixa efectiu quedava curta. Ara el camp és "Efectiu final a la caixa" (després de
+pagar) i l'app registra **Vendes efectiu** = final + pagaments − canvi, i la despesa de pagaments. `tancaments.efectiu` desa
+l'efectiu abans de pagar (final + pagaments), de manera que l'informe r1 no canvia de fórmula. Eliminada `tancarEvent()`
+(còpia morta). Verificat amb dos casos (sense i amb retirada i TPV). Els tancaments anteriors no es toquen.
+
 **Pendents** (res d'això depén de codi):
 1. Extractes actuals: Caixabank ES06 2100 1958 3602 0008 8726 des del 29/9; Caixabank ES56 2100 7990 7413 0059 2938
    des de l'1/4; Caixa Popular ES82 3159 0076 6426 7219 1729 des de l'1/4; Caixabank TPV ES60 2100 7990 7802 0033 2534
    des del 8/9. En importar el del 01 Banc, les despeses manuals del 8/10 (Gorres negres 4.116,42 € i Filament 3D
    214,95 €, pagades pel banc) apareixeran com a "possibles duplicats": deixar-les **desmarcades**.
-2. Recompte físic de la caixa en efectiu. Referència: Efectiu de l'app menys els saldos positius dels delegats
+2. **Tancaments anteriors amb pagaments (A-31)**: 4 caixes (pagaments de 9, 12, 120 i 792 €; la de 792 € és la Festa de
+   Cloenda 2026). Preguntar a qui les va tancar si l'efectiu es va comptar abans o després de pagar; si va ser després,
+   la Caixa efectiu està curta en eixos imports i cal corregir-les.
+2b. Recompte físic de la caixa en efectiu. Referència: Efectiu de l'app menys els saldos positius dels delegats
    (3.290,01 € a l'11/10); aproximadament 1.350 € a la caixa. El saldo inicial de 17.856 € és aproximat.
 3. A Configuració → Regles (Emilio): `T.PlanaMyCommerce` i `MANTENIMIENTO TPV` a 01 Tresoreria; esborrar `PR.DE;`;
    buidar el concepte de `PR.DE` i `DETIR`; allargar `RAMS`. Opcional: regla `FATIR` → 01 Secretaria (remeses de quotes).

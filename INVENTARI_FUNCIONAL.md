@@ -146,9 +146,10 @@ justificant, editar, esborrar.
   `obert`.
 - **Afegir canvi** (`afegirCanviEvent`, 4452): nou `fons` `event_canvi`.
 - **Retirada d'efectiu** (`retirarEfectiu`, 4359): moviment d'ingrés a Efectiu, `fontImport:'retirada_caixa'`.
-- **Tancar** (`executarTancament`, 4511): efectiu comptat, TPV, pagaments, àrea/delegació, notes.
-  Genera: moviment "Efectiu net" (`ing` o `gast` segons `efectiu − canvi`), moviment "Pagaments" (gast),
-  `fons` `event_canvi_devolucio`, i passa el tancament a `tancat`. El TPV **no** genera moviment.
+- **Tancar** (`executarTancament`): efectiu **final** (després dels pagaments fets amb la caixa, des de la v4.0.73),
+  TPV, pagaments, àrea/delegació, notes. Genera: ingrés "Vendes efectiu" = final + pagaments − canvi (o despesa
+  "Desquadrament caixa" si és negatiu), despesa "Pagaments", `fons` `event_canvi_devolucio`, i passa el tancament a
+  `tancat`. El TPV **no** genera moviment (arriba pel banc, A-23). `tancarEvent` (còpia morta) eliminada a la v4.0.73.
 - **Reobrir** (`resetTancament`, 9265) i **Eliminar** (`eliminarEventObert` 4634, `eliminarTancament`
   9290): esborren els moviments `tancament`/`retirada_caixa` de l'event i els fons associats.
 - Escriu: `tancaments`, `moviments`, `fons`.

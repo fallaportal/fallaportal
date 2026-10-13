@@ -337,7 +337,7 @@ tr:hover td{background:var(--bg2)}
     <div class="login-logo">Falla <span>Portal</span></div>
     <div class="login-sub">Sistema de gestió financera</div>
     <div class="login-fiscal">Any fiscal 26/27 · Abr 2026 – Mar 2027</div>
-    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v4.0.72</div>
+    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v4.0.73</div>
     <button class="btn-google" onclick="signIn()">
       <svg viewBox="0 0 24 24" width="20" height="20"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
       Entrar amb Google
@@ -379,7 +379,7 @@ tr:hover td{background:var(--bg2)}
     <div class="sb-bottom">
       <div class="sync-ind" style="display:flex;align-items:center;justify-content:space-between"><div style="display:flex;align-items:center;gap:6px"><div class="sync-dot" id="sync-dot"></div><span id="sync-text">Sincronitzat</span></div><button onclick="manualRefresh()" title="Actualitzar dades" style="background:none;border:none;cursor:pointer;padding:2px 4px;color:var(--text2);font-size:14px;line-height:1"><i class="ti ti-refresh"></i></button></div>
       <button class="btn-logout" onclick="signOut()"><i class="ti ti-logout" style="font-size:14px"></i> Tancar sessió</button>
-      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v4.0.72</div>
+      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v4.0.73</div>
     </div>
   </div>
 
@@ -591,20 +591,21 @@ tr:hover td{background:var(--bg2)}
           <div id="tanc-efectiu-row" style="display:none;padding:0 4px">
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
               <div>
-                <div style="font-size:10px;color:var(--text3);text-align:center;margin-bottom:4px;text-transform:uppercase;letter-spacing:.05em">Efectiu comptat</div>
+                <div style="font-size:10px;color:var(--text3);text-align:center;margin-bottom:4px;text-transform:uppercase;letter-spacing:.05em">Efectiu final a la caixa</div>
                 <div class="mov-import-box" style="border-color:var(--green)">
                   <input type="text" id="tanc-efectiu" placeholder="0,00" inputmode="decimal" oninput="updateTancResum()" style="font-size:20px;color:var(--green)">
                   <span style="font-size:18px;font-weight:700;color:var(--green);margin-left:2px">€</span>
                 </div>
               </div>
               <div>
-                <div style="font-size:10px;color:var(--text3);text-align:center;margin-bottom:4px;text-transform:uppercase;letter-spacing:.05em">Pagaments</div>
+                <div style="font-size:10px;color:var(--text3);text-align:center;margin-bottom:4px;text-transform:uppercase;letter-spacing:.05em">Pagaments fets amb la caixa</div>
                 <div class="mov-import-box" style="border-color:var(--red)">
                   <input type="text" id="tanc-pagaments" placeholder="0,00" inputmode="decimal" oninput="updateTancResum()" style="font-size:20px;color:var(--red)">
                   <span style="font-size:18px;font-weight:700;color:var(--red);margin-left:2px">€</span>
                 </div>
               </div>
             </div>
+            <div style="font-size:11px;color:var(--text3);text-align:center;margin:-2px 0 8px"><i class="ti ti-info-circle"></i> Compta l'efectiu al final, quan ja s'han fet tots els pagaments amb diners de la caixa.</div>
             <div>
               <div style="font-size:10px;color:var(--text3);text-align:center;margin-bottom:4px;text-transform:uppercase;letter-spacing:.05em">Vendes TPV</div>
               <div class="mov-import-box">
@@ -4288,7 +4289,7 @@ function onTancTancarChange(){
   if(areaRow)areaRow.style.display='block';
   if(notesRow)notesRow.style.display='block';
   if(btnTancar)btnTancar.style.display='block';
-  if(resumEl){resumEl.style.color='var(--text3)';resumEl.textContent='Introdueix l\'efectiu comptat i els pagaments realitzats';}
+  if(resumEl){resumEl.style.color='var(--text3)';resumEl.textContent='Introdueix l\'efectiu final i els pagaments fets amb la caixa';}
   renderTancRetirades(val);
   updateTancResum();
 }
@@ -4308,20 +4309,21 @@ function updateTancResum(){
   if(!val)return;
   const canvi=getTancCanviTotal(val);
   const retirades=getTancRetirades(val);
-  const ef=parseImport(document.getElementById('tanc-efectiu')?.value)||0;
-  const tpv=parseImport(document.getElementById('tanc-tpv')?.value)||0;
-  const pag=parseImport(document.getElementById('tanc-pagaments')?.value)||0;
-  const netEf=ef-canvi+retirades;
+  const {efFinal,tpv,pag}=_tancImports();
+  // L'efectiu es compta al final, després dels pagaments fets amb la caixa: les vendes en efectiu són
+  // efectiu final + pagaments − canvi (+ retirades, ja apuntades). Abans es restaven els pagaments dues vegades.
+  const netEf=efFinal+pag-canvi+retirades;
   const total=netEf+tpv-pag;
   const resumEl=document.getElementById('tanc-resum');
   if(!resumEl)return;
-  if(!ef&&!tpv&&!pag){resumEl.style.color='var(--text3)';resumEl.textContent='Introdueix l\'efectiu comptat i els pagaments realitzats';return;}
+  if(!efFinal&&!tpv&&!pag){resumEl.style.color='var(--text3)';resumEl.textContent='Introdueix l\'efectiu final i els pagaments fets amb la caixa';return;}
   resumEl.style.color='var(--text)';
   resumEl.innerHTML=
-    '<div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="color:var(--text2)">Efectiu comptat</span><span style="color:var(--green)">+'+fmtD(ef)+'</span></div>'+
+    '<div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="color:var(--text2)">Efectiu final a la caixa</span><span style="color:var(--green)">+'+fmtD(efFinal)+'</span></div>'+
+    (pag>0?'<div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="color:var(--text2)">+ Pagaments fets amb la caixa</span><span style="color:var(--green)">+'+fmtD(pag)+'</span></div>':'')+
     '<div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="color:var(--text2)">− Canvi inicial</span><span style="color:var(--text2)">−'+fmtD(canvi)+'</span></div>'+
     (retirades>0?'<div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="color:var(--text2)">+ Retirades</span><span style="color:var(--green)">+'+fmtD(retirades)+'</span></div>':'')+
-    '<div style="display:flex;justify-content:space-between;margin-bottom:8px;padding-bottom:8px;border-bottom:0.5px solid var(--border)"><span style="font-weight:500">= Ingrés net efectiu</span><span style="font-weight:600;color:'+(netEf>=0?'var(--green)':'var(--red)')+'">'+fmtS(netEf)+'</span></div>'+
+    '<div style="display:flex;justify-content:space-between;margin-bottom:8px;padding-bottom:8px;border-bottom:0.5px solid var(--border)"><span style="font-weight:500">= Vendes en efectiu</span><span style="font-weight:600;color:'+(netEf>=0?'var(--green)':'var(--red)')+'">'+fmtS(netEf)+'</span></div>'+
     (tpv>0?'<div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="color:var(--text2)">Vendes TPV</span><span>+'+fmtD(tpv)+'</span></div>':'')+
     (pag>0?'<div style="display:flex;justify-content:space-between;margin-bottom:8px;padding-bottom:8px;border-bottom:0.5px solid var(--border)"><span style="color:var(--text2)">− Pagaments</span><span style="color:var(--red)">−'+fmtD(pag)+'</span></div>':'')+
     '<div style="display:flex;justify-content:space-between;font-weight:700;font-size:15px"><span>Resultat net</span><span style="color:'+(total>=0?'var(--green)':'var(--red)')+'">'+fmtS(Math.round(total*100)/100)+'</span></div>';
@@ -4476,16 +4478,23 @@ async function afegirCanviEvent(){
   if(document.getElementById('page-lliurament')?.classList.contains('active'))renderFons();
 }
 
+// Imports del formulari de tancament. L'efectiu es compta al FINAL, després dels pagaments fets amb la caixa
+// (v4.0.73). ef = efectiu abans de pagar = final + pagaments, que és el que es desa a tancaments.efectiu.
+function _tancImports(){
+  const efFinal=parseImport(document.getElementById('tanc-efectiu')?.value)||0;
+  const tpv=parseImport(document.getElementById('tanc-tpv')?.value)||0;
+  const pag=parseImport(document.getElementById('tanc-pagaments')?.value)||0;
+  return{efFinal,ef:efFinal+pag,tpv,pag};
+}
+
 function mostrarConfirmTancar(){
   const val=document.getElementById('tanc-tancar-sel').value;
   if(!val){showToast('Selecciona un event',true);return;}
   const tc=(DB.tancaments||{})[val];
   if(!tc||tc.estat!=='obert'){showToast('Nomes es poden tancar events oberts',true);return;}
   const canvi=getTancCanviTotal(val);
-  const ef=parseImport(document.getElementById('tanc-efectiu')?.value)||0;
-  const tpv=parseImport(document.getElementById('tanc-tpv')?.value)||0;
-  const pag=parseImport(document.getElementById('tanc-pagaments')?.value)||0;
-  if(!ef&&!tpv&&!pag){showToast('Introdueix almenys un import',true);return;}
+  const {efFinal,ef,tpv,pag}=_tancImports();
+  if(!efFinal&&!tpv&&!pag){showToast('Introdueix almenys un import',true);return;}
   const retirades=getTancRetirades(val);
   const netEf=ef-canvi;
   const total=netEf+retirades+tpv-pag;
@@ -4496,10 +4505,11 @@ function mostrarConfirmTancar(){
         '<i class="ti ti-clock"></i> '+tc.concepte+
       '</div>'+
       '<div style="background:var(--bg2);border-radius:var(--r);padding:12px 14px;font-size:13px">'+
-        '<div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="color:var(--text2)">Efectiu comptat</span><span style="color:var(--green);font-weight:500">+'+fmtD(ef)+'</span></div>'+
+        '<div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="color:var(--text2)">Efectiu final a la caixa</span><span style="color:var(--green);font-weight:500">+'+fmtD(efFinal)+'</span></div>'+
+        (pag>0?'<div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="color:var(--text2)">+ Pagaments fets amb la caixa</span><span style="color:var(--green)">+'+fmtD(pag)+'</span></div>':'')+
         '<div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="color:var(--text2)">— Canvi inicial</span><span style="color:var(--text2)">—'+fmtD(canvi)+'</span></div>'+
         (retirades>0?'<div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="color:var(--text2)">+ Retirades anteriors</span><span style="color:var(--green)">+'+fmtD(retirades)+'</span></div>':'')+
-        '<div style="display:flex;justify-content:space-between;margin-bottom:10px;padding-bottom:10px;border-bottom:0.5px solid var(--border)"><span style="font-weight:500">= Ingres net efectiu</span><span style="font-weight:600;color:'+(netEf+retirades>=0?'var(--green)':'var(--red)')+'">'+fmtS(netEf+retirades)+'</span></div>'+
+        '<div style="display:flex;justify-content:space-between;margin-bottom:10px;padding-bottom:10px;border-bottom:0.5px solid var(--border)"><span style="font-weight:500">= Vendes en efectiu</span><span style="font-weight:600;color:'+(netEf+retirades>=0?'var(--green)':'var(--red)')+'">'+fmtS(netEf+retirades)+'</span></div>'+
         (tpv>0?'<div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="color:var(--text2)">Vendes TPV</span><span>+'+fmtD(tpv)+'</span></div>':'')+
         (pag>0?'<div style="display:flex;justify-content:space-between;margin-bottom:10px;padding-bottom:10px;border-bottom:0.5px solid var(--border)"><span style="color:var(--text2)">— Pagaments</span><span style="color:var(--red)">—'+fmtD(pag)+'</span></div>':'')+
         '<div style="display:flex;justify-content:space-between;font-weight:700;font-size:16px;margin-top:4px"><span>Resultat net</span><span style="color:'+(total>=0?'var(--green)':'var(--red)')+'">'+fmtS(Math.round(total*100)/100)+'</span></div>'+
@@ -4515,9 +4525,9 @@ async function executarTancament(){
   const tc=(DB.tancaments||{})[val];
   if(!tc||tc.estat!=='obert')return;
   const canvi=getTancCanviTotal(val);
-  const ef=parseImport(document.getElementById('tanc-efectiu')?.value)||0;
-  const tpv=parseImport(document.getElementById('tanc-tpv')?.value)||0;
-  const pag=parseImport(document.getElementById('tanc-pagaments')?.value)||0;
+  // ef = efectiu que hi havia abans de pagar (final + pagaments): és el que es desa a tancaments.efectiu i
+  // el que fan servir l'ingrés "Vendes efectiu" i l'informe r1.
+  const {efFinal,ef,tpv,pag}=_tancImports();
   const areaId=document.getElementById('tanc-area')?.value||'';
   const delegId=document.getElementById('tanc-deleg')?.value||'';
   const notes=document.getElementById('tanc-notes')?.value||'';
@@ -4533,19 +4543,20 @@ async function executarTancament(){
   tc.notes=notes;tc.estat='tancat';tc.tancat=true;tc.registratPer=currentUser?.email||'';
   DB.tancaments[evId]=tc;
   const netEfectiu=ef-canvi;
+  const detallTanc='efectiu final '+fmtD(efFinal)+' + pagaments '+fmtD(pag)+' − canvi '+fmtD(canvi);
   const t1=Date.now();
   if(netEfectiu>0){
     DB.moviments.push({id:'m'+t1,anyFiscal:af,tipus:'ing',via:'Efectiu',
       areaId,areaNom:area?.name||'',delegacioId:delegId,delegacioNom:deleg?.name||'',
-      eventId:ev?.id||evId,eventNom:evNom,concepte:'Efectiu net · '+evNom,establiment:'',
+      eventId:ev?.id||evId,eventNom:evNom,concepte:'Vendes efectiu · '+evNom,establiment:'',
       data:dataT,responsable:currentUser?.name||'',responsableEmail:currentUser?.email||'',
-      import:Math.abs(netEfectiu),notes:'Tancament caixa · '+notes,fontImport:'tancament'});
+      import:Math.abs(netEfectiu),notes:'Tancament caixa · '+detallTanc+(notes?' · '+notes:''),fontImport:'tancament'});
   } else if(netEfectiu<0){
     DB.moviments.push({id:'m'+t1,anyFiscal:af,tipus:'gast',via:'Efectiu',
       areaId,areaNom:area?.name||'',delegacioId:delegId,delegacioNom:deleg?.name||'',
-      eventId:ev?.id||evId,eventNom:evNom,concepte:'Efectiu net · '+evNom,establiment:'',
+      eventId:ev?.id||evId,eventNom:evNom,concepte:'Desquadrament caixa · '+evNom,establiment:'',
       data:dataT,responsable:currentUser?.name||'',responsableEmail:currentUser?.email||'',
-      import:Math.abs(netEfectiu),notes:'Tancament caixa · '+notes,fontImport:'tancament'});
+      import:Math.abs(netEfectiu),notes:'Tancament caixa · '+detallTanc+(notes?' · '+notes:''),fontImport:'tancament'});
   }
   if(pag>0){
     DB.moviments.push({id:'m'+(t1+1),anyFiscal:af,tipus:'gast',via:'Efectiu',
@@ -4557,68 +4568,6 @@ async function executarTancament(){
   const fonsDevolId=genId('fd');
   const fDevol={id:fonsDevolId,data:dataT,tipus:'event_canvi_devolucio',delegId:'_event',delegEmail:'_event',
     import:canvi,nota:'Devolucio canvi · '+evNom,registratPer:currentUser?.email||'',
-    anyFiscal:af,movimentId:'',eventTancamentId:evId};
-  DB.fons.push(fDevol);
-  saveCache();
-  ['tanc-efectiu','tanc-tpv','tanc-pagaments','tanc-notes'].forEach(id=>{
-    const el=document.getElementById(id);if(el)el.value='';
-  });
-  populateTancSelectors();
-  document.getElementById('tanc-tancar-sel').value='';
-  onTancTancarChange();
-  await saveMultiWithToast(['tancaments','moviments',function(){return saveFons(fDevol);}],'Caixa tancada ✓');
-  if(document.getElementById('page-lliurament')?.classList.contains('active'))renderFons();
-}
-
-async function tancarEvent(){
-  const val=document.getElementById('tanc-tancar-sel').value;
-  if(!val){showToast('Selecciona un event',true);return;}
-  const tc=(DB.tancaments||{})[val];
-  if(!tc||tc.estat!=='obert'){showToast('Nomes es poden tancar events oberts',true);return;}
-  const canvi=getTancCanviTotal(val);
-  const ef=parseImport(document.getElementById('tanc-efectiu')?.value)||0;
-  const tpv=parseImport(document.getElementById('tanc-tpv')?.value)||0;
-  const pag=parseImport(document.getElementById('tanc-pagaments')?.value)||0;
-  if(!ef&&!tpv&&!pag){showToast('Introdueix almenys un import',true);return;}
-  const areaId=document.getElementById('tanc-area')?.value||'';
-  const delegId=document.getElementById('tanc-deleg')?.value||'';
-  const notes=document.getElementById('tanc-notes')?.value||'';
-  const area=(DB.config.areas||[]).find(a=>a.id===areaId);
-  const deleg=(DB.config.delegacions||[]).find(d=>d.id===delegId);
-  const af=getAnyFiscal();
-  const dataT=tc.data||today();
-  const evId=val;
-  const evNom=tc.eventNom||tc.concepte||'';
-  const ev=(DB.config.events||[]).find(e=>e.id===val);
-  const retirades=getTancRetirades(evId);
-  tc.efectiu=ef;tc.tpv=tpv;tc.pagaments=pag;tc.canvi=canvi;tc.retirades=retirades;
-  tc.notes=notes;tc.estat='tancat';tc.tancat=true;tc.registratPer=currentUser?.email||'';
-  DB.tancaments[evId]=tc;
-  const netEfectiu=ef-canvi;
-  const t1=Date.now();
-  if(netEfectiu>0){
-    DB.moviments.push({id:'m'+t1,anyFiscal:af,tipus:'ing',via:'Efectiu',
-      areaId,areaNom:area?.name||'',delegacioId:delegId,delegacioNom:deleg?.name||'',
-      eventId:ev?.id||evId,eventNom:evNom,concepte:'Efectiu net · '+evNom,establiment:'',
-      data:dataT,responsable:currentUser?.name||'',responsableEmail:currentUser?.email||'',
-      import:Math.abs(netEfectiu),notes:'Tancament caixa · '+notes,fontImport:'tancament'});
-  } else if(netEfectiu<0){
-    DB.moviments.push({id:'m'+t1,anyFiscal:af,tipus:'gast',via:'Efectiu',
-      areaId,areaNom:area?.name||'',delegacioId:delegId,delegacioNom:deleg?.name||'',
-      eventId:ev?.id||evId,eventNom:evNom,concepte:'Efectiu net · '+evNom,establiment:'',
-      data:dataT,responsable:currentUser?.name||'',responsableEmail:currentUser?.email||'',
-      import:Math.abs(netEfectiu),notes:'Tancament caixa · '+notes,fontImport:'tancament'});
-  }
-  if(pag>0){
-    DB.moviments.push({id:'m'+(t1+1),anyFiscal:af,tipus:'gast',via:'Efectiu',
-      areaId,areaNom:area?.name||'',delegacioId:delegId,delegacioNom:deleg?.name||'',
-      eventId:ev?.id||evId,eventNom:evNom,concepte:'Pagaments · '+evNom,establiment:'',
-      data:dataT,responsable:currentUser?.name||'',responsableEmail:currentUser?.email||'',
-      import:pag,notes:'Pagaments tancament · '+notes,fontImport:'tancament'});
-  }
-  const fonsDevolId=genId('fd');
-  const fDevol={id:fonsDevolId,data:dataT,tipus:'event_canvi_devolucio',delegId:'_event',delegEmail:'_event',
-    import:canvi,nota:'Devolució canvi · '+evNom,registratPer:currentUser?.email||'',
     anyFiscal:af,movimentId:'',eventTancamentId:evId};
   DB.fons.push(fDevol);
   saveCache();
