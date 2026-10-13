@@ -337,7 +337,7 @@ tr:hover td{background:var(--bg2)}
     <div class="login-logo">Falla <span>Portal</span></div>
     <div class="login-sub">Sistema de gestió financera</div>
     <div class="login-fiscal">Any fiscal 26/27 · Abr 2026 – Mar 2027</div>
-    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v4.0.69</div>
+    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v4.0.70</div>
     <button class="btn-google" onclick="signIn()">
       <svg viewBox="0 0 24 24" width="20" height="20"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
       Entrar amb Google
@@ -379,7 +379,7 @@ tr:hover td{background:var(--bg2)}
     <div class="sb-bottom">
       <div class="sync-ind" style="display:flex;align-items:center;justify-content:space-between"><div style="display:flex;align-items:center;gap:6px"><div class="sync-dot" id="sync-dot"></div><span id="sync-text">Sincronitzat</span></div><button onclick="manualRefresh()" title="Actualitzar dades" style="background:none;border:none;cursor:pointer;padding:2px 4px;color:var(--text2);font-size:14px;line-height:1"><i class="ti ti-refresh"></i></button></div>
       <button class="btn-logout" onclick="signOut()"><i class="ti ti-logout" style="font-size:14px"></i> Tancar sessió</button>
-      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v4.0.69</div>
+      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v4.0.70</div>
     </div>
   </div>
 
@@ -3530,9 +3530,10 @@ async function deleteMoviment(id){
       await driveDeleteFile(mov.ticketUrl).catch(function(e){console.warn('Error esborrant Drive:',e);});
     }
   }
-  // Si el moviment era un gast de fons lliurats, eliminar també el registre de fons
+  // Si el moviment es va pagar amb fons lliurats o amb un avançament personal, eliminar també el registre de fons.
+  // Abans només es feia amb fons lliurats: l'avançament es quedava orfe i desquadrava el saldo del delegat (A-24).
   let fonsTambeBorrat=false;
-  if(mov&&mov.origenFons==='fons_lliurats'){
+  if(mov&&(mov.origenFons==='fons_lliurats'||mov.origenFons==='avanc')){
     const fonsAssoc=DB.fons.find(function(f){return f.movimentId===id;});
     if(fonsAssoc){
       DB.fons=DB.fons.filter(function(f){return f.movimentId!==id;});
@@ -3545,7 +3546,7 @@ async function deleteMoviment(id){
   filterHist();
   if(fonsTambeBorrat){
     renderFons();
-    showToast('Moviment i fons lliurat associat eliminats');
+    showToast(mov.origenFons==='avanc'?'Moviment i avançament associat eliminats':'Moviment i fons lliurat associat eliminats');
   }else{
     showToast('Moviment eliminat');
   }
@@ -6518,61 +6519,6 @@ async function deleteRegla(id){
   save('regles').catch(function(e){console.warn(e);});
 }
 
-// ── Avançaments orfes de Juanjo Felis (A-24, 2026-10-13) ── ELIMINAR després d'usar-lo.
-// Quatre avançaments es van registrar dues vegades; les despeses duplicades es van esborrar però els seus
-// avançaments es van quedar (deleteMoviment només esborra el fons si és 'fons_lliurats'). Cadascun té un bessó
-// (mateix delegat, import i concepte) que conserva la despesa. Desquadren el saldo de fons del delegat en 205,82 €.
-const _AVANC_ORFES={af:'26/27',email:'juanjo.felis@gmail.com',total:205.82,fons:[
-  {id:'f1781201592410',data:'11/06/2026',import:48.6,movimentId:'m1781201592409'},
-  {id:'f1783703299398_6x1d',data:'10/07/2026',import:63.28,movimentId:'m1783703299398_jq7w'},
-  {id:'f1783703393407_smjn',data:'13/05/2026',import:4.68,movimentId:'m1783703393407_mtg8'},
-  {id:'f1783703668683_1hv2',data:'13/05/2026',import:89.26,movimentId:'m1783703668682_vjeh'}]};
-function _avancOrfesPla(){
-  const P=_AVANC_ORFES;
-  const fons=DB.fons||[];
-  const movIds=new Set((DB.moviments||[]).map(function(m){return m.id;}));
-  const trobats=[];
-  for(const e of P.fons){
-    const f=fons.find(function(x){return x.id===e.id;});
-    if(!f||f.tipus!=='avanc'||f.anyFiscal!==P.af||String(f.delegEmail||'').toLowerCase()!==P.email)return{ok:false};
-    if(f.data!==e.data||Math.abs((parseFloat(f.import)||0)-e.import)>=0.005||f.movimentId!==e.movimentId)return{ok:false};
-    // El moviment ha de seguir sense existir
-    if(movIds.has(f.movimentId))return{ok:false};
-    // Ha d'existir el bessó: avançament del mateix delegat i import, amb la despesa encara present
-    const besso=fons.some(function(x){
-      return x.id!==f.id&&x.tipus==='avanc'&&String(x.delegEmail||'').toLowerCase()===P.email&&
-        Math.abs((parseFloat(x.import)||0)-e.import)<0.005&&x.movimentId&&movIds.has(x.movimentId);
-    });
-    if(!besso)return{ok:false};
-    trobats.push(f);
-  }
-  return{ok:true,fons:trobats,ids:new Set(trobats.map(function(f){return f.id;}))};
-}
-async function arreglaAvancOrfes(){
-  const P=_AVANC_ORFES;
-  let p;
-  try{p=_avancOrfesPla();}catch(e){showToast('Error comprovant: '+e.message,true);return;}
-  if(!p.ok){showToast('No disponible (ja aplicat o les dades han canviat)',true);return;}
-  const resum='Avançaments duplicats de Juanjo Felis ('+P.af+')\n\n'+
-    p.fons.map(function(f){return'• '+f.data+' · '+(f.nota||'')+' · '+fmtD(f.import);}).join('\n')+'\n\n'+
-    '• Les seues despeses ja es van esborrar; cadascun té un bessó que es queda amb la seua despesa.\n'+
-    '• El saldo de fons del delegat passa a deure-li '+fmtD(P.total)+' menys. Moviments, caixa i resultats no canvien.\n\n'+
-    'Abans es descarregarà una còpia de seguretat. Continuar?';
-  if(!confirm(resum))return;
-  try{
-    exportSnapshotExercici(P.af);
-    await new Promise(function(r){setTimeout(r,800);});
-    DB.fons=(DB.fons||[]).filter(function(f){return!p.ids.has(f.id);});
-    saveCache();
-    // Esborrar files existents: cal reescriure la pestanya sencera
-    await save('fons');
-    showToast('4 avançaments duplicats esborrats');
-    renderCfgExercicis();
-  }catch(e){
-    showToast('Error aplicant el canvi: '+e.message+'. Recarrega i comprova; tens la còpia de seguretat descarregada.',true);
-  }
-}
-
 function renderCfgExercicis(){
   const container=document.getElementById('cfg-exercicis');
   if(!container){console.warn('cfg-exercicis-container no trobat');return;}
@@ -6582,14 +6528,6 @@ function renderCfgExercicis(){
   const estats=DB.config.estats_exercicis||{};
   let html='';
   if(canDo){
-    let avOrf=null;
-    try{const pa=_avancOrfesPla();if(pa.ok)avOrf=pa;}catch(e){}
-    if(avOrf){
-      html+='<div style="background:var(--amber-bg);border:1px solid var(--amber);border-radius:var(--r);padding:12px 14px;margin-bottom:16px;color:var(--amber-text);font-size:13px">'+
-        '<div style="font-weight:600;margin-bottom:4px"><i class="ti ti-alert-triangle"></i> 4 avançaments duplicats de Juanjo Felis sense despesa (26/27)</div>'+
-        '<div style="margin-bottom:10px">Es van registrar dues vegades; les despeses duplicades ja es van esborrar però els avançaments es van quedar, i el seu saldo de fons diu que la falla li deu '+fmtD(_AVANC_ORFES.total)+' de més. S\'esborren els 4 duplicats (els bessons amb despesa es queden). Es descarrega una còpia de seguretat abans.</div>'+
-        '<button class="btn btn-primary" onclick="arreglaAvancOrfes()"><i class="ti ti-trash"></i> Revisar i aplicar</button></div>';
-    }
     html+='<div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">';
     html+='<button class="btn btn-primary" onclick="obrirNouExercici()"><i class="ti ti-calendar-plus"></i> Nou exercici</button>';
     html+='<button class="btn" onclick="openModalTancarExercici()" style="color:var(--amber)"><i class="ti ti-lock"></i> Tancar exercici actual</button>';

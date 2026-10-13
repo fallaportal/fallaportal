@@ -1,6 +1,6 @@
 # Work Stream Status — Falla Portal
 ## Snapshot Date: 2026-10-13
-## Versió en producció: v4.0.69
+## Versió en producció: v4.0.70
 
 > **Context de calendari**: període vacacional, ús baix de l'eina. Bon moment per a
 > canvis estructurals i per a la decisió pendent del Service Worker.
@@ -86,8 +86,10 @@ Efecte: el saldo final del 01 Banc 25/26 segons l'app passa de 19.210,51 € a 1
 Juanjo Felis sense despesa") que esborra 4 `avanc` del 26/27 (205,82 €) registrats dues vegades: les despeses duplicades ja
 s'havien esborrat i els avançaments s'havien quedat. Només apareix si els 4 casen (id, data, import, moviment inexistent) i
 cadascun té el bessó amb despesa; descarrega còpia abans. Verificat amb dades sintètiques (escriu `02 Fons` sencer sense els 4;
-saldo del delegat +205,82 €; prova negativa). **Pendent**: que Emilio l'aplique i eliminar el codi puntual. La causa
-(`deleteMoviment` no esborra l'avançament) continua: proposta de correcció a part.
+saldo del delegat +205,82 €; prova negativa). **Aplicat per Emilio el 2026-10-13; codi puntual eliminat a la v4.0.70.**
+**v4.0.70 — causa corregida**: `deleteMoviment` ara també esborra l'avançament associat quan la despesa es va pagar amb
+avançament personal (abans només ho feia amb fons lliurats). Reproduït amb la v4.0.69 (l'avançament quedava) i verificat
+amb la v4.0.70 (s'esborra; fons lliurats i caixa sense canvis).
 
 **Pendents** (res d'això depén de codi):
 1. Extractes actuals: Caixabank ES06 2100 1958 3602 0008 8726 des del 29/9; Caixabank ES56 2100 7990 7413 0059 2938
