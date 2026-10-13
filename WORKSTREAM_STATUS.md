@@ -1,6 +1,6 @@
 # Work Stream Status — Falla Portal
 ## Snapshot Date: 2026-10-13
-## Versió en producció: v4.0.59
+## Versió en producció: v4.0.60
 
 > **Context de calendari**: període vacacional, ús baix de l'eina. Bon moment per a
 > canvis estructurals i per a la decisió pendent del Service Worker.
@@ -23,6 +23,24 @@ GitHub Pages. Decisió D-021.
 **Blockers**:
   - Cap per a la Fase 0.
   - Per a la Fase 2 cal triar l'SMTP (§9.8 del pla).
+
+---
+
+### Completat 2026-10-13 — Xecs del 30/06 (v4.0.60)
+
+- **Què eren els xecs** (segons els tresorers):
+  - **364930 (5.750 €)**: 5.500 € d'orquestres (diners donats a Antonio Javier, que va pagar Eventime) i 250 €
+    de seguretat; tot a Festejos i Gastronomia · Música, Ambientació i Audiovisuals (0402).
+  - **364931 (502 €)**: diners donats a Juanjo, que va pagar el "Generador" en efectiu (despesa del 6/6 ja
+    apuntada): traspàs banc → caixa, la despesa estava comptada dues vegades.
+  - **364928 (860 €)**: encara no se sap. Una pista: Juanjo va pagar les grues (Monument Gran) però no hi ha
+    cap altre apunt de 860 €. No tocar fins que es confirme.
+  - 364929 (3.000 €): ja arreglat.
+- **Botó puntual** a Configuració → Exercicis (`_XECS_JUNY`, `_xecsJunyPla`, `arreglaXecsJuny`): divideix el
+  364930, simula el lliurament a Antonio Javier (desplegable per triar el delegat) i el pagament a Eventime
+  (lliurament sense apunt + despesa contra fons), i afegeix l'entrada de 502 € a l'efectiu. Verificat: el total
+  del banc no canvia, el saldo del delegat queda a 0 i no hi ha files repetides. **ELIMINAR aquest codi de
+  `index.html` després d'aplicar-lo.**
 
 ---
 
