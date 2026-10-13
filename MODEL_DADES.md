@@ -182,9 +182,12 @@ Es deixen fora `areaNom`, `delegacioNom`, `eventNom`, `responsable` i `ticketUrl
 | `descripcio` | text | obligatòria si no hi ha event (`CHECK`) |
 | `data` | date | |
 | `estat` | enum `oberta` \| `tancada` | transició només `oberta → tancada` i reobrir explícit |
-| `efectiu`, `tpv`, `pagaments` | numeric(12,2) | `tpv` continua sense generar moviment (A-23, 1:1) |
+| `efectiu`, `tpv`, `pagaments` | numeric(12,2) | `tpv` no genera moviment: arriba pel banc com a "ON <comerç> ddmm" (A-23, confirmat) |
 | `area_id`, `delegacio_id` | FK | destí dels moviments del tancament |
 | `notes` | text | ara es desa |
+
+**Millora proposada (després del tall)**: quadrar el `tpv` de la caixa amb els apunts "ON <comerç> ddmm" de l'extracte i
+assignar-los l'event i l'àrea de la caixa (avui queden a 01 Tresoreria sense event i el resultat de l'event no els inclou).
 
 El **canvi** i les **retirades** no es guarden: es calculen (`caixa_canvis` i moviments `retirada_caixa` de la caixa).
 

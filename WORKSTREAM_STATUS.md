@@ -374,6 +374,9 @@ Nota: ara que `_desantAraMateix` existeix, aquest últim requisit és més fàci
 
 **Informes R5–R8**: pendents de definir.
 
+**TPV de les caixes d'event al resultat de l'event** (A-23, 2026-10-13): els apunts "ON 367893310 ddmm" del banc queden a
+01 Tresoreria sense event; quadrar-los amb el TPV de la caixa i assignar-los l'event i l'àrea. Després del tall (D-025).
+
 **Falles.app: comptar per caixa o per vendes** (Emilio ho pensa, 2026-10-13; `INFORME_ANOMALIES_F0.md` §7.11). Per no tancar
 cap porta: pujar els consums de **tots** els events i registrar el passiu dels moneders periòdicament. Relacionat: no es
 porten inventaris (begudes, menjar); és un tema a part.

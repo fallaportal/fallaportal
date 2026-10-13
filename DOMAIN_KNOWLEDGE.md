@@ -130,6 +130,9 @@ Cremà (19/03) i el 31/03 serveixen per liquidar els pendents de Falles dins del
 - **Tancament de caixa**: el TPV només es desa a `tancaments.tpv`; els moviments que es generen són l'"Efectiu net"
   i els "Pagaments". Els apunts d'event de `fons` tenen `delegId:'_event'`; els tancaments "sense event" tenen un
   `eventId` sintètic `_se_…`.
+- **TPV de les caixes d'event**: les vendes amb targeta arriben al 01 Banc per l'extracte com a "ON 367893310 ddmm"
+  (número de comerç del TPV; ddmm = dia de la venda). Per això el tancament no en crea moviment (A-23). Eixos apunts es
+  classifiquen a 01 Tresoreria sense event.
 - **"Tancar exercici" no bloqueja res** (només marca l'estat) i pot no desar-se (A-01 de `INFORME_ANOMALIES_F0.md`).
 - Un banc creat des de la UI té id amb `_` i pot deixar files contaminades a `15 Saldos` (A-03).
 - Documents de la Fase 0: `INVENTARI_FUNCIONAL.md` (acceptació de la Fase 6) i `INFORME_ANOMALIES_F0.md`.
