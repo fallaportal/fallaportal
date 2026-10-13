@@ -1,6 +1,6 @@
 # Work Stream Status — Falla Portal
 ## Snapshot Date: 2026-10-13
-## Versió en producció: v4.0.73
+## Versió en producció: v4.0.74
 
 > **Context de calendari**: període vacacional, ús baix de l'eina. Bon moment per a
 > canvis estructurals i per a la decisió pendent del Service Worker.
@@ -102,6 +102,12 @@ restava els pagaments dues vegades i la Caixa efectiu quedava curta. Ara el camp
 pagar) i l'app registra **Vendes efectiu** = final + pagaments − canvi, i la despesa de pagaments. `tancaments.efectiu` desa
 l'efectiu abans de pagar (final + pagaments), de manera que l'informe r1 no canvia de fórmula. Eliminada `tancarEvent()`
 (còpia morta). Verificat amb dos casos (sense i amb retirada i TPV). Els tancaments anteriors no es toquen.
+
+**v4.0.74 (2026-10-13) — protecció provisional (D-034)**: l'any actiu continua global però només el canvien President i
+Tresoreria (no Junta), amb avís que afecta tothom; un exercici tancat no accepta canvis de moviments, fons, caixes ni
+importacions (President i Tresoreria poden fer-ho com a excepció confirmant-ho). Verificat amb Tresoreria (cancel·la i
+accepta l'excepció), Responsable d'àrea (bloquejat en registrar, esborrar i obrir caixa), Junta (no pot canviar l'any)
+i amb l'exercici obert (sense avisos).
 
 **Pendents** (res d'això depén de codi):
 1. Extractes actuals: Caixabank ES06 2100 1958 3602 0008 8726 des del 29/9; Caixabank ES56 2100 7990 7413 0059 2938

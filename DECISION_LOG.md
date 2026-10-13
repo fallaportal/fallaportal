@@ -554,3 +554,20 @@ estiga tancat.
 **Consequences**: Supersedeix el tractament "replicar" d'A-02. Desapareix el risc que una consulta d'un exercici antic
 envie els moviments dels altres a eixe exercici.
 
+---
+
+### D-034: Protecció provisional de l'any actiu i dels exercicis tancats a l'app actual (v4.0.74)
+**Date**: 2026-10-13
+**Status**: Accepted (Emilio); provisional fins al tall, quan la substitueixen D-029 i D-033
+**Context**: L'any actiu global és el control de Tresoreria sobre on es fan els moviments (explicació d'Emilio). Però
+"Tancar exercici" no bloquejava res (A-01) i Junta també podia canviar l'any de tothom. Fer el selector per usuari ara
+llevaria el control a Tresoreria abans que existisca el model nou.
+**Decision**:
+  1. L'any actiu **continua sent global**; només el poden canviar els rols amb `canConfig` (President i Tresoreria), no
+     Junta.
+  2. Canviar-lo demana confirmació: "Afecta TOTS els usuaris".
+  3. Un **exercici tancat** no accepta registrar, editar ni esborrar moviments, fons ni caixes, ni importacions que creen
+     moviments. President i Tresoreria poden fer-ho com a **excepció**, confirmant-ho. El pressupost no hi entra.
+**Consequences**: L'app compleix el que el diàleg de tancar exercici ja prometia. Adjuntar un justificant des de r4 no
+es bloqueja (no canvia imports).
+

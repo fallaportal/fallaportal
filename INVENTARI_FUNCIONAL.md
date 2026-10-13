@@ -47,7 +47,8 @@ usuari autenticat podria escriure al full igualment; la Fase 1 ho ha de trasllad
 | Pestanya Log de Configuració | `president`\|`treasury` (5583) |
 | Pestanya Usuaris de Configuració | `canUsers` (5571) |
 | Directiva: qui pot assignar | `president`\|`treasury`\|`area` (6612–6632) |
-| Canviar d'any fiscal | `viewAll`\|`canConfig` (1977) |
+| Canviar d'any fiscal (global, amb avís) | `canConfig` (des de la v4.0.74; abans també `viewAll`, és a dir Junta) |
+| Escriure en un exercici tancat | `president`\|`treasury` com a excepció confirmada; la resta, bloquejat (v4.0.74) |
 | Vista de fons | `canFons`+`viewAll` / `area` / resta (3730, 3761, 3789) |
 | Tancament de caixa de `delegat` | només events on és responsable o de la seua delegació (4149) |
 

@@ -68,7 +68,7 @@ Cremà (19/03) i el 31/03 serveixen per liquidar els pendents de Falles dins del
 
 ### Established Facts
 
-- **Versió en producció actual**: v4.0.73 (BUILD_VERSION `4073`) [TIME-SENSITIVE: 2026-10-13]
+- **Versió en producció actual**: v4.0.74 (BUILD_VERSION `4074`) [TIME-SENSITIVE: 2026-10-13]
 - **La caducitat del token de Google no tanca la sessió** [v4.0.47–48, D-020]:
   - Apareix un bàner i els guardats esperen el token nou.
   - `save()`/`writeTab()` esperen **abans** de fer la còpia de `DB`.
@@ -137,7 +137,10 @@ Cremà (19/03) i el 31/03 serveixen per liquidar els pendents de Falles dins del
 - **TPV de les caixes d'event**: les vendes amb targeta arriben al 01 Banc per l'extracte com a "ON 367893310 ddmm"
   (número de comerç del TPV; ddmm = dia de la venda). Per això el tancament no en crea moviment (A-23). Eixos apunts es
   classifiquen a 01 Tresoreria sense event.
-- **"Tancar exercici" no bloqueja res** (només marca l'estat) i pot no desar-se (A-01 de `INFORME_ANOMALIES_F0.md`).
+- **Exercici tancat** (des de la v4.0.74, D-034): no accepta canvis de moviments, fons, caixes ni importacions; President
+  i Tresoreria poden fer-ho com a excepció confirmant-ho. El pressupost no hi entra.
+- **Any actiu**: global; és el control de Tresoreria sobre on es fan els moviments. Només el canvien President i
+  Tresoreria, amb avís que afecta tothom. Al model nou passa a ser de consulta i per usuari (D-033).
 - Un banc creat des de la UI té id amb `_` i pot deixar files contaminades a `15 Saldos` (A-03).
 - Documents de la Fase 0: `INVENTARI_FUNCIONAL.md` (acceptació de la Fase 6) i `INFORME_ANOMALIES_F0.md`.
 - Aprovat per Emilio: àrees TPV → 01 Tresoreria, WiFi COM.T → 07 Coordinació Tècnica, aigua → 01 Jurídica i

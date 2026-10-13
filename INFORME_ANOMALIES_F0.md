@@ -129,7 +129,7 @@ al costat de l'export. Aquí només hi ha les conclusions; el repositori és pú
 ---
 
 ## 7. Decisions que necessiten Emilio (d'una en una)
-1. ~~A-01~~: decidit a D-029.
+1. ~~A-01~~: decidit a D-029 (model nou); a l'app actual, protecció provisional a la v4.0.74 (D-034).
 2. ~~A-23~~: **no** (Emilio, 2026-10-13; confirmat a les dades): el TPV de la caixa arriba al 01 Banc per l'extracte com a
    "ON 367893310 ddmm" (Festa de Cloenda 2026: 40,50 + 1.366,50 = 1.407,00 €). Crear-ne moviment el duplicaria. Pendent de
    millora (després del tall): eixos apunts del banc queden a 01 Tresoreria sense event, i el resultat de l'event no els inclou.
