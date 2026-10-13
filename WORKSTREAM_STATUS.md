@@ -1,6 +1,6 @@
 # Work Stream Status — Falla Portal
 ## Snapshot Date: 2026-10-13
-## Versió en producció: v4.0.68
+## Versió en producció: v4.0.69
 
 > **Context de calendari**: període vacacional, ús baix de l'eina. Bon moment per a
 > canvis estructurals i per a la decisió pendent del Service Worker.
@@ -81,6 +81,13 @@ còpia abans. A més, la importació de transaccions de falles.app ja no crea le
 dades sintètiques (2 escriptures: PUT + clear; proves negatives). **Aplicat per Emilio el 2026-10-13; codi puntual eliminat a
 la v4.0.68** (la importació continua sense crear les recàrregues TPV).
 Efecte: el saldo final del 01 Banc 25/26 segons l'app passa de 19.210,51 € a 16.374,01 € (casa amb l'inicial del 26/27).
+
+**v4.0.69 (2026-10-13) — avançaments orfes (A-24)**: botó puntual a Configuració → Exercicis ("4 avançaments duplicats de
+Juanjo Felis sense despesa") que esborra 4 `avanc` del 26/27 (205,82 €) registrats dues vegades: les despeses duplicades ja
+s'havien esborrat i els avançaments s'havien quedat. Només apareix si els 4 casen (id, data, import, moviment inexistent) i
+cadascun té el bessó amb despesa; descarrega còpia abans. Verificat amb dades sintètiques (escriu `02 Fons` sencer sense els 4;
+saldo del delegat +205,82 €; prova negativa). **Pendent**: que Emilio l'aplique i eliminar el codi puntual. La causa
+(`deleteMoviment` no esborra l'avançament) continua: proposta de correcció a part.
 
 **Pendents** (res d'això depén de codi):
 1. Extractes actuals: Caixabank ES06 2100 1958 3602 0008 8726 des del 29/9; Caixabank ES56 2100 7990 7413 0059 2938
