@@ -1,6 +1,6 @@
 # Work Stream Status — Falla Portal
 ## Snapshot Date: 2026-10-13
-## Versió en producció: v4.0.77
+## Versió en producció: v4.0.78
 
 > **Context de calendari**: període vacacional, ús baix de l'eina. Bon moment per a
 > canvis estructurals i per a la decisió pendent del Service Worker.
@@ -121,6 +121,12 @@ Caixabank es continua llegint (banc per IBAN, 2 moviments).
 
 **2026-10-13 — `dev.html` esborrat del repositori**: era la v3.0.15 publicada a `fallaportal.github.io/fallaportal/dev.html`
 i qualsevol que hi entrara escrivia al full real amb codi anterior a D-013–D-016.
+
+**v4.0.78 (2026-10-13) — Dashboard dels responsables (A-13)**: per als rols sense `viewAll` (`area`, `delegat`) el Dashboard
+llançava un `TypeError` en calcular la llista de fons (tractava la directiva, que va per any fiscal, com una llista) i
+tallava `initApp`: no es veien fons, últims moviments ni despesa per àrea, i no es programava el refresc de 5 min ni
+l'ajust mòbil/escriptori del botó de registrar. Ara llig la directiva de l'any actiu. Reproduït amb la v4.0.77 i
+verificat amb la v4.0.78 per a `area`, `delegat` i `treasury`.
 
 **Pendents** (res d'això depén de codi):
 1. Extractes actuals: Caixabank ES06 2100 1958 3602 0008 8726 des del 29/9; Caixabank ES56 2100 7990 7413 0059 2938
