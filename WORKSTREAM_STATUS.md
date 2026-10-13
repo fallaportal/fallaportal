@@ -1,6 +1,6 @@
 # Work Stream Status — Falla Portal
 ## Snapshot Date: 2026-10-13
-## Versió en producció: v4.0.71
+## Versió en producció: v4.0.72
 
 > **Context de calendari**: període vacacional, ús baix de l'eina. Bon moment per a
 > canvis estructurals i per a la decisió pendent del Service Worker.
@@ -94,7 +94,7 @@ amb la v4.0.70 (s'esborra; fons lliurats i caixa sense canvis).
 **v4.0.71 (2026-10-13) — consums sense data (A-10)**: botó puntual a Configuració → Exercicis ("Consums de falles.app sense
 data") que posa el 31/03/2026 al registre "Consums falles.app - Activitats Casal 25/26" (6.928 €), decisió d'Emilio. Només
 apareix si el registre casa (id, sense data, import, via `app`); descarrega còpia abans. Verificat amb dades sintètiques.
-**Pendent**: que Emilio l'aplique i eliminar el codi puntual.
+**Aplicat per Emilio el 2026-10-13; codi puntual eliminat a la v4.0.72.**
 
 **Pendents** (res d'això depén de codi):
 1. Extractes actuals: Caixabank ES06 2100 1958 3602 0008 8726 des del 29/9; Caixabank ES56 2100 7990 7413 0059 2938
