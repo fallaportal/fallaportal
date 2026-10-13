@@ -84,7 +84,7 @@ si es pot editar, `modificat_at`/`modificat_per`; no es repeteixen a cada taula.
 | `id` | text PK | `'25/26'`; `CHECK (id ~ '^\d{2}/\d{2}$')` |
 | `data_inici`, `data_fi` | date | 01/04–31/03 (D-026), desades a cada exercici en lloc de fixes al codi (avui hi són en 4 llocs) |
 | `data_obertura` | date | |
-| `tancat` | boolean | A-01: es desa de veritat; **no bloqueja res** fins que Emilio ho decidisca |
+| `tancat` | boolean | **Bloqueja** altes, edicions i esborrats dels registres de l'exercici, excepte per excepció (D-029) |
 | `data_tancament` | date | |
 | `es_prova` | boolean | exercicis de prova |
 
@@ -132,7 +132,9 @@ caixa esborra els moviments de l'operació `tancar_caixa`, no els que casen per 
 | Columna | Tipus | Origen al full | Notes |
 |---|---|---|---|
 | `id` | text PK | `id` | es conserva tal qual (A-15) |
-| `exercici_id` | FK not null | `anyFiscal` | **es conserva el valor desat**, no es recalcula de la data (A-10: 9 casos; decisió a part) |
+| `exercici_id` | FK not null | `anyFiscal` | **es calcula per la data** (trigger amb les dates de `exercicis`) llevat d'excepció (D-029) |
+| `imputacio_excepcional` | boolean | — | true si l'exercici no és el de la data o s'ha escrit en un exercici tancat |
+| `motiu_imputacio` | text | — | obligatori si `imputacio_excepcional`; en migrar: "Imputat al 25/26 a l'app antiga" |
 | `data` | date not null | `data` | 1 moviment sense data a resoldre en migrar |
 | `tipus` | enum `ingres` \| `despesa` | `tipus` (`ing`/`gast`) | |
 | `import` | numeric(12,2) `CHECK > 0` | `import` | |
@@ -160,7 +162,7 @@ Es deixen fora `areaNom`, `delegacioNom`, `eventNom`, `responsable` i `ticketUrl
 | Columna | Tipus | Notes |
 |---|---|---|
 | `id` | text PK | |
-| `exercici_id`, `data` | FK, date | |
+| `exercici_id`, `data` | FK, date | `exercici_id` per la data, amb `imputacio_excepcional` + `motiu_imputacio` com a moviments (D-029) |
 | `tipus` | enum | `lliurament`, `regularitzacio`, `despesa_fons`, `devolucio`, `avancament`, `reintegrament` |
 | `delegat_id` | FK usuaris **not null** | ja no hi ha `_event` |
 | `import` | numeric(12,2) `CHECK > 0` | |
@@ -174,7 +176,7 @@ Es deixen fora `areaNom`, `delegacioNom`, `eventNom`, `responsable` i `ticketUrl
 | Columna | Tipus | Notes |
 |---|---|---|
 | `id` | text PK | conserva l'`eventId` antic com a id (també els `_se_…`) |
-| `exercici_id` | FK | |
+| `exercici_id` | FK | per la data, amb excepció com a moviments (D-029) |
 | `event_id` | FK null | **índex únic parcial**: una caixa per event (1:1) |
 | `descripcio` | text | obligatòria si no hi ha event (`CHECK`) |
 | `data` | date | |
@@ -281,14 +283,14 @@ parelles de data i import), importacions (`fontImport` + dia de creació de l'id
   d'error, permesa per D-025.
 - Desfer una importació sencera, i saber quina regla ha classificat cada moviment.
 - Més d'un justificant per moviment.
-- El color de l'àrea es desa; el bloqueig de pressupost és per exercici; l'exercici tancat es desa (però no
-  bloqueja fins que es decidisca A-01).
+- El color de l'àrea es desa; el bloqueig de pressupost és per exercici.
+- L'exercici d'un registre ve de la seua data, i un exercici tancat no es pot tocar sense una excepció amb motiu (D-029).
 - Un usuari amb historial es desactiva en lloc d'esborrar-se.
 - Registre d'activitat i recuperació del que s'ha esborrat.
 
 ## 8. Decisions obertes del model (d'una en una)
 1. ~~**Operacions**~~ — **Decidit (D-027, 2026-10-13)**: s'adopta la taula `operacions`.
 2. ~~**Esborrar**~~ — **Decidit (D-028, 2026-10-13)**: esborrat real i recuperació des de `audit_log`; sense paperera.
-3. **`exercici_id` dels moviments**: es conserva el desat (recomanat per a 1:1) i una vista avisa dels que no casen amb la data.
+3. ~~**Exercici dels registres**~~ — **Decidit (D-029, 2026-10-13)**: per la data; exercici tancat bloquejat; excepcions amb motiu.
 4. **Responsable dels moviments importats**: avui és qui importa; es manté (1:1)?
 5. **Consums de falles.app** (§4.5): taula pròpia, fora del llibre major (recomanat), o compte `app` exclòs dels informes?

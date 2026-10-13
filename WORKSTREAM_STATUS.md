@@ -84,7 +84,9 @@ Confirmats: 01 Banc (extracte al 28/9 + despeses manuals del 8/10) i TPV (0 €)
 3. A Configuració → Regles (Emilio): `T.PlanaMyCommerce` i `MANTENIMIENTO TPV` a 01 Tresoreria; esborrar `PR.DE;`;
    buidar el concepte de `PR.DE` i `DETIR`; allargar `RAMS`. Opcional: regla `FATIR` → 01 Secretaria (remeses de quotes).
 4. Avançament pendent d'A. Alario: 40 €.
-5. Decidir si les remeses de quotes (`FATIR…`) i els apunts del TPV tenen regla pròpia; les àrees confirmades són TPV →
+5. **02 Banc (D-029)**: obtindre el saldo real de Caixa Popular a 31/03/2026. Si és 24.542,39 €, els 7 moviments del 02 Banc
+   d'abril–maig de 2026 (600,60 € nets de despesa) passen del 25/26 al 26/27 i el saldo inicial 26/27 del 02 Banc a 24.542,39 €.
+6. Decidir si les remeses de quotes (`FATIR…`) i els apunts del TPV tenen regla pròpia; les àrees confirmades són TPV →
    01 Tresoreria, WiFi COM.T → 07 Coordinació Tècnica, aigua → 01 Jurídica i Contractacions, quotes → 01 Secretaria.
 
 ---

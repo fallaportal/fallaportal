@@ -469,3 +469,26 @@ una operació sencera, D-027) a partir del valor "abans".
   - La restauració ha de comprovar que les claus foranes encara existeixen (p. ex. la delegació) i avisar si no.
   - `audit_log` no es pot esborrar ni modificar per ningú (RLS), perquè és l'única còpia del que s'ha esborrat.
 
+---
+
+### D-029: L'exercici es calcula per la data; un exercici tancat no es pot modificar sense excepció
+**Date**: 2026-10-13
+**Status**: Accepted (Emilio)
+**Context**: Avui cada moviment guarda l'exercici actiu en el moment de crear-lo (A-10) i "Tancar exercici" no
+bloqueja res (A-01). A les dades reals hi ha 9 moviments i 14 fons del 25/26 amb data del 26/27: 7 són comissions,
+quota i impostos del 02 Banc d'abril–maig de 2026 importats per error a l'any actiu; la resta (Festa de Cloenda 2026,
+caixes de maig, devolució de fons del 02/06/2026) semblen imputats al 25/26 a propòsit.
+**Decision**:
+  1. A Supabase, l'exercici de moviments, fons i caixes **es calcula per la data** (dates de `exercicis`, D-026).
+  2. Un **exercici tancat** no accepta altes, edicions ni esborrats.
+  3. **Excepció**: `president`\|`treasury` poden imputar un registre a un exercici diferent del de la data o escriure
+     en un exercici tancat amb **motiu obligatori** (`imputacio_excepcional`, `motiu_imputacio`, i `audit_log`).
+  4. **Migració 1:1**: els registres que no casen entren com a excepcions amb el motiu "Imputat al 25/26 a l'app
+     antiga"; cap xifra canvia i la Fase 6 compara igual.
+  5. **Correcció a part**: els 7 moviments del 02 Banc passen al 26/27 i el saldo inicial del 02 Banc 26/27 passa de
+     23.941,79 € a 24.542,39 € (+600,60), **després de comprovar el saldo real de Caixa Popular a 31/03/2026**.
+**Consequences**:
+  - Supersedeix el tractament "conservar el valor desat" proposat a A-10 i resol A-01 (bloqueig).
+  - El 25/26 ja està tancat: activar el bloqueig des del primer dia no canvia cap xifra.
+  - Les dates fixes del codi (4 llocs) passen a llegir les de `exercicis`.
+
