@@ -422,3 +422,18 @@ comportament alhora que es migra, una diferència no es pot atribuir a un error 
     WS-CONCILIACIÓ i la connexió als bancs (D-023).
 **Consequences**: Les anomalies de `INFORME_ANOMALIES_F0.md` marcades "Replicar" es traslladen tal qual; les de
 "Corregir en migrar" són canvis de model; les de "Decidir" esperen la decisió d'Emilio.
+
+---
+
+### D-026: L'exercici fiscal va del 01/04 al 31/03
+**Date**: 2026-10-13
+**Status**: Accepted (Emilio)
+**Context**: Emilio dubtava si la falla comença l'exercici el 20/03 (després de la Cremà) o el 01/04. L'app ja usa
+el 01/04 (fix al codi en 4 llocs) i els saldos inicials del 25/26 i del 26/27 estan datats el 01/04; el del 01 Banc
+26/27 es va quadrar amb el banc a eixa data.
+**Decision**: L'exercici va del **01/04 al 31/03**. Els dies del 20 al 31/03 serveixen per liquidar els pendents de
+Falles dins del mateix exercici.
+**Consequences**:
+  - Cap canvi a les dades: els 9 moviments del 20–31/03/2026 continuen al 25/26.
+  - Al model nou (`MODEL_DADES.md`) les dates d'inici i fi es desen a cada exercici en lloc d'estar fixes al codi.
+

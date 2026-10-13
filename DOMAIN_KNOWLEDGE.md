@@ -31,9 +31,8 @@
 
 **Event** — Activitat de la falla. Associat a delegació i any fiscal.
 
-**Any Fiscal** — Període comptable format `XX/YY` (ex: `26/27`). A l'app, del 01/04 al 31/03 (fix al codi; els saldos
-inicials del 25/26 i del 26/27 estan datats el 01/04). Emilio dubta (2026-10-13) si la falla el comença el 20/03
-(després de la Cremà): pendent de confirmar. Amb el 20/03, 9 moviments del 20–31/03/2026 passarien del 25/26 al 26/27.
+**Any Fiscal** — Període comptable format `XX/YY` (ex: `26/27`). **Del 01/04 al 31/03** (D-026): els dies entre la
+Cremà (19/03) i el 31/03 serveixen per liquidar els pendents de Falles dins del mateix exercici.
 
 **Banc** — Entitat a `DB.config.bancs`. Camps: `id`, `codi`, `nom`, `tipus` (`bank`|`cash`|`tpv`), `saldoInicial`, `saldoData`.
 
