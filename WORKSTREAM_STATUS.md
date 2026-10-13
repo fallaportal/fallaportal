@@ -339,6 +339,13 @@ Nota: ara que `_desantAraMateix` existeix, aquest últim requisit és més fàci
 
 **Informes R5–R8**: pendents de definir.
 
+**WS-BANK-API — connexió automàtica als bancs (PSD2)**: idea de 2026-10-13, decisió
+proposada a D-023. Depén de WS-SUPABASE: no començar abans de la Fase 3 (capa de dades).
+Primer pas: prova de concepte amb el 01 Banc en sandbox d'un agregador (triar-lo i
+verificar-ne preus i cobertura de Caixabank i Caixa Popular). Els moviments entren pel mateix
+procés que l'extracte CSV, no directes a `moviments`. Limitacions: ~4 consultes/dia per
+compte i consentiment que cal renovar cada 90–180 dies.
+
 **Botó Refresh en mòbil**: només és a la barra lateral (escriptori).
 
 **Pressupostos — re-render silenciós**: la pàgina es queda en blanc durant el polling.

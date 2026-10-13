@@ -338,3 +338,43 @@ tornava a comptar.
     diguen què van ser.
   - El saldo de la Caixa efectiu només serà fiable després d'això i d'un recompte físic
     (= caixa física + saldos positius dels delegats).
+
+---
+
+### D-023: Connexió automàtica als bancs (Open Banking / PSD2) — després de Supabase
+**Date**: 2026-10-13
+**Status**: Proposed — només enfocament; sense proveïdor triat ni codi
+**Context**: Hui els moviments bancaris entren per extracte CSV/XLS descarregat a mà
+(`processXLSBanc`, WS-BANK). Emilio vol valorar tindre les dades sempre actualitzades. Cap
+banc ofereix una API directa a una falla; el camí estàndard és PSD2 (accés a informació de
+comptes) a través d'un agregador autoritzat (p. ex. Enable Banking, GoCardless Bank Account
+Data, Tink, TrueLayer, Salt Edge; disponibilitat i preus per verificar). Comptes: 01 Banc i
+03 Banc (Caixabank), 02 Banc (Caixa Popular, cooperativa: cobertura per comprovar) i el compte
+TPV.
+**Decision**:
+  - **No es construeix res a l'arquitectura actual.** Els secrets de l'agregador i els tokens
+    de consentiment no poden viure en un `index.html` públic, i D-001 no deixa lloc a un
+    backend. Un backend provisional (Apps Script o similar) es descartaria amb la migració.
+  - **Es farà sobre Supabase** (D-021), a partir de la Fase 3 (capa de dades): Edge Function
+    que parla amb l'agregador, `pg_cron` que la dispara, tokens en una taula inaccessible al
+    client (RLS), Realtime per mostrar els moviments nous.
+  - **Els moviments de l'API no van directes a `moviments`.** Passen pel mateix procés que
+    l'extracte (regles d'importació, `bankHash` anti-duplicats, `conciliacio`), amb
+    `fontImport: 'api_[bancId]'` i en estat pendent de revisió. Raó: un xec `CARG.CHEQUE`
+    no diu si és retirada d'efectiu, diners per a un delegat o un pagament directe (D-022);
+    ho han de classificar persones. L'API substitueix només el pas "descarregar i arrossegar
+    el fitxer".
+  - **Primer una prova de concepte** amb un sol compte (01 Banc) en sandbox, per veure quins
+    camps arriben de veritat. Només si convenç, s'amplia als altres comptes.
+**Consequences / limitacions acceptades**:
+  - No és temps real: PSD2 limita les consultes sense l'usuari present a unes 4 per dia i
+    compte.
+  - El consentiment caduca (uns 90–180 dies segons banc i agregador): un tresorer l'ha de
+    renovar a l'app del banc, i l'app ha d'avisar abans que el feed s'aturi.
+  - El camp "Més dades" del CSV, que ajuda a decidir l'àrea, pot no existir a l'API.
+  - El TPV només es pot connectar com a compte bancari; el detall de vendes depén de l'adquirent.
+  - Dades sensibles (IBAN, moviments, tokens): només al projecte de Supabase a la UE i mai al
+    repo, igual que els extractes (D-018).
+  - Alternatives descartades de moment: millorar la importació CSV (continua manual) i
+    Norma 43 de Caixabank empresa (fitxer estructurat, però semiautomàtic). Es poden
+    reconsiderar si la prova de concepte falla.
