@@ -1,6 +1,6 @@
 # Work Stream Status — Falla Portal
 ## Snapshot Date: 2026-10-13
-## Versió en producció: v4.0.58
+## Versió en producció: v4.0.59
 
 > **Context de calendari**: període vacacional, ús baix de l'eina. Bon moment per a
 > canvis estructurals i per a la decisió pendent del Service Worker.
@@ -26,17 +26,29 @@ GitHub Pages. Decisió D-021.
 
 ---
 
+### Estat financer 2026-10-13 (resultat de l'exercici 26/27 fins ara)
+
+- **Resultat = −40.702,46 €**: la suma de tots els saldos ha baixat de 88.362,68 € (1/4/2026: 01 Banc
+  16.374,02 + 02 Banc 23.941,79 + Efectiu 17.856,00 + TPV 0 + 03 Banc 30.190,87) a 47.660,22 € (01 Banc
+  9.391,88 + 02 Banc 23.941,79 + Efectiu 4.135,68 + TPV 0 + 03 Banc 10.190,87). Es gasta de les reserves.
+- **Confiança dels saldos**: només 01 Banc (9.391,88 €, quadrat amb l'extracte al 28/9 + despeses manuals del
+  8/10) i TPV (0 €) estan confirmats. 02 Banc (sense cap moviment a 26/27; l'últim extracte és del 3/5), 03 Banc
+  (extracte del 18/5) i l'efectiu (aproximat, sense recompte) sumen 38.268,34 €, el 80 % del total, i no estan
+  confirmats.
+- **Si els xecs 364928, 364930 i 364931 (860 + 5.750 + 502 = 7.112 €) eren retirades per a la caixa**, el resultat
+  passaria a −33.590,46 €; si eren pagaments a proveïdors, no canvia.
+
+---
+
 ### Completat 2026-10-13 — Xec de 3.000 € d'Alario i correcció del traspàs (v4.0.58)
 
 - **Error corregit a v4.0.58**: `crearTraspasBancCaixa` guardava amb `saveMoviment` (que AFEGEIX
   una fila) un moviment ja existent que reclassificava, la qual cosa el duplicaria al full. Ara,
   si es reclassifica un moviment existent, es reescriu la pestanya sencera (`save('moviments')`); si
   només hi ha moviments nous, s'afegeixen. Verificat mirant exactament què s'envia al full.
-- **Botó puntual** a Configuració → Exercicis (`_XEC_ALARIO`, `_xecAlarioPla`, `arreglaXecAlario`):
-  el xec 364929 del 16/9 (3.000 €, Monument Gran) passa a Tresoreria + entrada de 3.000 € a la
-  Caixa efectiu; la despesa queda només al pagament d'Alario del 26/9 ("Pagament Octubre").
-  Només apareix si els moviments coincideixen i desapareix en aplicar-se. **ELIMINAR aquest codi
-  de `index.html` després d'aplicar-lo.**
+- **Xec 364929 (3.000 €, 16/9) arreglat**: Emilio va aplicar el botó puntual (xec a Tresoreria + entrada
+  de 3.000 € a la Caixa efectiu; la despesa de Monument Gran queda només al pagament d'Alario del 26/9).
+  El codi d'un sol ús s'ha eliminat a v4.0.59: ja no queda cap botó puntual a l'app.
 - **8/10**: els tresorers confirmen que la transferència de "Gorres negres" (4.116,42 €) i "Filament
   3D" (214,95 €) es va fer el 8/10 pel banc. Encara no hi ha apunts bancaris d'eixa data (l'últim
   extracte arriba al 28/9): quan s'importe, apareixeran com a "possibles duplicats" i s'han de

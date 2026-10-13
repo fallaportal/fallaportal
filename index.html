@@ -337,7 +337,7 @@ tr:hover td{background:var(--bg2)}
     <div class="login-logo">Falla <span>Portal</span></div>
     <div class="login-sub">Sistema de gestió financera</div>
     <div class="login-fiscal">Any fiscal 26/27 · Abr 2026 – Mar 2027</div>
-    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v4.0.58</div>
+    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v4.0.59</div>
     <button class="btn-google" onclick="signIn()">
       <svg viewBox="0 0 24 24" width="20" height="20"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
       Entrar amb Google
@@ -379,7 +379,7 @@ tr:hover td{background:var(--bg2)}
     <div class="sb-bottom">
       <div class="sync-ind" style="display:flex;align-items:center;justify-content:space-between"><div style="display:flex;align-items:center;gap:6px"><div class="sync-dot" id="sync-dot"></div><span id="sync-text">Sincronitzat</span></div><button onclick="manualRefresh()" title="Actualitzar dades" style="background:none;border:none;cursor:pointer;padding:2px 4px;color:var(--text2);font-size:14px;line-height:1"><i class="ti ti-refresh"></i></button></div>
       <button class="btn-logout" onclick="signOut()"><i class="ti ti-logout" style="font-size:14px"></i> Tancar sessió</button>
-      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v4.0.58</div>
+      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v4.0.59</div>
     </div>
   </div>
 
@@ -6517,51 +6517,6 @@ async function deleteRegla(id){
   save('regles').catch(function(e){console.warn(e);});
 }
 
-// ── Xec de 3.000 € d'Alario (2026-10-13) ── ELIMINAR després d'usar-lo.
-// El xec 364929 (16/9) està apuntat com a despesa de Monument Gran i el pagament d'Alario del 26/9
-// ("Pagament Octubre", 3.000 €) també: la despesa compta dues vegades. El xec passa a ser un
-// traspàs banc → caixa a Tresoreria (+ entrada a l'efectiu); la despesa queda només al pagament.
-const _XEC_ALARIO={
-  af:'26/27',xecId:'m1791711505922_6ixk0.9579865506639164',data:'16/09/2026',import:3000,bancCodi:'01 Banc',
-  pagamentId:'m1790458154071_82bg',pagamentData:'26/09/2026'
-};
-function _xecAlarioPla(){
-  const P=_XEC_ALARIO;
-  if(getAnyFiscal()!==P.af)return{ok:false};
-  const xec=(DB.moviments||[]).find(function(m){return m.id===P.xecId;});
-  const pag=(DB.moviments||[]).find(function(m){return m.id===P.pagamentId;});
-  if(!xec||!pag)return{ok:false};
-  if(xec.via!==P.bancCodi||xec.data!==P.data||xec.tipus!=='gast'||Math.abs((parseFloat(xec.import)||0)-P.import)>=0.005)return{ok:false};
-  if(pag.via!=='Efectiu'||pag.data!==P.pagamentData||pag.tipus!=='gast'||Math.abs((parseFloat(pag.import)||0)-P.import)>=0.005)return{ok:false};
-  if(xec.areaId==='01'&&xec.delegacioId==='0102')return{ok:false};   // ja reclassificat
-  const jaFet=(DB.moviments||[]).some(function(m){
-    return m.via==='Efectiu'&&m.tipus==='ing'&&m.origenFons==='banc_caixa'&&m.data===P.data&&Math.abs((parseFloat(m.import)||0)-P.import)<0.005;
-  });
-  if(jaFet)return{ok:false};
-  return{ok:true,xec:xec,pag:pag};
-}
-async function arreglaXecAlario(){
-  const P=_XEC_ALARIO;
-  let p;
-  try{p=_xecAlarioPla();}catch(e){showToast('Error comprovant: '+e.message,true);return;}
-  if(!p.ok){showToast('No disponible (ja aplicat o les dades han canviat)',true);return;}
-  const resum='Xec de '+fmtD(P.import)+' del '+P.data+' ('+p.xec.concepte+')\n\n'+
-    '• Deixa de ser despesa de '+(p.xec.delegacioNom||'Monument Gran')+' i passa a Administració · Tresoreria (traspàs banc → caixa).\n'+
-    '• S\'afegeix l\'entrada de '+fmtD(P.import)+' a la Caixa efectiu, el '+P.data+'.\n'+
-    '• La despesa de '+fmtD(P.import)+' queda només al pagament d\'Alario del '+P.pagamentData+' ("'+p.pag.concepte+'").\n\n'+
-    'El saldo del banc no canvia i la Caixa efectiu puja '+fmtD(P.import)+'. Abans es descarregarà una còpia de seguretat. Continuar?';
-  if(!confirm(resum))return;
-  try{
-    exportSnapshotExercici(P.af);
-    await new Promise(function(r){setTimeout(r,800);});
-    await crearTraspasBancCaixa(P.import,P.data,P.bancCodi,P.xecId,'A. Alario','xec 364929');
-    showToast('Xec arreglat: la despesa ara compta una sola vegada');
-    renderCfgExercicis();
-  }catch(e){
-    showToast('Error aplicant el canvi: '+e.message+'. Recarrega i comprova; tens la còpia de seguretat descarregada.',true);
-  }
-}
-
 function renderCfgExercicis(){
   const container=document.getElementById('cfg-exercicis');
   if(!container){console.warn('cfg-exercicis-container no trobat');return;}
@@ -6571,14 +6526,6 @@ function renderCfgExercicis(){
   const estats=DB.config.estats_exercicis||{};
   let html='';
   if(canDo){
-    let xecAl=null;
-    try{const px=_xecAlarioPla();if(px.ok)xecAl=px;}catch(e){}
-    if(xecAl){
-      html+='<div style="background:var(--amber-bg);border:1px solid var(--amber);border-radius:var(--r);padding:12px 14px;margin-bottom:16px;color:var(--amber-text);font-size:13px">'+
-        '<div style="font-weight:600;margin-bottom:4px"><i class="ti ti-alert-triangle"></i> Xec de 3.000 € d\'Alario comptat dues vegades</div>'+
-        '<div style="margin-bottom:10px">El xec del 16/9 i el pagament d\'Alario del 26/9 (Monument Gran) són la mateixa despesa. El xec passarà a ser un traspàs banc → caixa a Tresoreria, amb l\'entrada equivalent a la Caixa efectiu. Es descarrega una còpia de seguretat abans.</div>'+
-        '<button class="btn btn-primary" onclick="arreglaXecAlario()"><i class="ti ti-arrows-exchange"></i> Revisar i aplicar</button></div>';
-    }
     html+='<div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">';
     html+='<button class="btn btn-primary" onclick="obrirNouExercici()"><i class="ti ti-calendar-plus"></i> Nou exercici</button>';
     html+='<button class="btn" onclick="openModalTancarExercici()" style="color:var(--amber)"><i class="ti ti-lock"></i> Tancar exercici actual</button>';
