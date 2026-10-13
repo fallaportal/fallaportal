@@ -492,3 +492,17 @@ caixes de maig, devolució de fons del 02/06/2026) semblen imputats al 25/26 a p
   - El 25/26 ja està tancat: activar el bloqueig des del primer dia no canvia cap xifra.
   - Les dates fixes del codi (4 llocs) passen a llegir les de `exercicis`.
 
+---
+
+### D-030: Separar qui entra un moviment de qui n'és responsable
+**Date**: 2026-10-13
+**Status**: Accepted (Emilio)
+**Context**: El camp `responsable` d'un moviment manual és qui ha fet el pagament o el cobrament; en un moviment
+importat (extracte, falles.app) és qui ha pujat el fitxer. L'Historial mostra centenars de moviments del banc com si
+els haguera fet qui els va importar.
+**Decision**: Al model de Supabase, `creat_per` (sempre: qui entra o importa) i `responsable_id` (només moviments
+manuals: qui fa el pagament o cobrament; buit als importats). En migrar, el responsable dels importats passa a
+`creat_per`.
+**Consequences**: Cap xifra ni permís canvia (els importats només els poden tocar `president`\|`treasury`, igual que
+ara). L'Historial mostra "importat per X" als importats i el filtre de responsable deixa de comptar-los.
+

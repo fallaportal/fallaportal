@@ -147,7 +147,8 @@ caixa esborra els moviments de l'operació `tancar_caixa`, no els que casen per 
 | `font` | enum | `origen` + `fontImport` + `origenFons` | `manual`, `ingres_tercer`, `traspas_banc_caixa`, `extracte`, `csv_generic`, `fallesapp_transaccions`, `fallesapp_tickets`, `fallesapp_entrades`, `fallesapp_bonificacio`, `tancament_caixa`, `retirada_caixa` |
 | `pagament_efectiu` | enum null | `origenFons` | `caixa` \| `fons_lliurats` \| `avancament` (només despeses en efectiu) |
 | `concepte`, `establiment`, `notes` | text | | |
-| `responsable_id` | FK usuaris null | `responsableEmail` | per email; si no casa, `responsable_extern` text |
+| `responsable_id` | FK usuaris null | `responsableEmail` (només manuals) | qui ha fet el pagament o cobrament; **buit als importats** (D-030); si l'email no casa, `responsable_extern` text |
+| `creat_per` | FK usuaris not null | `responsableEmail` (importats) | qui l'ha entrat o importat; als manuals migrats, el mateix responsable |
 | `conciliacio` | enum `pendent` \| `conciliat` \| `no_aplica` | `conciliacio` | per defecte amb la regla de `calcConciliacio` |
 | `empremta` | text null | `bankHash` | **índex no únic** `(compte_id, empremta)` (A-04) |
 | `regla_id` | FK null | (`assignatPer`, es perdia) | quina regla l'ha classificat |
@@ -292,5 +293,5 @@ parelles de data i import), importacions (`fontImport` + dia de creació de l'id
 1. ~~**Operacions**~~ — **Decidit (D-027, 2026-10-13)**: s'adopta la taula `operacions`.
 2. ~~**Esborrar**~~ — **Decidit (D-028, 2026-10-13)**: esborrat real i recuperació des de `audit_log`; sense paperera.
 3. ~~**Exercici dels registres**~~ — **Decidit (D-029, 2026-10-13)**: per la data; exercici tancat bloquejat; excepcions amb motiu.
-4. **Responsable dels moviments importats**: avui és qui importa; es manté (1:1)?
+4. ~~**Responsable dels importats**~~ — **Decidit (D-030, 2026-10-13)**: `creat_per` (qui entra o importa) separat de `responsable_id` (només manuals).
 5. **Consums de falles.app** (§4.5): taula pròpia, fora del llibre major (recomanat), o compte `app` exclòs dels informes?
