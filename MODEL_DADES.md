@@ -235,6 +235,13 @@ moviments amb un compte fals. Les xifres de Dashboard, Resultats, Flux i pressup
 r3 llegiria els ingressos de l'event de moviments **+** consums, amb el mateix resultat. Els consums deixarien
 d'aparéixer a l'Historial de moviments (es veurien a la pantalla de Falles.app).
 
+**`fallesapp_recarregues`** — **requisit d'Emilio (2026-10-13): quadrar el que diu falles.app amb el que ha entrat de
+veritat a l'efectiu i als bancs.** Una fila per recàrrega o devolució del fitxer de transaccions (`id`, `exercici_id`,
+`data_hora`, `tipus` (`efectiu`, `tpv`, `devolucio`), `import`, `comanda_redsys`, `operacio_id`). Vista
+`v_quadrament_fallesapp` per dia o període: total de falles.app contra els moviments reals que li corresponen a la Caixa
+efectiu i als comptes bancaris (liquidacions "Ingrés APP", ingressos d'efectiu al banc), amb la diferència. Des de la
+v4.0.67 les recàrregues TPV ja no es posen al llibre (entren pel banc, A-27).
+
 ### 4.6 Sistema
 **`config`**: `clau text PK`, `valor jsonb`. Queden: `exercici_actiu` (global, 1:1 A-02) i `justificant`
 (`{mode, llindar}`). `drive_folders` desapareix (Storage).

@@ -68,7 +68,7 @@ Cremà (19/03) i el 31/03 serveixen per liquidar els pendents de Falles dins del
 
 ### Established Facts
 
-- **Versió en producció actual**: v4.0.66 (BUILD_VERSION `4066`) [TIME-SENSITIVE: 2026-10-13]
+- **Versió en producció actual**: v4.0.67 (BUILD_VERSION `4067`) [TIME-SENSITIVE: 2026-10-13]
 - **La caducitat del token de Google no tanca la sessió** [v4.0.47–48, D-020]:
   - Apareix un bàner i els guardats esperen el token nou.
   - `save()`/`writeTab()` esperen **abans** de fer la còpia de `DB`.
@@ -122,8 +122,11 @@ Cremà (19/03) i el 31/03 serveixen per liquidar els pendents de Falles dins del
 - **Falles.app** (sense decisió escrita; reconstruït el 2026-10-13): les **recàrregues** (efectiu i TPV) i les
   devolucions són apunts reals; els **consums per event** es pugen amb `via:'app'` només per atribuir ingressos als
   events (r3) i no entren a Dashboard, Resultats ni Flux (ja van entrar com a recàrrega); la **bonificació** dels
-  moneders és una despesa `via:'Virtual'` que sí compta. Les recàrregues TPV al 01 Banc del 25/26 probablement
-  dupliquen la liquidació de l'extracte (A-27).
+  moneders és una despesa `via:'Virtual'` que sí compta.
+- **Recàrregues TPV de falles.app**: la plataforma les liquida al 01 Banc agrupades i entren per l'extracte com a
+  "Ingrés APP". Des de la v4.0.67 la importació de falles.app **no** les crea (abans es comptaven dues vegades: 117
+  apunts, 2.836,50 € al 25/26, A-27). Les d'**efectiu** sí que s'importen (ingrés a la Caixa efectiu per dia).
+- Emilio vol **quadrar el que diu falles.app amb el que entra a l'efectiu i als bancs** (requisit del model nou).
 - **Tancament de caixa**: el TPV només es desa a `tancaments.tpv`; els moviments que es generen són l'"Efectiu net"
   i els "Pagaments". Els apunts d'event de `fons` tenen `delegId:'_event'`; els tancaments "sense event" tenen un
   `eventId` sintètic `_se_…`.

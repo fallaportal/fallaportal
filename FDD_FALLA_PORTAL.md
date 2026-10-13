@@ -121,6 +121,9 @@ la pujada d'un justificant falla.
 ---
 
 #### F-08: Integració Falles.app
+**Description**: Quatre zones: transaccions (recàrregues d'efectiu agrupades per dia i devolucions; les recàrregues
+TPV **no** s'importen des de la v4.0.67 perquè arriben per l'extracte com a "Ingrés APP"), saldos (passiu dels moneders),
+tickets (consums per event, `via:'app'`, només estadístics) i entrades. Bonificacions com a despesa `Virtual`.
 **Status**: Implementat
 
 ---

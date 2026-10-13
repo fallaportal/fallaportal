@@ -1,6 +1,6 @@
 # Work Stream Status — Falla Portal
 ## Snapshot Date: 2026-10-13
-## Versió en producció: v4.0.66
+## Versió en producció: v4.0.67
 
 > **Context de calendari**: període vacacional, ús baix de l'eina. Bon moment per a
 > canvis estructurals i per a la decisió pendent del Service Worker.
@@ -73,6 +73,13 @@ compte una sola vegada. Va començar quan el 01 Banc mostrava un desquadrament d
 23.941,79 + Efectiu 4.637,68 + TPV 0 + 03 Banc 10.190,87): **resultat −40.200,46 €**, finançat amb les reserves.
 Confirmats: 01 Banc (extracte al 28/9 + despeses manuals del 8/10) i TPV (0 €). **Sense confirmar (80 % del total)**:
 02 Banc (cap moviment a 26/27; l'últim extracte és del 3/5), 03 Banc (extracte del 18/5) i Efectiu (aproximat).
+
+**v4.0.67 (2026-10-13) — recàrregues TPV de falles.app duplicades (A-27)**: botó puntual a Configuració → Exercicis
+("117 recàrregues TPV de falles.app comptades dues vegades", "Revisar i aplicar") que esborra els 117 apunts "Recàrrega TPV"
+del 01 Banc 25/26 (2.836,50 €), només si casen exactament i l'extracte té els 25 "Ingrés APP" pel mateix total; descarrega
+còpia abans. A més, la importació de transaccions de falles.app ja no crea les recàrregues TPV. Verificat en execució amb
+dades sintètiques (2 escriptures: PUT + clear; proves negatives). **Pendent**: que Emilio l'aplique i eliminar el codi puntual.
+Efecte: el saldo final del 01 Banc 25/26 segons l'app passa de 19.210,51 € a 16.374,01 € (casa amb l'inicial del 26/27).
 
 **Pendents** (res d'això depén de codi):
 1. Extractes actuals: Caixabank ES06 2100 1958 3602 0008 8726 des del 29/9; Caixabank ES56 2100 7990 7413 0059 2938
