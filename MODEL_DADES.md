@@ -1,5 +1,5 @@
 # Model de dades — Falla Portal a Supabase
-## Redactat: 2026-10-13 · Estat: proposta per revisar amb Emilio (entrada de la Fase 1) · Decisions: D-021, D-024, D-025
+## Redactat: 2026-10-13 · Estat: decisions del §8 preses (D-027–D-031); entrada de la Fase 1 · Decisions: D-021, D-024, D-025
 
 Aquest document es llig sense context previ. Substitueix l'esborrany de taules del §4 de
 `PLA_MIGRACIO_SUPABASE.md`. Es basa en `INVENTARI_FUNCIONAL.md` (què fa l'app), `INFORME_ANOMALIES_F0.md`
@@ -108,8 +108,8 @@ de §4.2.
 | `als_informes` | boolean | **reprodueix 1:1** l'exclusió de `via:'app'` de Dashboard, Resultats i Flux |
 
 Un compte nou de tipus `virtual` per al valor màgic **`Virtual`** (bonificacions de falles.app, que sí compten com
-a despesa). El valor `app` **no** es converteix en compte si s'accepta la proposta de §4.5 (consums de falles.app fora
-del llibre major); si no s'accepta, es crea un compte `app` amb `als_informes=false`. El Flux i r4 passen a llistar els
+a despesa). El valor `app` **no** es converteix en compte: els consums de falles.app van a `fallesapp_consums`, fora del
+llibre major (D-031). El Flux i r4 passen a llistar els
 comptes de la taula en lloc d'una llista fixa (A-21; els totals no canvien).
 
 **`saldos_inicials`**: `PK (compte_id, exercici_id)`, `import numeric(12,2)`, `data date`. Clau forana real (A-03).
@@ -218,7 +218,7 @@ per a ell és el mateix (no entra), i l'historial no queda orfe.
 **`fallesapp_passiu`**: `id`, `exercici_id`, `data`, `total`, `fallers`, `operacio_id` — es guarda l'historial;
 la pantalla mostra l'últim de l'exercici (1:1).
 
-**`fallesapp_consums`** — **proposta, pendent de confirmar amb Emilio**. Què fa avui l'app amb falles.app (no hi ha
+**`fallesapp_consums`** — **decidit (D-031, 2026-10-13)**. Què fa avui l'app amb falles.app (no hi ha
 cap decisió escrita; reconstruït del codi i de les dades del 25/26):
 | Què es puja | 25/26 | Tractament actual |
 |---|---|---|
@@ -229,7 +229,7 @@ cap decisió escrita; reconstruït del codi i de les dades del 25/26):
 | Bonificació moneders | 31.967,20 € | moviment real (despesa `Virtual`) |
 
 Els consums no són diners que entren (ja van entrar com a recàrrega): són **dades estadístiques** per atribuir
-ingressos als events. Proposta: taula pròpia `fallesapp_consums` (`id`, `exercici_id`, `event_id FK null`,
+ingressos als events. Per això van a una taula pròpia `fallesapp_consums` (`id`, `exercici_id`, `event_id FK null`,
 `area_id`, `delegacio_id`, `import`, `consums int`, `periode_inici`, `periode_fi`, `operacio_id`) en lloc de
 moviments amb un compte fals. Les xifres de Dashboard, Resultats, Flux i pressupost no canvien (ja els excloïen);
 r3 llegiria els ingressos de l'event de moviments **+** consums, amb el mateix resultat. Els consums deixarien
@@ -259,7 +259,7 @@ d'aparéixer a l'Historial de moviments (es veurien a la pantalla de Falles.app)
 | Pestanya | Destí |
 |---|---|
 | `00 Config` | `exercicis` (exercicis, estats), `config` (anyFiscal → `exercici_actiu`, justificant), `rol_moduls`, `rol_reports`; `drive_folders` i `fappPassiu` es descarten |
-| `01 Moviments` | `moviments` + `justificants` (de `ticketUrl`) + `operacions` reconstruïdes; els `via:'app'` (consums) a `fallesapp_consums` si s'accepta §4.5 |
+| `01 Moviments` | `moviments` + `justificants` (de `ticketUrl`) + `operacions` reconstruïdes; els `via:'app'` (consums) a `fallesapp_consums` (D-031) |
 | `02 Fons` | `fons` (tipus de persona) + `caixa_canvis` (`event_canvi`, `event_canvi_devolucio`) |
 | `03 Tancaments` | `caixes` |
 | `04`–`06` | `arees`, `delegacions`, `events` |
@@ -294,4 +294,6 @@ parelles de data i import), importacions (`fontImport` + dia de creació de l'id
 2. ~~**Esborrar**~~ — **Decidit (D-028, 2026-10-13)**: esborrat real i recuperació des de `audit_log`; sense paperera.
 3. ~~**Exercici dels registres**~~ — **Decidit (D-029, 2026-10-13)**: per la data; exercici tancat bloquejat; excepcions amb motiu.
 4. ~~**Responsable dels importats**~~ — **Decidit (D-030, 2026-10-13)**: `creat_per` (qui entra o importa) separat de `responsable_id` (només manuals).
-5. **Consums de falles.app** (§4.5): taula pròpia, fora del llibre major (recomanat), o compte `app` exclòs dels informes?
+5. ~~**Consums de falles.app**~~ — **Decidit (D-031, 2026-10-13)**: taula pròpia `fallesapp_consums`.
+
+Totes les decisions obertes del model estan preses (D-027 a D-031).

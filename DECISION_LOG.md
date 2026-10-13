@@ -506,3 +506,17 @@ manuals: qui fa el pagament o cobrament; buit als importats). En migrar, el resp
 **Consequences**: Cap xifra ni permís canvia (els importats només els poden tocar `president`\|`treasury`, igual que
 ara). L'Historial mostra "importat per X" als importats i el filtre de responsable deixa de comptar-los.
 
+---
+
+### D-031: Els consums de falles.app es guarden fora del llibre de moviments
+**Date**: 2026-10-13
+**Status**: Accepted (Emilio)
+**Context**: Els consums per event de falles.app (59.137 € el 25/26) es pugen com a moviments amb `via:'app'` i
+s'exclouen a mà de Dashboard, Resultats i Flux: són estadístics (els diners ja van entrar com a recàrrega) i només
+serveixen per atribuir ingressos als events (r3). No hi havia cap decisió escrita; es va reconstruir del codi i de les
+dades. Les recàrregues, devolucions i bonificacions sí que són apunts reals i continuen al llibre.
+**Decision**: Taula pròpia `fallesapp_consums` (`MODEL_DADES.md` §4.5). No hi ha compte `app`.
+**Consequences**: Cap informe nou pot sumar-los per error. Dashboard, Resultats, Flux i pressupost no canvien; r3
+llegeix moviments + consums i dona el mateix. Els consums deixen de sortir a l'Historial de moviments i es veuen a la
+pantalla de Falles.app.
+
