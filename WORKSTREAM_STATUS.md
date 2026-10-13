@@ -1,6 +1,6 @@
 # Work Stream Status — Falla Portal
 ## Snapshot Date: 2026-10-13
-## Versió en producció: v4.0.57
+## Versió en producció: v4.0.58
 
 > **Context de calendari**: període vacacional, ús baix de l'eina. Bon moment per a
 > canvis estructurals i per a la decisió pendent del Service Worker.
@@ -23,6 +23,26 @@ GitHub Pages. Decisió D-021.
 **Blockers**:
   - Cap per a la Fase 0.
   - Per a la Fase 2 cal triar l'SMTP (§9.8 del pla).
+
+---
+
+### Completat 2026-10-13 — Xec de 3.000 € d'Alario i correcció del traspàs (v4.0.58)
+
+- **Error corregit a v4.0.58**: `crearTraspasBancCaixa` guardava amb `saveMoviment` (que AFEGEIX
+  una fila) un moviment ja existent que reclassificava, la qual cosa el duplicaria al full. Ara,
+  si es reclassifica un moviment existent, es reescriu la pestanya sencera (`save('moviments')`); si
+  només hi ha moviments nous, s'afegeixen. Verificat mirant exactament què s'envia al full.
+- **Botó puntual** a Configuració → Exercicis (`_XEC_ALARIO`, `_xecAlarioPla`, `arreglaXecAlario`):
+  el xec 364929 del 16/9 (3.000 €, Monument Gran) passa a Tresoreria + entrada de 3.000 € a la
+  Caixa efectiu; la despesa queda només al pagament d'Alario del 26/9 ("Pagament Octubre").
+  Només apareix si els moviments coincideixen i desapareix en aplicar-se. **ELIMINAR aquest codi
+  de `index.html` després d'aplicar-lo.**
+- **8/10**: els tresorers confirmen que la transferència de "Gorres negres" (4.116,42 €) i "Filament
+  3D" (214,95 €) es va fer el 8/10 pel banc. Encara no hi ha apunts bancaris d'eixa data (l'últim
+  extracte arriba al 28/9): quan s'importe, apareixeran com a "possibles duplicats" i s'han de
+  deixar desmarcats.
+- **Pendent**: xecs 364928 (860 €), 364930 (5.750 €) i 364931 (502 €): reclassificar-los (origen
+  "Banc" del lliurament, triant el moviment de l'extracte) quan es sàpiga què van ser.
 
 ---
 
