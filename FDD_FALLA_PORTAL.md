@@ -58,15 +58,31 @@ fotogràfic opcional.
 
 #### F-02: Importació CSV Bancari (WS-BANK)
 **Description**: Importació d'extractes bancaris. Classificació automàtica per regles.
-Detecció de duplicats per `bankHash`.
+Detecció de duplicats per `bankHash`, tenint en compte el sentit (un ingrés no és duplicat d'un pagament).
+**Preview** (v4.0.49–50): cada moviment dubtós és una fila clicable amb l'estat explícit "S'importarà" /
+"S'ometrà" (marcat = s'importa) i botons "Importar tots" / "Ometre tots". Es mostra la columna "Més dades" /
+"Mas Datos" del banc, detectada per nom de capçalera, perquè ajuda a decidir l'àrea.
+**Regles** (v4.0.54): el patró suggerit no porta números; la modal mostra quants moviments casa la regla (fitxer
+i historial); el concepte només es guarda si l'usuari el canvia; es pot limitar a pagaments o ingressos; una regla
+nova passa per davant de la que ja casava; la llista mostra tots els bancs i avisa de regles amb patró curt, número
+al concepte o patró repetit.
 **Acceptance Criteria**: duplicats detectats; regles apliquen àrea/delegació;
-els importats reben `origen:'CSV'` i `conciliacio:'conciliat'`.
+els importats reben `origen:'CSV'` i `conciliacio:'conciliat'`. Un moviment manual de banc pendent d'extracte
+apareix com a "possible duplicat" en importar-lo (cal desmarcar-lo).
 **Status**: Implementat
 
 ---
 
 #### F-03: Gestió de Fons Lliurats
-**Description**: Cicle sol·licitud → aprovació → lliurament → justificació.
+**Description**: Cicle sol·licitud → aprovació → lliurament → justificació. Model comptable a D-022:
+  - **Lliurament** i **devolució**: no fan apunt (els diners continuen sent de la caixa de la falla).
+  - **Despesa contra fons** i **avançament personal** (el delegat paga de la seua butxaca): fan apunt d'efectiu;
+    l'avançament deixa el saldo del delegat en negatiu.
+  - **Reintegrament** (la falla torna un avançament; botó visible a la targeta desplegada d'un delegat amb saldo
+    negatiu): només puja el saldo, sense apunt.
+  - **Origen "Banc"** (lliurament i reintegrament): els diners ixen del banc (xec o transferència) cap a un
+    delegat o la caixa. S'apunta un traspàs banc → caixa a Administració · Tresoreria (sortida del banc + entrada a
+    l'efectiu), sense despesa. Es pot triar un moviment ja importat de l'extracte perquè es reclassifique.
 **Status**: Implementat
 
 ---

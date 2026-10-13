@@ -1,6 +1,6 @@
 # Work Stream Status — Falla Portal
 ## Snapshot Date: 2026-10-13
-## Versió en producció: v4.0.65
+## Versió en producció: v4.0.66
 
 > **Context de calendari**: període vacacional, ús baix de l'eina. Bon moment per a
 > canvis estructurals i per a la decisió pendent del Service Worker.
@@ -26,107 +26,55 @@ GitHub Pages. Decisió D-021.
 
 ---
 
-### Completat 2026-10-13 — Xecs del 30/06 aplicats i botó eliminat (v4.0.61–v4.0.62)
+### Actiu — WS-QUADRAMENT (quadrament dels comptes de l'exercici 26/27, 2026-10-11 → 2026-10-13)
 
-- **Què eren els xecs** (segons els tresorers):
-  - **364930 (5.750 €)**: 5.500 € d'orquestres (diners donats a Antonio Javier, que va pagar Eventime) i 250 €
-    de seguretat (diners donats a Juanjo, que la va pagar); tot a Festejos i Gastronomia · Música, Ambientació i
-    Audiovisuals (0402). Cada part: xec = traspàs banc → caixa + lliurament al delegat + pagament contra fons.
-  - **364931 (502 €)**: diners donats a Juanjo, que va pagar el "Generador" en efectiu (despesa del 6/6 ja
-    apuntada): traspàs banc → caixa, la despesa estava comptada dues vegades.
-  - **364928 (860 €)**: encara no se sap. Una pista: Juanjo va pagar les grues (Monument Gran) però no hi ha
-    cap altre apunt de 860 €. No tocar fins que es confirme.
-  - 364929 (3.000 €): ja arreglat.
-- **Aplicat per Emilio** amb un botó puntual (dividir el 364930, simular el lliurament i el pagament de cada part a
-  Festejos · Música i afegir l'entrada de 502 € a l'efectiu). El codi d'un sol ús s'ha eliminat a v4.0.62: ja no
-  queda cap botó puntual a l'app. Verificat abans d'aplicar-lo: el total del banc no canvia, els saldos dels delegats
-  queden a 0 i no hi ha files repetides.
-- **Xec 364928 (860 €) — v4.0.65**: els tresorers confirmen que els diners van eixir del banc cap a la caixa i
-  d'allà es va pagar Manuel Neteja (Festejos · Dinars, Sopars i Festes), sense delegat pel mig. Botó puntual a
-  Configuració → Exercicis (`_XEC_860`, `_xec860Pla`, `arreglaXec860`): el xec és traspàs banc → caixa (entrada de
-  860 € a l'efectiu) i s'apunta el pagament en efectiu "Manuel Neteja" (data 10/07 per defecte; es pot canviar a
-  l'Historial). El banc i l'efectiu no canvien. **ELIMINAR aquest codi de `index.html` després d'aplicar-lo.**
-  Amb això, els quatre xecs (364928, 364929, 364930 i 364931) queden classificats.
-- **Generador MGM (502 €) — v4.0.63**: el xec 364931 va eixir del banc, els diners van passar per Juanjo i va pagar
-  MGM ("Generador", 6/6, Festejos · Dinars, Sopars i Festes, ja apuntat com a caixa). Faltava el rastre als Fons
-  delegats: botó puntual a Configuració → Exercicis (`_GENERADOR_JUANJO`, `_generadorJuanjoPla`,
-  `arreglaGeneradorJuanjo`) que registra el lliurament de 502 € a Juanjo el 6/6 i enllaça el pagament com a despesa
-  contra els seus fons (`origenFons` passa de `caixa` a `fons_lliurats`). L'efectiu i el saldo de Juanjo no canvien.
-  Emilio ho va aplicar i el codi d'un sol ús s'ha eliminat a v4.0.64: ja no queda cap botó puntual a l'app.
+**Objective**: que els saldos de l'app coincidisquen amb els bancs i la caixa, i que cada despesa
+compte una sola vegada. Va començar quan el 01 Banc mostrava un desquadrament de 9.737,85 €.
+**Current State**: 01 Banc i TPV confirmats; falten els altres tres comptes (vegeu "Pendents").
 
----
+**Fet (tot en producció, sense botons puntuals pendents d'eliminar)**:
+- **v4.0.49–50 Importació**: preview clar (marcat = s'importa, desmarcat = s'omet), "Més dades" visible,
+  backup de l'exercici actiu.
+- **v4.0.51 Duplicats**: `_classifyDuplicate` distingeix ingrés de pagament i reconeix el hash antic (sense
+  "Més dades"). La causa del desquadrament va ser una reimportació que va duplicar 50 moviments i un fitxer del
+  Compte 2 (TPV) importat dins el 01 Banc perquè el banc TPV no tenia IBAN (ara en té).
+- **v4.0.52–53 Neteja del 01 Banc** aplicada: 50 duplicats i la compra del pa duplicada esborrats, 9 moviments
+  passats al banc TPV, 2 traspassos afegits, saldo inicial 16.374,02 €.
+- **v4.0.54 Regles de mapeig**: patró suggerit sense números, previsualització de coincidències, concepte només si
+  l'usuari el canvia, tots els bancs al desplegable, prioritat per davant de la regla que ja casava, sentit del
+  moviment respectat, avisos a la llista. Detall més avall.
+- **v4.0.55–56 Reassignació d'àrees** aplicada (WiFi a 07 Coordinació Tècnica; TPV a 01 Tresoreria).
+- **v4.0.57–58 Fons delegats (D-022)**: el Reintegrament no funcionava i comptava la despesa dues vegades; ara només
+  puja el saldo del delegat. Origen "Banc" al lliurament i al reintegrament (`crearTraspasBancCaixa`). Error corregit:
+  reclassificar un moviment existent reescriu la pestanya (`save('moviments')`); `saveMoviment` només afegeix files
+  noves.
+- **v4.0.59–66 Xecs del 01 Banc classificats** (tots amb botó d'un sol ús, ja eliminat):
+  - 364929 (3.000 €, 16/9): xec = traspàs banc → caixa; la despesa de Monument Gran és només el pagament d'Alario.
+  - 364930 (5.750 €, 30/6): 5.500 € d'orquestres (Antonio Javier, Eventime) i 250 € de seguretat (Juanjo), a
+    Festejos · Música (0402); cada part és traspàs + lliurament + pagament contra fons.
+  - 364931 (502 €, 30/6): diners per a Juanjo, que va pagar el "Generador" a MGM; traspàs banc → caixa i rastre als
+    Fons delegats (lliurament del 6/6 i pagament enllaçat).
+  - 364928 (860 €, 10/7): diners a la caixa i d'allà es va pagar "Manuel Neteja" (Festejos · Dinars, Sopars i Festes);
+    traspàs banc → caixa i pagament en efectiu (data 10/07 per defecte).
 
-### Estat financer 2026-10-13 (resultat de l'exercici 26/27 fins ara)
+**Estat financer a 2026-10-13**: la suma de tots els saldos ha baixat de 88.362,68 € (1/4/2026: 01 Banc 16.374,02 +
+02 Banc 23.941,79 + Efectiu 17.856,00 + TPV 0 + 03 Banc 30.190,87) a 48.162,22 € (01 Banc 9.391,88 + 02 Banc
+23.941,79 + Efectiu 4.637,68 + TPV 0 + 03 Banc 10.190,87): **resultat −40.200,46 €**, finançat amb les reserves.
+Confirmats: 01 Banc (extracte al 28/9 + despeses manuals del 8/10) i TPV (0 €). **Sense confirmar (80 % del total)**:
+02 Banc (cap moviment a 26/27; l'últim extracte és del 3/5), 03 Banc (extracte del 18/5) i Efectiu (aproximat).
 
-- **Resultat = −40.702,46 €** (abans dels xecs del 30/06) i **−40.200,46 €** un cop aplicats: la suma de tots els
-  saldos ha baixat de 88.362,68 € (1/4/2026: 01 Banc 16.374,02 + 02 Banc 23.941,79 + Efectiu 17.856,00 + TPV 0 +
-  03 Banc 30.190,87) a 48.162,22 € (01 Banc 9.391,88 + 02 Banc 23.941,79 + Efectiu 4.637,68 + TPV 0 + 03 Banc
-  10.190,87). Es gasta de les reserves.
-- **Confiança dels saldos**: només 01 Banc (9.391,88 €, quadrat amb l'extracte al 28/9 + despeses manuals del
-  8/10) i TPV (0 €) estan confirmats. 02 Banc (sense cap moviment a 26/27; l'últim extracte és del 3/5), 03 Banc
-  (extracte del 18/5) i l'efectiu (aproximat, sense recompte) sumen 38.268,34 €, el 80 % del total, i no estan
-  confirmats.
-- **Només queda sense classificar el xec 364928 (860 €)**: si és un traspàs banc → caixa (diners per a Juanjo),
-  el resultat millorarà fins a −39.340,46 € (i la despesa de les grues hauria d'estar apuntada a Monument Gran);
-  si va ser un pagament directe, no canvia.
-
----
-
-### Completat 2026-10-13 — Xec de 3.000 € d'Alario i correcció del traspàs (v4.0.58)
-
-- **Error corregit a v4.0.58**: `crearTraspasBancCaixa` guardava amb `saveMoviment` (que AFEGEIX
-  una fila) un moviment ja existent que reclassificava, la qual cosa el duplicaria al full. Ara,
-  si es reclassifica un moviment existent, es reescriu la pestanya sencera (`save('moviments')`); si
-  només hi ha moviments nous, s'afegeixen. Verificat mirant exactament què s'envia al full.
-- **Xec 364929 (3.000 €, 16/9) arreglat**: Emilio va aplicar el botó puntual (xec a Tresoreria + entrada
-  de 3.000 € a la Caixa efectiu; la despesa de Monument Gran queda només al pagament d'Alario del 26/9).
-  El codi d'un sol ús s'ha eliminat a v4.0.59: ja no queda cap botó puntual a l'app.
-- **8/10**: els tresorers confirmen que la transferència de "Gorres negres" (4.116,42 €) i "Filament
-  3D" (214,95 €) es va fer el 8/10 pel banc. Encara no hi ha apunts bancaris d'eixa data (l'últim
-  extracte arriba al 28/9): quan s'importe, apareixeran com a "possibles duplicats" i s'han de
-  deixar desmarcats.
-- **Pendent**: xecs 364928 (860 €), 364930 (5.750 €) i 364931 (502 €): reclassificar-los (origen
-  "Banc" del lliurament, triant el moviment de l'extracte) quan es sàpiga què van ser.
-
----
-
-### Completat 2026-10-13 — Fons delegats: Reintegrament arreglat i origen "Banc" (v4.0.57)
-
-- Model comptable dels fons delegats documentat a **D-022**.
-- **Reintegrament**: funciona (abans donava error en obrir-se) i ja no genera un segon apunt de
-  despesa; només puja el saldo del delegat. La targeta del delegat és plegable i el botó només
-  es veu desplegada i amb saldo negatiu.
-- **Origen "Banc"** al lliurament i al reintegrament (`crearTraspasBancCaixa`): sortida del banc +
-  entrada a l'efectiu a Tresoreria, sense despesa; si el moviment ja és a l'extracte se'n pot
-  triar un i es reclassifica a Tresoreria en lloc de duplicar-lo.
-- Cancel·lar el formulari el deixa com a "Nou lliurament" (abans un Reintegrament cancel·lat
-  convertia el lliurament següent en reintegrament).
-- **Pendent**: reclassificar els xecs 364928 (860 €), 364929 (3.000 €, 16/9), 364930 (5.750 €) i
-  364931 (502 €) un cop els tresorers diguen si van ser retirades per a la caixa/delegats o
-  pagaments a proveïdors; el de 3.000 € ja és clar (despesa comptada dues vegades amb el
-  pagament d'Alario del 26/9). Després, recompte físic de l'efectiu.
-
----
-
-### Completat 2026-10-13 — Reassignació d'àrees aplicada i botó eliminat (v4.0.56)
-
-- Emilio va aplicar la reassignació (2 apunts del WiFi a 07 Coordinació Tècnica i 5 del TPV
-  a 01 Tresoreria) i el codi d'un sol ús s'ha eliminat. Ja no queda cap botó puntual a l'app.
-- Decisions: TPV → 01 Tresoreria; WiFi COM.T → 07 Coordinació Tècnica; aigua → 01 Jurídica i
-  Contractacions; remeses de quotes (FATIR…) → 01 Secretaria.
-- **Pendent per a Emilio a Configuració → Regles**: `T.PlanaMyCommerce` i `MANTENIMIENTO TPV`
-  a 01 Tresoreria; esborrar `PR.DE;`; buidar el concepte de `PR.DE` i `DETIR`; allargar `RAMS`;
-  opcional regla `FATIR` → 01 Secretaria.
-- **Pendents oberts** (vegeu més avall): extractes actuals de Caixa Popular, 03 Banc i 01 Banc des
-  del 28/9; recompte físic de l'efectiu (= caixa física + 3.290,01 € en mans dels delegats);
-  xecs 364928 (860 €), 364930 (5.750 €) i 364931 (502 €) del 01 Banc, i el de 3.000 € del 16/9
-  (despesa comptada dues vegades: xec a Monument Gran + pagament d'Alario del 26/9);
-  avançament pendent d'A. Alario (40 €).
-- **Les despeses manuals del 8/10** (Gorres negres 4.116,42 € i Filament 3D 214,95 €) es van pagar
-  pel banc: són la diferència entre el saldo de l'app (9.391,88 €) i l'extracte (13.723,25 €).
-  En importar un extracte posterior al 8/10 apareixeran com a "possibles duplicats": cal deixar-les
-  desmarcades (s'ometran).
-- Disseny dels fons delegats (Reintegrament i diners del banc cap a un delegat): resolt a v4.0.57 (D-022).
+**Pendents** (res d'això depén de codi):
+1. Extractes actuals: Caixabank ES06 2100 1958 3602 0008 8726 des del 29/9; Caixabank ES56 2100 7990 7413 0059 2938
+   des de l'1/4; Caixa Popular ES82 3159 0076 6426 7219 1729 des de l'1/4; Caixabank TPV ES60 2100 7990 7802 0033 2534
+   des del 8/9. En importar el del 01 Banc, les despeses manuals del 8/10 (Gorres negres 4.116,42 € i Filament 3D
+   214,95 €, pagades pel banc) apareixeran com a "possibles duplicats": deixar-les **desmarcades**.
+2. Recompte físic de la caixa en efectiu. Referència: Efectiu de l'app menys els saldos positius dels delegats
+   (3.290,01 € a l'11/10); aproximadament 1.350 € a la caixa. El saldo inicial de 17.856 € és aproximat.
+3. A Configuració → Regles (Emilio): `T.PlanaMyCommerce` i `MANTENIMIENTO TPV` a 01 Tresoreria; esborrar `PR.DE;`;
+   buidar el concepte de `PR.DE` i `DETIR`; allargar `RAMS`. Opcional: regla `FATIR` → 01 Secretaria (remeses de quotes).
+4. Avançament pendent d'A. Alario: 40 €.
+5. Decidir si les remeses de quotes (`FATIR…`) i els apunts del TPV tenen regla pròpia; les àrees confirmades són TPV →
+   01 Tresoreria, WiFi COM.T → 07 Coordinació Tècnica, aigua → 01 Jurídica i Contractacions, quotes → 01 Secretaria.
 
 ---
 

@@ -123,6 +123,13 @@ confirmar amb `repr()` abans de concloure que hi ha un error de sintaxi.
 11. **NO mostrar èxit abans de tenir el resultat** → el missatge depén de l'escriptura real.
 12. **NO fer operacions lentes abans de guardar** → guardar primer.
 13. **NO donar per bo un canvi sense executar-lo** → Regla 5.
+14. **NO desar amb `saveMoviment()` un moviment que ja existeix** → afegeix una fila nova al full i el duplica. Per a
+    moviments modificats, `save('moviments')` (reescriu la pestanya); `saveMoviment` només per a moviments nous.
+15. **NO apuntar com a despesa els diners que ixen del banc cap a la caixa o un delegat** → traspàs banc → caixa a
+    Tresoreria (D-022); la despesa és el que paga el delegat després.
+16. **NO fer una prova amb la xarxa simulada sense mirar què s'envia al full** (`PUT`, `append`, `clear`) → és l'única
+    manera de detectar duplicats o reescriptures inesperades. Una prova que simula `save`/`saveMoviment` no ho veu.
+17. **NO deixar el codi d'un sol ús a producció** → s'elimina amb un commit apart quan l'usuari confirma que l'ha aplicat.
 
 ---
 
@@ -138,6 +145,17 @@ versió abans de tocar res. Si no coincideixen amb els del projecte, demanar-los
 4. Bump de versió als tres llocs
 5. Claude entrega `sw.js` primer, `index.html` segon
 6. Emilio descarrega, puja a GitHub, prova en producció
+
+**Correcció puntual de dades de producció** (patró usat el 2026-10-11/13, funciona bé per a Emilio):
+1. Comparar un backup de l'exercici (botó "Backup JSON" a Configuració → Exercicis) amb els extractes del banc
+   per trobar la causa (duplicats, apunts al banc equivocat, traspassos sense l'altre costat).
+2. Preguntar a Emilio/tresorers què era cada cas en comptes de suposar-ho (qüestionari amb opcions).
+3. Una targeta ambre a Configuració → Exercicis amb un botó "Revisar i aplicar" que només apareix si cada apunt
+   coincideix (id, data, import, sentit i àrea actual) i desapareix en aplicar-se; diàleg amb el resum; backup
+   descarregat abans d'escriure; desa la pestanya sencera si modifica apunts existents.
+4. Provar al navegador amb dades sintètiques construïdes amb els mateixos ids, mirant què s'envia al full.
+   Esperar que acabe la càrrega inicial del mock (si no, recarrega les dades en mig de la prova).
+5. Pujar, esperar que Emilio l'aplique i eliminar el codi amb un commit apart.
 
 **Closing de sessió**: Emilio diu "executem closing chat" → Claude genera els 6
 documents (DOMAIN_KNOWLEDGE, DECISION_LOG, WORKSTREAM_STATUS, CONVENTIONS, FDD, TDD)

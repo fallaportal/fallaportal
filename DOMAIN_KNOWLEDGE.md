@@ -67,7 +67,7 @@
 
 ### Established Facts
 
-- **Versió en producció actual**: v4.0.65 (BUILD_VERSION `4065`) [TIME-SENSITIVE: 2026-10-13]
+- **Versió en producció actual**: v4.0.66 (BUILD_VERSION `4066`) [TIME-SENSITIVE: 2026-10-13]
 - **La caducitat del token de Google no tanca la sessió** [v4.0.47–48, D-020]:
   - Apareix un bàner i els guardats esperen el token nou.
   - `save()`/`writeTab()` esperen **abans** de fer la còpia de `DB`.
@@ -93,6 +93,30 @@
 - El scope `drive.file` no permet accedir a carpetes compartides. Cal scope `drive`.
 - No existeix entorn Dev separat. Les proves es fan en producció.
 - La conciliació és control, no comptable: els moviments compten als informes independentment del seu estat.
+- **Comptes bancaris** (a l'app, IBAN i via):
+  - **01 Banc** Caixabank ES06 2100 1958 3602 0008 8726.
+  - **02 Banc** Caixa Popular ES82 3159 0076 6426 7219 1729.
+  - **03 Banc** Caixabank ES56 2100 7990 7413 0059 2938.
+  - **TPV targetes** (tipus `tpv`) Caixabank ES60 2100 7990 7802 0033 2534: només comissions del TPV i traspassos
+    propis; saldo 0. L'IBAN s'ha de tenir configurat al banc: si no, `processXLSBanc` assigna el fitxer al primer
+    Caixabank que troba (va passar el 11/10/2026).
+- **El saldo d'un banc/via és saldo inicial + ingressos − despeses de tots els moviments d'eixa via** (sense filtrar
+  per origen). Per això un apunt pagat per Efectiu resta de la Caixa efectiu encara que els diners vinguen d'una
+  retirada del banc: cal l'entrada equivalent (traspàs banc → caixa).
+- **Model dels fons delegats** (D-022): el lliurament i la devolució no fan apunt; la despesa contra fons i
+  l'avançament personal sí; el Reintegrament només puja el saldo del delegat. Els diners que ixen del banc cap a un
+  delegat o la caixa (xec, transferència) s'apunten com a traspàs a Administració · Tresoreria (sortida del banc +
+  entrada a l'efectiu), mai com a despesa. Els diners que els delegats tenen a les mans compten dins la Caixa efectiu.
+- **Convenció dels traspassos entre comptes**: els dos costats s'apunten a Administració i Secretaria · Tresoreria
+  (`TRASPASO PROPIO`), de manera que el resultat per àrea és zero.
+- Un xec de l'extracte (`CARG.CHEQUE nnnnnn`) pot ser una retirada d'efectiu, diners per a un delegat o un pagament
+  directe: l'extracte no ho diu i cal preguntar-ho als tresorers. Importats sense revisar compten com a despesa.
+- **Els apunts manuals de banc no es concilien sols amb l'extracte**: en importar-lo, apareixen com a "possibles
+  duplicats" (mateixa data, import i sentit, concepte diferent) i s'han de deixar desmarcats.
+- **Resultat de l'exercici** (reserves gastades): és la variació de la suma de tots els saldos (a 13/10/2026:
+  −40.200,46 €) i només és fiable quan els saldos de tots els comptes estan confirmats.
+- Aprovat per Emilio: àrees TPV → 01 Tresoreria, WiFi COM.T → 07 Coordinació Tècnica, aigua → 01 Jurídica i
+  Contractacions, remeses de quotes (`FATIR…`) → 01 Secretaria.
 
 ---
 

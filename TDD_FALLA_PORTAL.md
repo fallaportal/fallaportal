@@ -100,6 +100,37 @@ via és codi d'un banc tipus 'bank'      → 'pendent'
 resta                                   → 'no_aplica'
 ```
 
+#### Detecció de duplicats bancaris — v4.0.51
+```
+_classifyDuplicate(banc, data, imp /* amb signe */, concepte, concepteAlt)
+  candidats = DB.moviments amb mateixa via, data, |import| i sentit (ing/gast)
+  cap candidat                        → 'nou'
+  algun amb bankHash === hash(concepte) o hash(concepteAlt) → 'duplicat_segur'
+  resta                               → 'possible'
+```
+`concepteAlt` és el concepte sense "Més dades" (les importacions antigues no el combinaven). `_concepteOriginal`
+alimenta el hash i no canvia en els formats que no combinaven "Més dades"; `m.masDades` i `m._conceptePropi`
+només serveixen per mostrar-lo al preview i per als patrons de regla.
+
+#### Regles de mapeig — v4.0.54
+```
+_reglaPatrons(r)      separadors , ; i salt de línia, en minúscules
+_reglaCasa(r, concepte, impSigne)   movtype 'gast'/'ing' limita el sentit; 'auto' = tots dos
+_ordenarRegles(llista)  per prioritat; a igualtat, el patró més llarg primer
+_partEstable(text, n)   treu els números de 3+ xifres (xec, remesa, data) i les paraules d'1 lletra
+_suggerirPatrons(m)     {moviment, masDades, tots}
+_avisosRegla(r)         patró curt (<5), número al concepte, patró repetit
+```
+`aplicarReglesImportacio` usa `_ordenarRegles` + `_reglaCasa`. Una regla nova des de la importació agafa la prioritat
+de la primera regla que ja casava amb el moviment, menys 1 (mínim 1).
+
+#### Traspàs banc → caixa — v4.0.57–58
+`crearTraspasBancCaixa(imp, data, bancCodi, movExistentId, nomDelegat, motiu)` (async): si `movExistentId` existeix,
+el reclassifica a 01/0102 (Administració · Tresoreria); si no, crea la sortida del banc; sempre crea l'entrada a
+l'efectiu (`origenFons:'banc_caixa'`). **Persistència**: si ha modificat un moviment existent fa `save('moviments')`
+(reescriu la pestanya); si només hi ha moviments nous, `saveMoviment` per a cadascun. `saveMoviment` fa `appendRow`
+i, aplicat a un moviment existent, el duplicaria al full.
+
 #### Migració conciliacio — loadFromSheets
 ```js
 _newMoviments.forEach(function(m){
