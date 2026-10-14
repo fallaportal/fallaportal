@@ -346,7 +346,7 @@ tr:hover td{background:var(--bg2)}
     <div class="login-logo">Falla <span>Portal</span></div>
     <div class="login-sub">Sistema de gestió financera</div>
     <div class="login-fiscal">Any fiscal 26/27 · Abr 2026 – Mar 2027</div>
-    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v4.1.1</div>
+    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v4.1.2</div>
     <div id="login-step-boot" class="login-boot">Comprovant la sessió…</div>
     <div id="login-step-email" class="hidden">
       <label class="login-lbl" for="login-email">Correu electrònic</label>
@@ -399,7 +399,7 @@ tr:hover td{background:var(--bg2)}
     <div class="sb-bottom">
       <div class="sync-ind" style="display:flex;align-items:center;justify-content:space-between"><div style="display:flex;align-items:center;gap:6px"><div class="sync-dot" id="sync-dot"></div><span id="sync-text">Sincronitzat</span></div><button onclick="manualRefresh()" title="Actualitzar dades" style="background:none;border:none;cursor:pointer;padding:2px 4px;color:var(--text2);font-size:14px;line-height:1"><i class="ti ti-refresh"></i></button></div>
       <button class="btn-logout" onclick="signOut()"><i class="ti ti-logout" style="font-size:14px"></i> Tancar sessió</button>
-      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v4.1.1</div>
+      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v4.1.2</div>
     </div>
   </div>
 
@@ -1539,10 +1539,9 @@ tr:hover td{background:var(--bg2)}
 </div>
 
 <div class="toast" id="toast"><span id="toast-msg"></span><button class="toast-retry" id="toast-retry" style="display:none" onclick="toastRetry()">Reintentar</button></div>
-<div class="fase-banner" id="fase-banner">Versió de proves amb Supabase: les dades es llegeixen de Supabase, però guardar-hi canvis encara no funciona (Fase 3).</div>
+<div class="fase-banner" id="fase-banner">Versió de proves amb Supabase: les dades i els canvis són a Supabase (projecte de proves); el full de Google continua sent el de producció fins al tall.</div>
 
 <script>
-const SHEET_ID='1SUeIZbZN1kUxt5nNRkEVLZI__eHecYv4JZE5QNuGaQ0';
 const TABS={
   moviments:{name:'01 Moviments',headers:['id','data','tipus','via','areaId','areaNom','delegacioId','delegacioNom','eventId','eventNom','concepte','establiment','responsable','responsableEmail','import','notes','anyFiscal','origenFons','fontImport','bankHash','origen','ticketUrl','ticketMotiu','conciliacio']},
   fons:{name:'02 Fons',headers:['id','data','tipus','delegId','delegEmail','import','nota','registratPer','anyFiscal','movimentId','eventTancamentId']},
@@ -1565,40 +1564,8 @@ const TABS={
   config_ext:{name:'00 Config',headers:['clau','valor']},
   audit_log:{name:'18 Audit Log',headers:['data','hora','usuari','email','accio','detall','import']}
 };
-const CACHE_KEY='fallaportal_cache';
-
 // La caché de DB a localStorage (dades de la falla sense xifrar, deute 1-bis) s'ha eliminat: només es guarda la sessió.
 function saveCache(){}
-function auditLog(accio,detall,imp){
-  // Fire-and-forget total: setTimeout garanteix que MAI estiga al camí crític
-  setTimeout(function(){
-    try{
-      if(!accessToken)return;
-      const now=new Date();
-      const data=String(now.getDate()).padStart(2,'0')+'/'+String(now.getMonth()+1).padStart(2,'0')+'/'+now.getFullYear();
-      const hora=String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0')+':'+String(now.getSeconds()).padStart(2,'0');
-      const u=currentUser||{};
-      const row=[data,hora,u.name||u.email||'',u.email||'',accio,detall||'',imp!=null?String(imp):''];
-      sheetsReq('POST',SHEETS_API+'/values/'+sheetRangeUrl(TABS.audit_log.name,'A1')+':append?valueInputOption=RAW&insertDataOption=INSERT_ROWS',
-        {range:sheetRange(TABS.audit_log.name,'A1'),majorDimension:'ROWS',values:[row]}).catch(function(e){console.warn('auditLog:',e);});
-    }catch(e){console.warn('auditLog:',e);}
-  },0);
-}
-
-
-function loadCache(){
-  try{
-    const c=localStorage.getItem(CACHE_KEY);
-    if(!c)return false;
-    const {db,ts}=JSON.parse(c);
-    if(Date.now()-ts>3600000)return false; // cache d'1 hora
-    if(db.moviments)DB.moviments=db.moviments;
-    if(db.fons)DB.fons=db.fons;
-    if(db.tancaments)DB.tancaments=db.tancaments;
-    if(db.config&&db.config.usuaris&&db.config.usuaris.length>0)DB.config=db.config;
-    return true;
-  }catch(e){return false;}
-}
 
 // Guardar en segon pla sense bloquejar la UI — usar per a dades no crítiques
 function saveBackground(key){
@@ -1708,7 +1675,7 @@ function getModulVis(){
   return getDefaultModulVis();
 }
 
-let accessToken=null,currentUser=null,pollingInterval=null;   // accessToken: capa de Sheets, es lleva a la Fase 3
+let currentUser=null;
 // Sheets centralitzat - no cal driveIds
 let DB={
   config:{
@@ -1904,13 +1871,6 @@ const sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{
   auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,storageKey:'fp_auth'}
 });
 
-// Capa de dades antiga (Sheets): sense token de Google no pot llegir ni escriure. Fins a la Fase 3 falla amb un error
-// clar en lloc d'esperar un token que mai arribarà (cap guardat s'ha de perdre en silenci).
-// Capa de Sheets (dead code fins que s'elimine a la Fase 3): sense token de Google no pot escriure. La lectura ja va per
-// Supabase (loadFromSupabase); l'escriptura encara no: falla amb un error clar en lloc d'esperar un token que no arribarà.
-function tokenVigent(){return!!currentUser;}   // hi ha sessió de Supabase
-function esperarToken(){return Promise.reject(new Error('Guardar a Supabase encara no està connectat (Fase 3)'));}
-
 const ROL_PRIORITAT=['president','treasury','area','delegat','board'];
 let _entrant=false,_reenviaFins=0,_reenviaTimer=null;
 
@@ -2051,10 +2011,9 @@ sb.auth.onAuthStateChange(function(evt,session){
 });
 
 function tancaLocal(){
-  currentUser=null;accessToken=null;dadesCarregades=false;
+  currentUser=null;dadesCarregades=false;_sbBase=null;_sbPestanyes=null;_sbMotiu=null;
   DB.config.usuaris=[];   // la persona següent no ha de heretar els permisos de l'anterior
-  if(pollingInterval){clearInterval(pollingInterval);pollingInterval=null;}
-  try{localStorage.removeItem(CACHE_KEY);}catch(e){}
+  sbAturaRealtime();
   loginEl('sb-name').textContent='—';
   loginEl('sb-role').textContent='—';
 }
@@ -2148,7 +2107,11 @@ function exerciciTancatBloqueja(any){
   if(!e||!e.tancat)return false;
   const rol=getRol();
   if(rol==='president'||rol==='treasury'){
-    return!confirm('L\'exercici '+af+' està tancat.\n\nVols fer aquest canvi igualment, com a excepció?');
+    // Com a excepció (D-029) cal un motiu: viatja amb el guardat i queda al registre d'activitat.
+    const motiu=prompt('L\'exercici '+af+' està tancat.\n\nPer fer aquest canvi com a excepció, escriu-ne el motiu (queda al registre d\'activitat):');
+    if(!motiu||!motiu.trim())return true;
+    _sbMotiu={text:motiu.trim(),ts:Date.now()};
+    return false;
   }
   showToast('L\'exercici '+af+' està tancat: no s\'hi poden fer canvis. Parla amb Tresoreria.',true);
   return true;
@@ -2553,26 +2516,25 @@ let _lastRefresh=0;
 const REFRESH_MIN_GAP=30*1000;   // mínim 30s entre refrescos per canvi de pàgina
 const REFRESH_AUTO_MS=5*60*1000; // refresc automàtic cada 5 minuts
 
-async function bgRefresh(){
-  // No recarreguem mentre s'esta escrivint al full: el swap substituiria
-  // DB.moviments i s'enduria el que encara no s'ha guardat.
-  if(_desantAraMateix>0)return;
-  if(!tokenVigent())return;
+// Torna a llegir de Supabase i repinta la pantalla oberta. Mai si hi ha un guardat en curs o canvis sense desar: la lectura
+// els trepitjaria (DB es substitueix sencer).
+async function bgRefresh(forca){
+  if(_desantAraMateix>0||!currentUser||!dadesCarregades)return;
+  if(sbHiHaPendents())return;
   const now=Date.now();
-  if(now-_lastRefresh<REFRESH_MIN_GAP)return;
+  if(forca!==true&&now-_lastRefresh<REFRESH_MIN_GAP)return;
   _lastRefresh=now;
   const _snapMovs=DB.moviments?[...DB.moviments]:[];
   const _snapFons=DB.fons?[...DB.fons]:[];
   try{
     await loadFromSupabase();
-    saveCache();
     buildNav();
     const act=document.querySelector('.page.active');
     if(act){
       const pid=act.id.replace('page-','');
-      ({'dashboard':renderDashboard,'historial':renderHistorial,'lliurament':renderFons,
-        'tancament':renderTancamentSilent,
-        'resultats':renderResultats,'flux':renderFlux,'reports':renderReports}[pid]||function(){})();
+      const renders={dashboard:updateDashboardSilent,historial:filterHist,lliurament:renderFons,
+        tancament:renderTancamentSilent,resultats:renderResultats,flux:renderFlux,reports:renderReports};
+      if(renders[pid])renders[pid]();
     }
   }catch(e){
     if(_snapMovs.length>0)DB.moviments=_snapMovs;
@@ -2608,31 +2570,6 @@ function closeMobMenu(){
   if(m)m.style.display='none';
   if(o)o.style.display='none';
 }
-
-// SHEETS API
-const SPREADSHEET_ID=SHEET_ID;
-const SHEETS_API='https://sheets.googleapis.com/v4/spreadsheets/'+SHEET_ID;
-async function sheetsReq(method,url,body,_reintent){
-  await esperarToken();
-  const opts={method,headers:{Authorization:'Bearer '+accessToken,'Content-Type':'application/json'}};
-  if(body)opts.body=JSON.stringify(body);
-  let r;
-  // Un tall de xarxa no invalida la sessió: l'error es propaga i qui crida
-  // ja reintenta o restaura el snapshot.
-  try{r=await fetch(url,opts);}catch(netErr){throw new Error('Sense connexió a internet');}
-  if(r.status===401){
-    // Una reescriptura porta la foto de DB de quan es va cridar: reenviar-la
-    // després d'esperar podria trepitjar dades més noves. save() la refà sencera.
-    const reescriptura=method==='PUT'||url.indexOf(':clear')>=0;
-    if(!_reintent&&!reescriptura)return sheetsReq(method,url,body,true);
-    const e=new Error('La sessió de Google ha caducat');e.code='AUTH';throw e;
-  }
-  if(!r.ok){const err=await r.json().catch(()=>({}));throw new Error((err.error?.message)||r.status);}
-  return r.json();
-}
-function sheetRange(n,c){const name=n.includes(' ')?("'"+n+"'"):n;return c?name+'!'+c:name;}
-function sheetRangeUrl(n,c){return encodeURIComponent(sheetRange(n,c));}
-function sheetTabUrl(n){const name=n.includes(' ')?("'"+n+"'"):n;return encodeURIComponent(name);}
 
 // ===== ADAPTADOR SUPABASE · INICI =====
 // Fase 3 (D-046): les pantalles continuen llegint DB amb la forma antiga (la del full de Google). Aquest bloc llig les taules
@@ -2693,7 +2630,10 @@ function sbPestanyes(R){
   const exercicis=(R.exercicis||[]).slice().sort(function(a,b){return a.id<b.id?-1:1;});
   const cfgDb=_sbMap(R.config,'clau');
   const estats={};
-  exercicis.forEach(function(e){estats[e.id]={tancat:!!e.tancat,dataObertura:_sbDD(e.data_obertura),dataTancament:_sbDD(e.data_tancament)};});
+  exercicis.forEach(function(e){
+    estats[e.id]={tancat:!!e.tancat,dataObertura:_sbDD(e.data_obertura),dataTancament:_sbDD(e.data_tancament)};
+    if(e.es_prova)estats[e.id].test=true;
+  });
   const cfgRows=[
     {clau:'anyFiscal',valor:cfgDb.exercici_actiu?_sbS(cfgDb.exercici_actiu.valor):''},
     {clau:'exercicis',valor:JSON.stringify(exercicis.map(function(e){return e.id;}))},
@@ -2775,7 +2715,7 @@ function sbPestanyes(R){
   const fonsRows=(R.fons||[]).map(function(f){
     return{id:f.id,data:_sbDD(f.data),tipus:tipusFonsLegacy[f.tipus]||f.tipus,delegId:f.delegat_id,delegEmail:emailU(f.delegat_id),
       import:_sbS(f.import),nota:_sbS(f.nota),registratPer:emailU(f.creat_per),anyFiscal:f.exercici_id,
-      movimentId:_sbS(f.moviment_id),eventTancamentId:''};
+      movimentId:_sbS(f.moviment_id),eventTancamentId:'',origen:_sbS(f.origen)};
   });
   const canviPerCaixa={};
   (R.caixa_canvis||[]).forEach(function(c){
@@ -2796,7 +2736,7 @@ function sbPestanyes(R){
     return{eventId:c.id,eventNom:ev?ev.nom:_sbS(c.descripcio),data:_sbDD(c.data),efectiu:_sbS(c.efectiu),tpv:_sbS(c.tpv),
       canvi:_sbS(Math.round((canviPerCaixa[c.id]||0)*100)/100),pagaments:_sbS(c.pagaments),tancat:tancada?'true':'false',
       estat:tancada?'tancat':'obert',fonsId:obertura[c.id]||'',concepte:(ev?ev.nom:_sbS(c.descripcio))+' '+_sbDD(c.data),
-      registratPer:emailU(c.creat_per),anyFiscal:c.exercici_id};
+      registratPer:emailU(c.creat_per),anyFiscal:c.exercici_id,areaId:_sbS(c.area_id),delegacioId:_sbS(c.delegacio_id),notes:_sbS(c.notes)};
   });
 
   // --- Pressupost
@@ -2819,7 +2759,7 @@ function sbPestanyes(R){
     return{id:r.id,font:c?c.codi:'',patrons:(r.patrons||[]).join(','),areaId:_sbS(r.area_id),
       areaNom:r.area_id&&arees[r.area_id]?arees[r.area_id].nom:'',delegacioId:_sbS(r.delegacio_id),
       delegacioNom:r.delegacio_id&&delegs[r.delegacio_id]?delegs[r.delegacio_id].nom:'',concepte:_sbS(r.concepte),
-      tipus:r.tipus==='assignar'?'auto':r.tipus,movtype:r.sentit==='despesa'?'gast':r.sentit==='ingres'?'ing':'auto',
+      tipus:r.tipus==='assignar'?'auto':r.tipus==='ignorar'?'ignore':r.tipus,movtype:r.sentit==='despesa'?'gast':r.sentit==='ingres'?'ing':'auto',
       prioritat:_sbS(r.prioritat),activa:r.activa?'true':'false'};
   });
 
@@ -2851,6 +2791,345 @@ function sbFilesRols(R){
   files.push({id:n.id,label:n.label,color:n.color,canRegister:'false',canFons:'false',canImport:'false',canConfig:'false',canUsers:'false',viewAll:'false',custom:'false'});
   return files;
 }
+// ----- Escriptura (D-048). El camí invers de sbPestanyes: les files de pestanya → files de les taules, i la diferència entre
+// dues fotos. save() compara la foto de l'última lectura (_sbBase) amb l'estat actual de DB i envia només el que ha canviat,
+// tot junt, a public.guarda_canvis (una sola transacció, amb els permisos de qui desa). Les funcions d'aquest bloc són pures
+// (no toquen ni xarxa ni DOM): tools/supabase_roundtrip.mjs i tools/supabase_escriptura.mjs les proven contra la base de dades.
+//
+// Cada fila de taula és { k: identificació, f: la resta de columnes }. L'identificació és la clau primària o, quan la pestanya
+// no té id (línies de pressupost, directiva), una clau natural. Les columnes que posa el servidor (creat_per, responsable,
+// conciliació, exercici per la data, import d'un fons lligat a una despesa…) no s'envien mai.
+const SB_ORDRE_TAULES=['exercicis','config','usuaris','rols','usuari_rols','rol_moduls','arees','delegacions','comptes','saldos_inicials',
+  'directiva','events','regles_importacio','caixes','moviments','fons','caixa_canvis','pressupost_linies','pressupost_estat',
+  'pressupost_historial','fallesapp_passiu','fallesapp_consums'];
+const SB_ALTA_O_CANVI={config:1,pressupost_estat:1};                 // si la fila ja hi és es canvia, si no es crea
+const SB_NO_S_ESBORREN={pressupost_estat:1,pressupost_historial:1,fallesapp_passiu:1};   // només creixen (historial)
+const SB_SENSE_ID={pressupost_historial:1,fallesapp_passiu:1};        // files iguals = la mateixa; només altes
+// Els sis permisos antics de «14 Rols» i els mòduls de la matriu que governen (MODEL_DADES §9.3).
+const SB_PERMISOS_MODULS={canRegister:['moviments'],canFons:['fons','caixa_obrir','pressupostos_aprovar'],canImport:['fallesapp','importacio'],
+  canConfig:['configuracio','rols','r1','exercicis','directiva','registre'],canUsers:['usuaris']};
+
+const _sbIso=function(s){
+  s=String(s===null||s===undefined?'':s).trim();
+  if(!s)return null;
+  let m=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if(m)return m[3]+'-'+m[2].padStart(2,'0')+'-'+m[1].padStart(2,'0');
+  m=s.match(/^(\d{4}-\d{2}-\d{2})/);
+  return m?m[1]:null;
+};
+const _sbNum2=function(v){
+  const n=parseFloat(String(v===null||v===undefined?'':v).replace(',','.'));
+  return isFinite(n)?Math.round(n*100)/100:null;
+};
+const _sbTxt=function(v){const s=String(v===null||v===undefined?'':v).trim();return s===''?null:s;};
+const _sbOk=function(v){return v===true||String(v).toLowerCase()==='true';};
+const _sbJson=function(s,def){try{const x=JSON.parse(s);return x===null||x===undefined?def:x;}catch(e){return def;}};
+const _sbNorm=function(s){return String(s===null||s===undefined?'':s).normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().replace(/\s+/g,' ').trim();};
+const _sbAF=function(v){
+  v=String(v===null||v===undefined?'':v).trim();
+  if(/^\d{2}\/\d{2}$/.test(v))return v;
+  const y=parseInt(v,10);
+  if(!isNaN(y)&&y>2000)return String(y-2000).padStart(2,'0')+'/'+String(y-1999).padStart(2,'0');
+  return v;
+};
+// Exercici d'una data (D-026: de l'01/04 al 31/03) i, si l'app diu un altre, la imputació excepcional (D-029).
+function _sbExerciciDe(iso,llista){
+  if(!iso)return null;
+  for(let i=0;i<llista.length;i++){
+    const y=2000+parseInt(llista[i].slice(0,2),10);
+    if(iso>=y+'-04-01'&&iso<=(y+1)+'-03-31')return llista[i];
+  }
+  return null;
+}
+function _sbImputacio(iso,anyFull,llista){
+  const dat=_sbExerciciDe(iso,llista),antic=_sbTxt(_sbAF(anyFull));
+  if(antic&&(!dat||antic!==dat))return{exercici_id:antic,imputacio_excepcional:true,motiu_imputacio:'Imputat al '+antic+' des de l\'app'};
+  return{exercici_id:dat,imputacio_excepcional:false,motiu_imputacio:null};
+}
+
+// Pestanyes → files de les taules: {taula:[{k,f}]}. ctx.colors = colors d'àrea per codi.
+function sbTaules(T,ctx){
+  ctx=ctx||{};
+  const O={};
+  const afegeix=function(t,k,f){(O[t]=O[t]||[]).push({k:k,f:f});};
+  const cfg={};
+  (T['00 Config']||[]).forEach(function(r){cfg[r.clau]=r.valor;});
+  const exLlista=[];
+  _sbJson(cfg.exercicis,[]).map(_sbAF).forEach(function(e){if(e&&exLlista.indexOf(e)<0)exLlista.push(e);});
+  exLlista.sort();
+  const estats=_sbJson(cfg.estats_exercicis,{});
+
+  // --- Exercicis i configuració
+  exLlista.forEach(function(id){
+    const y=2000+parseInt(id.slice(0,2),10),e=estats[id]||{};
+    afegeix('exercicis',{id:id},{data_inici:y+'-04-01',data_fi:(y+1)+'-03-31',data_obertura:_sbIso(e.dataObertura),
+      tancat:!!e.tancat,data_tancament:_sbIso(e.dataTancament),es_prova:!!e.test});
+  });
+  if(_sbTxt(cfg.anyFiscal))afegeix('config',{clau:'exercici_actiu'},{valor:_sbAF(cfg.anyFiscal)});
+  const just=_sbJson(cfg.justificant,null);
+  if(just&&typeof just==='object')afegeix('config',{clau:'justificant'},{valor:{mode:just.mode||'mai',llindar:Number(just.llindar)||0}});
+
+  // --- Persones i rols
+  const usuaris=T['08 Usuaris']||[];
+  const uId={},uEmail={},uNom={};
+  usuaris.forEach(function(u){
+    uId[u.id]=u;uEmail[String(u.email||'').toLowerCase()]=u;
+    (uNom[_sbNorm(u.nom)]=uNom[_sbNorm(u.nom)]||[]).push(u);
+  });
+  const resolU=function(s){
+    s=_sbTxt(s);
+    if(!s)return null;
+    if(uId[s])return uId[s].id;
+    if(s.indexOf('@')>=0){const u=uEmail[s.toLowerCase()];return u?u.id:null;}
+    const c=uNom[_sbNorm(s)];
+    return c&&c.length===1?c[0].id:null;
+  };
+  usuaris.forEach(function(u){
+    afegeix('usuaris',{id:u.id},{nom:_sbTxt(u.nom),email:String(u.email||'').trim().toLowerCase(),actiu:true});
+    if(u.rol&&u.rol!=='noauth')afegeix('usuari_rols',{usuari_id:u.id,rol_id:u.rol},{});
+  });
+  (T['14 Rols']||[]).forEach(function(r){
+    if(!r.id||r.id==='noauth')return;
+    afegeix('rols',{id:r.id},{nom:_sbTxt(r.label)||r.id,color:_sbTxt(r.color),de_sistema:!_sbOk(r.custom)});
+    afegeix('rol_perms',{rol_id:r.id},{canRegister:_sbOk(r.canRegister),canFons:_sbOk(r.canFons),canImport:_sbOk(r.canImport),
+      canConfig:_sbOk(r.canConfig),canUsers:_sbOk(r.canUsers)});
+  });
+
+  // --- Organització i comptes
+  const colors=ctx.colors||{};
+  (T['04 Arees']||[]).forEach(function(a){afegeix('arees',{id:a.id},{nom:_sbTxt(a.nom),color:colors[a.id]||null});});
+  const delegs={};
+  (T['05 Delegacions']||[]).forEach(function(d){
+    delegs[d.id]=d;
+    afegeix('delegacions',{id:d.id},{area_id:_sbTxt(d.areaId),nom:_sbTxt(d.nom)});
+  });
+  const tipusCompte={bank:'banc',cash:'efectiu',tpv:'tpv'};
+  const compteId={Virtual:'virtual'};
+  (T['07 Bancs']||[]).forEach(function(b){
+    compteId[b.codi]=b.id;
+    const tipus=tipusCompte[b.tipus]||'banc';
+    let iban=_sbTxt(b.compte);
+    if(iban&&!/^[A-Za-z]{2}\d{2}[A-Za-z0-9]{11,30}$/.test(iban.replace(/\s+/g,'')))iban=null;
+    if(tipus==='efectiu')iban=null;
+    afegeix('comptes',{id:b.id},{codi:_sbTxt(b.codi),nom:_sbTxt(b.nom),tipus:tipus,iban:iban?iban.toUpperCase().replace(/\s+/g,' '):null});
+  });
+  (T['15 Saldos']||[]).forEach(function(s){
+    afegeix('saldos_inicials',{compte_id:s.bancId,exercici_id:_sbAF(s.anyFiscal)},{import:_sbNum2(s.saldoInicial)||0,data:_sbIso(s.saldoData)});
+  });
+  (T['09 Usuaris Assignacions']||[]).forEach(function(a){
+    if(!uId[a.userId])return;
+    afegeix('directiva',{exercici_id:_sbAF(a.anyFiscal),usuari_id:a.userId,area_id:a.tipus==='area'?a.id:null,
+      delegacio_id:a.tipus==='delegacio'?a.id:null},{});
+  });
+  const events={};
+  (T['06 Events']||[]).forEach(function(e){
+    events[e.id]=e;
+    afegeix('events',{id:e.id},{exercici_id:_sbAF(e.anyFiscal||e.year),delegacio_id:_sbTxt(e.delegId),nom:_sbTxt(e.nom),
+      data_inici:_sbIso(e.dataInici),hora_inici:_sbHora(e.horaInici)||null,data_fi:_sbIso(e.dataFi),hora_fi:_sbHora(e.horaFi)||null,
+      responsable_id:resolU(e.responsable),per_defecte:_sbOk(e.perDefecte)});
+  });
+  (T['13 Regles CSV']||[]).forEach(function(r){
+    const font=_sbTxt(r.font);
+    let compte=null;
+    if(font){compte=compteId[font]||null;if(!compte)return;}   // «app» no és cap compte (D-031): no es pot desar
+    const patrons=String(r.patrons||'').split(/[,;\n]/).map(function(x){return x.trim();}).filter(Boolean);
+    if(!patrons.length)return;
+    const area=_sbTxt(r.areaId);
+    afegeix('regles_importacio',{id:r.id},{compte_id:compte,patrons:patrons,
+      tipus:({auto:'assignar',assignar:'assignar',tpv:'tpv',ignore:'ignorar',ignorar:'ignorar'})[r.tipus]||'assignar',
+      sentit:({gast:'despesa',ing:'ingres'})[r.movtype]||'qualsevol',area_id:area,delegacio_id:area?_sbTxt(r.delegacioId):null,
+      concepte:_sbTxt(r.concepte),prioritat:parseInt(r.prioritat,10)||100,activa:!(r.activa===false||String(r.activa)==='false')});
+  });
+
+  // --- Caixes d'event
+  const caixes={};
+  const tancaments=T['03 Tancaments']||[];
+  tancaments.forEach(function(t){caixes[t.eventId]=t;});
+  tancaments.forEach(function(t){
+    const iso=_sbIso(t.data),eventId=events[t.eventId]?t.eventId:null,area=_sbTxt(t.areaId);
+    afegeix('caixes',{id:t.eventId},Object.assign({
+      event_id:eventId,descripcio:eventId?null:(_sbTxt(t.eventNom)||_sbTxt(t.concepte)),data:iso,
+      estat:(t.estat==='tancat'||_sbOk(t.tancat))?'tancada':'oberta',
+      efectiu:_sbNum2(t.efectiu),tpv:_sbNum2(t.tpv),pagaments:_sbNum2(t.pagaments),
+      area_id:area,delegacio_id:area?_sbTxt(t.delegacioId):null,notes:_sbTxt(t.notes)},_sbImputacio(iso,t.anyFiscal,exLlista)));
+  });
+
+  // --- Moviments (i consums de falles.app, que van a una altra taula)
+  const origenFons={caixa:'caixa',fons_lliurats:'fons_lliurats',avanc:'avancament'};
+  const fontDe=function(m){
+    const fi=m.fontImport||'';
+    if(fi==='tancament')return'tancament_caixa';
+    if(fi==='retirada_caixa')return'retirada_caixa';
+    if(fi==='fallesapp_bonif')return'fallesapp_bonificacio';
+    if(fi==='fallesapp')return'fallesapp_transaccions';
+    if(fi.indexOf('xls_')===0)return'extracte';
+    if(fi==='csv')return'csv_generic';
+    if(m.origenFons==='tercer')return'ingres_tercer';
+    if(m.origenFons==='banc_caixa')return'traspas_banc_caixa';
+    return'manual';
+  };
+  (T['01 Moviments']||[]).forEach(function(m){
+    const iso=_sbIso(m.data),area=_sbTxt(m.areaId),deleg=area?_sbTxt(m.delegacioId):null,imp=_sbNum2(Math.abs(parseFloat(m.import)||0));
+    if(m.via==='app'){
+      afegeix('fallesapp_consums',{id:m.id},{exercici_id:_sbImputacio(iso,m.anyFiscal,exLlista).exercici_id,
+        event_id:events[m.eventId]?m.eventId:null,area_id:area,delegacio_id:deleg,import:imp,periode_inici:iso,periode_fi:iso});
+      return;
+    }
+    const font=fontDe(m),esCaixa=font==='tancament_caixa'||font==='retirada_caixa',despesa=m.tipus!=='ing';
+    const importat=font==='extracte'||font==='csv_generic'||font==='fallesapp_transaccions';
+    afegeix('moviments',{id:m.id},Object.assign({
+      data:iso,tipus:despesa?'despesa':'ingres',import:imp,compte_id:compteId[m.via]||null,area_id:area,delegacio_id:deleg,
+      event_id:events[m.eventId]?m.eventId:null,caixa_id:esCaixa?_sbTxt(m.eventId):null,font:font,
+      pagament_efectiu:despesa&&font==='manual'?(origenFons[m.origenFons]||null):null,
+      concepte:_sbTxt(m.concepte),establiment:_sbTxt(m.establiment),notes:_sbTxt(m.notes),
+      empremta:importat?_sbTxt(m.bankHash):null,motiu_sense_justificant:_sbTxt(m.ticketMotiu)},_sbImputacio(iso,m.anyFiscal,exLlista)));
+  });
+
+  // --- Fons de persones i canvi de caixa
+  const tipusFons={gast_fons:'despesa_fons',avanc:'avancament',lliurament:'lliurament',regularitzacio:'regularitzacio',devolucio:'devolucio',reintegrament:'reintegrament'};
+  const cx0={};   // primer canvi de cada caixa (si la caixa no diu quin va ser el lliurament inicial)
+  (T['02 Fons']||[]).forEach(function(f){
+    const iso=_sbIso(f.data);
+    if(f.tipus==='event_canvi'||f.tipus==='event_canvi_devolucio'){
+      const caixa=_sbTxt(f.eventTancamentId);
+      if(!caixa||!caixes[caixa])return;
+      let tipus='devolucio';
+      if(f.tipus==='event_canvi'){
+        const inicial=_sbTxt(caixes[caixa].fonsId);
+        tipus=(inicial?inicial===f.id:!cx0[caixa])?'lliurament':'ampliacio';
+        cx0[caixa]=true;
+      }
+      afegeix('caixa_canvis',{id:f.id},{caixa_id:caixa,data:iso,tipus:tipus,import:_sbNum2(f.import)});
+      return;
+    }
+    const tipus=tipusFons[f.tipus];
+    if(!tipus)return;
+    const lligat=tipus==='despesa_fons'||tipus==='avancament';
+    afegeix('fons',{id:f.id},Object.assign({
+      data:iso,tipus:tipus,delegat_id:(uId[f.delegId]?f.delegId:resolU(f.delegEmail)),import:_sbNum2(f.import),
+      origen:(tipus==='lliurament'||tipus==='reintegrament')?(_sbTxt(f.origen)||null):null,
+      moviment_id:lligat?_sbTxt(f.movimentId):null,nota:_sbTxt(f.nota)},_sbImputacio(iso,f.anyFiscal,exLlista)));
+  });
+
+  // --- Pressupost i falles.app (passiu)
+  (T['10 Pressupostos Plans']||[]).forEach(function(p){
+    const concepte=_sbTxt(p.concepte),varis=!!concepte&&concepte.toLowerCase()==='varis';
+    afegeix('pressupost_linies',{exercici_id:_sbAF(p.any),delegacio_id:_sbTxt(p.delegacioId),event_id:_sbTxt(p.eventId),concepte:concepte},
+      {tipus:varis?'varis':(!concepte||p.tipus==='event'?'event':'concepte'),import:_sbNum2(p.importPla)||0,notes:_sbTxt(p.notes)});
+  });
+  (T['11 Pressupostos Config']||[]).forEach(function(p){
+    if(_sbTxt(p.any))afegeix('pressupost_estat',{exercici_id:_sbAF(p.any)},{estat:p.estat==='bloquejat'?'bloquejat':'obert'});
+  });
+  (T['12 Pressupostos Historial']||[]).forEach(function(h){
+    afegeix('pressupost_historial',null,{exercici_id:_sbAF(h.any),accio:h.accio,motiu:_sbTxt(h.motiu)});
+  });
+  (T['16 Fapp Passiu']||[]).forEach(function(p){
+    afegeix('fallesapp_passiu',null,{exercici_id:_sbAF(p.anyFiscal),data:_sbIso(p.data),total:_sbNum2(p.total)||0,fallers:parseInt(p.fallers,10)||0});
+  });
+  return O;
+}
+
+// Igualtat de valors de columna (nombres, text, llistes, jsonb).
+function _sbIgual(a,b){
+  if(a===undefined)a=null;
+  if(b===undefined)b=null;
+  return JSON.stringify(a)===JSON.stringify(b);
+}
+
+// Diferències entre dues fotos (base i ara) → llista ordenada d'operacions per a guarda_canvis.
+// Ordre: primer els canvis que han de passar abans (desmarcar l'event per defecte antic), després els esborrats (fills
+// abans que pares), després les altes (pares abans que fills) i al final els canvis. Així tancar una caixa afegeix els seus
+// moviments i el canvi mentre encara és oberta, i només després la tanca.
+function sbCanvis(base,ara){
+  const mapa=function(llista){
+    const m=new Map(),vistos={};
+    (llista||[]).forEach(function(e){
+      let id=e.k?JSON.stringify(Object.keys(e.k).sort().map(function(c){return[c,e.k[c]];})):'#'+JSON.stringify(e.f);
+      if(!e.k){vistos[id]=(vistos[id]||0)+1;id+='#'+vistos[id];}
+      if(!m.has(id))m.set(id,e);
+    });
+    return m;
+  };
+  const del={},alta={},canvi={},previs=[];
+  const esborrats={moviments:{},caixes:{},exercicis:{}};
+  const taules=SB_ORDRE_TAULES.concat(['rol_perms']);
+  const M={};
+  taules.forEach(function(t){
+    const mb=mapa(base[t]),mn=mapa(ara[t]);
+    M[t]={b:mb,n:mn};
+    mb.forEach(function(e,id){if(!mn.has(id)&&!SB_NO_S_ESBORREN[t]){(del[t]=del[t]||[]).push(e);}});
+    mn.forEach(function(e,id){
+      const v=mb.get(id);
+      if(!v){(alta[t]=alta[t]||[]).push(e);return;}
+      const ch={};
+      Object.keys(e.f).forEach(function(c){if(!_sbIgual(v.f[c],e.f[c]))ch[c]=e.f[c];});
+      if(Object.keys(ch).length)(canvi[t]=canvi[t]||[]).push({k:e.k,f:ch,fila:e.f});
+    });
+  });
+  (del.moviments||[]).forEach(function(e){esborrats.moviments[e.k.id]=1;});
+  (del.caixes||[]).forEach(function(e){esborrats.caixes[e.k.id]=1;});
+  (del.exercicis||[]).forEach(function(e){esborrats.exercicis[e.k.id]=1;});
+  const exCaixa={};
+  M.caixes.b.forEach(function(e){exCaixa[e.k.id]=e.f.exercici_id;});
+  // Un fill que s'esborra amb el seu pare ho fa per cascada (la clau forana): no s'envia, i així no cal tindre permís per
+  // esborrar-lo d'un en un (R4, R5).
+  const cascada=function(t,e){
+    const f=e.f||{},k=e.k||{};
+    if(t==='fons'&&f.moviment_id&&esborrats.moviments[f.moviment_id])return true;
+    if(t==='moviments'&&f.caixa_id&&esborrats.caixes[f.caixa_id])return true;
+    if(t==='caixa_canvis'&&f.caixa_id&&esborrats.caixes[f.caixa_id])return true;
+    if(t==='caixa_canvis'&&esborrats.exercicis[exCaixa[f.caixa_id]])return true;
+    if(t==='exercicis')return false;
+    const ex=f.exercici_id||k.exercici_id;
+    return!!(ex&&esborrats.exercicis[ex]);
+  };
+
+  const ops=[];
+  const op=function(t,a,k,f){const o={t:t,a:a,k:k};if(f)o.f=f;ops.push(o);};
+  // 1) canvis previs: desmarcar un event «per defecte» abans de marcar-ne un altre (índex únic)
+  (canvi.events||[]).forEach(function(e){if(e.f.per_defecte===false){op('events','u',e.k,{per_defecte:false});delete e.f.per_defecte;}});
+  // 2) esborrats, fills abans que pares
+  SB_ORDRE_TAULES.slice().reverse().forEach(function(t){
+    (del[t]||[]).forEach(function(e){
+      if(cascada(t,e))return;
+      if(t==='usuaris'){op('usuaris','u',e.k,{actiu:false});return;}   // una persona amb historial es desactiva, no s'esborra
+      op(t,'d',e.k);
+    });
+  });
+  // 3) altes, pares abans que fills
+  SB_ORDRE_TAULES.forEach(function(t){
+    (alta[t]||[]).forEach(function(e){
+      const fila=Object.assign({},e.k||{},e.f);
+      op(t,SB_ALTA_O_CANVI[t]?'s':'i',e.k||{},SB_ALTA_O_CANVI[t]?e.f:fila);
+    });
+  });
+  // 4) canvis (només les columnes que han canviat)
+  SB_ORDRE_TAULES.forEach(function(t){
+    (canvi[t]||[]).forEach(function(e){
+      const f=Object.assign({},e.f);
+      // L'import d'una despesa amb fons o d'un avançament el manté la base de dades (R5): no s'envia.
+      if(t==='fons'&&(e.fila.tipus==='despesa_fons'||e.fila.tipus==='avancament'))delete f.import;
+      if(!Object.keys(f).length)return;
+      op(t,SB_ALTA_O_CANVI[t]?'s':'u',e.k,f);
+    });
+  });
+  // 5) els sis permisos antics d'un rol → mòduls de la matriu (lectura/edició)
+  const permisos=function(rolId,perm,sera){
+    SB_PERMISOS_MODULS[perm].forEach(function(modul){
+      if(sera)op('rol_moduls','s',{rol_id:rolId,modul_id:modul},{nivell:'edicio'});
+      else op('rol_moduls','d',{rol_id:rolId,modul_id:modul});
+    });
+  };
+  const rolsBase=M.rol_perms.b;
+  M.rol_perms.n.forEach(function(e,id){
+    const b=rolsBase.get(id);
+    Object.keys(SB_PERMISOS_MODULS).forEach(function(perm){
+      const abans=b?!!b.f[perm]:false,ara2=!!e.f[perm];
+      if(abans!==ara2)permisos(e.k.rol_id,perm,ara2);
+    });
+  });
+  return ops;
+}
 // ===== ADAPTADOR SUPABASE · FI =====
 
 // Pestanyes de la darrera càrrega (les que ha construït sbPestanyes). readTab() ja no va a cap full.
@@ -2859,21 +3138,95 @@ async function readTab(tabName){
   if(!_sbPestanyes)throw new Error('Dades no carregades de Supabase');
   return _sbPestanyes[tabName]||[];
 }
-async function writeTab(tabName,headers,rows){
-  await esperarToken();   // abans de fer la foto de rows, no després
-  const data=[headers,...(rows||[]).map(function(r){return headers.map(function(h){return r[h]!==undefined?String(r[h]):'';});})];
-  // Escrivim primer — si falla, les dades antigues queden intactes
-  await sheetsReq('PUT',SHEETS_API+'/values/'+sheetRangeUrl(tabName,'A1')+'?valueInputOption=RAW',
-    {range:sheetRange(tabName,'A1'),majorDimension:'ROWS',values:data});
-  // Netegem files sobreres (files velles que han quedat per sota de les noves)
-  const totalFiles=data.length+1;
-  await sheetsReq('POST',SHEETS_API+'/values/'+sheetRangeUrl(tabName,'A'+totalFiles+':ZZ9999')+':clear',{});
+
+// (Es van perdre per error en el tros 1 de la Fase 3 i les altes no podien funcionar; recuperades a la v4.1.2.)
+function calcSaldoDelegat(fonsArr){
+  const rebuts=fonsArr.filter(function(f){return f.tipus==='lliurament';}).reduce(function(s,f){return s+f.import;},0);
+  const gastFons=fonsArr.filter(function(f){return f.tipus==='gast_fons';}).reduce(function(s,f){return s+f.import;},0);
+  const devol=fonsArr.filter(function(f){return f.tipus==='devolucio';}).reduce(function(s,f){return s+f.import;},0);
+  const avanc=fonsArr.filter(function(f){return f.tipus==='avanc';}).reduce(function(s,f){return s+f.import;},0);
+  const reint=fonsArr.filter(function(f){return f.tipus==='reintegrament';}).reduce(function(s,f){return s+f.import;},0);
+  return rebuts-gastFons-devol-avanc+reint;
+}
+function genId(prefix){
+  return prefix+Date.now()+'_'+Math.random().toString(36).slice(2,6);
+}
+// ----- Desat per diferències (D-048) -----
+// _sbBase: foto (files de les taules) de l'última lectura o de l'últim desat. Mentre no hi ha canvis, és igual a l'estat actual
+// de DB; el que l'usuari canvia a DB és la diferència que s'envia. La foto es fa amb el mateix convertidor que el càlcul de
+// diferències, de manera que el que la lectura normalitza (hores per defecte, enters…) no compta com a canvi.
+let _sbBase=null;
+let _sbGen=0;     // puja a cada desat que envia canvis: una lectura iniciada abans d'un desat s'ha de descartar
+let _sbCua=Promise.resolve();
+let _sbMotiu=null;   // {text, ts}: motiu de l'excepció en un exercici tancat, confirmat per l'usuari (D-029)
+
+// Les pestanyes actuals tal com les veu l'app (DB), per al càlcul de diferències.
+function sbPestanyesActuals(){
+  const T={};
+  const rows=configToRows();
+  T['04 Arees']=rows.arees;T['05 Delegacions']=rows.delegacions;T['06 Events']=rows.events;T['07 Bancs']=rows.bancs;
+  T['08 Usuaris']=rows.usuaris;T['09 Usuaris Assignacions']=rows.assignacions;
+  T['01 Moviments']=DB.moviments||[];
+  T['02 Fons']=DB.fons||[];
+  T['03 Tancaments']=Object.values(DB.tancaments||{});
+  T['15 Saldos']=Object.entries(DB.saldos||{}).map(function(e){
+    // La clau és «idBanc_XX/YY»: l'id d'un banc nou (genId) pot dur «_», així que l'exercici es separa pel final.
+    const m=e[0].match(/^(.*)_(\d{2}\/\d{2})$/)||[null,e[0],''];
+    return{bancId:m[1],anyFiscal:m[2],saldoInicial:e[1].saldoInicial||0,saldoData:e[1].saldoData||''};
+  });
+  T['13 Regles CSV']=DB.regles||[];
+  T['14 Rols']=Object.values(getRoles()).map(function(r){
+    return{id:r.id,label:r.label,color:r.color||'p-gray',canRegister:String(r.canRegister),canFons:String(r.canFons),
+      canImport:String(r.canImport),canConfig:String(r.canConfig),canUsers:String(r.canUsers),viewAll:String(r.viewAll),custom:String(r.custom||false)};
+  });
+  const cfg=[{clau:'anyFiscal',valor:DB.config.anyFiscal||''},
+    {clau:'exercicis',valor:JSON.stringify(DB.config.exercicis||[])},
+    {clau:'estats_exercicis',valor:JSON.stringify(DB.config.estats_exercicis||{})}];
+  if(DB.config.justificant)cfg.push({clau:'justificant',valor:JSON.stringify(DB.config.justificant)});
+  T['00 Config']=cfg;
+  T['10 Pressupostos Plans']=DB.pres_plans||[];
+  T['11 Pressupostos Config']=DB.pres_config&&DB.pres_config.any?[DB.pres_config]:[];
+  T['12 Pressupostos Historial']=DB.pres_historial||[];
+  T['16 Fapp Passiu']=DB.fapp_passius||[];
+  return T;
+}
+function sbFotoActual(){return sbTaules(sbPestanyesActuals(),{colors:AREA_COLORS});}
+
+// Hi ha canvis a DB que encara no s'han desat?
+function sbHiHaPendents(){
+  if(!_sbBase||!dadesCarregades)return false;
+  try{return sbCanvis(_sbBase,sbFotoActual()).length>0;}
+  catch(e){console.warn('sbHiHaPendents:',e);return true;}
 }
 
-async function appendRow(tabName,headers,row){
-  const values=[headers.map(function(h){return row[h]!==undefined?String(row[h]):'';})];
-  await sheetsReq('POST',SHEETS_API+'/values/'+sheetRangeUrl(tabName,'A1')+':append?valueInputOption=RAW&insertDataOption=INSERT_ROWS',
-    {range:sheetRange(tabName,'A1'),majorDimension:'ROWS',values});
+function sbTextError(err){
+  const m=(err&&err.message)||String(err);
+  if(/Failed to fetch|NetworkError|Load failed|fetch/i.test(m)&&!/permís|existeix/i.test(m))return'Sense connexió a internet';
+  if(/JWT|token/i.test(m)&&/expired|caduc|invalid/i.test(m))return'La sessió ha caducat: recarrega la pàgina i torna a entrar';
+  return m;
+}
+
+// Un sol desat: compara DB amb la foto, envia les diferències a guarda_canvis i, només si Postgres les accepta, renova la foto.
+async function sbDesaUna(){
+  if(!_sbBase)throw new Error('Dades no carregades de Supabase');
+  const ara=sbFotoActual();
+  const ops=sbCanvis(_sbBase,ara);
+  if(!ops.length)return 0;
+  const motiu=(_sbMotiu&&Date.now()-_sbMotiu.ts<120000)?_sbMotiu.text:null;
+  let r;
+  try{r=await sb.rpc('guarda_canvis',{p_canvis:ops,p_motiu:motiu});}
+  catch(e){throw new Error(sbTextError(e));}
+  if(r.error)throw new Error(sbTextError(r.error));
+  _sbGen++;
+  _sbBase=ara;   // la foto que s'ha enviat, no la d'ara: el que s'haja canviat mentre s'enviava continua pendent
+  if(motiu)_sbMotiu=null;
+  return ops.length;
+}
+// Els desats es posen en cua: cadascú compara amb l'estat de quan li toca, no amb el de quan es va cridar.
+function sbDesa(){
+  const p=_sbCua.then(sbDesaUna);
+  _sbCua=p.catch(function(){});
+  return p;
 }
 
 // ─── LOG INTERN CONFIG_EXT ───────────────────────────────────────────────────
@@ -2935,110 +3288,32 @@ function renderCfgLog(){
   el.innerHTML=html;
 }
 
-// Snapshot de l'última càrrega exitosa del Sheet (protecció defensiva)
-let _lastGoodCfgExt={exercicis:null,drive_folders:null,anyFiscal:null};
-
-function updateLastGoodCfgExt(){
-  if((DB.config.exercicis||[]).length>0)_lastGoodCfgExt.exercicis=JSON.parse(JSON.stringify(DB.config.exercicis));
-  if(Object.keys(DB.config.drive_folders||{}).length>0)_lastGoodCfgExt.drive_folders=JSON.parse(JSON.stringify(DB.config.drive_folders));
-  if(DB.config.anyFiscal)_lastGoodCfgExt.anyFiscal=DB.config.anyFiscal;
-}
-
-// Fins que loadFromSupabase() no ha acabat be almenys una vegada, DB no reflecteix
-// el contingut del full. Com que save() reescriu pestanyes senceres, guardar en
-// eixe estat esborraria del full tot el que DB encara no havia arribat a llegir.
+// Fins que loadFromSupabase() no ha acabat be almenys una vegada, DB no reflecteix el contingut de Supabase i no
+// es pot comparar amb res: guardar en eixe estat enviaria com a canvis el que DB encara no havia arribat a llegir.
 let dadesCarregades=false;
 
-// Nombre d'escriptures al full en curs. Mentre n'hi haja alguna, els refrescos
-// en segon pla s'han d'esperar: si recarreguen enmig d'un guardat, substitueixen
-// DB.moviments pel que hi ha al full i se n'enduen el que encara no s'ha escrit.
+// Nombre de desats en curs. Mentre n'hi haja algun, els refrescos en segon pla s'han d'esperar: substituirien DB.
 let _desantAraMateix=0;
 
+// Guarda a Supabase tot el que ha canviat a DB des de l'última lectura o desat (D-048). El paràmetre només diu qui ho demana:
+// els canvis són sempre tots, en una sola transacció i en l'ordre que demanen les claus foranes, de manera que una acció que
+// toca moviments, fons i caixes (tancar una caixa) no pot quedar a mitges ni dependre de l'ordre de les crides.
+// Propaga els errors: qui crida ha de tractar-los, i mai s'ha de mostrar «Guardat ✓» abans de saber el resultat.
 async function save(key){
   if(!dadesCarregades){
     showToast('Les dades no s\'han carregat be. Recarrega la pagina abans de guardar res.',true);
     throw new Error('Dades no carregades: save(\''+key+'\') bloquejat');
   }
-  // Si hi ha guardats esperant una renovació del token, cadascú ha d'escriure
-  // l'estat de DB de quan continua, no el de quan es va cridar (D-020).
-  await esperarToken();
-  let referAmbTokenNou=false;
   _desantAraMateix++;
-  try{
   setSyncing(true,true);
   try{
-    if(key==='config'){
-      const rows=configToRows();
-      await writeTab(TABS.arees.name,TABS.arees.headers,rows.arees);
-      await writeTab(TABS.delegacions.name,TABS.delegacions.headers,rows.delegacions);
-      await writeTab(TABS.events.name,TABS.events.headers,rows.events);
-      await writeTab(TABS.bancs.name,TABS.bancs.headers,rows.bancs);
-      await writeTab(TABS.usuaris.name,TABS.usuaris.headers,rows.usuaris);
-      await writeTab(TABS.usuaris_assignacions.name,TABS.usuaris_assignacions.headers,rows.assignacions);
-      setSyncing(false,true);return;
-    }
-    const t=TABS[key];
-    if(!t){throw new Error('Tab desconegut: '+key);}
-    if(key==='moviments'){await writeTab(t.name,t.headers,DB.moviments);}
-    else if(key==='fons'){await writeTab(t.name,t.headers,DB.fons);}
-    else if(key==='tancaments'){await writeTab(t.name,t.headers,Object.values(DB.tancaments));}
-    else if(key==='saldos'){
-      const saldosArr=Object.entries(DB.saldos||{}).map(function(e){
-        const parts=e[0].split('_');const bancId=parts[0];const anyFiscal=parts.slice(1).join('_');
-        return{bancId,anyFiscal,saldoInicial:e[1].saldoInicial||0,saldoData:e[1].saldoData||''};
-      });
-      await writeTab(t.name,t.headers,saldosArr);
-    }
-    else if(key==='regles'){await writeTab(t.name,t.headers,DB.regles);}
-    else if(key==='rols'){
-      const rolsArr=Object.values(getRoles()).map(function(r){
-        return{id:r.id,label:r.label,color:r.color||'p-gray',
-          canRegister:String(r.canRegister),canFons:String(r.canFons),
-          canImport:String(r.canImport),canConfig:String(r.canConfig),
-          canUsers:String(r.canUsers),viewAll:String(r.viewAll),custom:String(r.custom||false)};
-      });
-      await writeTab(TABS.rols.name,TABS.rols.headers,rolsArr);
-    }
-    else if(key==='config_ext'){
-      // PROTECCIÓ DEFENSIVA: si els camps crítics estan buits, usar l'últim valor bo conegut
-      const safeExercicis=(DB.config.exercicis||[]).length>0
-        ? DB.config.exercicis
-        : (_lastGoodCfgExt.exercicis||[]);
-      const safeDriveFolders=Object.keys(DB.config.drive_folders||{}).length>0
-        ? DB.config.drive_folders
-        : (_lastGoodCfgExt.drive_folders||{});
-      const safeAnyFiscal=DB.config.anyFiscal||_lastGoodCfgExt.anyFiscal||'26/27';
-      // LOG: registrar sempre qui escriu i amb quins valors
-      logCfgExtSave(safeExercicis,safeDriveFolders);
-      const cfgRows=[
-        {clau:'anyFiscal',valor:safeAnyFiscal},
-        {clau:'exercicis',valor:JSON.stringify(safeExercicis)},
-        {clau:'estats_exercicis',valor:JSON.stringify(DB.config.estats_exercicis||{})},
-        {clau:'fappPassiu',valor:JSON.stringify(DB.config.fappPassiu||{})},
-        {clau:'justificant',valor:JSON.stringify(DB.config.justificant||{mode:'mai',llindar:0})},
-        {clau:'drive_folders',valor:JSON.stringify(safeDriveFolders)},
-        {clau:'modulVis',valor:JSON.stringify(DB.config.modulVis||{})},
-        {clau:'reportVis',valor:JSON.stringify(DB.config.reportVis||{})}
-      ];
-      await writeTab(TABS.config_ext.name,TABS.config_ext.headers,cfgRows);
-    }
-    else if(key==='pres_plans'){await writeTab(t.name,t.headers,DB.pres_plans);}
-    else if(key==='pres_config'){await writeTab(t.name,t.headers,[DB.pres_config]);}
-    else if(key==='pres_historial'){await writeTab(t.name,t.headers,DB.pres_historial);}
+    await sbDesa();
   }catch(e){
-    if(e.code==='AUTH'){referAmbTokenNou=true;return;}
     showToast('Error guardant: '+e.message,true);
-    setSyncing(false,true);
-    // PROPAGUEM l'error. Abans es feia return, i qui cridava no podia saber que
-    // havia fallat: saveWithToast arribava igualment a la linia de l'exit i
-    // l'usuari veia "Moviment registrat" encara que el full haguera rebutjat
-    // l'escriptura. La confirmacio ha de dependre del resultat real.
     throw e;
-  }
-  setSyncing(false,true);
   }finally{
     _desantAraMateix--;
-    if(referAmbTokenNou)return save(key);
+    setSyncing(false,true);
   }
 }
 
@@ -3056,59 +3331,18 @@ async function _driveGetTicketFolder(af){
 }
 
 async function _driveUploadTicket(file, movId, af){
-  const folderId=await _driveGetTicketFolder(af);
-  await esperarToken();
-  const ext=file.name.split('.').pop()||'jpg';
-  const nomFitxer=movId+'.'+ext;
-  // Upload multipart
-  const metadata={name:nomFitxer,parents:[folderId]};
-  const form=new FormData();
-  form.append('metadata',new Blob([JSON.stringify(metadata)],{type:'application/json'}));
-  form.append('file',file);
-  const resp=await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,webViewLink',{
-    method:'POST',
-    headers:{Authorization:'Bearer '+accessToken},
-    body:form
-  });
-  const data=await resp.json();
-  if(!data.id)throw new Error('Error pujant a Drive: '+(data.error?.message||'desconegut'));
-  // Fer el fitxer llegible per a qui tinga l'enllaç
-  await fetch('https://www.googleapis.com/drive/v3/files/'+data.id+'/permissions',{
-    method:'POST',
-    headers:{Authorization:'Bearer '+accessToken,'Content-Type':'application/json'},
-    body:JSON.stringify({role:'reader',type:'anyone'})
-  });
-  return data.webViewLink||('https://drive.google.com/file/d/'+data.id+'/view');
+  // Els justificants passen de Drive a Supabase Storage a la Fase 4: sense Google no hi ha cap token per a Drive.
+  throw new Error('Els justificants encara no es poden pujar: passen a Supabase Storage (Fase 4).');
 }
 
 async function driveDeleteFile(ticketUrl){
-  if(!ticketUrl)return;
-  // Extraure ID de l'URL
-  const m=ticketUrl.match(/\/d\/([a-zA-Z0-9_-]+)/);
-  if(!m)return;
-  const fileId=m[1];
-  await esperarToken();
-  await fetch('https://www.googleapis.com/drive/v3/files/'+fileId,{
-    method:'DELETE',
-    headers:{Authorization:'Bearer '+accessToken}
-  });
+  // Fase 4: sense token de Google, el fitxer de Drive es queda com a còpia.
+  if(ticketUrl)console.warn('El fitxer de Drive no s\'esborra (Fase 4):',ticketUrl);
 }
 
-async function saveMoviment(mov){
-  setSyncing(true,true);
-  try{
-    await appendRow(TABS.moviments.name,TABS.moviments.headers,mov);
-  }catch(e){
-    console.warn('appendRow failed, trying writeTab:',e.message);
-    try{
-      await writeTab(TABS.moviments.name,TABS.moviments.headers,DB.moviments);
-    }catch(e2){
-      showToast('Error guardant moviment: '+e2.message,true);
-    }
-  }
-  setSyncing(false,true);
-}
-async function saveFons(f){setSyncing(true,true);try{await appendRow(TABS.fons.name,TABS.fons.headers,f);}catch(e){showToast('Error guardant fons: '+e.message,true);}setSyncing(false,true);}
+// Els moviments i fons nous ja són a DB: desar-los és enviar les diferències (el mateix que save()).
+async function saveMoviment(mov){await save('moviments');}
+async function saveFons(f){await save('fons');}
 
 // TABS MIGRATION MAP
 const TABS_MIGRATION={
@@ -3151,7 +3385,13 @@ function rowsToConfig(arees,delegacions,events,bancs,usuaris,assignacions,regles
 }
 
 async function loadFromSupabase(){
-  _sbPestanyes=sbPestanyes(await sbLligTot());
+  // Una lectura que comença abans d'un guardat i acaba després porta l'estat d'abans del guardat: aplicar-la desfaria el que
+  // acaba de desar-se (i deixaria DB diferent de la foto de base). Es descarta si, mentre llegia, s'ha desat, s'està desant
+  // o l'usuari ha canviat alguna cosa. La primera lectura no té res a perdre.
+  const gen=_sbGen;
+  const R=await sbLligTot();
+  if(dadesCarregades&&(gen!==_sbGen||_desantAraMateix>0||sbHiHaPendents()))return false;
+  _sbPestanyes=sbPestanyes(R);
   // Swap atòmic: llegim tot en variables temporals i assignem a DB al final
   // Evita que una operació d'usuari concurrent veja DB en estat inconsistent
   const movsRows=await readTab(TABS.moviments.name);
@@ -3225,14 +3465,7 @@ async function loadFromSupabase(){
   if(presConfigRows.length>0)DB.pres_config=presConfigRows[presConfigRows.length-1];
   const mapReglesRows=await readTab(TABS.regles.name);
   DB.regles=mapReglesRows.map(function(r){return{...r,prioritat:parseInt(r.prioritat)||10,activa:r.activa!=='false'};});
-  if(!DB.regles.length){
-    DB.regles=getDefaultRegles();
-    // Migrar automàticament al Sheets (pestanya 13 Regles CSV buida → populem)
-    // writeTab directe en lloc de save(): aixo passa enmig de la carrega, quan
-    // dadesCarregades encara es false. Es segur perque nomes escriu si la
-    // pestanya esta buida i el contingut son les regles per defecte.
-    writeTab(TABS.regles.name,TABS.regles.headers,DB.regles).catch(function(e){console.warn('No s\'han pogut migrar les regles per defecte:',e);});
-  }
+  if(!DB.regles.length)DB.regles=getDefaultRegles();   // només en memòria: no es desen fins que algú toca les regles
   const rolsRows=await readTab(TABS.rols.name);
   if(rolsRows.length>0){
     DB.config.rols={};
@@ -3263,7 +3496,6 @@ async function loadFromSupabase(){
     if(cfgMap.justificant){try{DB.config.justificant=JSON.parse(cfgMap.justificant);}catch(e){}}
     if(cfgMap.drive_folders){try{DB.config.drive_folders=JSON.parse(cfgMap.drive_folders);}catch(e){}}
     // Actualitzar snapshot de valors bons per a protecció defensiva
-    updateLastGoodCfgExt();
     if(cfgMap.modulVis){try{DB.config.modulVis=JSON.parse(cfgMap.modulVis);}catch(e){}}
     if(cfgMap.reportVis){try{DB.config.reportVis=JSON.parse(cfgMap.reportVis);}catch(e){}}
   }
@@ -3282,8 +3514,10 @@ async function loadFromSupabase(){
   DB.moviments=_newMoviments;
   DB.fons=_newFons;
   DB.tancaments=_newTancaments;
-  // A partir d'aci DB reflecteix el full: ja es pot guardar sense perill.
+  // A partir d'aci DB reflecteix Supabase: ja es pot guardar sense perill. La foto de base és DB tal com acaba de quedar
+  // (no les files cruses): el que la lectura normalitza no ha de comptar com a canvi de l'usuari.
   dadesCarregades=true;
+  _sbBase=sbFotoActual();
 }
 
 
@@ -3721,7 +3955,7 @@ async function doRegistrarMoviment(imp,areaId,area,delegId,deleg,event,eventId,u
       await save('moviments');
     }catch(e){
       // La despesa es queda a DB amb el mateix id: reintentar NO duplica,
-      // perque writeTab reescriu la pestanya sencera a partir de l'array.
+      // perque es desa la diferència amb Supabase i l'id ja és a DB.
       showToastRetry('No s\'ha registrat la despesa i el justificant no s\'ha pujat. Comprova l\'historial abans de tornar a introduir-la.',
         function(){saveWithToast('moviments','Despesa registrada ✓ — adjunta el justificant editant-la');});
       return;
@@ -4847,6 +5081,7 @@ async function executarTancament(){
   const retirades=getTancRetirades(evId);
   tc.efectiu=ef;tc.tpv=tpv;tc.pagaments=pag;tc.canvi=canvi;tc.retirades=retirades;
   tc.notes=notes;tc.estat='tancat';tc.tancat=true;tc.registratPer=currentUser?.email||'';
+  tc.areaId=areaId;tc.delegacioId=delegId;   // destí dels moviments del tancament: es desa a la caixa
   DB.tancaments[evId]=tc;
   const netEfectiu=ef-canvi;
   const detallTanc='efectiu final '+fmtD(efFinal)+' + pagaments '+fmtD(pag)+' − canvi '+fmtD(canvi);
@@ -5580,7 +5815,7 @@ function renderFlux(){
 
 const MANUAL={
   intro:`<h3 style="margin-bottom:12px">Benvingut a Falla Portal</h3>
-    <p style="color:var(--text2);line-height:1.6;margin-bottom:12px">Sistema de gestió financera de la Falla Portal per a l'any fiscal actiu. Totes les dades es guarden automàticament a Google Sheets i estan disponibles en temps real per a tots els usuaris autoritzats.</p>
+    <p style="color:var(--text2);line-height:1.6;margin-bottom:12px">Sistema de gestió financera de la Falla Portal per a l'any fiscal actiu. Totes les dades es guarden automàticament a Supabase i estan disponibles en temps real per a tots els usuaris autoritzats.</p>
     <div style="background:var(--blue-bg);border-radius:var(--r);padding:12px;font-size:13px;color:var(--blue-text);margin-bottom:12px"><strong>Primer pas:</strong> El President o Tresorera han de donar d'alta els usuaris a <strong>Configuració → Usuaris</strong>, indicant el seu email de Google i rol assignat.</div>
     <div style="font-size:13px;line-height:2">
       <div>📊 <strong>Dashboard</strong> — resum global de l'exercici actiu</div>
@@ -5927,7 +6162,7 @@ function openModalArea(id){
 async function saveArea(){
   const id=document.getElementById('ma-id').value.trim().padStart(2,'0');
   const nom=document.getElementById('ma-nom').value.trim();
-  const resp=document.getElementById('ma-resp').value.trim();
+  const resp='';   // el responsable ja no s'assigna ací sinó a la Directiva (el camp ma-resp no existeix)
   const color=document.getElementById('ma-color').value;
   if(!id||!nom){showToast('ID i nom són obligatoris',true);return;}
   if(!editAreaId&&DB.config.areas.find(a=>a.id===id)){showToast('Ja existeix una àrea amb aquest ID',true);return;}
@@ -6241,6 +6476,7 @@ async function deleteBanc(id){
   if(!b)return;
   if(!confirm('Eliminar '+b.nom+'?'))return;
   DB.config.bancs=DB.config.bancs.filter(x=>x.id!==id);
+  Object.keys(DB.saldos||{}).filter(function(k){return k.indexOf(id+'_')===0;}).forEach(function(k){delete DB.saldos[k];});   // els saldos inicials del banc marxen amb ell
   saveCache();renderCfgBancs();
   showToast('Banc eliminat');
   save('config').catch(function(e){console.warn(e);});
@@ -7141,7 +7377,7 @@ function saveDriveFolders(){
   if(fEl)DB.config.drive_folders['factures_'+af]=_extractDriveId(fEl.value);
   saveCache();
   save('config_ext').catch(function(e){showToast('Error guardant: '+e.message,true);});
-  showToast('Carpetes Drive guardades per '+af);
+  showToast('Les carpetes de Drive ja no es desen: els justificants passen a Supabase Storage (Fase 4)',true);
 }
 
 function getDriveFolderTickets(af){
@@ -7353,7 +7589,7 @@ async function saveModulVis(){
   }
   try{
     await save('config_ext');
-    showToast('Visibilitat de mòduls guardada');
+    showToast('Visibilitat de mòduls aplicada només en aquesta sessió: encara no es desa a Supabase (pendent de la matriu de permisos)',true);
     buildNav();
   }catch(e){showToast('Error guardant: '+e.message,true);}
 }
@@ -7363,7 +7599,7 @@ async function resetModulVis(){
   DB.config.modulVis=getDefaultModulVis();
   saveCache();
   await save('config_ext');
-  showToast('Valors per defecte restaurats');
+  showToast('Valors per defecte restaurats només en aquesta sessió (encara no es desa a Supabase)',true);
   renderCfgModuls();
   buildNav();
 }
@@ -7430,7 +7666,7 @@ async function saveReportVis(){
   if(!DB.config.reportVis)DB.config.reportVis=getDefaultReportVis();
   try{
     await save('config_ext');
-    showToast('Visibilitat de reports guardada');
+    showToast('Visibilitat de reports aplicada només en aquesta sessió: encara no es desa a Supabase (pendent de la matriu de permisos)',true);
     renderReports();
   }catch(e){showToast('Error guardant: '+e.message,true);}
 }
@@ -7440,7 +7676,7 @@ async function resetReportVis(){
   DB.config.reportVis=getDefaultReportVis();
   saveCache();
   await save('config_ext');
-  showToast('Valors per defecte restaurats');
+  showToast('Valors per defecte restaurats només en aquesta sessió (encara no es desa a Supabase)',true);
   renderCfgReports();
 }
 
@@ -7543,8 +7779,7 @@ function registrarPassiuFapp(total,fallers){
   if(idx2>=0){DB.fapp_passius[idx2]={data,total,fallers,anyFiscal:af};}
   else{DB.fapp_passius.push({data,total,fallers,anyFiscal:af});}
   saveCache();
-  writeTab(TABS.fapp_passiu.name,TABS.fapp_passiu.headers,DB.fapp_passius).catch(function(e){console.warn(e);});
-  showToast('Passiu de '+fmtD(total)+' registrat i guardat');
+  save('fapp_passiu').then(function(){showToast('Passiu de '+fmtD(total)+' registrat i guardat');}).catch(function(e){console.warn(e);});
   if(document.getElementById('page-dashboard')?.classList.contains('active'))renderDashboard();
   cancelFappImport(2);
 }
@@ -7677,39 +7912,29 @@ function renderTancamentSilent(){
   if(tancamentUsuariActiu())return;
   renderTancamentList();
 }
+// Realtime (D-048): en lloc de llegir cada 30 s, l'app es subscriu als canvis de les taules i llig quan en passa algun.
+// Els canvis propis també arriben: com que ja són a DB no hi ha res a repintar, i bgRefresh no llig mentre hi ha canvis sense desar.
+// Cada 5 minuts (initApp) i en canviar de pantalla (showPage) es llig igualment, per si es perd algun avís.
+let _sbCanal=null,_sbTemps=null;
 function startPolling(){
-  if(pollingInterval)clearInterval(pollingInterval);
-  pollingInterval=setInterval(function(){
-    if(!tokenVigent())return;
-    if(_desantAraMateix>0)return;   // no recarregar enmig d'un guardat
-    setSyncing(true,true);
-    // Guardar snapshot per evitar UI buida durant la càrrega
-    const _snapMovs=DB.moviments?[...DB.moviments]:[];
-    const _snapFons=DB.fons?[...DB.fons]:[];
-    loadFromSupabase().then(function(){
-      saveCache();
-      setSyncing(false,true);
-      const activePage=document.querySelector('.page.active');
-      if(activePage){
-        const id=activePage.id.replace('page-','');
-        const renders={historial:filterHist,
-          lliurament:renderFons,
-          tancament:renderTancamentSilent,resultats:renderResultats,flux:renderFlux};
-        if(id==='dashboard'){updateDashboardSilent();}
-        else if(renders[id]){renders[id]();}
-      }
-    }).catch(function(e){
-      // Restaurar snapshot si la càrrega falla
-      if(_snapMovs.length>0)DB.moviments=_snapMovs;
-      if(_snapFons.length>0)DB.fons=_snapFons;
-      setSyncing(false,true);
-      console.warn('Polling error:',e);
+  if(_sbCanal||!currentUser)return;
+  _sbCanal=sb.channel('canvis-dades')
+    .on('postgres_changes',{event:'*',schema:'public'},function(){
+      clearTimeout(_sbTemps);
+      _sbTemps=setTimeout(function(){bgRefresh(true);},800);   // un guardat de moltes files és un sol refresc
+    })
+    .subscribe(function(estat){
+      if(estat==='CHANNEL_ERROR'||estat==='TIMED_OUT')console.warn('Realtime:',estat);
     });
-  },30000);
+}
+function sbAturaRealtime(){
+  clearTimeout(_sbTemps);
+  if(_sbCanal){try{sb.removeChannel(_sbCanal);}catch(e){console.warn('Realtime:',e);}_sbCanal=null;}
 }
 
 async function manualRefresh(){
   if(!currentUser)return;
+  if(_desantAraMateix>0||sbHiHaPendents()){showToast('Hi ha canvis sense desar: espera que es guarden abans d\'actualitzar.',true);return;}
   setSyncing(true,true);
   loadFromSupabase().then(function(){
     saveCache();
@@ -8319,7 +8544,7 @@ async function eliminarExercici(any){
   const html='<div style="margin-bottom:16px">'+
     '<div style="background:var(--red-bg);border:1px solid var(--red);border-radius:var(--r);padding:12px 14px;margin-bottom:12px">'+
       '<div style="font-size:14px;font-weight:700;color:var(--red-text);margin-bottom:6px"><i class="ti ti-alert-triangle"></i> Eliminar exercici '+any+'</div>'+
-      '<div style="font-size:13px;color:var(--red-text)">Aquesta acci&#243; &#233;s <strong>irreversible</strong>. S&#39;eliminaran totes les dades associades del Google Sheets.</div>'+
+      '<div style="font-size:13px;color:var(--red-text)">Aquesta acci&#243; &#233;s <strong>irreversible</strong>. S&#39;eliminaran totes les dades associades de Supabase.</div>'+
     '</div>'+
     '<div style="font-size:13px;margin-bottom:10px"><strong>Dades que s&#39;eliminaran:</strong></div>'+
     '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:12px;margin-bottom:12px">'+
@@ -8379,16 +8604,9 @@ async function confirmarEliminarExercici(any){
   saveCache();
   renderCfgExercicis();
 
-  // Guardar totes les taules afectades al Sheets
+  // Un sol guardat: l'exercici s'esborra a Supabase i tot el que en penja marxa per cascada (A-25)
   try{
-    await save('moviments');
-    await save('fons');
-    // Tancaments: reconstruir de DB.tancaments
-    await save('tancaments');
-    await save('config');   // events + bancs
-    await save('saldos');
-    await save('pres_plans');
-    await save('config_ext'); // exercicis + anyFiscal
+    await save('config_ext');
     showToast('Exercici '+any+' eliminat correctament');
   }catch(e){
     showToast('Error eliminant dades: '+e.message,true);
@@ -9325,7 +9543,7 @@ function resetTancament(eventId){
     save('fons').catch(e=>console.warn(e)),
     save('moviments').catch(e=>console.warn(e))
   ]).then(()=>showToast('Caixa reoberta — ja pots corregir els imports'))
-    .catch(()=>showToast('Error guardant a Sheets',true));
+    .catch(()=>showToast('Error guardant: la caixa no s\'ha reobert a Supabase',true));
   renderReport1();
 }
 

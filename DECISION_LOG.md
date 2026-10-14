@@ -849,3 +849,38 @@ forma del full (`via`, `areaNom`, dates DD/MM/AAAA, imports en text). Reescriure
   - S'elimina la caché de `DB` a `localStorage` (deute 1-bis): només es guarda la sessió.
   - Els noms desnormalitzats (`areaNom`, `delegacioNom`, `eventNom`, `userNom`) ara són els actuals (A-14); el creador d'un fons és
     el seu email (A-07).
+
+---
+
+### D-048: Fase 3, escriptura: `guarda_canvis` i desat per diferències de tot `DB` (Realtime en lloc del polling)
+**Date**: 2026-10-15
+**Status**: Accepted (desenvolupa D-047, Opció A d'Emilio)
+**Context**: L'app té 66 punts de crida a `save()` que pensen en «reescriure la pestanya», però els fluxos reals toquen diverses
+entitats alhora (tancar una caixa = moviments + canvi + estat de la caixa) i moltes crides es llancen en paral·lel i sense esperar-se.
+**Decision**:
+  - **Funció de Postgres `public.guarda_canvis(p_canvis jsonb, p_motiu text)`** (`supabase/migrations/20261015100000_guarda_canvis.sql`):
+    aplica una llista d'operacions `{t, a: i|u|d|s, k, f}` en ordre i en una sola transacció. **SECURITY INVOKER** (RLS, columnes
+    permeses, exercici tancat i la resta de triggers s'apliquen com si l'usuari fes l'INSERT/UPDATE/DELETE per l'API), taules en llista
+    tancada, columnes validades i `quote_ident`. **Comprova quantes files toca cada operació**: RLS no dona error en un UPDATE/DELETE
+    filtrat i sense això l'app diria «Guardat ✓» d'un canvi no desat (el test que ho demostra va primer). La identificació `k` pot ser
+    una clau natural (línies de pressupost, directiva). L'esquema `app` no s'exposa.
+  - **Excepció de la convenció «cap `set_config` amb dades de l'usuari»**: la funció només escriu la variable `app.motiu` (nom fix),
+    que D-029/t40 ja preveia i només té efecte per a qui té `exercicis` en edició; val només dins de la transacció.
+  - **`save(clau)` desa TOT el que ha canviat**, no només la clau: compara `DB` (convertit a files de taula amb `sbTaules`) amb una
+    foto (`_sbBase`) feta amb el mateix convertidor just després de cada lectura, de manera que el que la lectura normalitza no compta
+    com a canvi. Una sola cua; ordre: desmarcar l'event per defecte antic, esborrats (fills abans que pares), altes (pares abans que
+    fills), canvis (tancar una caixa afegeix els seus moviments mentre és oberta i només després la tanca). Els fills que marxen
+    per cascada (moviments d'una caixa, fons d'una despesa, tot el d'un exercici) no s'envien. Una persona esborrada es desactiva.
+    L'import d'una despesa amb fons no s'envia (el manté el trigger, R5). Els sis permisos de `14 Rols` es tradueixen a `rol_moduls`.
+  - **Una lectura que ha començat abans d'un desat es descarta** (generació `_sbGen`, `_desantAraMateix`, canvis pendents): trepitjaria l'estat.
+  - **Exercici tancat**: President/Tresoreria escriuen com a excepció amb un motiu (`prompt`) que viatja amb el guardat i queda a `audit_log`.
+  - **Realtime** (`supabase/migrations/20261015110000_realtime.sql`): l'app es subscriu als canvis de les 25 taules i llig amb 800 ms de
+    pausa; segueixen el refresc cada 5 min i en canviar de pantalla. Fora la capa de Sheets (`sheetsReq`, `writeTab`, `appendRow`, token).
+**Consequences**:
+  - **No persisteixen** (no tenen taula al model): visibilitat de mòduls i reports per rol (`modulVis`, `reportVis`: la matriu del servidor
+    els substitueix; l'app ho avisa), carpetes de Drive, regles amb font `app` (D-031), notes/establiment/empremta dels consums de falles.app.
+  - Els justificants (Drive → Storage) són la Fase 4: pujar-ne un falla amb un missatge clar; esborrar-ne el fitxer de Drive ja no es fa.
+  - `operacions` (D-027) encara no es creen en desar: els moviments nous tenen `operacio_id` nul.
+  - Errors preexistents corregits de pas: el tros 1 va perdre `genId` i `calcSaldoDelegat` (cap alta no podia funcionar); `saveArea` llegia un
+    camp `ma-resp` que no existeix; la clau de saldos `idBanc_XX/YY` es trencava amb els ids nous (`_`); eliminar un banc no n'eliminava els saldos;
+    tancar un exercici cridava `save('config')` i no persistia (ara tot es desa).

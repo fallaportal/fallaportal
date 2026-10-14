@@ -1,7 +1,7 @@
 # Model de dades — Falla Portal a Supabase
 ## Redactat: 2026-10-13 · Actualitzat: 2026-10-14 (Fase 1: SQL i permisos) · Decisions: D-021, D-024, D-025, D-027–D-031, D-035–D-037
 
-L'esquema implementat és a `supabase/migrations/` (4 fitxers) i els tests a `supabase/tests/` (§9.6). On aquest
+L'esquema implementat és a `supabase/migrations/` (8 fitxers) i els tests a `supabase/tests/` (§9.6). On aquest
 document i l'SQL no coincidisquen, mana l'SQL i cal corregir el document.
 
 Aquest document es llig sense context previ. Substitueix l'esborrany de taules del §4 de
@@ -445,6 +445,9 @@ Totes les decisions d'aquesta llista estan preses. Els quatre canvis s'apliquen 
   `SUPABASE_DB_URL` a `tools/.env`. `--detall` mostra el motiu de cada error esperat.
 - **Una migració ja aplicada al projecte de Supabase no es modifica**: els canvis van en un fitxer nou. (El dia del
   tall el projecte es buida i s'hi apliquen totes des de zero, D-043.)
+- **Escriptura des de l'app (Fase 3, D-048)**: la funció `public.guarda_canvis` (migració `20261015100000`, security invoker) és l'únic camí
+  d'escriptura del client; aplica llistes d'altes/canvis/esborrats en una transacció amb els permisos de qui crida i falla si RLS filtra una
+  operació. Tests a `supabase/tests/casos_guarda.mjs` (63). La migració `20261015110000` posa les taules a la publicació de Realtime.
 - **Projecte** `fallaportal` (D-043): organització AI4ALL (Pro), regió eu-west-1 (Irlanda), PostgreSQL 17.11, Data
   API activada, sense integració amb GitHub (les migracions s'apliquen a mà). "Automatically expose new tables" va quedar
   marcat i "Enable automatic RLS" sense marcar en crear-lo: no importa, perquè la migració de permisos treu els permisos

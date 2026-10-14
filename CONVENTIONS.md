@@ -77,10 +77,16 @@ confirmar amb `repr()` abans de concloure que hi ha un error de sintaxi.
 a `main`** amb codi de Supabase (GitHub Pages publica `main`). Els canvis d'`index.html` que s'hagen de publicar abans del tall
 van a `main`, i després es porten a la branca (`git merge main`). Versions de la branca: v4.1.x.
 
-**Eines de dades (Fase 3, D-047)**: `node tools/supabase_carrega.mjs "<export.xlsx>" [--simula]` carrega l'export del full (una
-transacció, valida sumes); `node tools/supabase_roundtrip.mjs "<export.xlsx>"` comprova que l'adaptador de lectura d'`index.html`
-reconstrueix el full. Qualsevol canvi a `sbPestanyes()` o a la càrrega s'ha de tancar amb la prova en verd. L'export i els seus
-derivats (JSON, informes) viuen fora del repo.
+**Eines de dades (Fase 3, D-047, D-048)**: `node tools/supabase_carrega.mjs "<export.xlsx>" [--simula]` carrega l'export del full (una
+transacció, valida sumes; també serveix per a netejar les dades de proves); `node tools/supabase_roundtrip.mjs "<export.xlsx>"` comprova que
+l'adaptador de lectura d'`index.html` reconstrueix el full; `node tools/supabase_escriptura.mjs [--accions]` comprova el camí invers
+(`sbTaules`), que no hi ha canvis fantasma i cada acció d'escriptura de l'inventari §4 contra la base de dades real dins d'una transacció que es desfà.
+Qualsevol canvi a `sbPestanyes()`, `sbTaules()`, `sbCanvis()` o a la càrrega s'ha de tancar amb les tres proves en verd.
+**Desat (D-048)**: `save(clau)` desa TOT el que ha canviat a `DB` (no només la clau). Una acció nova només ha de deixar `DB` com vol i cridar
+`save`; si escriu una columna nova, cal ensenyar-la a `sbTaules()`. Les columnes que posa el servidor (creat_per, responsable, conciliació,
+import d'un fons lligat) no s'envien mai. Mai assignar `DB` des d'una lectura mentre hi ha un desat en curs o canvis sense desar.
+**Fitxers amb accents**: no editar `index.html` amb scripts `python - <<EOF` amb barres invertides dins de cometes (el shell se'n menja
+una): usar l'eina d'edició, o escriure el tros a un fitxer i empalmar-lo.
 
 **Supabase (migració, D-021)**:
 - L'esquema va a `supabase/migrations/` (un fitxer per canvi, nom `AAAAMMDDhhmmss_descripcio.sql`). **Una migració ja
@@ -124,7 +130,8 @@ derivats (JSON, informes) viuen fora del repo.
 | `any fiscal` | Exercici comptable `XX/YY` |
 | `directiva` | Mapeja usuaris a àrees/delegacions (tab 09) |
 | `bankHash` | Hash per detectar duplicats en importació CSV |
-| `writeTab` | Escriu la pestanya sencera des de `DB` (escriu primer, neteja després) |
+| `writeTab` | (històric, eliminat a la v4.1.2) escrivia la pestanya sencera; ara `save()` envia diferències a `guarda_canvis` |
+| `_sbBase` | Foto (files de taules) de l'última lectura o desat; la diferència amb `DB` és el que s'envia |
 | swap atòmic | Llegir tot en temporals i assignar a `DB` al final |
 | `dadesCarregades` | Pany: fals fins que una càrrega acaba bé |
 | `_desantAraMateix` | Comptador d'escriptures en curs |

@@ -1,5 +1,5 @@
 # Work Stream Status — Falla Portal
-## Snapshot Date: 2026-10-14
+## Snapshot Date: 2026-10-15
 ## Versió en producció: v4.0.78
 
 > **Context de calendari**: període vacacional, ús baix de l'eina. Bon moment per a
@@ -82,20 +82,24 @@ extern de la plantilla o servir-lo des del domini propi; (4) l'ús continuat mil
   - Pendent de la Fase 3: llegir les dades de Supabase, la matriu de permisos al client, treure `saveCache`/`loadCache` i la capa
     de Sheets (`sheetsReq`, `tokenVigent`/`esperarToken` provisionals), i el bàner.
   - Una persona només té un rol a l'app (prioritat president > treasury > area > delegat > board) fins a la Fase 3.
-**Fase 3 en curs (2026-10-15, Sonnet 5.5 · high; branca `supabase`, v4.1.1, D-047)**:
-  - Fet (tros 1, lectura): dades reals a Supabase (`node tools/supabase_carrega.mjs "<export.xlsx>"`, l'export és a
-    `~/Downloads/Falla Portal DB.xlsx`, fora del repo); adaptador de lectura `sbPestanyes()`; `loadFromSupabase()` paginat; la prova
-    `node tools/supabase_roundtrip.mjs "<export.xlsx>"` quadra. Entrada real verificada al navegador. Sense caché a `localStorage`.
-  - **Pendent (tros 2, escriptura)**: `save()` per diferències en una transacció (funció de Postgres), amb prova de cada acció de
-    l'inventari §4 (moviment, despesa amb fons, avançament, traspàs, caixa, pressupost, Configuració, directiva, rols, regles…); després
-    Realtime en lloc del polling i treure `sheetsReq`/`writeTab`/`appendRow`.
-  - Decisions pendents d'Emilio: (1) Junta té `viewAll=false` al full real i la matriu carregada diu «tot»; (2) els consums de
-    falles.app ja no desen empremta: com es detecten duplicats en reimportar (per període + event + import?); (3) descartats a la
-    càrrega: 4 avançaments orfes i 12 canvis orfes (net zero).
-**Propera sessió: Fase 3 (escriptura)** (capa de dades: càrrega des de Supabase paginada, operacions per fila als 66 punts de `save()`,
-Realtime, vistes del model §5, matriu de permisos al client, fora la caché de `localStorage` i la capa de Sheets) amb
-**Sonnet 5.5 · high** i **Opus 5.5 · high** per a les parts delicades (fons ↔ moviments, tancaments, importació amb
-`empremta`, bloqueig de pressupostos). A la branca `supabase`, sense tocar `main`.
+**Fase 3 (2026-10-15, Sonnet 5.5 · high; branca `supabase`, v4.1.2, D-047 i D-048): lectura i escriptura fetes**:
+  - Tros 1 (lectura): dades reals a Supabase (`node tools/supabase_carrega.mjs "<export.xlsx>"`, l'export és a `~/Downloads/Falla Portal DB.xlsx`,
+    fora del repo), adaptador `sbPestanyes()`, `loadFromSupabase()` paginat, prova `tools/supabase_roundtrip.mjs`.
+  - **Tros 2 (escriptura, D-048)**: `public.guarda_canvis` (security invoker, una transacció, comprova les files tocades); `save()` desa per
+    diferències tot `DB` (`sbTaules`/`sbCanvis`, foto `_sbBase`); Realtime en lloc del polling (migració `…110000_realtime.sql`); fora la
+    capa de Sheets. **253 tests en verd en local i a Supabase**, `supabase_roundtrip` en verd i `node tools/supabase_escriptura.mjs --accions`
+    (33 escenaris de l'inventari §4 contra les dades reals, en transacció que es desfà). Provat al navegador amb entrada real (vegeu PLA §11).
+    Es van trobar i corregir errors preexistents (D-048): `genId` i `calcSaldoDelegat` perduts al tros 1, `saveArea`, claus de saldos amb `_`,
+    saldos d'un banc esborrat, i una cursa entre lectura i desat.
+  - **Pendent**: (a) Fase 4: justificants (pujar-ne falla amb missatge clar); (b) matriu rol × mòdul al client i pantalles de permisos
+    (`modulVis`/`reportVis` i carpetes de Drive **no es desen**, l'app ho avisa); (c) crear `operacions` en desar (D-027); (d) retocar els textos
+    «Sheets/Drive» que queden al manual; (e) esborrar els usuaris de prova d'Authentication (Emilio).
+  - Decisions pendents d'Emilio (no bloquegen): (1) Junta té `viewAll=false` al full real i la matriu carregada diu «tot»; (2) els consums de
+    falles.app ja no desen empremta: com es detecten duplicats en reimportar (període + event + import?); (3) descartats a la càrrega: 4
+    avançaments orfes i 12 canvis orfes (net zero); (4) regles d'importació amb font `app` (2) no es poden desar; (5) un responsable d'àrea que fa
+    un traspàs banc → caixa reclassificant un moviment de l'extracte rep error de permís (només Historial en edició el pot canviar).
+**Propera sessió: Fase 4 (justificants a Storage)** i, en paral·lel, la matriu de permisos al client; després Fases 5–6 (script de migració
+final, proves d'acceptació rol per rol amb `tools/supabase_escriptura.mjs` com a base). A la branca `supabase`, sense tocar `main`.
 **Blockers**:
   - Cap per a començar la Fase 3. El pendent de brossa no la bloqueja, però cal resoldre'l abans del tall: si els codis van
     a brossa, la gent no entrarà.

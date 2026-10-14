@@ -12,7 +12,10 @@
 import { readFileSync, readdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { casos } from '../supabase/tests/casos_rls.mjs';
+import { casos as casosRls } from '../supabase/tests/casos_rls.mjs';
+import { casos as casosGuarda } from '../supabase/tests/casos_guarda.mjs';
+
+const casos = [...casosRls, ...casosGuarda];
 import { connectaRemot } from './connexio.mjs';
 
 const aqui = dirname(fileURLToPath(import.meta.url));
