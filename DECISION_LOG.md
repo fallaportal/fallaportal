@@ -784,3 +784,36 @@ Google); contrasenyes donades d'alta a mà; el correu de donDominio.
   - Si el correu falla, ningú no pot entrar: la Fase 2 ha de provar un enviament real i el pla de marxa arrere (§7)
     continua sent el full fins al tall.
 
+---
+
+### D-046: Alta a Auth amb un hook "Before User Created", i la Fase 2 en una branca
+**Date**: 2026-10-14
+**Status**: Accepted (Emilio: el hook; la branca la va anunciar Claude)
+**Context**: Amb l'alta pública desactivada, `signInWithOtp` només envia codi a qui ja és a `auth.users`; el pla preveia una
+funció de servidor amb la clau d'administrador que creara l'usuari d'Auth en donar d'alta una persona a `usuaris`. A més, mentre
+les dades siguen al full de Google (fins a la Fase 3), llevar Google Identity deixa l'app sense token per a llegir-lo, i un
+`push` a `main` es publica a producció.
+**Decision**:
+  - **Hook**: l'alta pública s'activa, però `app.hook_alta_usuari` (`supabase/migrations/20261014170000_hook_alta_usuaris.sql`),
+    registrat a Authentication → Hooks → "Before User Created", rebutja qualsevol correu que no siga el d'un membre (persona
+    activa de `usuaris` amb almenys un rol). S'executa abans de crear l'usuari i abans d'enviar el correu: a qui no és membre
+    no se li envia res. Sense codi de servidor ni clau d'administrador; només el rol `supabase_auth_admin` el pot executar.
+  - **Missatge explícit**: l'app diu "Aquest correu no és de cap membre de la falla". Revela qui és membre (unes 30 persones)
+    però fa evident una errada d'escriptura; acceptat.
+  - **Branca `supabase`**: tot el codi de la migració (Fases 2–6) va a esta branca. **Fins al tall no es fa `push` de codi de
+    Supabase a `main`**; `main` continua amb Google i el full. El 28 del tall es fusiona.
+  - **Fora la porta del correu d'administració** (`it.fallaportal@gmail.com` = Tresoreria) i el "si no hi ha usuaris, el primer
+    que entra és president": els permisos els decideix Postgres (RLS) per al correu del JWT, i cap d'eixos camins li'n
+    donaria. Qui ha d'administrar ha de ser a `usuaris` amb rol.
+  - **Un sol rol per persona a l'app** de moment (prioritat president > treasury > area > delegat > board > la resta):
+    la matriu rol × mòdul amb diversos rols (D-036) arriba al client a la Fase 3.
+**Alternatives Considered**: Edge Function amb la clau d'administrador (codi de servidor per desplegar i mantindre; l'alta
+pública es quedava desactivada); trigger que insereix a `auth.users` (Supabase ho desaconsella i pot trencar-se amb una
+actualització d'Auth).
+**Consequences**:
+  - La condició de seguretat de D-044 ("alta pública desactivada i confirmació d'email activada") passa a ser "només els
+    membres poden crear usuari (hook) i el codi per correu demostra que el correu és teu". Cal que el hook estiga registrat:
+    sense ell, qualsevol podria crear-se un usuari (no veuria cap dada, perquè RLS exigeix ser membre, però rebria correus
+    des del nostre SMTP).
+  - `auth_user_id` de `usuaris` no s'omple (la identitat és l'email del JWT); es decidirà a la Fase 3 si cal.
+  - Remitent real dels correus: `no-respon@mail.fallaportal.es` (D-045 deia `no-response@`).

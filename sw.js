@@ -1,5 +1,5 @@
 // Falla Portal — Service Worker v4.0.1
-const BUILD_VERSION = '4078';
+const BUILD_VERSION = '4100';
 const CACHE_NAME = 'falla-portal-v' + BUILD_VERSION;
 const BASE = '/fallaportal';
 
@@ -12,7 +12,8 @@ self.addEventListener('install', function(event) {
         BASE + '/index.html',
         BASE + '/icon-192.png',
         BASE + '/icon-512.png',
-        BASE + '/apple-touch-icon.png'
+        BASE + '/apple-touch-icon.png',
+        BASE + '/logo-mail.png'
       ]);
     }).then(function() {
       return self.skipWaiting();

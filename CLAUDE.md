@@ -49,8 +49,8 @@ anterior".
 
 No hi ha suite de tests. Qualsevol canvi que afecte la UI o el flux de dades s'ha
 de provar executant l'app real al navegador (servidor `falla-static`,
-`.claude/launch.json`, port 8899) seguint el bypass d'OAuth documentat a
-`.claude/skills/verify/SKILL.md`. No es dona per tancada una tasca només perquè el
+`.claude/launch.json`, port 8899) seguint el bypass d'OAuth (a `main`) o la simulació del client de Supabase (a la
+branca `supabase`) documentats a `.claude/skills/verify/SKILL.md`. No es dona per tancada una tasca només perquè el
 fitxer "es veu bé".
 
 L'esquema de Supabase (`supabase/`, migració D-021) es prova amb `node tools/supabase_tests.mjs` (PGlite en local;
@@ -71,6 +71,10 @@ confirmat. Un tancament que es queda en el commit local deixa la propera sessió
 (local o web) llegint un `origin/main` desactualitzat, i com el continuity set es
 reescriu sencer a cada tancament (no per línies), la primera divergència real
 produeix un conflicte de fitxer complet, no una fusió trivial de git. Per això:
+
+**Branca `supabase` (D-046)**: la migració a Supabase es desenvolupa a la branca `supabase`, que no es publica. Mai
+`push` a `main` amb codi de Supabase. A l'inici fes `git pull` a la branca on treballes; al tancament el push i la
+comprovació (`git log origin/<branca> -1`) són els de la branca. Els canvis que van a producció abans del tall van a `main`.
 
 1. `git add` + `git commit` dels documents actualitzats i el codi.
 2. `git push`.

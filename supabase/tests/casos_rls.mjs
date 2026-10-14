@@ -45,6 +45,10 @@ function fons(o = {}) {
 
 const comptaMov = "select count(*) from public.moviments where id like 't\\_%'";
 
+
+const hook = (email) => "select app.hook_alta_usuari('" + JSON.stringify({ user: { email } }).replace(/'/g, "''") + "'::jsonb)::text";
+const hookErr = (email) => "select app.hook_alta_usuari('" + JSON.stringify({ user: { email } }).replace(/'/g, "''") + "'::jsonb) -> 'error' ->> 'http_code'";
+
 export const casos = [
   // ---------------------------------------------------------------- Seguretat de l'esquema (substitueixen les opcions
   // "Enable automatic RLS" i "Automatically expose new tables" del projecte: fallen si una taula nova se'n queda fora)
@@ -263,4 +267,18 @@ export const casos = [
   // R11 · Dades que no canvien
   { nom: 'R11 config: les dates d\'un exercici no es canvien (D-026)', com: T, sql: "update public.exercicis set data_fi = '2093-03-30' where id = '92/93' returning 1", espera: 'error' },
   { nom: 'R11 rols: un rol de sistema no deixa de ser-ho', com: T, sql: "update public.rols set de_sistema = false where id = 'board' returning 1", espera: 'error' },
+
+  // ---------------------------------------------------------------- Fase 2 · hook "Before User Created" (D-046)
+  { nom: 'hook alta: un membre actiu amb rol pot crear-se l\'usuari', com: 'servei', sql: hook(P), espera: { valor: '{}' } },
+  { nom: 'hook alta: el correu es compara sense majúscules ni espais', com: 'servei', sql: hook('  President@Prova.TEST '), espera: { valor: '{}' } },
+  { nom: 'hook alta: un membre amb diversos rols també', com: 'servei', sql: hook(M), espera: { valor: '{}' } },
+  { nom: 'hook alta: un correu desconegut es rebutja', com: 'servei', sql: hookErr(N), espera: { valor: '403' } },
+  { nom: 'hook alta: un membre inactiu es rebutja', com: 'servei', sql: hookErr(I), espera: { valor: '403' } },
+  { nom: 'hook alta: una persona sense cap rol es rebutja', com: 'servei', sql: hookErr(S), espera: { valor: '403' } },
+  { nom: 'hook alta: una petició sense correu es rebutja', com: 'servei', sql: "select app.hook_alta_usuari('{\"user\":{}}'::jsonb) -> 'error' ->> 'http_code'", espera: { valor: '403' } },
+  { nom: 'hook alta: un correu buit es rebutja', com: 'servei', sql: hookErr(''), espera: { valor: '403' } },
+  { nom: 'hook alta: el rebuig porta un missatge', com: 'servei', sql: "select app.hook_alta_usuari('{\"user\":{\"email\":\"" + N + "\"}}'::jsonb) -> 'error' ->> 'message'", espera: { valor: 'Aquest correu no és de cap membre de la falla.' } },
+  { nom: 'hook alta: un rol que s\'esborra a mitges no deixa passar (sense usuari_rols)', com: 'servei', prep: "delete from public.usuari_rols where usuari_id = 't_president'", sql: hookErr(P), espera: { valor: '403' } },
+  { nom: 'hook alta: només el rol d\'Auth pot executar-lo', com: 'servei', sql: "select has_function_privilege('supabase_auth_admin', 'app.hook_alta_usuari(jsonb)', 'execute') and has_schema_privilege('supabase_auth_admin', 'app', 'usage') and not has_function_privilege('anon', 'app.hook_alta_usuari(jsonb)', 'execute') and not has_function_privilege('authenticated', 'app.hook_alta_usuari(jsonb)', 'execute') and not has_function_privilege('public', 'app.hook_alta_usuari(jsonb)', 'execute')", espera: { valor: 'true' } },
+  { nom: 'hook alta: un membre no pot provar correus des de l\'API', com: D, sql: hookErr(N), espera: 'error' },
 ];

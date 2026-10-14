@@ -15,7 +15,7 @@
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="32x32" href="icon-32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="icon-16.png">
-<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -44,16 +44,25 @@ input,select,textarea{font-family:inherit;font-size:15px;background:var(--bg);co
 input:focus,select:focus,textarea:focus{border-color:var(--blue)}
 #login-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--bg3)}
 .login-card{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--rl);padding:40px;text-align:center;max-width:380px;width:90%}
+.login-img{display:block;height:88px;width:auto;margin:0 auto 14px}
 .login-logo{font-size:30px;font-weight:600;margin-bottom:8px}.login-logo span{color:var(--red)}
 .login-sub{font-size:15px;color:var(--text2);margin-bottom:8px}
 .login-fiscal{font-size:11px;color:var(--text3);margin-bottom:28px;padding:5px 12px;background:var(--bg2);border-radius:20px;display:inline-block}
-.btn-google{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:14px;border-radius:var(--r);border:0.5px solid var(--border2);background:var(--bg);font-size:16px;font-weight:500;color:var(--text);transition:background .15s}
-.btn-google:hover{background:var(--bg2)}
+.login-lbl{display:block;text-align:left;font-size:12px;color:var(--text2);margin:20px 0 6px}
+.login-sent{font-size:13px;color:var(--text2);line-height:1.5;margin-top:20px}.login-sent b{color:var(--text);word-break:break-all}
+#login-code{text-align:center;font-size:26px;letter-spacing:.35em;padding:12px 8px 12px calc(8px + .35em);font-variant-numeric:tabular-nums;margin-top:14px}
+.btn-login{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:14px;margin-top:14px;border-radius:var(--r);border:none;background:var(--text);font-size:16px;font-weight:500;color:var(--bg);transition:opacity .15s}
+.btn-login:hover{opacity:.88}.btn-login:disabled{opacity:.45;cursor:default}
+.login-links{display:flex;justify-content:center;gap:6px;flex-wrap:wrap;margin-top:16px;font-size:12px;color:var(--text3)}
+.login-link{background:none;border:none;padding:2px 4px;font-size:12px;color:var(--text2);text-decoration:underline}.login-link:disabled{color:var(--text3);text-decoration:none;cursor:default}
+.login-boot{margin-top:28px;font-size:13px;color:var(--text3)}
+body:has(#login-screen:not(.hidden)) #mobile-nav,body:has(#noauth-screen:not(.hidden)) #mobile-nav{display:none!important}
 .login-note{font-size:11px;color:var(--text3);margin-top:16px}
 .login-err{margin-top:12px;font-size:12px;color:var(--red);padding:8px;background:var(--red-bg);border-radius:var(--r)}
 #app{display:flex;min-height:100vh}
 .sidebar{width:260px;background:var(--bg);border-right:0.5px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;overflow-y:auto;z-index:100}
 .sb-logo{padding:18px 16px 14px;border-bottom:0.5px solid var(--border)}
+.sb-brand{display:flex;align-items:center;gap:10px}.sb-brand img{height:34px;width:auto;flex-shrink:0}
 .sb-logo-text{font-size:18px;font-weight:600}.sb-logo-text span{color:var(--red)}
 .sb-fiscal{font-size:12px;color:var(--text3);margin-top:2px}
 .sb-user{padding:10px 16px;border-bottom:0.5px solid var(--border);display:flex;align-items:center;gap:8px}
@@ -166,9 +175,8 @@ input[type=checkbox]{accent-color:var(--green)}
 .modal-title{font-size:17px;font-weight:500;margin-bottom:18px}
 .toast{position:fixed;bottom:24px;right:24px;padding:10px 16px;background:var(--green);color:#fff;border-radius:var(--r);font-size:13px;z-index:300;display:none;align-items:center;gap:8px;max-width:340px}
 .toast.show{display:flex}.toast.error{background:var(--red)}.toast.pending{background:#555}.toast.warn{background:var(--amber,#B45309)}
-.reauth-banner{position:fixed;top:0;left:0;right:0;z-index:400;display:none;align-items:center;justify-content:center;flex-wrap:wrap;gap:10px;padding:10px 16px;background:var(--amber,#B45309);color:#fff;font-size:13px}
-.reauth-banner.show{display:flex}
-.reauth-banner button{background:#fff;color:#7a3e06;border:none;border-radius:var(--r);padding:6px 14px;font-size:13px;font-weight:600;cursor:pointer}
+.fase-banner{position:fixed;top:0;left:0;right:0;z-index:400;display:none;align-items:center;justify-content:center;padding:2px 16px;background:var(--amber,#B45309);color:#fff;font-size:11px;line-height:14px;text-align:center;pointer-events:none}
+.fase-banner.show{display:flex}
 .toast-retry{background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:4px;padding:3px 10px;font-size:12px;cursor:pointer;margin-left:4px;white-space:nowrap}
 .pill{font-size:11px;padding:3px 9px;border-radius:10px}
 .p-ok{background:var(--green-bg);color:var(--green-text)}
@@ -334,14 +342,26 @@ tr:hover td{background:var(--bg2)}
 
 <div id="login-screen">
   <div class="login-card">
+    <img class="login-img" src="logo-mail.png" alt="" width="63" height="88">
     <div class="login-logo">Falla <span>Portal</span></div>
     <div class="login-sub">Sistema de gestió financera</div>
     <div class="login-fiscal">Any fiscal 26/27 · Abr 2026 – Mar 2027</div>
-    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v4.0.78</div>
-    <button class="btn-google" onclick="signIn()">
-      <svg viewBox="0 0 24 24" width="20" height="20"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
-      Entrar amb Google
-    </button>
+    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v4.1.0</div>
+    <div id="login-step-boot" class="login-boot">Comprovant la sessió…</div>
+    <div id="login-step-email" class="hidden">
+      <label class="login-lbl" for="login-email">Correu electrònic</label>
+      <input id="login-email" type="email" inputmode="email" autocomplete="email" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="nom@correu.com" onkeydown="if(event.key==='Enter')loginEnviaCodi()">
+      <button class="btn-login" id="login-send" onclick="loginEnviaCodi()">Envia&#39;m el codi</button>
+    </div>
+    <div id="login-step-code" class="hidden">
+      <div class="login-sent">Hem enviat un codi de 6 xifres a<br><b id="login-sent-email"></b></div>
+      <input id="login-code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]*" placeholder="······" aria-label="Codi de 6 xifres" oninput="loginCodiCanvia()" onkeydown="if(event.key==='Enter')loginVerificaCodi()">
+      <button class="btn-login" id="login-verify" onclick="loginVerificaCodi()">Entrar</button>
+      <div class="login-links">
+        <button class="login-link" id="login-resend" onclick="loginReenvia()">Reenviar el codi</button> ·
+        <button class="login-link" onclick="loginCanviaCorreu()">Canviar el correu</button>
+      </div>
+    </div>
     <div class="login-note">Accés restringit als membres autoritzats de la Falla Portal</div>
     <div id="login-err" class="login-err hidden"></div>
   </div>
@@ -363,7 +383,7 @@ tr:hover td{background:var(--bg2)}
 <div id="app" class="hidden">
   <div class="sidebar">
     <div class="sb-logo">
-      <div class="sb-logo-text">Falla <span>Portal</span></div>
+      <div class="sb-brand"><img src="logo-mail.png" alt="" width="24" height="34"><div class="sb-logo-text">Falla <span>Portal</span></div></div>
       <div class="sb-fiscal" style="display:flex;align-items:center;gap:6px;margin-top:4px">
       <span style="font-size:11px;color:var(--text3)">Any fiscal:</span>
       <select id="sb-any-fiscal" onchange="canviarExerciciGlobal(this.value,this)"
@@ -379,7 +399,7 @@ tr:hover td{background:var(--bg2)}
     <div class="sb-bottom">
       <div class="sync-ind" style="display:flex;align-items:center;justify-content:space-between"><div style="display:flex;align-items:center;gap:6px"><div class="sync-dot" id="sync-dot"></div><span id="sync-text">Sincronitzat</span></div><button onclick="manualRefresh()" title="Actualitzar dades" style="background:none;border:none;cursor:pointer;padding:2px 4px;color:var(--text2);font-size:14px;line-height:1"><i class="ti ti-refresh"></i></button></div>
       <button class="btn-logout" onclick="signOut()"><i class="ti ti-logout" style="font-size:14px"></i> Tancar sessió</button>
-      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v4.0.78</div>
+      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v4.1.0</div>
     </div>
   </div>
 
@@ -1115,9 +1135,9 @@ tr:hover td{background:var(--bg2)}
   <div class="modal">
     <div class="modal-inner">
       <div class="modal-title" id="mu-title">Nou usuari</div>
-      <div class="info-box">L'email ha de coincidir exactament amb el compte de Google del membre.</div>
+      <div class="info-box">L'email ha de coincidir exactament amb el correu on el membre rebrà el codi d'entrada.</div>
       <div class="field"><label>Nom complet</label><input type="text" id="mu-nom" placeholder="Nom i cognoms"></div>
-      <div class="field"><label>Email de Google</label><input type="email" id="mu-email" placeholder="exemple@gmail.com"></div>
+      <div class="field"><label>Correu electrònic</label><input type="email" id="mu-email" placeholder="nom@correu.com"></div>
       <div class="field">
         <label>Rol principal</label>
         <select id="mu-rol">
@@ -1519,11 +1539,9 @@ tr:hover td{background:var(--bg2)}
 </div>
 
 <div class="toast" id="toast"><span id="toast-msg"></span><button class="toast-retry" id="toast-retry" style="display:none" onclick="toastRetry()">Reintentar</button></div>
-<div class="reauth-banner" id="reauth-banner"><span>La sessió de Google ha caducat. No s'ha perdut res.</span><button onclick="requestToken()">Continuar</button></div>
+<div class="fase-banner" id="fase-banner">Versió de proves amb Supabase: l'entrada per correu ja funciona; les dades hi arribaran a la Fase 3.</div>
 
 <script>
-const CLIENT_ID='762692298201-gnhlho2ob1fb77s6uoevocji8r6afssm.apps.googleusercontent.com';
-const SCOPES='https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile';
 const SHEET_ID='1SUeIZbZN1kUxt5nNRkEVLZI__eHecYv4JZE5QNuGaQ0';
 const TABS={
   moviments:{name:'01 Moviments',headers:['id','data','tipus','via','areaId','areaNom','delegacioId','delegacioNom','eventId','eventNom','concepte','establiment','responsable','responsableEmail','import','notes','anyFiscal','origenFons','fontImport','bankHash','origen','ticketUrl','ticketMotiu','conciliacio']},
@@ -1691,7 +1709,7 @@ function getModulVis(){
   return getDefaultModulVis();
 }
 
-let tokenClient=null,accessToken=null,currentUser=null,pollingInterval=null;
+let accessToken=null,currentUser=null,pollingInterval=null;   // accessToken: capa de Sheets, es lleva a la Fase 3
 // Sheets centralitzat - no cal driveIds
 let DB={
   config:{
@@ -1878,89 +1896,172 @@ function setSyncing(b,silent){
   if(!silent){const ov=document.getElementById('dash-overlay');if(ov){ov.style.display=b?'flex':'none';}}
 }
 
-// AUTH
-// El token de Google dura ~1 h i GIS no el pot renovar sense un toc de l'usuari
-// (el popup es bloqueja si no ve d'un gest). Per això, en caducar, no es tanca la
-// sessió: es mostra #reauth-banner i les escriptures esperen el token nou.
-// Mai es crida oauth2.revoke(): esborra el consentiment i obliga a repassar la
-// pantalla de permisos a la següent entrada.
-const LAST_EMAIL_KEY='fp_last_email';
-let tokenExpiresAt=0,_reauthWaiters=[];
-function lastEmail(){try{return localStorage.getItem(LAST_EMAIL_KEY)||'';}catch(e){return'';}}
-function tokenVigent(){return!!accessToken&&Date.now()<tokenExpiresAt-60000;}
+// AUTH — Supabase Auth: correu + codi de 6 xifres (D-021, D-046). Sense Google.
+// La sessió es desa a localStorage (clau fp_auth) i es renova sola amb el refresh token: s'entra una vegada per
+// dispositiu. La identitat per a les polítiques RLS és l'email del JWT; aquí només es decideix què es mostra.
+const SUPABASE_URL='https://hektqtkfwrnpxdyiynwn.supabase.co';
+const SUPABASE_KEY='PENDENT_CLAU_PUBLICA';   // clau pública (publishable/anon): la seguretat és a RLS, no ací
+const sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{
+  auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,storageKey:'fp_auth'}
+});
+
+// Capa de dades antiga (Sheets): sense token de Google no pot llegir ni escriure. Fins a la Fase 3 falla amb un error
+// clar en lloc d'esperar un token que mai arribarà (cap guardat s'ha de perdre en silenci).
+function tokenVigent(){return false;}
+function esperarToken(){return Promise.reject(new Error('Les dades encara no estan connectades a Supabase (Fase 3)'));}
+
+const ROL_PRIORITAT=['president','treasury','area','delegat','board'];
+let _entrant=false,_reenviaFins=0,_reenviaTimer=null;
+
 function appOberta(){return!!currentUser&&!document.getElementById('app').classList.contains('hidden');}
-function requestToken(){
-  const hint=(currentUser&&currentUser.email)||lastEmail();
-  tokenClient.requestAccessToken(hint?{prompt:'',hint:hint}:{prompt:''});
+function loginEl(id){return document.getElementById(id);}
+function loginPas(pas){
+  ['boot','email','code'].forEach(function(p){loginEl('login-step-'+p).classList.toggle('hidden',p!==pas);});
+  if(pas==='email')setTimeout(function(){loginEl('login-email').focus();},0);
+  if(pas==='code')setTimeout(function(){loginEl('login-code').focus();},0);
 }
-function esperarToken(){
-  if(tokenVigent())return Promise.resolve();
-  if(!appOberta())return Promise.reject(new Error('Sessió no iniciada'));
-  document.getElementById('reauth-banner').classList.add('show');
-  return new Promise(function(res,rej){_reauthWaiters.push({res:res,rej:rej});});
+function loginError(txt){
+  const e=loginEl('login-err');
+  if(!txt){e.classList.add('hidden');e.textContent='';return;}
+  e.textContent=txt;e.classList.remove('hidden');
 }
-function alliberarEsperes(err){
-  const w=_reauthWaiters;_reauthWaiters=[];
-  w.forEach(function(x){if(err)x.rej(err);else x.res();});
+function loginOcupat(on){
+  ['login-send','login-verify'].forEach(function(id){loginEl(id).disabled=on;});
 }
-async function onTokenResponse(resp){
-  if(resp.error){
-    if(appOberta())return;
-    const e=document.getElementById('login-err');
-    e.textContent='Error: '+resp.error+'. Assegura\'t que el teu email està a la llista d\'usuaris de prova a Google Cloud Console.';
-    e.classList.remove('hidden');return;
-  }
-  const renovacio=appOberta();
-  const emailPrevi=renovacio?(currentUser.email||'').toLowerCase():'';
-  accessToken=resp.access_token;
-  tokenExpiresAt=Date.now()+(Number(resp.expires_in)||3600)*1000;
-  if(renovacio){
-    let email='';
-    try{
-      const r=await fetch('https://www.googleapis.com/oauth2/v3/userinfo',{headers:{Authorization:'Bearer '+accessToken}});
-      email=((await r.json()).email||'').toLowerCase();
-    }catch(e){}
-    if(email&&email!==emailPrevi){
-      signOut();
-      const e=document.getElementById('login-err');
-      e.textContent='Has continuat amb un altre compte ('+email+'). Torna a entrar amb el teu.';
-      e.classList.remove('hidden');return;
-    }
-    document.getElementById('reauth-banner').classList.remove('show');
-    alliberarEsperes();
+function mostraLogin(missatge){
+  loginEl('app').classList.add('hidden');
+  loginEl('noauth-screen').classList.add('hidden');
+  loginEl('login-screen').classList.remove('hidden');
+  loginEl('fase-banner').classList.remove('show');
+  loginError(missatge||'');
+  loginPas('email');
+}
+function errorLogin(e,pas){
+  const m=String((e&&e.message)||e||'');
+  if((e&&e.status===429)||/rate limit|security purposes|too many/i.test(m))
+    return'Has demanat massa codis. Espera un minut i torna-ho a provar.';
+  if(pas==='code')return'El codi no és correcte o ha caducat. Torna a escriure\'l o demana\'n un de nou.';
+  if(/membre/i.test(m))return'Aquest correu no és de cap membre de la falla. Comprova que l\'has escrit bé o demana l\'alta.';
+  if(/fetch|network|failed/i.test(m))return'Sense connexió a internet.';
+  return'No s\'ha pogut enviar el codi. Comprova el correu i torna-ho a provar.';
+}
+
+async function loginEnviaCodi(reenviament){
+  const email=loginEl('login-email').value.trim().toLowerCase();
+  if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){loginError('Escriu el teu correu electrònic.');return;}
+  loginError('');loginOcupat(true);
+  try{
+    const r=await sb.auth.signInWithOtp({email:email,options:{shouldCreateUser:true}});
+    if(r.error)throw r.error;
+  }catch(e){
+    loginOcupat(false);
+    loginError(errorLogin(e,'email'));
     return;
   }
-  await loadUserInfo();
-  try{localStorage.setItem(LAST_EMAIL_KEY,currentUser.email);}catch(e){}
-  await loadAllFromDrive();
-  initApp();
+  loginOcupat(false);
+  loginEl('login-sent-email').textContent=email;
+  loginEl('login-code').value='';
+  loginPas('code');
+  loginReenviaEspera(60);
 }
-window.onload=()=>{
-  tokenClient=google.accounts.oauth2.initTokenClient({
-    client_id:CLIENT_ID,scope:SCOPES,
-    callback:onTokenResponse,
-    // popup tancat o bloquejat: el bàner o el botó d'entrar continuen visibles
-    error_callback:function(err){console.warn('OAuth popup:',err&&err.type);}
-  });
-  // Google One Tap — login automàtic si ja tens sessió activa
-  google.accounts.id.initialize({
-    client_id:CLIENT_ID,
-    callback:handleGoogleCredential,
-    auto_select:true,
-    cancel_on_tap_outside:false
-  });
-  google.accounts.id.prompt(function(notification){
-    if(notification.isNotDisplayed()||notification.isSkippedMoment()){
-      console.log('One Tap no disponible:',notification.getNotDisplayedReason&&notification.getNotDisplayedReason()||notification.getSkippedReason&&notification.getSkippedReason()||'');
-    }
-  });
-};
+function loginReenviaEspera(segons){
+  _reenviaFins=Date.now()+segons*1000;
+  clearInterval(_reenviaTimer);
+  const b=loginEl('login-resend');
+  function pinta(){
+    const falta=Math.ceil((_reenviaFins-Date.now())/1000);
+    if(falta<=0){clearInterval(_reenviaTimer);b.disabled=false;b.textContent='Reenviar el codi';return;}
+    b.disabled=true;b.textContent='Reenviar el codi ('+falta+' s)';
+  }
+  pinta();_reenviaTimer=setInterval(pinta,500);
+}
+function loginReenvia(){loginEnviaCodi(true);}
+function loginCanviaCorreu(){
+  clearInterval(_reenviaTimer);loginError('');loginPas('email');
+}
+function loginCodiCanvia(){
+  const c=loginEl('login-code');
+  c.value=c.value.replace(/\D/g,'').slice(0,6);
+  if(c.value.length===6)loginVerificaCodi();
+}
+async function loginVerificaCodi(){
+  const email=loginEl('login-sent-email').textContent;
+  const token=loginEl('login-code').value.trim();
+  if(!/^\d{6}$/.test(token)){loginError('El codi té 6 xifres.');return;}
+  if(loginEl('login-verify').disabled)return;
+  loginError('');loginOcupat(true);
+  try{
+    const r=await sb.auth.verifyOtp({email:email,token:token,type:'email'});
+    if(r.error)throw r.error;
+    // La sessió arriba per onAuthStateChange (SIGNED_IN) i entraAmbSessio obri l'app.
+  }catch(e){
+    loginError(errorLogin(e,'code'));
+    loginEl('login-code').value='';loginEl('login-code').focus();
+  }
+  loginOcupat(false);
+}
 
-function signIn(){
-  if(tokenClient){requestToken();return;}
-  var _r=setInterval(function(){if(tokenClient){clearInterval(_r);requestToken();}},30);
-  setTimeout(function(){clearInterval(_r);},6000);
+function inicialsDe(nom){
+  return(nom||'?').split(' ').filter(Boolean).slice(0,2).map(function(w){return w[0];}).join('').toUpperCase()||'?';
 }
+// La persona i els seus rols, tal com els veu RLS: un correu que no és membre actiu amb algun rol no hi troba cap fila.
+async function carregaMembre(email){
+  const r=await sb.from('usuaris').select('id,nom,email,usuari_rols(rol_id)').eq('email',email).eq('actiu',true).limit(1);
+  if(r.error)throw r.error;
+  const u=(r.data||[])[0];
+  const rols=u?(u.usuari_rols||[]).map(function(x){return x.rol_id;}):[];
+  if(!u||!rols.length)return null;
+  // L'app encara coneix un sol rol per persona (Fase 3: permisos de la matriu rol × mòdul, D-036).
+  const rol=ROL_PRIORITAT.find(function(x){return rols.indexOf(x)>=0;})||rols.slice().sort()[0];
+  return{id:u.id,nom:u.nom,email:u.email,rol:rol,rols:rols,arees:[],delegacions:[]};
+}
+async function entraAmbSessio(session){
+  if(_entrant||appOberta())return;
+  _entrant=true;
+  try{
+    const email=String(session.user.email||'').toLowerCase();
+    let membre=null;
+    try{membre=await carregaMembre(email);}
+    catch(e){
+      // No s'ha pogut comprovar (xarxa, servidor): la sessió es conserva, es pot tornar a provar.
+      mostraLogin('No s\'ha pogut comprovar l\'accés ('+((e&&e.message)||e)+'). Recarrega la pàgina.');
+      return;
+    }
+    currentUser={email:email,name:membre?membre.nom:email,initials:inicialsDe(membre?membre.nom:email)};
+    DB.config.usuaris=membre?[membre]:[];
+    if(membre)loginEl('fase-banner').classList.add('show');
+    // Les dades arribaran de Supabase a la Fase 3: l'app s'obri amb el DB buit.
+    initApp();
+    setSyncing(false);   // amaga el "Carregant dades…" del Dashboard: de moment no hi ha res a carregar
+  }finally{_entrant=false;}
+}
+
+sb.auth.onAuthStateChange(function(evt,session){
+  // setTimeout: dins d'aquest callback no es poden fer crides a Supabase sense arriscar un bloqueig.
+  setTimeout(function(){
+    if(session&&(evt==='INITIAL_SESSION'||evt==='SIGNED_IN')){entraAmbSessio(session);return;}
+    if(evt==='INITIAL_SESSION'&&!session){mostraLogin();return;}
+    if(evt==='SIGNED_OUT'&&currentUser){
+      // El refresh token ja no val (revocat o caducat): cal tornar a entrar.
+      tancaLocal();mostraLogin('La sessió s\'ha tancat. Torna a entrar.');
+    }
+  },0);
+});
+
+function tancaLocal(){
+  currentUser=null;accessToken=null;dadesCarregades=false;
+  DB.config.usuaris=[];   // la persona següent no ha de heretar els permisos de l'anterior
+  if(pollingInterval){clearInterval(pollingInterval);pollingInterval=null;}
+  try{localStorage.removeItem(CACHE_KEY);}catch(e){}
+  loginEl('sb-name').textContent='—';
+  loginEl('sb-role').textContent='—';
+}
+async function signOut(){
+  try{await sb.auth.signOut({scope:'local'});}catch(e){console.warn('signOut:',e);}
+  tancaLocal();
+  mostraLogin();
+}
+
 function initExerciciSelector(){
   const sel=document.getElementById('sb-any-fiscal');
   if(!sel)return;
@@ -2124,13 +2225,8 @@ function getUsuari(){
   const email=currentUser.email;
   const u=DB.config.usuaris.find(x=>(x.email||'').toLowerCase()===(email||'').toLowerCase());
   if(u)return u;
-  // Email administrador = president/tresoreria sempre
-  if(email==='it.fallaportal@gmail.com')
-    return{id:'sys',nom:currentUser.name,email,rol:'treasury',arees:[],delegacions:[]};
-  // Si no hi ha usuaris configurats, el primer que entra és president
-  if(!DB.config.usuaris||DB.config.usuaris.length===0)
-    return{id:'sys',nom:currentUser.name,email,rol:'president',arees:[],delegacions:[]};
-  // Email no reconegut = no autoritzat
+  // Els permisos els decideix Postgres (RLS) per al correu del JWT: aquí no hi ha cap correu ni cap persona amb
+  // permisos per defecte. Un correu que no és membre = no autoritzat
   return{id:'guest',nom:currentUser.name,email,rol:'noauth',arees:[],delegacions:[]};
 }
 
@@ -2498,12 +2594,10 @@ async function sheetsReq(method,url,body,_reintent){
   // ja reintenta o restaura el snapshot.
   try{r=await fetch(url,opts);}catch(netErr){throw new Error('Sense connexió a internet');}
   if(r.status===401){
-    tokenExpiresAt=0;
     // Una reescriptura porta la foto de DB de quan es va cridar: reenviar-la
     // després d'esperar podria trepitjar dades més noves. save() la refà sencera.
     const reescriptura=method==='PUT'||url.indexOf(':clear')>=0;
     if(!_reintent&&!reescriptura)return sheetsReq(method,url,body,true);
-    document.getElementById('reauth-banner').classList.add('show');
     const e=new Error('La sessió de Google ha caducat');e.code='AUTH';throw e;
   }
   if(!r.ok){const err=await r.json().catch(()=>({}));throw new Error((err.error?.message)||r.status);}
@@ -2788,19 +2882,6 @@ async function saveMoviment(mov){
   setSyncing(false,true);
 }
 async function saveFons(f){setSyncing(true,true);try{await appendRow(TABS.fons.name,TABS.fons.headers,f);}catch(e){showToast('Error guardant fons: '+e.message,true);}setSyncing(false,true);}
-
-// GOOGLE AUTH
-async function loadUserInfo(){
-  const resp=await fetch('https://www.googleapis.com/oauth2/v3/userinfo',{headers:{Authorization:'Bearer '+accessToken}});
-  const info=await resp.json();
-  currentUser={email:info.email,name:info.name,picture:info.picture};
-  // Calcular inicials del nom per l'avatar
-  currentUser.initials=(info.name||'?').split(' ').slice(0,2).map(function(w){return w[0]||'';}).join('').toUpperCase()||'?';
-  const emailLow=info.email.toLowerCase();
-  if(emailLow==='it.fallaportal@gmail.com'){currentUser.rol='treasury';currentUser.id='it';}
-  else{const u=(DB.config.usuaris||[]).find(function(x){return(x.email||'').toLowerCase()===emailLow;});currentUser.rol=u?u.rol:'noauth';currentUser.id=u?u.id:'';}
-}
-
 
 // TABS MIGRATION MAP
 const TABS_MIGRATION={
@@ -6890,7 +6971,7 @@ function getDriveFolderFactures(af){
 function renderCfgUsuaris(){
   const ROL_LABELS={'president':'President','treasury':'Tresoreria','area':'Resp. d\'Area','delegat':'Resp. Delegacio','board':'Junta'};
   const ROL_COLORS={'president':'p-purple','treasury':'p-info','area':'p-ok','delegat':'p-warn','board':'p-gray'};
-  let html='<div class="info-box">L\'email ha de coincidir exactament amb el compte de Google del membre. L\'email <strong>it.fallaportal@gmail.com</strong> te automaticament rol de Tresoreria.</div>';
+  let html='<div class="info-box">L\'email ha de coincidir exactament amb el correu on el membre rebrà el codi d\'entrada.</div>';
   html+='<button class="btn btn-primary" style="margin-bottom:12px" onclick="openModalUsuari(null)"><i class="ti ti-plus"></i> Afegir usuari</button>';
   html+='<div class="card"><div class="table-wrap"><table>';
   html+='<thead><tr><th>Nom</th><th>Email</th><th>Rol</th><th></th></tr></thead><tbody>';
@@ -7399,53 +7480,7 @@ async function registrarBonificacio(){
   document.getElementById('fapp-bonif-import').value='';
   document.getElementById('fapp-bonif-data').value='';
 }
-function signOut(){
-  accessToken=null;tokenExpiresAt=0;currentUser=null;
-  dadesCarregades=false;
-  alliberarEsperes(new Error('Sessió tancada'));
-  document.getElementById('reauth-banner').classList.remove('show');
-  if(pollingInterval){clearInterval(pollingInterval);pollingInterval=null;}
-  try{localStorage.removeItem(CACHE_KEY);localStorage.removeItem(LAST_EMAIL_KEY);}catch(e){}
-  document.getElementById('app').classList.add('hidden');
-  document.getElementById('login-screen').classList.remove('hidden');
-  document.getElementById('sb-name').textContent='—';
-  document.getElementById('sb-role').textContent='—';
-  google.accounts.id.disableAutoSelect();
-}
-
 // UTILS
-
-function handleGoogleCredential(response){
-  // One Tap només dona la identitat (JWT). Per a Sheets/Drive cal un access token;
-  // si el navegador bloqueja el popup, queda el botó d'entrar, ja amb l'email com a hint.
-  try{
-    const p=JSON.parse(atob(response.credential.split('.')[1].replace(/-/g,'+').replace(/_/g,'/')));
-    if(p.email)localStorage.setItem(LAST_EMAIL_KEY,p.email);
-  }catch(e){}
-  requestToken();
-}
-
-
-async function loadAllFromDrive(){
-  const hasCache=loadCache();
-  setSyncing(true);
-  loadFromSheets().then(function(){
-    saveCache();
-    setSyncing(false);
-    initExerciciSelector();
-    buildNav();
-    canviarExercici(getAnyFiscal(),true);
-    const activePage=document.querySelector('.page.active');
-    if(activePage){
-      const id=activePage.id.replace('page-','');
-      const renders={dashboard:renderDashboard,historial:filterHist,
-        pressupostos:renderPressupostosEdit,lliurament:renderFons,
-        tancament:renderTancamentList,resultats:renderResultats,flux:renderFlux};
-      if(renders[id])renders[id]();
-    }
-    startPolling();
-  }).catch(function(e){setSyncing(false);console.warn('Sheets error:',e);});
-}
 
 function tancamentUsuariActiu(){
   // Retorna true si l'usuari té un event seleccionat al panell de tancament
@@ -7461,10 +7496,7 @@ function renderTancamentSilent(){
 function startPolling(){
   if(pollingInterval)clearInterval(pollingInterval);
   pollingInterval=setInterval(function(){
-    if(!tokenVigent()){
-      if(accessToken&&appOberta())document.getElementById('reauth-banner').classList.add('show');
-      return;
-    }
+    if(!tokenVigent())return;
     if(_desantAraMateix>0)return;   // no recarregar enmig d'un guardat
     setSyncing(true,true);
     // Guardar snapshot per evitar UI buida durant la càrrega

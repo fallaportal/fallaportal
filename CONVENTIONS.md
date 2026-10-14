@@ -73,6 +73,10 @@ confirmar amb `repr()` abans de concloure que hi ha un error de sintaxi.
 
 **Ordre de presentació fitxers**: `sw.js` PRIMER, `index.html` SEGON. Sempre.
 
+**Branca `supabase` (D-046)**: el codi de la migració (client i SQL) va a la branca `supabase` fins al tall; **mai `push`
+a `main`** amb codi de Supabase (GitHub Pages publica `main`). Els canvis d'`index.html` que s'hagen de publicar abans del tall
+van a `main`, i després es porten a la branca (`git merge main`). Versions de la branca: v4.1.x.
+
 **Supabase (migració, D-021)**:
 - L'esquema va a `supabase/migrations/` (un fitxer per canvi, nom `AAAAMMDDhhmmss_descripcio.sql`). **Una migració ja
   aplicada al projecte de Supabase no es modifica**: el canvi va en un fitxer nou.

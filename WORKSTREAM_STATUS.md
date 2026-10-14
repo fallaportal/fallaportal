@@ -41,22 +41,36 @@ Supabase, idèntics.
 **Fet per Emilio (2026-10-14)**: a Supabase, Authentication, "Allow new users to sign up" desactivat (la identitat de
 les polítiques és l'email del JWT). Falten els altres ajustos d'Auth (Confirm email, Secure email change) a la Fase 2.
 **Correu d'entrada muntat i provat de punta a punta (2026-10-14, D-045)**: Resend amb el domini `mail.fallaportal.es`
-(DNS verificat), SMTP configurat a Supabase (remitent `no-response@mail.fallaportal.es`, nom "Falla Portal"), ajustos d'Auth
-(OTP de 6 xifres que caduca als 900 s, "Secure email change" activat, alta pública desactivada), plantilla "Magic link" amb el
+(DNS verificat), SMTP configurat a Supabase (remitent `no-respon@mail.fallaportal.es`, nom "Falla Portal"), ajustos d'Auth
+(OTP de 6 xifres que caduca als 900 s, "Secure email change" activat; l'alta pública s'activa amb el hook, D-046), plantilla "Magic link" amb el
 logo (`supabase/email/codi_entrada.html`, logo servit des de `raw.githubusercontent.com`) i límit de 30 correus/hora. Prova real
 des de Supabase (Users → Send magic link): **arriba, amb el logo i el remitent correcte, però a brossa**.
-**Pendents del correu (començar per ací la sessió següent)**:
-  1. **Brossa**: Emilio ha d'enviar les línies SPF, DKIM i DMARC de l'encapçalament del correu de prova (Gmail ⋮ → Mostra
-     l'original). Tres `PASS` = problema de reputació d'un domini nou (millora amb l'ús; avisar els membres que marquen
-     "No és brossa" el primer cop). Algun `FAIL` = corregir el DNS. Si persisteix, valorar-ne l'origen (domini nou, logo
-     extern) o enviar també un exemple a Outlook/iCloud.
+**Pendents del correu**:
+  1. ~~Brossa~~: analitzada, vegeu més avall (autenticació correcta; Outlook el posa a brossa per reputació).
   2. Emilio ha d'**esborrar l'usuari de prova** d'Authentication → Users (la Fase 2 el crea ben fet).
   3. Comprovar que la plantilla "Magic link" de Supabase porta la línia `<img>` amb l'adreça de `raw.githubusercontent.com`
      (el logo es veia al correu; confirmar-ho a la plantilla desada).
-**Propera sessió: Fase 2** (pantalla d'entrada email → codi, sessió persistent, pantalla `noauth`, tancar sessió, i treure
-tot el codi de Google Identity) amb **Sonnet 5.5 · high**. Cal decidir-hi com es creen els usuaris d'Auth: amb l'alta
-pública desactivada, `signInWithOtp` només funciona per a qui ja existeix a `auth.users`, així que donar d'alta una persona
-a la llista d'usuaris ha de crear-la també a Auth (funció de servidor amb la clau d'administrador, que mai va al client).
+**Brossa analitzada (2026-10-14, encapçalament d'un correu a Hotmail)**: SPF, DKIM (el del domini i el d'Amazon SES) i DMARC
+surten `pass`, i el correu arriba amb `X-MS-Exchange-Organization-SCL: 5` i `RF:JunkEmail`: el DNS és correcte i és Outlook
+qui el posa a brossa per reputació (domini nou, IP compartida d'SES) o contingut. Remitent real: `no-respon@mail.fallaportal.es`.
+Mesures, per ordre: marcar "No és brossa" i afegir el remitent als contactes (els membres, el primer cop); provar un enviament
+a Gmail i iCloud; i, si persisteix, treure el logo extern (`raw.githubusercontent.com`) de la plantilla com a experiment.
+
+**Fase 2 en curs (2026-10-14, Sonnet 5.5 · high) — branca `supabase`, v4.1.0, D-046**:
+  - Fet: hook `app.hook_alta_usuari` (només els membres poden crear-se l'usuari d'Auth; migració aplicada a Supabase, 190 tests
+    en verd en local i a Supabase); entrada correu → codi de 6 xifres, sessió persistent, `noauth`, tancar sessió, logo a
+    l'entrada i a la barra lateral; fora Google Identity i el correu d'administració `it.fallaportal@gmail.com`. Provat al
+    navegador amb el client de Supabase simulat. **No és a `main` ni es publica**: sense Google l'app no pot llegir el full, així
+    que la branca s'obri amb el DB buit i un bàner "Versió de proves amb Supabase" fins a la Fase 3.
+  - **Falta la prova real** (començar per ací): (1) Emilio dona la clau pública (publishable/anon) del projecte i Claude la posa
+    a `SUPABASE_KEY` (`index.html`); (2) Emilio activa "Allow new users to sign up" i registra el hook a Authentication → Hooks
+    → "Before User Created" → Postgres function `app.hook_alta_usuari`; (3) fila a `usuaris` + `usuari_rols` amb l'email de
+    prova i el rol `president` (la fa Claude amb `tools/.env`); (4) entrar des de `localhost:8899` amb el codi que arriba al
+    correu; (5) comprovar quin missatge torna Supabase quan el hook rebutja (`errorLogin` busca "membre"); (6) esborrar l'usuari
+    de prova d'Authentication → Users.
+  - Pendent de la Fase 3: llegir les dades de Supabase, la matriu de permisos al client, treure `saveCache`/`loadCache` i la capa
+    de Sheets (`sheetsReq`, `tokenVigent`/`esperarToken` provisionals), i el bàner.
+  - Una persona només té un rol a l'app (prioritat president > treasury > area > delegat > board) fins a la Fase 3.
 **Blockers**:
   - Cap per a començar la Fase 2 (l'SMTP està provat). El pendent de brossa no la bloqueja, però cal resoldre'l abans del
     tall: si els codis van a brossa, la gent no entrarà.

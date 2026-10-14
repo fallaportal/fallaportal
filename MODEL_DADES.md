@@ -477,11 +477,12 @@ Revisió de les polítiques i els triggers amb ulls d'atacant: un membre que fa 
 | R11 | Canviar les dates d'un exercici (desquadra l'exercici dels registres ja desats) o la marca de rol de sistema. | No es canvien. |
 
 **Pendent fora de l'SQL (no són de la Fase 1):**
-- **Auth (alta pública desactivada el 2026-10-14; la resta, a la Fase 2)**: la identitat és l'email del JWT, i val el que val la
-  verificació de l'email de Supabase Auth. Cal: "Allow new users to sign up" **desactivat** (alta pública
-  desactivada, pla §5), "Confirm email" activat, "Secure email change" activat, cap altre proveïdor (Google, telèfon,
-  anònim) sense revisar-ho abans. Si l'alta pública i la confirmació estigueren desactivades alhora, qualsevol podria
-  entrar amb l'email d'un membre.
+- **Auth (D-046)**: la identitat és l'email del JWT, i val el que val la verificació de l'email de Supabase Auth. Cal:
+  "Allow new users to sign up" **activat** però amb el hook "Before User Created" (`app.hook_alta_usuari`, migració
+  `20261014170000`) registrat, de manera que només un membre pot crear-se l'usuari; "Confirm email" activat, "Secure email
+  change" activat, cap altre proveïdor (Google, telèfon, anònim) sense revisar-ho abans. Sense el hook, l'alta pública deixaria
+  crear usuaris a qualsevol (sense dades visibles, però amb correus enviats des del nostre SMTP); sense la confirmació
+  d'email, qualsevol podria entrar amb l'email d'un membre.
 - **Fase 3**: l'API de Supabase torna com a màxim 1.000 files per consulta (Max rows): la càrrega de dades ha de
   paginar o les xifres eixiran curtes sense avís. L'app ja no ha d'actualitzar l'import del fons en editar una despesa
   amb fons (ho fa la base de dades).

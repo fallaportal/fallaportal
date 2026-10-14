@@ -55,7 +55,7 @@ La migració està feta quan es complixen tots aquests criteris:
 
 | Àmbit | Hui | Després |
 |---|---|---|
-| Entrada | Token de Google d'1 h; renovació amb un toc (v4.0.48) | Supabase Auth per **email amb codi de 6 xifres** (sense Google); sessió persistent amb refresh token; alta pública desactivada |
+| Entrada | Token de Google d'1 h; renovació amb un toc (v4.0.48) | Supabase Auth per **email amb codi de 6 xifres** (sense Google); sessió persistent amb refresh token; alta pública activada però limitada als membres per un hook (D-046) |
 | Autorització | Rols comprovats en JS; tots els usuaris són editors del full | RLS a Postgres; el full deixa d'estar compartit |
 | Escriptura | `writeTab` reescriu la pestanya sencera | insert/update/delete per fila |
 | Proteccions contra truncar el full | Swap atòmic, `dadesCarregades`, `_desantAraMateix`, snapshots (D-003, D-013–D-016) | Innecessàries: desapareixen |
@@ -129,10 +129,13 @@ Decisió d'Emilio (2026-09-27): **entrada per email, sense Google**.
   a iOS, l'enllaç del correu s'obri a Safari i no dins de la PWA instal·lada, i la
   sessió quedaria fora de l'app.
 - **Només membres**:
-  - Alta pública desactivada a Supabase.
+  - Alta pública activada a Supabase, amb el hook "Before User Created" (D-046) que només deixa crear l'usuari d'Auth
+    als membres: persona activa de `usuaris` amb almenys un rol. Sense codi de servidor.
   - Els usuaris es donen d'alta des de la llista `usuaris`, amb el rol assignat
-    (`canUsers`).
+    (`canUsers`); l'usuari d'Auth es crea sol la primera vegada que entren.
   - Un email que no hi és no rep cap codi.
+  - **Branca `supabase`** (D-046): tot el desenvolupament de les Fases 2–6 va a esta branca; `main` continua amb Google i
+    el full fins al tall.
 - **Emilio**:
   - El projecte `fallaportal` ja existeix (D-043).
   - **SMTP: Resend** (D-045), al compte de Resend que Emilio ja té (Pro). Domini d'enviament `mail.fallaportal.es`
@@ -144,8 +147,10 @@ Decisió d'Emilio (2026-09-27): **entrada per email, sense Google**.
     Supabase és només per a proves i té límits d'enviament molt baixos.
   - A Supabase Auth, l'adreça de l'app (Site URL) és la de proves fins al tall i `https://app.fallaportal.es` des del
     tall (D-042).
+  - Activa l'alta pública i registra el hook (Authentication → Hooks → "Before User Created" → Postgres function →
+    `app.hook_alta_usuari`); dona la clau pública (publishable/anon) del projecte.
   - Revisa la plantilla del correu del codi, en valencià.
-- **Auth de Supabase** (MODEL_DADES §9.7): "Allow new users to sign up" desactivat, "Confirm email" i "Secure email
+- **Auth de Supabase** (MODEL_DADES §9.7): "Allow new users to sign up" activat amb el hook, "Confirm email" i "Secure email
   change" activats, cap altre proveïdor. La identitat de les polítiques és l'email del JWT.
 - **Claude**: pantalla d'entrada (email → codi), sessió persistent, pantalla `noauth`,
   tancar sessió. Es lleva tot el codi de Google Identity (GIS, One Tap, `tokenClient`,
@@ -333,7 +338,7 @@ setmanes i després ve la setmana de congelació.
 |---|---|---|---|
 | 0 | **Fet** | 2026-10-13 | `INVENTARI_FUNCIONAL.md`, `INFORME_ANOMALIES_F0.md` (codi + perfil de les dades reals), `MODEL_DADES.md` (decisions D-026–D-033) i `tools/f0_perfil_dades.py`. Correccions prèvies a l'app actual: v4.0.67–v4.0.78. Oberts sense bloquejar: A-31 (tancaments antics amb pagaments) i caixa vs vendes de falles.app. Tancada per Emilio el 2026-10-13. |
 | 1 | **Fet** | 2026-10-14 | SQL a `supabase/migrations/` (5 fitxers: taules, mòduls i rols, permisos, triggers i revisió de seguretat), aplicat al projecte `fallaportal` (PostgreSQL 17.11, eu-west-1) amb `tools/supabase_migra.mjs`. **178 tests de RLS en verd en local i a Supabase**, amb resultats i missatges idèntics (D-037). Revisió final amb Opus 5.5 · max: 11 grups de troballes corregides sense tocar la matriu (D-044, `MODEL_DADES.md` §9.7). Decisions D-035, D-036, D-038–D-044. Les vistes del model §5 passen a la Fase 3. |
-| 2 | Pendent | | |
+| 2 | **En curs** | 2026-10-14 | Branca `supabase`, versió **v4.1.0**. Fet i provat: hook d'alta (migració `20261014170000`, 12 tests nous, **190 en verd en local i a Supabase**); a `index.html`, pantalla d'entrada correu → codi, sessió persistent (supabase-js 2.45.4 des de CDN), pantalla `noauth`, tancar sessió, logo a l'entrada i a la barra lateral, i fora Google Identity (GIS, One Tap, `tokenClient`, OAuth, `loadUserInfo`) i les portes del correu d'administració. Provat al navegador amb el client simulat (no ha eixit res de la màquina): correu invàlid, no membre, límit de codis, codi mal i bo, membre amb dos rols, `noauth`, persona sense rols, error de xarxa, sessió revocada, tancar sessió i les 13 pantalles sense errors. **Falta la prova real**: clau pública a `SUPABASE_KEY`, alta pública i hook al panell, i una fila a `usuaris` amb rol per a l'email de prova. Després, `main` no es toca. |
 | 3 | Pendent | | |
 | 4 | Pendent | | |
 | 5 | Pendent | | |
