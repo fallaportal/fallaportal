@@ -761,3 +761,26 @@ requereix un rol (R3); un avançament no pot valdre més que la seua despesa ni 
     la confirmació d'email activada (Fase 2; recomanat fer-ho ja).
   - 178 tests en verd en local i a Supabase, amb resultats idèntics.
 
+---
+
+### D-045: Proveïdor d'SMTP: Resend, amb el subdomini mail.fallaportal.es
+**Date**: 2026-10-14
+**Status**: Accepted (Emilio)
+**Context**: L'app actual no envia cap correu (l'entrada és amb Google). Els enviarà quan l'entrada siga amb codi de 6
+xifres per correu (D-021): un correu cada vegada que algú entra o li caduca la sessió. Emilio va considerar també
+l'entrada amb contrasenya donada d'alta a mà (sense correu): descartada perquè cada oblit de contrasenya li hauria caigut
+a ell i les persones reutilitzen contrasenyes. Obrir el registre a qualsevol correu es va descartar: la identitat de les
+polítiques és l'email del JWT i sense confirmació per correu algú podria registrar-se amb l'adreça d'un membre.
+**Decision**: Resend, al compte (Pro) que Emilio ja té, amb el domini d'enviament `mail.fallaportal.es` (un subdomini,
+perquè el domini arrel quede lliure per a bústies) i remitent `no-respon@mail.fallaportal.es`. Regió Ireland (eu-west-1),
+seguiment de clics i d'obertures desactivat, recepció desactivada. Una clau d'API pròpia de la falla, només amb permís
+d'enviament i limitada al domini. El correu d'una bústia d'hosting (donDominio) es descarta per a enviament automàtic.
+**Alternatives Considered**: Entrada amb Google a través de Supabase (sense SMTP, però només per a qui té compte de
+Google); contrasenyes donades d'alta a mà; el correu de donDominio.
+**Consequences**:
+  - Cost: cap de nou (el compte de Resend ja és Pro; amb el gratuït n'hi hauria prou: ~30 persones, límit de 100 al dia).
+  - La clau d'API és un secret: només al gestor de contrasenyes d'Emilio i a la configuració de Supabase; mai al repo
+    ni al xat.
+  - Si el correu falla, ningú no pot entrar: la Fase 2 ha de provar un enviament real i el pla de marxa arrere (§7)
+    continua sent el full fins al tall.
+

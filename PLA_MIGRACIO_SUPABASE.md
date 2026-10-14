@@ -135,9 +135,12 @@ Decisió d'Emilio (2026-09-27): **entrada per email, sense Google**.
   - Un email que no hi és no rep cap codi.
 - **Emilio**:
   - El projecte `fallaportal` ja existeix (D-043).
-  - Configura un **SMTP propi**: un proveïdor d'enviament transaccional amb remitent del domini
-    `fallaportal.es` (p. ex. `no-respon@fallaportal.es`, D-042) i els registres DNS SPF, DKIM i DMARC
-    que indique el proveïdor (sense ells, els codis van al correu brossa). El correu per defecte de
+  - **SMTP: Resend** (D-045), al compte de Resend que Emilio ja té (Pro). Domini d'enviament `mail.fallaportal.es`
+    (regió Ireland, eu-west-1; sense seguiment de clics ni d'obertures; recepció desactivada), remitent
+    `no-respon@mail.fallaportal.es`. Registres DNS a donDominio: TXT `resend._domainkey.mail` (DKIM), CNAME `rsend.mail`
+    i `send.mail` (SPF) i TXT `_dmarc` (`v=DMARC1; p=none;`, un de sol al domini). Clau d'API pròpia de la falla (només
+    "Sending access", limitada a eixe domini), que només va al gestor de contrasenyes d'Emilio i a Authentication →
+    Emails → SMTP Settings de Supabase (host `smtp.resend.com`, port 465, usuari `resend`). El correu per defecte de
     Supabase és només per a proves i té límits d'enviament molt baixos.
   - A Supabase Auth, l'adreça de l'app (Site URL) és la de proves fins al tall i `https://app.fallaportal.es` des del
     tall (D-042).
@@ -298,8 +301,7 @@ Totes aquestes comprovacions s'automatitzen dins de l'script de la Fase 5:
 7. ~~`dev.html`~~: **esborrat del repositori el 2026-10-13** (Emilio): era la v3.0.15 publicada a GitHub Pages i escrivia
    al full real amb codi anterior a les correccions de pèrdua de dades. `index1.html`, `index2.html` i `index_2.html` només
    són a l'ordinador d'Emilio (ignorats per git); els pot esborrar ell.
-8. SMTP: quin proveïdor envia els codis (necessari per a la Fase 2). El remitent serà del domini `fallaportal.es`
-   (comprat per Emilio el 2026-10-14, D-042); falta triar el proveïdor.
+8. ~~SMTP~~: **Resend**, amb el domini `mail.fallaportal.es` (D-045, 2026-10-14). Falta que Emilio verifique el DNS.
 
 ---
 

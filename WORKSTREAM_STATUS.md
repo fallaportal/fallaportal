@@ -40,11 +40,13 @@ cadena de connexió i el certificat de Supabase són a `tools/.env` i `tools/pro
 Supabase, idèntics.
 **Fet per Emilio (2026-10-14)**: a Supabase, Authentication, "Allow new users to sign up" desactivat (la identitat de
 les polítiques és l'email del JWT). Falten els altres ajustos d'Auth (Confirm email, Secure email change) a la Fase 2.
-**Propera sessió: Fase 2** (entrada per correu amb codi) amb **Sonnet 5.5 · high**. Necessita el proveïdor d'SMTP
-(§9.8 del pla) i els ajustos d'Auth de `MODEL_DADES.md` §9.7.
+**Propera sessió: Fase 2** (entrada per correu amb codi) amb **Sonnet 5.5 · high**. Proveïdor d'SMTP triat: **Resend**
+(D-045). Necessita el domini `mail.fallaportal.es` verificat, la clau d'API a Supabase i els ajustos d'Auth de
+`MODEL_DADES.md` §9.7.
 **Blockers**:
-  - Fase 2: triar el proveïdor d'SMTP (§9.8 del pla). El remitent serà del domini `fallaportal.es`, comprat el
-    2026-10-14 (D-042). Emilio: activar-ne la renovació automàtica i el bloqueig de transferència.
+  - Fase 2: que el domini d'enviament `mail.fallaportal.es` siga **Verified** a Resend (Emilio ha afegit el domini i
+    està copiant els 4 registres DNS a donDominio, 2026-10-14; D-045). Després, la clau d'API a Supabase (SMTP Settings).
+  - Emilio: activar la renovació automàtica i el bloqueig de transferència del domini `fallaportal.es` (D-042).
 
 ---
 
