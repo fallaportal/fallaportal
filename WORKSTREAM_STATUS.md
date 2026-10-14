@@ -40,12 +40,26 @@ cadena de connexió i el certificat de Supabase són a `tools/.env` i `tools/pro
 Supabase, idèntics.
 **Fet per Emilio (2026-10-14)**: a Supabase, Authentication, "Allow new users to sign up" desactivat (la identitat de
 les polítiques és l'email del JWT). Falten els altres ajustos d'Auth (Confirm email, Secure email change) a la Fase 2.
-**Propera sessió: Fase 2** (entrada per correu amb codi) amb **Sonnet 5.5 · high**. Proveïdor d'SMTP triat: **Resend**
-(D-045). Necessita el domini `mail.fallaportal.es` verificat, la clau d'API a Supabase i els ajustos d'Auth de
-`MODEL_DADES.md` §9.7.
+**Correu d'entrada muntat i provat de punta a punta (2026-10-14, D-045)**: Resend amb el domini `mail.fallaportal.es`
+(DNS verificat), SMTP configurat a Supabase (remitent `no-response@mail.fallaportal.es`, nom "Falla Portal"), ajustos d'Auth
+(OTP de 6 xifres que caduca als 900 s, "Secure email change" activat, alta pública desactivada), plantilla "Magic link" amb el
+logo (`supabase/email/codi_entrada.html`, logo servit des de `raw.githubusercontent.com`) i límit de 30 correus/hora. Prova real
+des de Supabase (Users → Send magic link): **arriba, amb el logo i el remitent correcte, però a brossa**.
+**Pendents del correu (començar per ací la sessió següent)**:
+  1. **Brossa**: Emilio ha d'enviar les línies SPF, DKIM i DMARC de l'encapçalament del correu de prova (Gmail ⋮ → Mostra
+     l'original). Tres `PASS` = problema de reputació d'un domini nou (millora amb l'ús; avisar els membres que marquen
+     "No és brossa" el primer cop). Algun `FAIL` = corregir el DNS. Si persisteix, valorar-ne l'origen (domini nou, logo
+     extern) o enviar també un exemple a Outlook/iCloud.
+  2. Emilio ha d'**esborrar l'usuari de prova** d'Authentication → Users (la Fase 2 el crea ben fet).
+  3. Comprovar que la plantilla "Magic link" de Supabase porta la línia `<img>` amb l'adreça de `raw.githubusercontent.com`
+     (el logo es veia al correu; confirmar-ho a la plantilla desada).
+**Propera sessió: Fase 2** (pantalla d'entrada email → codi, sessió persistent, pantalla `noauth`, tancar sessió, i treure
+tot el codi de Google Identity) amb **Sonnet 5.5 · high**. Cal decidir-hi com es creen els usuaris d'Auth: amb l'alta
+pública desactivada, `signInWithOtp` només funciona per a qui ja existeix a `auth.users`, així que donar d'alta una persona
+a la llista d'usuaris ha de crear-la també a Auth (funció de servidor amb la clau d'administrador, que mai va al client).
 **Blockers**:
-  - Fase 2: que el domini d'enviament `mail.fallaportal.es` siga **Verified** a Resend (Emilio ha afegit el domini i
-    està copiant els 4 registres DNS a donDominio, 2026-10-14; D-045). Després, la clau d'API a Supabase (SMTP Settings).
+  - Cap per a començar la Fase 2 (l'SMTP està provat). El pendent de brossa no la bloqueja, però cal resoldre'l abans del
+    tall: si els codis van a brossa, la gent no entrarà.
   - Emilio: activar la renovació automàtica i el bloqueig de transferència del domini `fallaportal.es` (D-042).
 
 ---

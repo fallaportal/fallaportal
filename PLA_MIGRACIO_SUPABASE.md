@@ -137,7 +137,7 @@ Decisió d'Emilio (2026-09-27): **entrada per email, sense Google**.
   - El projecte `fallaportal` ja existeix (D-043).
   - **SMTP: Resend** (D-045), al compte de Resend que Emilio ja té (Pro). Domini d'enviament `mail.fallaportal.es`
     (regió Ireland, eu-west-1; sense seguiment de clics ni d'obertures; recepció desactivada), remitent
-    `no-respon@mail.fallaportal.es`. Registres DNS a donDominio: TXT `resend._domainkey.mail` (DKIM), CNAME `rsend.mail`
+    `no-response@mail.fallaportal.es`. Registres DNS a donDominio: TXT `resend._domainkey.mail` (DKIM), CNAME `rsend.mail`
     i `send.mail` (SPF) i TXT `_dmarc` (`v=DMARC1; p=none;`, un de sol al domini). Clau d'API pròpia de la falla (només
     "Sending access", limitada a eixe domini), que només va al gestor de contrasenyes d'Emilio i a Authentication →
     Emails → SMTP Settings de Supabase (host `smtp.resend.com`, port 465, usuari `resend`). El correu per defecte de

@@ -772,7 +772,7 @@ l'entrada amb contrasenya donada d'alta a mà (sense correu): descartada perquè
 a ell i les persones reutilitzen contrasenyes. Obrir el registre a qualsevol correu es va descartar: la identitat de les
 polítiques és l'email del JWT i sense confirmació per correu algú podria registrar-se amb l'adreça d'un membre.
 **Decision**: Resend, al compte (Pro) que Emilio ja té, amb el domini d'enviament `mail.fallaportal.es` (un subdomini,
-perquè el domini arrel quede lliure per a bústies) i remitent `no-respon@mail.fallaportal.es`. Regió Ireland (eu-west-1),
+perquè el domini arrel quede lliure per a bústies) i remitent `no-response@mail.fallaportal.es`. Regió Ireland (eu-west-1),
 seguiment de clics i d'obertures desactivat, recepció desactivada. Una clau d'API pròpia de la falla, només amb permís
 d'enviament i limitada al domini. El correu d'una bústia d'hosting (donDominio) es descarta per a enviament automàtic.
 **Alternatives Considered**: Entrada amb Google a través de Supabase (sense SMTP, però només per a qui té compte de
