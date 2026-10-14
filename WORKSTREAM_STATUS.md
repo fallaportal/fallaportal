@@ -56,11 +56,12 @@ qui el posa a brossa per reputació (domini nou, IP compartida d'SES) o contingu
 **Troballa (2026-10-15): la primera entrada d'una persona usa la plantilla "Confirm sign up", no "Magic link"** (l'usuari d'Auth es
 crea en demanar el primer codi, D-046). La de Supabase per defecte porta un enllaç i cap codi: el correu que va arribar a Gmail
 (`it.fallaportal@gmail.com`, persona nova) era eixe, sense número, i per tant **no serveix per a comparar la brossa** amb el de
-Hotmail (que ja tenia usuari i va rebre "Magic link"). Cal posar la mateixa plantilla a "Confirm sign up". Mesures, per ordre:
-(0) enganxar `supabase/email/codi_entrada.html` a **"Confirm sign up" i "Magic link"** (des de `<!doctype html>`, amb l'assumpte
-"El teu codi d'accés a Falla Portal: {{ .Token }}") i tornar a provar amb Gmail i Hotmail; (1) estructura HTML completa
-(el primer correu duia només un `<div>`); (2) marcar "No és brossa" i
-afegir el remitent als contactes (els membres, el primer cop: avisar-los abans del tall); (3) si persisteix, treure el logo
+Hotmail (que ja tenia usuari i va rebre "Magic link"). Cal posar la mateixa plantilla a "Confirm sign up". **Resultat amb la plantilla del codi a les dues (2026-10-15)**: Gmail → safata d'entrada; Hotmail → brossa, també amb l'estructura HTML
+completa. És reputació d'Outlook amb un domini nou. Mesures, per ordre:
+(0) [fet] enganxar `supabase/email/codi_entrada.html` a **"Confirm sign up" i "Magic link"** (des de `<!doctype html>`, amb l'assumpte
+"El teu codi d'accés a Falla Portal: {{ .Token }}") i tornar a provar amb Gmail i Hotmail; (1) [fet, no ha canviat res] estructura HTML completa
+(el primer correu duia només un `<div>`); (2) [decidit per Emilio, 2026-10-15: deixar-ho així] marcar "No és brossa" i
+afegir el remitent als contactes (els membres, el primer cop: avisar-los abans del tall; repetir la prova a Hotmail/Outlook abans del tall); (3) si persisteix, treure el logo
 extern de la plantilla o servir-lo des del domini propi; (4) l'ús continuat millora la reputació. Files de prova a `usuaris`:
 `prova_emilio` (Hotmail, president) i `prova_gmail` (Gmail, board); s'esborren al buidatge del tall.
 
