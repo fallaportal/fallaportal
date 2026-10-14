@@ -149,7 +149,7 @@ Decisió d'Emilio (2026-09-27): **entrada per email, sense Google**.
     tall (D-042).
   - Activa l'alta pública i registra el hook (Authentication → Hooks → "Before User Created" → Postgres function →
     `app.hook_alta_usuari`); dona la clau pública (publishable/anon) del projecte.
-  - Revisa la plantilla del correu del codi, en valencià.
+  - Revisa la plantilla del correu del codi, en valencià, i la posa a "Magic link" **i** a "Confirm sign up" (la primera entrada d'un membre n'usa la segona).
 - **Auth de Supabase** (MODEL_DADES §9.7): "Allow new users to sign up" activat amb el hook, "Confirm email" i "Secure email
   change" activats, cap altre proveïdor. La identitat de les polítiques és l'email del JWT.
 - **Claude**: pantalla d'entrada (email → codi), sessió persistent, pantalla `noauth`,

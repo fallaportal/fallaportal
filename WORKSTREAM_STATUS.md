@@ -53,10 +53,13 @@ des de Supabase (Users → Send magic link): **arriba, amb el logo i el remitent
 **Brossa analitzada (2026-10-14, encapçalament d'un correu a Hotmail)**: SPF, DKIM (el del domini i el d'Amazon SES) i DMARC
 surten `pass`, i el correu arriba amb `X-MS-Exchange-Organization-SCL: 5` i `RF:JunkEmail`: el DNS és correcte i és Outlook
 qui el posa a brossa per reputació (domini nou, IP compartida d'SES) o contingut. Remitent real: `no-respon@mail.fallaportal.es`.
-Prova comparativa (2026-10-15): el mateix codi enviat a Gmail (`it.fallaportal@gmail.com`) **arriba a la safata d'entrada**, així que el
-problema és de reputació d'Outlook/Hotmail amb un domini nou, no del DNS ni de Supabase. Mesures, per ordre: (1) enganxar la plantilla
-nova de `supabase/email/codi_entrada.html` (estructura HTML completa; el primer correu duia només un `<div>`) a Supabase →
-Authentication → Emails → "Magic link", des de `<!doctype html>`, i tornar a enviar un codi a Hotmail; (2) marcar "No és brossa" i
+**Troballa (2026-10-15): la primera entrada d'una persona usa la plantilla "Confirm sign up", no "Magic link"** (l'usuari d'Auth es
+crea en demanar el primer codi, D-046). La de Supabase per defecte porta un enllaç i cap codi: el correu que va arribar a Gmail
+(`it.fallaportal@gmail.com`, persona nova) era eixe, sense número, i per tant **no serveix per a comparar la brossa** amb el de
+Hotmail (que ja tenia usuari i va rebre "Magic link"). Cal posar la mateixa plantilla a "Confirm sign up". Mesures, per ordre:
+(0) enganxar `supabase/email/codi_entrada.html` a **"Confirm sign up" i "Magic link"** (des de `<!doctype html>`, amb l'assumpte
+"El teu codi d'accés a Falla Portal: {{ .Token }}") i tornar a provar amb Gmail i Hotmail; (1) estructura HTML completa
+(el primer correu duia només un `<div>`); (2) marcar "No és brossa" i
 afegir el remitent als contactes (els membres, el primer cop: avisar-los abans del tall); (3) si persisteix, treure el logo
 extern de la plantilla o servir-lo des del domini propi; (4) l'ús continuat millora la reputació. Files de prova a `usuaris`:
 `prova_emilio` (Hotmail, president) i `prova_gmail` (Gmail, board); s'esborren al buidatge del tall.

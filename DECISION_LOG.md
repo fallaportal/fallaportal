@@ -817,3 +817,5 @@ actualització d'Auth).
     des del nostre SMTP).
   - `auth_user_id` de `usuaris` no s'omple (la identitat és l'email del JWT); es decidirà a la Fase 3 si cal.
   - Remitent real dels correus: `no-respon@mail.fallaportal.es` (D-045 deia `no-response@`).
+  - **La primera entrada d'una persona envia la plantilla "Confirm sign up"** (es crea l'usuari), no "Magic link". Totes dues
+    han de dur el codi (`{{ .Token }}`); la de Supabase per defecte porta un enllaç i cap codi.

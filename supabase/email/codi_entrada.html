@@ -1,6 +1,9 @@
 <!--
   Plantilla del correu del codi d'entrada de Falla Portal (D-021, D-045).
-  On posar-la: Supabase → Authentication → Emails → plantilla "Magic link" (és la que envia el codi d'entrada).
+  On posar-la: Supabase → Authentication → Emails, **a dues plantilles amb el mateix contingut**:
+    - "Magic link": l'envia a qui ja té usuari d'Auth.
+    - "Confirm sign up": l'envia a qui entra per primera vegada (D-046: l'usuari es crea en demanar el primer codi). Per
+      defecte porta un enllaç i **cap codi**: sense canviar-la, la primera entrada de cada membre no funciona.
   Assumpte: El teu codi d'accés a Falla Portal: {{ .Token }}
   Només porta el codi (cap enllaç): a iOS un enllaç s'obriria a Safari i no dins de l'app instal·lada.
   {{ .Token }} és el codi de 6 xifres. Caduca segons Authentication → Providers → Email → "Email OTP Expiration"
