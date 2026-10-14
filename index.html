@@ -1900,7 +1900,7 @@ function setSyncing(b,silent){
 // La sessió es desa a localStorage (clau fp_auth) i es renova sola amb el refresh token: s'entra una vegada per
 // dispositiu. La identitat per a les polítiques RLS és l'email del JWT; aquí només es decideix què es mostra.
 const SUPABASE_URL='https://hektqtkfwrnpxdyiynwn.supabase.co';
-const SUPABASE_KEY='PENDENT_CLAU_PUBLICA';   // clau pública (publishable/anon): la seguretat és a RLS, no ací
+const SUPABASE_KEY='sb_publishable_Kfv9C4OHdp0CBZK9qPjv4A_V4CshZGR';   // clau pública (publishable/anon): la seguretat és a RLS, no ací
 const sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{
   auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,storageKey:'fp_auth'}
 });
@@ -2006,7 +2006,7 @@ function inicialsDe(nom){
 }
 // La persona i els seus rols, tal com els veu RLS: un correu que no és membre actiu amb algun rol no hi troba cap fila.
 async function carregaMembre(email){
-  const r=await sb.from('usuaris').select('id,nom,email,usuari_rols(rol_id)').eq('email',email).eq('actiu',true).limit(1);
+  const r=await sb.from('usuaris').select('id,nom,email,usuari_rols!usuari_id(rol_id)').eq('email',email).eq('actiu',true).limit(1);
   if(r.error)throw r.error;
   const u=(r.data||[])[0];
   const rols=u?(u.usuari_rols||[]).map(function(x){return x.rol_id;}):[];
