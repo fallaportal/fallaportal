@@ -1,0 +1,23 @@
+<!--
+  Plantilla del correu del codi d'entrada de Falla Portal (D-021, D-045).
+  On posar-la: Supabase → Authentication → Emails → plantilla "Magic link" (és la que envia el codi d'entrada).
+  Assumpte: El teu codi d'accés a Falla Portal: {{ .Token }}
+  Només porta el codi (cap enllaç): a iOS un enllaç s'obriria a Safari i no dins de l'app instal·lada.
+  {{ .Token }} és el codi de 6 xifres. Caduca segons Authentication → Providers → Email → "Email OTP Expiration"
+  (recomanat: 900 s = 15 minuts; si es canvia, canvia també el text de sota).
+
+  Logo: logo-mail.png, a l'arrel del repositori (176 px d'ample, fons transparent, 19 KB, es mostra a 88 px).
+  Un correu no pot dur la imatge dins: l'ha de carregar d'una adreça pública. Fins al tall de Supabase és
+  https://fallaportal.github.io/fallaportal/logo-mail.png; DES DEL TALL ha de ser https://app.fallaportal.es/logo-mail.png
+  (pla, Fase 7). Sense imatge (clients que la bloquegen) es veu el text "Falla Portal" i el codi segueix llegint-se.
+-->
+<div style="font-family: -apple-system, 'Segoe UI', Roboto, Arial, sans-serif; max-width: 420px; margin: 0 auto; padding: 24px; color: #1f2937;">
+  <div style="text-align: center; margin: 0 0 12px;">
+    <img src="https://fallaportal.github.io/fallaportal/logo-mail.png" width="88" alt="Falla Portal" style="display: inline-block; width: 88px; height: auto; border: 0;">
+  </div>
+  <h2 style="margin: 0 0 12px; font-size: 20px; text-align: center;">Falla Portal</h2>
+  <p style="margin: 0 0 16px; font-size: 15px; line-height: 1.5;">Aquest és el teu codi per entrar:</p>
+  <p style="margin: 0 0 16px; font-size: 34px; font-weight: 700; letter-spacing: 8px; text-align: center; background: #f3f4f6; border-radius: 8px; padding: 14px 0;">{{ .Token }}</p>
+  <p style="margin: 0 0 8px; font-size: 14px; line-height: 1.5; color: #4b5563;">Escriu-lo a l'app. Caduca d'ací a 15 minuts i només serveix una vegada.</p>
+  <p style="margin: 0; font-size: 13px; line-height: 1.5; color: #6b7280;">Si no has demanat entrar tu, ignora aquest correu: ningú no pot entrar sense el codi. No el compartisques amb ningú.</p>
+</div>
