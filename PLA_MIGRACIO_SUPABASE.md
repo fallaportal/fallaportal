@@ -223,9 +223,8 @@ Decisió d'Emilio (2026-09-27): **entrada per email, sense Google**.
      "Enforce HTTPS" (el certificat el posa GitHub; pot tardar una estona).
    - `sw.js` (`BASE`) i `manifest.json` (`start_url`, `scope`) passen de `/fallaportal/` a l'arrel `/` (deute #14):
      si no, la instal·lació i la caché fallen en silenci.
-   - **Logo del correu del codi**: la plantilla (`supabase/email/codi_entrada.html`, enganxada a Supabase) carrega
-     `logo-mail.png` d'una adreça pública. Canviar-la de `https://fallaportal.github.io/fallaportal/logo-mail.png` a
-     `https://app.fallaportal.es/logo-mail.png` a la plantilla de Supabase i al fitxer, i comprovar que el logo es veu.
+   - **Logo del correu del codi**: no canvia amb el tall. La plantilla carrega `logo-mail.png` de
+     `raw.githubusercontent.com/fallaportal/fallaportal/main/` (repositori públic).
    - L'adreça antiga `fallaportal.github.io/fallaportal` redirigeix sola al domini nou [Probable: comportament de
      GitHub Pages; comprovar-ho]. Cada usuari torna a instal·lar l'app al mòbil una vegada, la mateixa que ja ha
      d'entrar amb el correu nou.
