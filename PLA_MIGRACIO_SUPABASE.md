@@ -1,5 +1,5 @@
 # Pla de migració a Supabase — Falla Portal
-## Redactat: 2026-09-27 · Estat: revisat amb Emilio; decisions principals preses (§9). Comença la Fase 0.
+## Redactat: 2026-09-27 · Actualitzat: 2026-10-14 · Estat: Fase 0 feta; Fase 1 en curs (vegeu §11).
 ## Decisió associada: D-021 (`DECISION_LOG.md`)
 
 Aquest document es llig sense context previ. Cada sessió de la migració comença
@@ -19,20 +19,24 @@ La migració està feta quan es complixen tots aquests criteris:
 3. **Accessos**: els permisos els aplica Postgres (RLS), no el JavaScript. El Google
    Sheet deixa d'estar compartit en edició amb els usuaris.
 4. **Sessió**: cada usuari entra una vegada per dispositiu i la sessió dura setmanes.
-5. **Hosting**: continua a GitHub Pages (`fallaportal.github.io/fallaportal`). Sense Vercel.
+5. **Hosting**: continua a GitHub Pages, amb el domini propi **`app.fallaportal.es`** des del dia del tall (D-042). Sense Vercel.
 
 ---
 
 ## 2. Decisions de partida
 
-- **Supabase**: projectes nous dins del compte que Emilio ja té. N'hi haurà dos:
-  `fallaportal-dev` i `fallaportal-prod`. És el primer entorn de proves real del
-  projecte (D-005 continua valent per a l'app actual fins al tall).
+- **Supabase: un sol projecte, `fallaportal`** (D-043), a l'organització Pro que Emilio ja té (AI4ALL, uns 10 $/mes),
+  regió UE:
+  - **Fins al tall fa de proves**: la falla continua amb el full i a Supabase només hi ha dades de prova i còpies.
+  - **El dia del tall es buida** (esquema, usuaris d'Auth i fitxers de prova), s'hi tornen a aplicar les migracions i
+    s'hi carreguen les dades reals: passa a ser el definitiu.
+  - **Després del tall no hi ha entorn de proves** (com D-005 avui): els canvis d'esquema es proven en local amb PGlite
+    i s'apliquen amb còpia prèvia; la xarxa són les còpies diàries del pla Pro (7 dies) i el registre d'activitat.
 - **Sense bundler** (D-001 es manté): `supabase-js` des de CDN amb la versió fixada.
 - **Es manté el model `DB` en memòria**: la UI continua llegint de `DB` i només canvia
   la persistència. És la manera de no reescriure 9.400 línies de pantalles.
 - **Congelació d'una setmana**: només per a la migració final i el tall. Tot el
-  desenvolupament previ (Fases 0–6) es fa contra `dev` amb una còpia de les dades,
+  desenvolupament previ (Fases 0–6) es fa contra el projecte de Supabase amb una còpia de les dades,
   mentre la falla continua fent servir l'app actual. La setmana de congelació es fixa
   quan la Fase 6 està tancada, no abans.
 - **Els permisos es repliquen 1:1**: primer es reprodueix exactament el que fa l'app hui.
@@ -55,7 +59,7 @@ La migració està feta quan es complixen tots aquests criteris:
 | Autorització | Rols comprovats en JS; tots els usuaris són editors del full | RLS a Postgres; el full deixa d'estar compartit |
 | Escriptura | `writeTab` reescriu la pestanya sencera | insert/update/delete per fila |
 | Proteccions contra truncar el full | Swap atòmic, `dadesCarregades`, `_desantAraMateix`, snapshots (D-003, D-013–D-016) | Innecessàries: desapareixen |
-| Validació | Cap (només al formulari) | Restriccions: import > 0, claus foranes, `bankHash` únic, estats enumerats |
+| Validació | Cap (només al formulari) | Restriccions: import > 0, claus foranes, estats enumerats, exercicis sense solapament; `bankHash` (ara `empremta`) indexat però **no** únic (A-04: hi ha duplicats legítims) |
 | Refresc | Polling cada 30 s + `bgRefresh` a cada canvi de pantalla | Realtime (subscripció per taula) |
 | Justificants | Drive, públics per enllaç, scope `drive` complet | Storage privat amb URLs signades; sense scope de Drive |
 | Auditoria | Revertida (D-007) | Triggers a `audit_log` (qui, quan, abans/després) |
@@ -76,9 +80,12 @@ cada acció, caixes d'event i els seus canvis fora de `fons`, justificants en ta
 exercici, permisos de mòduls i reports en taules, `audit_log` (D-024), vistes per als càlculs i una vista amb la forma
 antiga dels moviments per a la UI. Es conserven els `id` actuals. Les decisions obertes són al seu §8.
 
-- **RLS**: funcions SQL `rol_actual()` i `delegacions_meues(any_fiscal)` (security definer) que lligen `usuaris` +
-  `directiva` + `rols`. Les polítiques repliquen `perm()`, `getMyArees()` i `getMyDelegacions()` (D-025: 1:1). Un
-  email que no és a `usuaris` (`noauth`) no veu cap fila. `board` només pot llegir.
+- **RLS** (detall a `MODEL_DADES.md` §9): qualsevol membre llig totes les files, com avui (D-035); l'escriptura la
+  decideix una matriu rol × mòdul (lectura/edició, abast `tot` o `directiva`) amb diversos rols per persona (D-036),
+  carregada amb els permisos d'avui. Funcions `app.pot_editar()`, `app.dins_abast()`, `app.delegacions_meues()`…
+  (security definer) que lligen `usuaris`, `usuari_rols`, `rol_moduls` i `directiva`. Un email que no és a `usuaris`
+  (`noauth`) no veu cap fila. `board` serà de només lectura (D-038), però després del tall: fins aleshores
+  reprodueix l'app actual (tanca caixes, edita pressupost i adjunta justificants).
 
 ---
 
@@ -112,9 +119,9 @@ Cada fase indica el model i l'esforç recomanats (vegeu §8).
   de caixes d'event amb `event_id` nullable (A-05); bloqueig de pressupost per any (A-11); `saldos`
   amb FK correcta (A-03); data real i `numeric` (A-09, A-10).
 - **Tests de RLS**: per a cada rol, consultes que han de passar i consultes que han de
-  fallar, executables contra `dev`.
+  fallar, executables contra el projecte de Supabase.
 - **Model**: Opus 5.5 · **xhigh**. Revisió final de les polítiques: Opus 5.5 · **max**.
-- **Sessions**: 1–2. **Sortida**: tests de RLS en verd a `dev`.
+- **Sessions**: 1–2. **Sortida**: tests de RLS en verd al projecte de Supabase.
 
 ### Fase 2 — Entorn dev i autenticació per email
 Decisió d'Emilio (2026-09-27): **entrada per email, sense Google**.
@@ -127,12 +134,16 @@ Decisió d'Emilio (2026-09-27): **entrada per email, sense Google**.
     (`canUsers`).
   - Un email que no hi és no rep cap codi.
 - **Emilio**:
-  - Crea `dev` i `prod` en una regió de la UE. `prod` en pla de pagament; `dev` pot ser
-    gratuït.
-  - Configura un **SMTP propi** (p. ex. un proveïdor d'enviament transaccional, o el
-    compte de la falla). El correu per defecte de Supabase és només per a proves i té
-    límits d'enviament molt baixos.
+  - El projecte `fallaportal` ja existeix (D-043).
+  - Configura un **SMTP propi**: un proveïdor d'enviament transaccional amb remitent del domini
+    `fallaportal.es` (p. ex. `no-respon@fallaportal.es`, D-042) i els registres DNS SPF, DKIM i DMARC
+    que indique el proveïdor (sense ells, els codis van al correu brossa). El correu per defecte de
+    Supabase és només per a proves i té límits d'enviament molt baixos.
+  - A Supabase Auth, l'adreça de l'app (Site URL) és la de proves fins al tall i `https://app.fallaportal.es` des del
+    tall (D-042).
   - Revisa la plantilla del correu del codi, en valencià.
+- **Auth de Supabase** (MODEL_DADES §9.7): "Allow new users to sign up" desactivat, "Confirm email" i "Secure email
+  change" activats, cap altre proveïdor. La identitat de les polítiques és l'email del JWT.
 - **Claude**: pantalla d'entrada (email → codi), sessió persistent, pantalla `noauth`,
   tancar sessió. Es lleva tot el codi de Google Identity (GIS, One Tap, `tokenClient`,
   D-020).
@@ -140,7 +151,7 @@ Decisió d'Emilio (2026-09-27): **entrada per email, sense Google**.
   - Desapareixen el client OAuth de Google, el mode "Testing", el scope `drive` i la
     caducitat cada 7 dies.
   - Per primera vegada es podrà provar el login real en local.
-- **Model**: Sonnet 5 · **high**. **Sessions**: 1.
+- **Model**: Sonnet 5.5 · **high**. **Sessions**: 1.
 
 ### Fase 3 — Capa de dades
 - `loadFromSheets()` → càrrega des de Supabase per any fiscal.
@@ -148,12 +159,14 @@ Decisió d'Emilio (2026-09-27): **entrada per email, sense Google**.
   agrupats per entitat.
 - Es lleven: swap atòmic, `_desantAraMateix`, snapshots, polling (→ Realtime) i la
   caché de `DB` a `localStorage`.
+- **Paginar totes les lectures**: l'API de Supabase torna com a màxim 1.000 files per consulta; sense paginar, les
+  xifres eixirien curtes sense avís (MODEL_DADES §9.7).
 - **Model**:
-  - Sonnet 5 · **high** per al gruix mecànic.
+  - Sonnet 5.5 · **high** per al gruix mecànic.
   - Opus 5.5 · **high** per a les parts delicades: fons ↔ moviments, tancaments,
     importació CSV amb `bankHash` i bloqueig de pressupostos.
 - **Sessions**: 2–3. **Sortida**: totes les entrades de l'inventari que escriuen dades
-  funcionen a `dev`.
+  funcionen al projecte de Supabase.
 
 ### Fase 4 — Justificants a Storage
 - Bucket privat `justificants/{anyFiscal}/{movId}.{ext}`, polítiques per rol, URL
@@ -166,7 +179,7 @@ Decisió d'Emilio (2026-09-27): **entrada per email, sense Google**.
     Els orfes no es pugen: es llisten perquè Emilio decidisca.
   - Quan tot està verificat, es retira l'accés "qualsevol amb l'enllaç" dels fitxers de
     Drive. **No s'esborren**: queden com a còpia.
-- **Model**: Sonnet 5 · **high** (per l'script de migració de fitxers). **Sessions**: 1–2.
+- **Model**: Sonnet 5.5 · **high** (per l'script de migració de fitxers). **Sessions**: 1–2.
 
 ### Fase 5 — Script de migració i assajos
 - Script local que llig l'export `.xlsx`, transforma les dades (dates, imports,
@@ -175,35 +188,49 @@ Decisió d'Emilio (2026-09-27): **entrada per email, sense Google**.
 - Idempotent: es pot repetir sobre una base buida tantes vegades com calga.
 - Inclou l'**export invers** (Supabase → `.xlsx` amb el format de pestanyes actual)
   per a la marxa arrere de §7.
-- Assajos complets sobre `dev` fins que la validació de §6 surt neta dues vegades seguides.
+- Assajos complets sobre el projecte de Supabase fins que la validació de §6 surt neta dues vegades seguides.
+- Inclou el **buidatge** del projecte que es farà el dia del tall: esquema, usuaris d'Auth i fitxers de Storage de
+  prova (D-043). S'assaja també.
 - **Model**: Opus 5.5 · **high**. **Sessions**: 1.
 
 ### Fase 6 — Proves d'acceptació
-- Inventari sencer, rol per rol, a `dev` amb les dades migrades i usuaris de prova per rol.
+- Inventari sencer, rol per rol, al projecte de Supabase amb les dades migrades i usuaris de prova per rol.
 - Comparació d'informes amb les mateixes dades: Estat de Resultats, Flux d'Efectiu i
   saldo de fons per delegat, app vella vs nova. **Les xifres han de ser idèntiques.**
 - Revisió de codi: `/code-review high`, o `/code-review ultra` si la vols multiagent
   (la llances tu i es factura a part).
-- **Model**: Sonnet 5 · **high** per recórrer l'inventari al navegador. Opus 5.5 · **high**
+- **Model**: Sonnet 5.5 · **high** per recórrer l'inventari al navegador. Opus 5.5 · **high**
   per a cada discrepància.
 - **Sessions**: 1–2. **Sortida**: cap discrepància oberta. Només llavors es fixa la
   setmana de congelació.
 
 ### Fase 7 — Setmana de congelació i tall
-1. Una setmana abans: avís als usuaris.
+1. Una setmana abans:
+   - Avís als usuaris.
+   - Comprovar que la configuració del projecte és la de `MODEL_DADES.md` §9.6 i preparar l'SMTP definitiu i
+     l'adreça de l'app (D-042).
 2. Dia 0:
    - El full passa a només lectura (compartició com a lector).
    - Export final `.xlsx`.
    - `git tag pre-supabase`.
-3. Migració a `prod` i validació de §6.
-4. Publicació de la versió nova a GitHub Pages. Emilio prova amb comptes reals de cada rol.
+3. Buidatge del projecte (dades, usuaris d'Auth i fitxers de prova; D-043), migracions des de zero, tests
+   (`--remot`), càrrega de les dades reals i validació de §6.
+4. Publicació de la versió nova a GitHub Pages **a `app.fallaportal.es`** (D-042), en el mateix desplegament:
+   - DNS: `CNAME app → fallaportal.github.io`; a GitHub, Settings → Pages → Custom domain `app.fallaportal.es` i
+     "Enforce HTTPS" (el certificat el posa GitHub; pot tardar una estona).
+   - `sw.js` (`BASE`) i `manifest.json` (`start_url`, `scope`) passen de `/fallaportal/` a l'arrel `/` (deute #14):
+     si no, la instal·lació i la caché fallen en silenci.
+   - L'adreça antiga `fallaportal.github.io/fallaportal` redirigeix sola al domini nou [Probable: comportament de
+     GitHub Pages; comprovar-ho]. Cada usuari torna a instal·lar l'app al mòbil una vegada, la mateixa que ja ha
+     d'entrar amb el correu nou.
+   - Emilio prova amb comptes reals de cada rol.
 5. La resta de la setmana és marge per a sorpreses. Es pot obrir abans si tot és verd.
 - **Model**: Opus 5.5 · **high** el dia del tall. **Sessions**: 1–2.
 
 ### Fase 8 — Estabilització
-- Primeres dues setmanes: correccions amb Sonnet 5 · **medium**.
-- Reescriure el `TDD_FALLA_PORTAL.md` i actualitzar el continuity set: Sonnet 5 · **low**
-  (o Haiku 4.5 · **low** per a actualitzacions curtes).
+- Primeres dues setmanes: correccions amb Sonnet 5.5 · **medium**.
+- Reescriure el `TDD_FALLA_PORTAL.md` i actualitzar el continuity set: Sonnet 5.5 · **low**
+  (o Haiku 5.5 · **low** per a actualitzacions curtes).
 
 ---
 
@@ -238,17 +265,17 @@ Totes aquestes comprovacions s'automatitzen dins de l'script de la Fase 5:
 |---|---|---|
 | 0 Auditoria i inventari | Opus 5.5 | high |
 | 1 Esquema i RLS | Opus 5.5 | xhigh (revisió final: max) |
-| 2 Auth i entorn dev | Sonnet 5 | high |
-| 3 Capa de dades | Sonnet 5 / Opus 5.5 per a les parts delicades | high |
-| 4 Storage i migració de justificants | Sonnet 5 | high |
+| 2 Auth i entorn dev | Sonnet 5.5 | high |
+| 3 Capa de dades | Sonnet 5.5 / Opus 5.5 per a les parts delicades | high |
+| 4 Storage i migració de justificants | Sonnet 5.5 | high |
 | 5 Script de migració | Opus 5.5 | high |
-| 6 Acceptació | Sonnet 5 / Opus 5.5 per a discrepàncies | high |
+| 6 Acceptació | Sonnet 5.5 / Opus 5.5 per a discrepàncies | high |
 | 7 Tall | Opus 5.5 | high |
-| 8 Estabilització | Sonnet 5 (Haiku 4.5 per a documentació curta) | medium / low |
+| 8 Estabilització | Sonnet 5.5 (Haiku 5.5 per a documentació curta) | medium / low |
 
 - **Opus 5.5**: disseny, seguretat, integritat de dades i dies crítics.
-- **Sonnet 5**: implementació i proves al navegador.
-- **Haiku 4.5**: documentació i tasques repetitives, no tocar dades.
+- **Sonnet 5.5**: implementació i proves al navegador.
+- **Haiku 5.5**: documentació i tasques repetitives, no tocar dades.
 - **Nivells d'esforç**: low · medium · high · xhigh · max. No hi ha cap nivell
   "ultracode". El més profund per revisar codi és `/code-review ultra`.
 - **Com es canvia**: al selector de model de l'app, o demanant-ho a Claude a l'inici
@@ -261,7 +288,7 @@ Totes aquestes comprovacions s'automatitzen dins de l'script de la Fase 5:
 **Preses el 2026-09-27:**
 1. **Ningú treballa directament al Google Sheet**: només l'app. No cal cap export
    permanent; el full queda com a arxiu de només lectura.
-2. **Supabase de pagament per a `prod`**; `dev` pot ser gratuït.
+2. **Supabase de pagament**: un sol projecte, de proves fins al tall i definitiu després (D-043).
 3. **Justificants antics: es migren a Storage** (Fase 4).
 4. **Entrada per email, sense Google**: codi de 6 xifres (Fase 2).
 
@@ -271,7 +298,8 @@ Totes aquestes comprovacions s'automatitzen dins de l'script de la Fase 5:
 7. ~~`dev.html`~~: **esborrat del repositori el 2026-10-13** (Emilio): era la v3.0.15 publicada a GitHub Pages i escrivia
    al full real amb codi anterior a les correccions de pèrdua de dades. `index1.html`, `index2.html` i `index_2.html` només
    són a l'ordinador d'Emilio (ignorats per git); els pot esborrar ell.
-8. SMTP: quin proveïdor o compte envia els codis (necessari per a la Fase 2).
+8. SMTP: quin proveïdor envia els codis (necessari per a la Fase 2). El remitent serà del domini `fallaportal.es`
+   (comprat per Emilio el 2026-10-14, D-042); falta triar el proveïdor.
 
 ---
 
@@ -300,7 +328,7 @@ setmanes i després ve la setmana de congelació.
 | Fase | Estat | Data | Notes |
 |---|---|---|---|
 | 0 | **Fet** | 2026-10-13 | `INVENTARI_FUNCIONAL.md`, `INFORME_ANOMALIES_F0.md` (codi + perfil de les dades reals), `MODEL_DADES.md` (decisions D-026–D-033) i `tools/f0_perfil_dades.py`. Correccions prèvies a l'app actual: v4.0.67–v4.0.78. Oberts sense bloquejar: A-31 (tancaments antics amb pagaments) i caixa vs vendes de falles.app. Tancada per Emilio el 2026-10-13. |
-| 1 | Pendent | | Comença a la propera sessió (Opus 5.5 · xhigh; revisió final de RLS amb max). Entrada: `MODEL_DADES.md`. |
+| 1 | **Fet** | 2026-10-14 | SQL a `supabase/migrations/` (5 fitxers: taules, mòduls i rols, permisos, triggers i revisió de seguretat), aplicat al projecte `fallaportal` (PostgreSQL 17.11, eu-west-1) amb `tools/supabase_migra.mjs`. **178 tests de RLS en verd en local i a Supabase**, amb resultats i missatges idèntics (D-037). Revisió final amb Opus 5.5 · max: 11 grups de troballes corregides sense tocar la matriu (D-044, `MODEL_DADES.md` §9.7). Decisions D-035, D-036, D-038–D-044. Les vistes del model §5 passen a la Fase 3. |
 | 2 | Pendent | | |
 | 3 | Pendent | | |
 | 4 | Pendent | | |

@@ -1,5 +1,5 @@
 # Work Stream Status — Falla Portal
-## Snapshot Date: 2026-10-13
+## Snapshot Date: 2026-10-14
 ## Versió en producció: v4.0.78
 
 > **Context de calendari**: període vacacional, ús baix de l'eina. Bon moment per a
@@ -15,19 +15,36 @@ GitHub Pages. Decisió D-021.
 **Current State**: Pla a `PLA_MIGRACIO_SUPABASE.md`, **revisat amb Emilio el
 2026-09-27**. Decisions preses:
   - Ningú treballa directament al full.
-  - Supabase de pagament per a `prod`.
+  - Supabase de pagament: un sol projecte (D-043).
   - Els justificants antics es migren.
   - Entrada per email amb codi, sense Google.
 
 **Fase 0 tancada (2026-10-13)**: inventari, informe d'anomalies amb perfil de dades reals, model de dades nou
 (`MODEL_DADES.md`, decisions D-026–D-033) i correccions a l'app actual (v4.0.67–v4.0.78).
-**Propera sessió**: **Fase 1 — esquema i seguretat** amb **Opus 5.5 · xhigh** (revisió final de les polítiques RLS amb
-**max**), en una sessió nova que comence llegint `CLAUDE.md`, el continuity set i `MODEL_DADES.md`. Sortida: SQL versionat a
-`supabase/migrations/` i tests de RLS en verd a `dev`. Cal que Emilio haja creat els projectes `fallaportal-dev` i
-`fallaportal-prod` (regió UE) abans de poder executar res contra `dev`.
+**Fase 1 tancada (2026-10-14)**:
+  - Decisions d'Emilio: **D-035** (a Supabase qualsevol membre llig totes les dades, com avui; Postgres controla
+    l'escriptura), **D-036** (permisos amb una matriu rol × mòdul de lectura/edició, i diversos rols per persona) i
+    **D-038–D-041** (permisos d'avui que no es volen, per a després del tall: Junta només lectura, Àrea sense gestió de
+    fons, r4 només als moviments propis, només President dissenya rols).
+  - Fet: SQL a `supabase/migrations/` (taules, catàleg de mòduls i rols de sistema amb els permisos d'avui, funcions i
+    polítiques RLS, triggers d'autoria, exercici per data, exercici tancat, columnes permeses, estat de caixa,
+    anti-bloqueig i registre d'activitat). 178 tests de RLS en verd **en local (PGlite, D-037) i a Supabase**, comprovant el motiu
+    de cada error esperat i amb una prova de control (dues polítiques espatllades → 6 tests fallen).
+  - Detall del model de permisos i dels pendents: `MODEL_DADES.md` §9.
+**Projecte de Supabase creat i provat (2026-10-14)**: `fallaportal` (organització AI4ALL, Pro, regió eu-west-1,
+PostgreSQL 17.11). Les 4 migracions hi estan aplicades i els 151 tests hi passen, amb el mateix resultat que en local. La
+cadena de connexió i el certificat de Supabase són a `tools/.env` i `tools/prod-ca-2021.crt` (fora del repo).
+**Revisió final de seguretat feta (2026-10-14, Opus 5.5 · max, D-044)**: 11 grups de troballes (R1–R11,
+`MODEL_DADES.md` §9.7), totes reproduïdes amb un test abans de corregir-les a
+`supabase/migrations/20261014150000_revisio_seguretat.sql`, sense tocar la matriu. 178 tests en verd en local i a
+Supabase, idèntics.
+**Fet per Emilio (2026-10-14)**: a Supabase, Authentication, "Allow new users to sign up" desactivat (la identitat de
+les polítiques és l'email del JWT). Falten els altres ajustos d'Auth (Confirm email, Secure email change) a la Fase 2.
+**Propera sessió: Fase 2** (entrada per correu amb codi) amb **Sonnet 5.5 · high**. Necessita el proveïdor d'SMTP
+(§9.8 del pla) i els ajustos d'Auth de `MODEL_DADES.md` §9.7.
 **Blockers**:
-  - Cap per a la Fase 0.
-  - Per a la Fase 2 cal triar l'SMTP (§9.8 del pla).
+  - Fase 2: triar el proveïdor d'SMTP (§9.8 del pla). El remitent serà del domini `fallaportal.es`, comprat el
+    2026-10-14 (D-042). Emilio: activar-ne la renovació automàtica i el bloqueig de transferència.
 
 ---
 
@@ -402,6 +419,12 @@ via helpers, respectar el swap atòmic, no interferir amb guardats concurrents.
 Nota: ara que `_desantAraMateix` existeix, aquest últim requisit és més fàcil.
 
 **Informes R5–R8**: pendents de definir.
+
+**Després del tall — canvis de permisos decidits** (es fan a la matriu de rols, sense tocar l'SQL):
+- Junta de només lectura (D-038): `board` passa a lectura a `caixa`, `pressupostos` i `r4`.
+- Responsable d'àrea sense gestió de fons (D-039): `area` passa a lectura a `fons`.
+- Justificants des de r4 només als moviments propis (D-040): `area` i `delegat` passen a lectura a `r4`.
+- Només President dissenya rols (D-041): `treasury` passa a lectura a `rols`.
 
 **TPV de les caixes d'event al resultat de l'event** (A-23, 2026-10-13): els apunts "ON 367893310 ddmm" del banc queden a
 01 Tresoreria sense event; quadrar-los amb el TPV de la caixa i assignar-los l'event i l'àrea. Després del tall (D-025).

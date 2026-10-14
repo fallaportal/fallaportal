@@ -219,8 +219,9 @@ Totes les pestanyes es llegeixen en temporals. L'assignació a `DB` es fa al fin
 
 13. **`u.arees` i `u.delegacions` sempre buides** → usar `getMyArees()`/`getMyDelegacions()`.
 
-14. **`sw.js` té `BASE = '/fallaportal'` clavat**: si canvia el nom del repositori, la
-    caché deixa de funcionar en silenci.
+14. **`sw.js` té `BASE = '/fallaportal'` clavat** (i `manifest.json`, `start_url` i `scope`): si canvia el nom del
+    repositori o l'adreça, la caché deixa de funcionar en silenci. Es resol al tall de Supabase, quan l'app passa a
+    `app.fallaportal.es` i a l'arrel `/` (D-042).
 
 ---
 

@@ -76,7 +76,9 @@ Cremà (19/03) i el 31/03 serveixen per liquidar els pendents de Falles dins del
 - **Migració a Supabase planificada** (D-021, `PLA_MIGRACIO_SUPABASE.md`):
   - Entrada per email amb codi, sense Google.
   - El hosting continua a GitHub Pages.
-  - Propera fase: F0.
+  - Fase 0 feta (2026-10-13); Fase 1 en curs (esquema i RLS a `supabase/`, tests en local).
+  - Permisos a Supabase: matriu rol × mòdul (lectura/edició, abast tot o directiva) i diversos rols per persona
+    (D-036); qualsevol membre llig totes les dades, com avui (D-035). Detall a `MODEL_DADES.md` §9.
 - Un sol fitxer `index.html` de ~9.400 línies. Sense bundler ni framework.
 - Google Sheets és l'única base de dades. No hi ha backend propi.
 - **`readTab()` propaga els errors** [v4.0.42]. Abans tornava `[]` i convertia un tall de xarxa en pèrdua de dades.
@@ -179,7 +181,11 @@ Pestanyes Google Sheets:
 
 ### External References
 
-- **Producció**: `https://fallaportal.github.io/fallaportal/`
+- **Producció**: `https://fallaportal.github.io/fallaportal/` (fins al tall de Supabase)
+- **Supabase**: projecte `fallaportal` (ref `hektqtkfwrnpxdyiynwn`), organització AI4ALL (Pro) d'Emilio, regió
+  eu-west-1 (Irlanda), PostgreSQL 17.11. De proves fins al tall i definitiu després (D-043).
+- **Domini propi**: `fallaportal.es` (comprat per Emilio el 2026-10-14). Des del tall, l'app serà a
+  `https://app.fallaportal.es` i els codis d'entrada s'enviaran des del domini (D-042).
 - **Sheets API v4**: `https://sheets.googleapis.com/v4/spreadsheets/{SHEET_ID}/values/`
 - **Drive API v3**: `https://www.googleapis.com/drive/v3/files`
 - **Admin email**: `it.fallaportal@gmail.com` (rol `treasury`)

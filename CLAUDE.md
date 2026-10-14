@@ -53,6 +53,11 @@ de provar executant l'app real al navegador (servidor `falla-static`,
 `.claude/skills/verify/SKILL.md`. No es dona per tancada una tasca només perquè el
 fitxer "es veu bé".
 
+L'esquema de Supabase (`supabase/`, migració D-021) es prova amb `node tools/supabase_tests.mjs` (PGlite en local;
+`--remot` contra el projecte de Supabase) i s'aplica amb `node tools/supabase_migra.mjs aplica`. Primera vegada:
+`cd tools && npm install`. La connexió necessita `tools/.env` i `tools/prod-ca-2021.crt`, que només són a l'ordinador
+d'Emilio (fora del repo).
+
 ## 4. Sincronització git — inici i tancament de sessió
 
 **A l'INICI de qualsevol sessió (local o web):** fes `git pull` abans de tocar res.

@@ -17,3 +17,8 @@ index_2.html
 # Export del Google Sheet i informes de perfil de dades (Fase 0 de la migracio): xifres reals, mai al repo
 FallaPortal_export*.xlsx
 *_perfil_dades_*.md
+
+# Eines locals de desenvolupament (tools/): dependencies d'npm, la cadena de connexio i el certificat de Supabase
+tools/node_modules/
+tools/.env
+tools/*.crt

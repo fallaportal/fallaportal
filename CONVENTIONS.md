@@ -73,6 +73,22 @@ confirmar amb `repr()` abans de concloure que hi ha un error de sintaxi.
 
 **Ordre de presentació fitxers**: `sw.js` PRIMER, `index.html` SEGON. Sempre.
 
+**Supabase (migració, D-021)**:
+- L'esquema va a `supabase/migrations/` (un fitxer per canvi, nom `AAAAMMDDhhmmss_descripcio.sql`). **Una migració ja
+  aplicada al projecte de Supabase no es modifica**: el canvi va en un fitxer nou.
+- Mai claus ni dades reals al repo: la cadena de connexió va a `tools/.env` (ignorat) i la clau `service_role` mai a
+  cap fitxer del repo.
+- Aplicar: `node tools/supabase_migra.mjs estat` i `… aplica` (mai a mà a l'editor SQL: no quedaria anotada).
+- Tests: `node tools/supabase_tests.mjs` (local, PGlite) i `--remot` (contra el projecte de Supabase). Un canvi de permisos no està fet
+  fins que els tests passen i s'ha mirat el motiu de cada error esperat (`--detall`).
+- Els permisos es canvien a la matriu (`rol_moduls`), no a les polítiques; les polítiques només canvien si canvia el
+  que vol dir un mòdul.
+- Un sol projecte de Supabase (D-043): després del tall, cada migració es prova abans en local i s'aplica amb una
+  còpia prèvia de la base de dades.
+- Tests de permisos: primer el test que demostra el forat (ha de fallar), després la correcció. Una inserció de test
+  no retorna mai una columna (`returning 1`): `returning id` obliga a poder llegir la fila nova i amaga forats.
+- Mai exposar l'esquema `app` a l'API, ni posar al client cap funció que faça `set_config` amb dades de l'usuari.
+
 ---
 
 ### Eines de treball afegides (2026-07-29)

@@ -281,7 +281,7 @@ justifique. Però:
 
 ### D-021: Migració a Supabase, mantenint GitHub Pages
 **Date**: 2026-09-27
-**Status**: Proposed — aprovat en principi; el pla està pendent de revisió amb Emilio
+**Status**: Accepted (pla revisat amb Emilio el 2026-09-27; en execució: Fase 0 feta, Fase 1 en curs)
 **Context**: Emilio ja té compte de Supabase. Motivacions:
   - Sessions persistents.
   - Control d'accessos al servidor: hui cada usuari és editor del full i els rols només
@@ -570,4 +570,194 @@ llevaria el control a Tresoreria abans que existisca el model nou.
      moviments. President i Tresoreria poden fer-ho com a **excepció**, confirmant-ho. El pressupost no hi entra.
 **Consequences**: L'app compleix el que el diàleg de tancar exercici ja prometia. Adjuntar un justificant des de r4 no
 es bloqueja (no canvia imports).
+
+---
+
+### D-035: A Supabase, qualsevol membre llig totes les dades; Postgres controla l'escriptura
+**Date**: 2026-10-14
+**Status**: Accepted (Emilio)
+**Context**: Avui tothom rep totes les dades al navegador (el full és compartit amb tots) i cada pantalla filtra. Algunes
+pantalles mostren als responsables d'àrea i delegats xifres de **tota** la falla: totals i despesa per àrea del Dashboard
+(`index.html:3061`, `3153`), "Total planificat/executat" de Pressupostos (`4691`), r3 amb moviments d'altres delegacions
+(`9309`) i fons de delegats sense delegació al Dashboard (`3091`). Si Postgres limitara les files a l'abast de cada rol,
+eixes xifres canviarien sense avís, perquè el `DB` en memòria quedaria incomplet.
+**Decision**: Opció A. Qualsevol membre (persona activa amb almenys un rol) llig totes les files; RLS controla qui
+escriu què. Excepció: `audit_log`, només amb el mòdul `registre`. Qui no és membre no veu res.
+**Alternatives Considered**: (B) files limitades a l'abast + funcions al servidor que tornen només els totals globals:
+més protecció, però 4 pantalles canvien de font a la Fase 3 i més risc de diferències a la Fase 6. (C) limitades sense
+totals globals: canvi de comportament (D-025), després del tall.
+**Consequences**: Xifres i pantalles idèntiques. La lectura d'un mòdul només decideix si la pantalla es veu. Limitar les
+lectures (B) és una decisió possible després del tall.
+
+---
+
+### D-036: Permisos amb una matriu rol × mòdul i diversos rols per persona
+**Date**: 2026-10-14
+**Status**: Accepted (Emilio: "jo dissenye els rols, assigne els mòduls als rols, si poden editar o veure, i en una altra
+taula assigne rols a persones, 1 a N")
+**Context**: Avui els permisos són 6 indicadors per rol (`canRegister`, `canFons`, `canImport`, `canConfig`, `canUsers`,
+`viewAll`) més la visibilitat de mòduls (`modulVis`), la de reports (`reportVis`) i comprovacions literals del nom del rol
+(`president`\|`treasury`). Cada persona té un sol rol. `canRegister` només decideix quins mòduls es veuen per defecte.
+**Decision**:
+  - Taules `rols`, `moduls` (catàleg fix), `rol_moduls` (rol, mòdul, nivell `lectura`\|`edicio`, abast
+    `tot`\|`directiva`, `barra`) i `usuari_rols` (persona → 1..N rols). Edició = crear, modificar i esborrar. Amb diversos
+    rols val el permís més alt.
+  - Dues regles fixes fora de la matriu: l'**abast** (directiva de l'exercici actiu) i la **propietat** (sense edició a
+    Historial, cadascú només toca el que ha creat).
+  - Quatre mòduls es parteixen perquè avui tenen dues edicions diferents: Caixa (obrir / tancar), Pressupostos (línies /
+    aprovar), Configuració (general / rols / usuaris / exercicis / directiva) i Reports (r1 reobrir caixa / r4 adjuntar).
+  - Valors inicials = permisos d'avui (`MODEL_DADES.md` §9.3): ningú no nota cap canvi (D-025).
+  - Desapareixen l'administrador fix `it.fallaportal@gmail.com` i el "primer que entra és president"; els substitueix un
+    trigger que impedeix deixar la falla sense ningú actiu amb `usuaris` en edició (i, des de D-041, amb `rols`).
+**Consequences**:
+  - Les pestanyes "Mestre de Rols", "Mòduls" i "Reports" de Configuració passen a ser una sola matriu (Fase 3).
+  - Quatre permisos d'avui que no es volen, decidits el mateix dia i aplicats a la matriu després del tall: Junta només
+    lectura (D-038), Àrea sense gestió de fons (D-039), r4 només als moviments propis (D-040) i només President dissenya
+    rols (D-041). Són dades de la matriu: canviar-los no toca les polítiques.
+
+---
+
+### D-037: Tests de l'esquema i de RLS en local amb PGlite
+**Date**: 2026-10-14
+**Status**: Accepted
+**Context**: En l'ordinador d'Emilio no hi ha Postgres ni Docker (la CLI de Supabase en necessita per a la base local), i
+`fallaportal-dev` encara no existeix. La Fase 1 demana tests de RLS executables.
+**Decision**: Provador `tools/supabase_tests.mjs` amb PGlite (Postgres 18 compilat a WebAssembly, paquet npm
+`@electric-sql/pglite`, fixat a 0.5.9). Aplica `supabase/tests/supabase_local.sql` (rols i `auth` mínims) i les
+migracions, carrega dades de prova i executa cada cas en un SAVEPOINT amb el rol `authenticated` i el JWT de la persona.
+Amb `--remot` executa els mateixos casos contra `dev` dins d'una transacció que es desfà.
+**Consequences**:
+  - `tools/package.json` és una eina de desenvolupament; l'app continua sense bundler ni dependències (D-001 intacte).
+    `tools/node_modules/` i `tools/.env` són a `.gitignore`.
+  - Supabase executa Postgres 17: l'SQL no pot dependre de res exclusiu de la 18. **Comprovat el 2026-10-14**: al
+    projecte `fallaportal` (PostgreSQL 17.11) passen els mateixos 151 casos, amb resultats i missatges idèntics.
+  - Les migracions s'apliquen amb `tools/supabase_migra.mjs`, que les anota a la taula de la CLI de Supabase
+    (`supabase_migrations.schema_migrations`). La connexió verifica el certificat amb la CA de Supabase.
+  - Abans de donar una política per bona, es comprova el motiu de cada error esperat (`--detall`): un cas que espera un
+    error també passaria amb una errada d'escriptura.
+
+---
+
+### D-038: La Junta és de només lectura
+**Date**: 2026-10-14
+**Status**: Accepted (Emilio); s'aplica després del tall (D-025)
+**Context**: El rol `board` es diu "Junta (lectura)" i l'FDD el descriu com a "visibilitat, sense edició", però l'app
+v4.0.78 li deixa tancar caixes d'event (la pantalla de caixa es mostra a tots els rols), editar línies de pressupost (n'hi
+ha prou amb `viewAll`) i adjuntar justificants des de r4. Ningú no ho va decidir: són botons que apareixen.
+**Decision**: Junta només llig. A la matriu (D-036), `caixa`, `pressupostos` i `r4` passen d'edició a lectura per al rol
+`board`.
+**Consequences**: Fins al tall, els valors inicials de la matriu i els tests reprodueixen l'app actual (la Fase 6 compara
+rol per rol). Després del tall es canvien les tres caselles a Configuració, sense tocar l'SQL de les polítiques.
+
+---
+
+### D-039: Els fons dels delegats els gestiona Tresoreria, no el responsable d'àrea
+**Date**: 2026-10-14
+**Status**: Accepted (Emilio); s'aplica després del tall (D-025)
+**Context**: A l'app v4.0.78, la vista de Fons del responsable d'àrea reutilitza la targeta de delegat de Tresoreria, que
+porta els botons "Lliurar fons", "Devolució" i "Reintegrament"; el formulari li deixa triar qualsevol persona i l'origen
+"Banc", que apunta un traspàs banc → caixa. El rol `area` no té `canFons` ni als valors per defecte del codi.
+**Decision**: El responsable d'àrea no lliura fons ni registra devolucions, reintegraments ni traspassos. A la matriu
+(D-036), `fons` passa d'edició a lectura (abast directiva) per al rol `area`. Continua veient el saldo dels delegats de
+les seues delegacions.
+**Consequences**: Fins al tall, la matriu i els tests reprodueixen l'app actual. Un traspàs banc → caixa (D-022) només
+l'apunta qui té `fons` en edició.
+
+---
+
+### D-040: Justificants des de r4: cadascú als seus moviments; President i Tresoreria a qualsevol
+**Date**: 2026-10-14
+**Status**: Accepted (Emilio); s'aplica després del tall (D-025)
+**Context**: El report r4 (despeses sense justificant) mostra el botó "Adjuntar" a tots els rols i per a qualsevol despesa
+manual de l'exercici, també d'altres àrees (`r4UploadTicket`, sense cap comprovació).
+**Decision**: Qui no és President ni Tresoreria només adjunta justificants als moviments que ha registrat ell (regla de
+propietat de `justificants`). A la matriu (D-036), `r4` passa a lectura per a `area` i `delegat`; President i Tresoreria
+el mantenen en edició.
+**Consequences**: Ningú no penja el justificant d'una despesa que no ha fet. Fins al tall, la matriu i els tests
+reprodueixen l'app actual.
+
+---
+
+### D-041: Només President dissenya rols
+**Date**: 2026-10-14
+**Status**: Accepted (Emilio); s'aplica després del tall (D-025)
+**Context**: Avui Tresoreria té `canConfig`, que inclou "Mestre de Rols" i "Mòduls": pot canviar els permisos de qualsevol
+rol, també el seu, i donar-se `canUsers`, que només té President. A la matriu (D-036) això és el mòdul `rols`.
+**Decision**: Només President dissenya rols i n'assigna els mòduls. Després del tall, `rols` passa a lectura per al rol
+`treasury`. Alternatives descartades: deixar-ho com ara, o que Tresoreria continuara dissenyant rols amb una regla que
+impedira donar mòduls que ella no té.
+**Consequences**:
+  - President gestiona sol persones (`usuaris`) i rols (`rols`).
+  - La protecció contra quedar-se sense administrador cobreix també `rols`: cap canvi pot deixar la falla sense ningú
+    actiu amb `rols` en edició (trigger `app.t_algu_administra`, des del primer dia; no canvia el que pot fer ningú).
+
+---
+
+### D-042: Domini propi fallaportal.es: correu dels codis i app a app.fallaportal.es des del tall
+**Date**: 2026-10-14
+**Status**: Accepted (Emilio)
+**Context**: Emilio ha comprat el domini `fallaportal.es`. L'app és a `fallaportal.github.io/fallaportal/`, i `sw.js`
+(`BASE = '/fallaportal'`) i `manifest.json` (`start_url`, `scope`) hi tenen la ruta clavada (deute tècnic #14). La
+Fase 2 necessita un SMTP propi per als codis d'entrada.
+**Decision**:
+  - **Correu**: els codis de 6 xifres s'envien des del domini (p. ex. `no-respon@fallaportal.es`) amb un proveïdor
+    transaccional i registres SPF, DKIM i DMARC (Fase 2). Falta triar el proveïdor.
+  - **Web**: l'app passa a `app.fallaportal.es` (GitHub Pages amb domini propi) **el dia del tall**, amb la versió
+    Supabase. El domini arrel queda lliure (web pública o redirecció).
+**Alternatives Considered**: `fallaportal.es` a l'arrel (equivalent, amb registres A en lloc de CNAME); canviar l'adreça
+ara, abans de Supabase: descartat perquè obliga a afegir el domini al client OAuth de Google (no es pot provar en local),
+a corregir `sw.js` i `manifest.json` sobre l'app actual i fa reinstal·lar l'app dues vegades.
+**Consequences**:
+  - El tall inclou la configuració del domini a GitHub Pages i el canvi de `/fallaportal/` a `/` de `sw.js` i
+    `manifest.json` (pla, Fase 7, pas 4). Els usuaris reinstal·len l'app una sola vegada.
+  - Supabase Auth de `prod` apunta a `https://app.fallaportal.es`.
+  - El domini ha de tindre renovació automàtica i bloqueig de transferència: l'app i el correu en depenen.
+
+---
+
+### D-043: Supabase: un sol projecte, de proves fins al tall i definitiu després
+**Date**: 2026-10-14
+**Status**: Accepted (Emilio: "sent 10 usuaris, realment necessitem dev i prod?")
+**Context**: Supabase cobra per organització: el pla Pro val 25 $/mes amb 10 $ de crèdit de computació (un projecte
+Micro) i cada projecte més costa uns 10 $/mes. El pla Free admet dos projectes gratuïts, que es pausen després d'una
+setmana amb poc ús i no tenen còpies diàries. Emilio ja té una organització Pro (AI4ALL) amb dos projectes. Fins al tall,
+la falla continua amb el full: a Supabase no hi ha res en ús.
+**Decision**:
+  - Un sol projecte, `fallaportal`, a l'organització Pro d'Emilio, regió UE (uns 10 $/mes des d'ara).
+  - Fins al tall fa de proves. El dia del tall es buida (esquema, usuaris d'Auth i fitxers de prova), s'hi apliquen les
+    migracions des de zero i s'hi carreguen les dades reals: passa a ser el definitiu.
+**Alternatives Considered**:
+  - Un projecte de proves gratuït a part i un definitiu de pagament (recomanat per Claude, 75 %: 0 € més i l'únic lloc on
+    provar l'entrada per correu i l'app sencera després del tall). Emilio prefereix un sol projecte.
+  - Dos projectes a l'organització Pro: uns 10 $/mes més.
+**Consequences**:
+  - **Després del tall no hi ha entorn de proves** (com D-005 avui). Els canvis d'esquema i de permisos es proven en local
+    amb PGlite (D-037) i s'apliquen amb una còpia prèvia; l'entrada per correu, Storage i l'app sencera es proven sobre
+    les dades reals. La xarxa són les còpies diàries del pla Pro (7 dies) i el registre d'activitat (D-024, D-028). Si
+    algun canvi gran ho demana, es pot crear un projecte de proves gratuït aleshores.
+  - El buidatge del dia del tall s'assaja a la Fase 5.
+  - El provador `--remot`, després del tall, treballa sobre les dades reals dins d'una transacció que es desfà: fora
+    d'hores d'ús.
+  - Les dades de la falla viuen a l'organització d'Emilio amb els seus altres projectes. Si una altra persona de la
+    falla hi ha d'entrar, convidar-la a l'organització li dona accés a tots: llavors convé moure el projecte a una
+    organització pròpia.
+
+---
+
+### D-044: Revisió final de seguretat de la Fase 1: es tanquen els camins de l'API sense tocar la matriu
+**Date**: 2026-10-14
+**Status**: Accepted
+**Context**: El pla (Fase 1) demana una revisió final de les polítiques RLS amb esforç màxim. Es va fer suposant un
+atacant que és membre i fa servir l'API de Supabase directament, no les pantalles. Es van trobar 11 grups de camins
+oberts (R1–R11, `MODEL_DADES.md` §9.7), tots reproduïts amb tests que fallaven abans de corregir-los.
+**Decision**: Corregir-los tots a `supabase/migrations/20261014150000_revisio_seguretat.sql`, sense canviar cap casella
+de la matriu de permisos (D-036) ni cap comportament de les pantalles (D-025). Els més importants: `authenticated`
+sense TRUNCATE (R1); una connexió només és "de servei" amb el claim `service_role` o sense JWT (R2); la identitat
+requereix un rol (R3); un avançament no pot valdre més que la seua despesa ni repetir-se (R5).
+**Consequences**:
+  - L'import d'una despesa amb fons o d'un avançament el manté la base de dades (Fase 3: l'app no l'actualitza a part).
+  - El responsable, l'empremta bancària i la regla d'un moviment els posa el servidor.
+  - La identitat continua sent l'email del JWT: la seguretat depén que Supabase Auth tinga l'alta pública desactivada i
+    la confirmació d'email activada (Fase 2; recomanat fer-ho ja).
+  - 178 tests en verd en local i a Supabase, amb resultats idèntics.
 

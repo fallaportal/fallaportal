@@ -1,0 +1,13 @@
+{
+  "name": "fallaportal-tools",
+  "private": true,
+  "description": "Eines locals de desenvolupament (no formen part de l'app publicada)",
+  "type": "module",
+  "scripts": {
+    "test:db": "node supabase_tests.mjs"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "0.5.9",
+    "pg": "8.23.1"
+  }
+}
