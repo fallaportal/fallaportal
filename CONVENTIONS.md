@@ -77,6 +77,11 @@ confirmar amb `repr()` abans de concloure que hi ha un error de sintaxi.
 a `main`** amb codi de Supabase (GitHub Pages publica `main`). Els canvis d'`index.html` que s'hagen de publicar abans del tall
 van a `main`, i després es porten a la branca (`git merge main`). Versions de la branca: v4.1.x.
 
+**Eines de dades (Fase 3, D-047)**: `node tools/supabase_carrega.mjs "<export.xlsx>" [--simula]` carrega l'export del full (una
+transacció, valida sumes); `node tools/supabase_roundtrip.mjs "<export.xlsx>"` comprova que l'adaptador de lectura d'`index.html`
+reconstrueix el full. Qualsevol canvi a `sbPestanyes()` o a la càrrega s'ha de tancar amb la prova en verd. L'export i els seus
+derivats (JSON, informes) viuen fora del repo.
+
 **Supabase (migració, D-021)**:
 - L'esquema va a `supabase/migrations/` (un fitxer per canvi, nom `AAAAMMDDhhmmss_descripcio.sql`). **Una migració ja
   aplicada al projecte de Supabase no es modifica**: el canvi va en un fitxer nou.

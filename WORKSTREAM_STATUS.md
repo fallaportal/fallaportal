@@ -82,7 +82,17 @@ extern de la plantilla o servir-lo des del domini propi; (4) l'ús continuat mil
   - Pendent de la Fase 3: llegir les dades de Supabase, la matriu de permisos al client, treure `saveCache`/`loadCache` i la capa
     de Sheets (`sheetsReq`, `tokenVigent`/`esperarToken` provisionals), i el bàner.
   - Una persona només té un rol a l'app (prioritat president > treasury > area > delegat > board) fins a la Fase 3.
-**Propera sessió: Fase 3** (capa de dades: càrrega des de Supabase paginada, operacions per fila als 66 punts de `save()`,
+**Fase 3 en curs (2026-10-15, Sonnet 5.5 · high; branca `supabase`, v4.1.1, D-047)**:
+  - Fet (tros 1, lectura): dades reals a Supabase (`node tools/supabase_carrega.mjs "<export.xlsx>"`, l'export és a
+    `~/Downloads/Falla Portal DB.xlsx`, fora del repo); adaptador de lectura `sbPestanyes()`; `loadFromSupabase()` paginat; la prova
+    `node tools/supabase_roundtrip.mjs "<export.xlsx>"` quadra. Entrada real verificada al navegador. Sense caché a `localStorage`.
+  - **Pendent (tros 2, escriptura)**: `save()` per diferències en una transacció (funció de Postgres), amb prova de cada acció de
+    l'inventari §4 (moviment, despesa amb fons, avançament, traspàs, caixa, pressupost, Configuració, directiva, rols, regles…); després
+    Realtime en lloc del polling i treure `sheetsReq`/`writeTab`/`appendRow`.
+  - Decisions pendents d'Emilio: (1) Junta té `viewAll=false` al full real i la matriu carregada diu «tot»; (2) els consums de
+    falles.app ja no desen empremta: com es detecten duplicats en reimportar (per període + event + import?); (3) descartats a la
+    càrrega: 4 avançaments orfes i 12 canvis orfes (net zero).
+**Propera sessió: Fase 3 (escriptura)** (capa de dades: càrrega des de Supabase paginada, operacions per fila als 66 punts de `save()`,
 Realtime, vistes del model §5, matriu de permisos al client, fora la caché de `localStorage` i la capa de Sheets) amb
 **Sonnet 5.5 · high** i **Opus 5.5 · high** per a les parts delicades (fons ↔ moviments, tancaments, importació amb
 `empremta`, bloqueig de pressupostos). A la branca `supabase`, sense tocar `main`.

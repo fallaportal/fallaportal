@@ -819,3 +819,33 @@ actualització d'Auth).
   - Remitent real dels correus: `no-respon@mail.fallaportal.es` (D-045 deia `no-response@`).
   - **La primera entrada d'una persona envia la plantilla "Confirm sign up"** (es crea l'usuari), no "Magic link". Totes dues
     han de dur el codi (`{{ .Token }}`); la de Supabase per defecte porta un enllaç i cap codi.
+
+---
+
+### D-047: Fase 3: `DB` amb la forma del full i un adaptador de pestanyes (lectura feta, escriptura per diferències)
+**Date**: 2026-10-15
+**Status**: Accepted (Emilio: "Opció A i càrrega de dades reals per provar")
+**Context**: L'app té 66 punts de crida a `save()` que pensen en "reescriure la pestanya" i les pantalles llegeixen `DB` amb la
+forma del full (`via`, `areaNom`, dates DD/MM/AAAA, imports en text). Reescriure'ls tots amb operacions explícites tocaria massa codi
+(més risc de regressions). A més, per a provar calien dades reals a Supabase.
+**Decision**:
+  - **Lectura (feta)**: `sbPestanyes(R)` (a `index.html`, entre els marcadors `ADAPTADOR SUPABASE`) converteix les taules de
+    Supabase (llegides amb paginació de 1.000 files) en les files de pestanya del full; `loadFromSupabase()` (abans
+    `loadFromSheets()`) conserva el seu cos i `readTab()` llig d'eixes pestanyes. La funció és pura: `tools/supabase_roundtrip.mjs`
+    la comprova contra l'export del full camp per camp.
+  - **Escriptura (pendent)**: `save(clau)` compararà les files de pestanya de `DB` amb les de l'última lectura i enviarà només les
+    altes, canvis i esborrats, en **una sola transacció** (funció de Postgres amb permisos de qui l'executa, RLS inclosa), de manera
+    que un guardat no quede a mitges. Els 66 punts de crida no canvien.
+  - **Dades de prova**: `tools/supabase_carrega.mjs "<export.xlsx>"` carrega l'export del full al projecte (una transacció, abans
+    buida les dades; cada pas valida les sumes per exercici i tipus). Creix fins a ser el script de la Fase 5.
+**Consequences** (diferències respecte del full, totes comprovades per la prova d'anada i tornada):
+  - Descarta a propòsit: 4 avançaments orfes de fons (A-24), 12 apunts de canvi de caixes ja esborrades (2 per caixa, net zero) i 2
+    regles de font `app`. Una retirada d'una caixa que ja no existeix passa a moviment manual (cap xifra canvia).
+  - Els consums de falles.app (taula `fallesapp_consums`, D-031) es mostren com a moviments `via:'app'` amb concepte «Consums
+    falles.app» (r3 i l'Historial els llegeixen igual que abans); ja no desen notes, establiment ni empremta.
+  - Els 6 permisos antics (`14 Rols`) dels rols de sistema són els de `DEFAULT_ROLES`; **al full real Junta té `viewAll=false`**
+    i la matriu carregada reprodueix el valor per defecte (true): decisió pendent d'Emilio. Una persona té un sol rol a l'app
+    (prioritat president > treasury > area > delegat > board).
+  - S'elimina la caché de `DB` a `localStorage` (deute 1-bis): només es guarda la sessió.
+  - Els noms desnormalitzats (`areaNom`, `delegacioNom`, `eventNom`, `userNom`) ara són els actuals (A-14); el creador d'un fons és
+    el seu email (A-07).

@@ -346,7 +346,7 @@ tr:hover td{background:var(--bg2)}
     <div class="login-logo">Falla <span>Portal</span></div>
     <div class="login-sub">Sistema de gestió financera</div>
     <div class="login-fiscal">Any fiscal 26/27 · Abr 2026 – Mar 2027</div>
-    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v4.1.0</div>
+    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v4.1.1</div>
     <div id="login-step-boot" class="login-boot">Comprovant la sessió…</div>
     <div id="login-step-email" class="hidden">
       <label class="login-lbl" for="login-email">Correu electrònic</label>
@@ -399,7 +399,7 @@ tr:hover td{background:var(--bg2)}
     <div class="sb-bottom">
       <div class="sync-ind" style="display:flex;align-items:center;justify-content:space-between"><div style="display:flex;align-items:center;gap:6px"><div class="sync-dot" id="sync-dot"></div><span id="sync-text">Sincronitzat</span></div><button onclick="manualRefresh()" title="Actualitzar dades" style="background:none;border:none;cursor:pointer;padding:2px 4px;color:var(--text2);font-size:14px;line-height:1"><i class="ti ti-refresh"></i></button></div>
       <button class="btn-logout" onclick="signOut()"><i class="ti ti-logout" style="font-size:14px"></i> Tancar sessió</button>
-      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v4.1.0</div>
+      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v4.1.1</div>
     </div>
   </div>
 
@@ -1539,7 +1539,7 @@ tr:hover td{background:var(--bg2)}
 </div>
 
 <div class="toast" id="toast"><span id="toast-msg"></span><button class="toast-retry" id="toast-retry" style="display:none" onclick="toastRetry()">Reintentar</button></div>
-<div class="fase-banner" id="fase-banner">Versió de proves amb Supabase: l'entrada per correu ja funciona; les dades hi arribaran a la Fase 3.</div>
+<div class="fase-banner" id="fase-banner">Versió de proves amb Supabase: les dades es llegeixen de Supabase, però guardar-hi canvis encara no funciona (Fase 3).</div>
 
 <script>
 const SHEET_ID='1SUeIZbZN1kUxt5nNRkEVLZI__eHecYv4JZE5QNuGaQ0';
@@ -1567,9 +1567,8 @@ const TABS={
 };
 const CACHE_KEY='fallaportal_cache';
 
-function saveCache(){
-  try{localStorage.setItem(CACHE_KEY,JSON.stringify({db:DB,ts:Date.now()}));}catch(e){}
-}
+// La caché de DB a localStorage (dades de la falla sense xifrar, deute 1-bis) s'ha eliminat: només es guarda la sessió.
+function saveCache(){}
 function auditLog(accio,detall,imp){
   // Fire-and-forget total: setTimeout garanteix que MAI estiga al camí crític
   setTimeout(function(){
@@ -1907,8 +1906,10 @@ const sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{
 
 // Capa de dades antiga (Sheets): sense token de Google no pot llegir ni escriure. Fins a la Fase 3 falla amb un error
 // clar en lloc d'esperar un token que mai arribarà (cap guardat s'ha de perdre en silenci).
-function tokenVigent(){return false;}
-function esperarToken(){return Promise.reject(new Error('Les dades encara no estan connectades a Supabase (Fase 3)'));}
+// Capa de Sheets (dead code fins que s'elimine a la Fase 3): sense token de Google no pot escriure. La lectura ja va per
+// Supabase (loadFromSupabase); l'escriptura encara no: falla amb un error clar en lloc d'esperar un token que no arribarà.
+function tokenVigent(){return!!currentUser;}   // hi ha sessió de Supabase
+function esperarToken(){return Promise.reject(new Error('Guardar a Supabase encara no està connectat (Fase 3)'));}
 
 const ROL_PRIORITAT=['president','treasury','area','delegat','board'];
 let _entrant=false,_reenviaFins=0,_reenviaTimer=null;
@@ -2032,7 +2033,8 @@ async function entraAmbSessio(session){
     if(membre)loginEl('fase-banner').classList.add('show');
     // Les dades arribaran de Supabase a la Fase 3: l'app s'obri amb el DB buit.
     initApp();
-    setSyncing(false);   // amaga el "Carregant dades…" del Dashboard: de moment no hi ha res a carregar
+    if(membre)carregaInicial();
+    else setSyncing(false);
   }finally{_entrant=false;}
 }
 
@@ -2055,6 +2057,31 @@ function tancaLocal(){
   try{localStorage.removeItem(CACHE_KEY);}catch(e){}
   loginEl('sb-name').textContent='—';
   loginEl('sb-role').textContent='—';
+}
+// Càrrega inicial (abans loadAllFromDrive): llig Supabase, repinta la pantalla oberta i arrenca el refresc periòdic.
+async function carregaInicial(){
+  setSyncing(true);
+  try{
+    await loadFromSupabase();
+  }catch(e){
+    setSyncing(false);
+    console.warn('Supabase:',e);
+    showToast('No s\'han pogut carregar les dades: '+e.message,true);
+    return;
+  }
+  setSyncing(false);
+  initExerciciSelector();
+  buildNav();
+  canviarExercici(getAnyFiscal(),true);
+  const activePage=document.querySelector('.page.active');
+  if(activePage){
+    const id=activePage.id.replace('page-','');
+    const renders={dashboard:renderDashboard,historial:filterHist,
+      pressupostos:renderPressupostosEdit,lliurament:renderFons,
+      tancament:renderTancamentList,resultats:renderResultats,flux:renderFlux};
+    if(renders[id])renders[id]();
+  }
+  startPolling();
 }
 async function signOut(){
   try{await sb.auth.signOut({scope:'local'});}catch(e){console.warn('signOut:',e);}
@@ -2537,7 +2564,7 @@ async function bgRefresh(){
   const _snapMovs=DB.moviments?[...DB.moviments]:[];
   const _snapFons=DB.fons?[...DB.fons]:[];
   try{
-    await loadFromSheets();
+    await loadFromSupabase();
     saveCache();
     buildNav();
     const act=document.querySelector('.page.active');
@@ -2607,30 +2634,230 @@ function sheetRange(n,c){const name=n.includes(' ')?("'"+n+"'"):n;return c?name+
 function sheetRangeUrl(n,c){return encodeURIComponent(sheetRange(n,c));}
 function sheetTabUrl(n){const name=n.includes(' ')?("'"+n+"'"):n;return encodeURIComponent(name);}
 
-async function readTab(tabName){
-  // Una lectura fallida (xarxa, quota 429, 5xx) ha de propagar l'error.
-  // Abans es tornava [] i loadFromSheets no podia distingir una pestanya buida
-  // d'una lectura fallida: DB quedava a zero i el desat seguent reescrivia el
-  // full sencer amb dades incompletes. Els que criden loadFromSheets ja tenen
-  // .catch() que restaura l'estat anterior.
-  const r=await sheetsReq('GET',SHEETS_API+'/values/'+sheetTabUrl(tabName));
-  if(!r.values||r.values.length<2)return[];
-  const headers=r.values[0];
-  return r.values.slice(1).filter(function(row){return row.some(function(c){return c;});}).map(function(row){
-    const obj={};headers.forEach(function(h,i){obj[h]=row[i]||'';});return obj;
-  });
+// ===== ADAPTADOR SUPABASE · INICI =====
+// Fase 3 (D-046): les pantalles continuen llegint DB amb la forma antiga (la del full de Google). Aquest bloc llig les taules
+// de Supabase i les torna com a files "de pestanya", amb les mateixes capçaleres i els mateixos textos que tenia el full
+// (dates DD/MM/AAAA, imports i booleans com a text, noms desnormalitzats), de manera que loadFromSupabase() no canvia.
+// sbPestanyes() és pura (no toca ni xarxa ni DOM): tools/supabase_roundtrip.mjs la comprova contra l'export del full.
+const SB_PAGINA=1000;   // l'API de Supabase torna com a màxim 1.000 files per consulta
+const SB_ORDRES={
+  exercicis:['id'],usuaris:['id'],usuari_rols:['usuari_id','rol_id'],rols:['id'],rol_moduls:['rol_id','modul_id'],arees:['id'],
+  delegacions:['id'],comptes:['id'],saldos_inicials:['compte_id','exercici_id'],directiva:['id'],events:['id'],
+  regles_importacio:['id'],caixes:['id'],moviments:['id'],justificants:['id'],fons:['id'],caixa_canvis:['id'],
+  pressupost_linies:['id'],pressupost_estat:['exercici_id'],pressupost_historial:['id'],fallesapp_passiu:['id'],
+  fallesapp_consums:['id'],config:['clau']
+};
+async function sbLligTaula(taula){
+  const out=[];
+  for(let i=0;;i+=SB_PAGINA){
+    let q=sb.from(taula).select('*');
+    SB_ORDRES[taula].forEach(function(c){q=q.order(c,{ascending:true});});
+    const r=await q.range(i,i+SB_PAGINA-1);
+    if(r.error)throw new Error('Supabase ('+taula+'): '+r.error.message);
+    for(let k=0;k<r.data.length;k++)out.push(r.data[k]);
+    if(r.data.length<SB_PAGINA)break;
+  }
+  return out;
+}
+async function sbLligTot(){
+  const noms=Object.keys(SB_ORDRES);
+  const llistes=await Promise.all(noms.map(sbLligTaula));
+  const R={};
+  noms.forEach(function(n,i){R[n]=llistes[i];});
+  return R;
 }
 
-function calcSaldoDelegat(fonsArr){
-  const rebuts=fonsArr.filter(function(f){return f.tipus==='lliurament';}).reduce(function(s,f){return s+f.import;},0);
-  const gastFons=fonsArr.filter(function(f){return f.tipus==='gast_fons';}).reduce(function(s,f){return s+f.import;},0);
-  const devol=fonsArr.filter(function(f){return f.tipus==='devolucio';}).reduce(function(s,f){return s+f.import;},0);
-  const avanc=fonsArr.filter(function(f){return f.tipus==='avanc';}).reduce(function(s,f){return s+f.import;},0);
-  const reint=fonsArr.filter(function(f){return f.tipus==='reintegrament';}).reduce(function(s,f){return s+f.import;},0);
-  return rebuts-gastFons-devol-avanc+reint;
+const _sbS=function(v){return v===null||v===undefined?'':String(v);};
+const _sbDD=function(iso){
+  const m=String(iso||'').match(/^(\d{4})-(\d{2})-(\d{2})/);
+  return m?m[3]+'/'+m[2]+'/'+m[1]:'';
+};
+const _sbHora=function(t){const m=String(t||'').match(/^(\d{2}:\d{2})/);return m?m[1]:'';};
+const _sbMap=function(llista,clau){const m={};(llista||[]).forEach(function(x){m[x[clau||'id']]=x;});return m;};
+const _sbPrioritatRol=['president','treasury','area','delegat','board'];
+function sbRolPrincipal(ids){
+  return _sbPrioritatRol.find(function(x){return ids.indexOf(x)>=0;})||ids.slice().sort()[0];
 }
-function genId(prefix){
-  return prefix+Date.now()+'_'+Math.random().toString(36).slice(2,6);
+
+// Passa les taules de Supabase (R) a les pestanyes del full: {'01 Moviments':[...], ...}
+function sbPestanyes(R){
+  const T={};
+  const usuaris=_sbMap(R.usuaris),comptes=_sbMap(R.comptes),arees=_sbMap(R.arees),delegs=_sbMap(R.delegacions);
+  const events=_sbMap(R.events),caixes=_sbMap(R.caixes);
+  const nomU=function(id){return usuaris[id]?usuaris[id].nom:'';};
+  const emailU=function(id){return usuaris[id]?usuaris[id].email:'';};
+  const rolsDe={};
+  (R.usuari_rols||[]).forEach(function(r){(rolsDe[r.usuari_id]=rolsDe[r.usuari_id]||[]).push(r.rol_id);});
+
+  // --- Config i exercicis
+  const exercicis=(R.exercicis||[]).slice().sort(function(a,b){return a.id<b.id?-1:1;});
+  const cfgDb=_sbMap(R.config,'clau');
+  const estats={};
+  exercicis.forEach(function(e){estats[e.id]={tancat:!!e.tancat,dataObertura:_sbDD(e.data_obertura),dataTancament:_sbDD(e.data_tancament)};});
+  const cfgRows=[
+    {clau:'anyFiscal',valor:cfgDb.exercici_actiu?_sbS(cfgDb.exercici_actiu.valor):''},
+    {clau:'exercicis',valor:JSON.stringify(exercicis.map(function(e){return e.id;}))},
+    {clau:'estats_exercicis',valor:JSON.stringify(estats)}
+  ];
+  if(cfgDb.justificant)cfgRows.push({clau:'justificant',valor:JSON.stringify(cfgDb.justificant.valor)});
+  T['00 Config']=cfgRows;
+
+  // --- Organització
+  T['04 Arees']=(R.arees||[]).map(function(a){return{id:a.id,nom:a.nom,responsable:''};});
+  T['05 Delegacions']=(R.delegacions||[]).map(function(d){return{id:d.id,areaId:d.area_id,nom:d.nom,responsable:''};});
+  T['06 Events']=(R.events||[]).map(function(e){
+    return{id:e.id,delegId:e.delegacio_id,nom:e.nom,year:e.exercici_id,responsable:nomU(e.responsable_id),status:'pendent',
+      dataInici:_sbS(e.data_inici),horaInici:_sbHora(e.hora_inici),dataFi:_sbS(e.data_fi),horaFi:_sbHora(e.hora_fi),
+      anyFiscal:e.exercici_id,perDefecte:e.per_defecte?'true':''};
+  });
+  const tipusBanc={banc:'bank',efectiu:'cash',tpv:'tpv'};
+  T['07 Bancs']=(R.comptes||[]).filter(function(c){return c.tipus!=='virtual';}).sort(function(a,b){return a.id.localeCompare(b.id,'ca',{numeric:true});}).map(function(c){
+    return{id:c.id,codi:c.codi,nom:c.nom,tipus:tipusBanc[c.tipus]||'bank',compte:_sbS(c.iban)};
+  });
+  T['15 Saldos']=(R.saldos_inicials||[]).map(function(s){
+    return{bancId:s.compte_id,anyFiscal:s.exercici_id,saldoInicial:_sbS(s.import),saldoData:_sbDD(s.data)};
+  });
+
+  // --- Persones, rols i directiva (un sol rol per persona de moment: el de més prioritat)
+  T['08 Usuaris']=(R.usuaris||[]).filter(function(u){return u.actiu&&(rolsDe[u.id]||[]).length;}).map(function(u){
+    return{id:u.id,nom:u.nom,email:u.email,rol:sbRolPrincipal(rolsDe[u.id])};
+  });
+  T['09 Usuaris Assignacions']=(R.directiva||[]).map(function(d){
+    const area=d.area_id?arees[d.area_id]:null,deleg=d.delegacio_id?delegs[d.delegacio_id]:null;
+    return{userId:d.usuari_id,userNom:nomU(d.usuari_id),tipus:d.area_id?'area':'delegacio',id:d.area_id||d.delegacio_id,
+      nom:(area||deleg||{}).nom||'',anyFiscal:d.exercici_id};
+  });
+  T['14 Rols']=sbFilesRols(R);
+
+  // --- Moviments (inclou, com a files via 'app', els consums de falles.app: r3 encara els llig d'ací)
+  const justPer={};
+  (R.justificants||[]).forEach(function(j){if(!justPer[j.moviment_id])justPer[j.moviment_id]=j;});
+  const origenDe={ // font -> [origen, fontImport, origenFons]
+    manual:['Manual','',''],ingres_tercer:['','','tercer'],traspas_banc_caixa:['Manual','','banc_caixa'],
+    extracte:['CSV','',''],csv_generic:['CSV','csv',''],fallesapp_transaccions:['App','fallesapp',''],
+    fallesapp_bonificacio:['App','fallesapp_bonif',''],tancament_caixa:['','tancament',''],retirada_caixa:['Manual','retirada_caixa','']
+  };
+  const origenFonsDe={caixa:'caixa',fons_lliurats:'fons_lliurats',avancament:'avanc'};
+  const movs=(R.moviments||[]).map(function(m){
+    const c=comptes[m.compte_id]||{};
+    const o=origenDe[m.font]||['Manual','',''];
+    const ev=m.event_id?events[m.event_id]:null;
+    const cx=m.caixa_id?caixes[m.caixa_id]:null;
+    const eventId=m.caixa_id||m.event_id||'';
+    const eventNom=cx?(cx.event_id&&events[cx.event_id]?events[cx.event_id].nom:_sbS(cx.descripcio)):(ev?ev.nom:'');
+    const resp=m.responsable_id||m.creat_per;
+    const j=justPer[m.id];
+    return{id:m.id,data:_sbDD(m.data),tipus:m.tipus==='ingres'?'ing':'gast',via:c.codi||'',
+      areaId:_sbS(m.area_id),areaNom:m.area_id&&arees[m.area_id]?arees[m.area_id].nom:'',
+      delegacioId:_sbS(m.delegacio_id),delegacioNom:m.delegacio_id&&delegs[m.delegacio_id]?delegs[m.delegacio_id].nom:'',
+      eventId:eventId,eventNom:eventNom,concepte:_sbS(m.concepte),establiment:_sbS(m.establiment),
+      responsable:nomU(resp),responsableEmail:emailU(resp),import:_sbS(m.import),notes:_sbS(m.notes),
+      anyFiscal:m.exercici_id,
+      origenFons:m.font==='manual'?(origenFonsDe[m.pagament_efectiu]||''):o[2],
+      fontImport:m.font==='extracte'?'xls_'+m.compte_id:o[1],
+      bankHash:_sbS(m.empremta),origen:o[0],ticketUrl:j?_sbS(j.url_drive_original):'',
+      ticketMotiu:_sbS(m.motiu_sense_justificant),conciliacio:m.conciliacio};
+  });
+  (R.fallesapp_consums||[]).forEach(function(k){
+    const ev=k.event_id?events[k.event_id]:null;
+    movs.push({id:k.id,data:_sbDD(k.periode_fi||k.periode_inici),tipus:'ing',via:'app',
+      areaId:_sbS(k.area_id),areaNom:k.area_id&&arees[k.area_id]?arees[k.area_id].nom:'',
+      delegacioId:_sbS(k.delegacio_id),delegacioNom:k.delegacio_id&&delegs[k.delegacio_id]?delegs[k.delegacio_id].nom:'',
+      eventId:_sbS(k.event_id),eventNom:ev?ev.nom:'',concepte:'Consums falles.app',establiment:'',
+      responsable:nomU(k.creat_per),responsableEmail:emailU(k.creat_per),import:_sbS(k.import),notes:'',
+      anyFiscal:k.exercici_id,origenFons:'',fontImport:'fallesapp_tickets',bankHash:'',origen:'App',ticketUrl:'',ticketMotiu:'',
+      conciliacio:'no_aplica'});
+  });
+  T['01 Moviments']=movs;
+
+  // --- Fons de persones i canvi de caixa (que al full eren fons amb delegat «_event»)
+  const tipusFonsLegacy={despesa_fons:'gast_fons',avancament:'avanc'};
+  const fonsRows=(R.fons||[]).map(function(f){
+    return{id:f.id,data:_sbDD(f.data),tipus:tipusFonsLegacy[f.tipus]||f.tipus,delegId:f.delegat_id,delegEmail:emailU(f.delegat_id),
+      import:_sbS(f.import),nota:_sbS(f.nota),registratPer:emailU(f.creat_per),anyFiscal:f.exercici_id,
+      movimentId:_sbS(f.moviment_id),eventTancamentId:''};
+  });
+  const canviPerCaixa={};
+  (R.caixa_canvis||[]).forEach(function(c){
+    const cx=caixes[c.caixa_id]||{};
+    fonsRows.push({id:c.id,data:_sbDD(c.data),tipus:c.tipus==='devolucio'?'event_canvi_devolucio':'event_canvi',delegId:'_event',
+      delegEmail:'_event',import:_sbS(c.import),nota:'',registratPer:emailU(c.creat_per),anyFiscal:cx.exercici_id||'',
+      movimentId:'',eventTancamentId:c.caixa_id});
+    if(c.tipus!=='devolucio')canviPerCaixa[c.caixa_id]=(canviPerCaixa[c.caixa_id]||0)+Number(c.import);
+  });
+  T['02 Fons']=fonsRows;
+  const obertura={};   // fonsId: el primer canvi lliurat a la caixa
+  (R.caixa_canvis||[]).forEach(function(c){if(c.tipus==='lliurament'&&!obertura[c.caixa_id])obertura[c.caixa_id]=c.id;});
+
+  // --- Caixes d'event (03 Tancaments)
+  T['03 Tancaments']=(R.caixes||[]).map(function(c){
+    const ev=c.event_id?events[c.event_id]:null;
+    const tancada=c.estat==='tancada';
+    return{eventId:c.id,eventNom:ev?ev.nom:_sbS(c.descripcio),data:_sbDD(c.data),efectiu:_sbS(c.efectiu),tpv:_sbS(c.tpv),
+      canvi:_sbS(Math.round((canviPerCaixa[c.id]||0)*100)/100),pagaments:_sbS(c.pagaments),tancat:tancada?'true':'false',
+      estat:tancada?'tancat':'obert',fonsId:obertura[c.id]||'',concepte:(ev?ev.nom:_sbS(c.descripcio))+' '+_sbDD(c.data),
+      registratPer:emailU(c.creat_per),anyFiscal:c.exercici_id};
+  });
+
+  // --- Pressupost
+  T['10 Pressupostos Plans']=(R.pressupost_linies||[]).map(function(p){
+    const ev=p.event_id?events[p.event_id]:null;
+    return{any:p.exercici_id,delegacioId:p.delegacio_id,delegacioNom:delegs[p.delegacio_id]?delegs[p.delegacio_id].nom:'',
+      eventId:_sbS(p.event_id),eventNom:ev?ev.nom:'',concepte:_sbS(p.concepte),tipus:p.tipus,importPla:_sbS(p.import),notes:_sbS(p.notes)};
+  });
+  T['11 Pressupostos Config']=(R.pressupost_estat||[]).map(function(p){
+    return{any:p.exercici_id,estat:p.estat,bloquejatPer:nomU(p.modificat_per||p.creat_per),
+      bloquejatEmail:emailU(p.modificat_per||p.creat_per),data:_sbDD(p.modificat_at||p.creat_at)};
+  });
+  T['12 Pressupostos Historial']=(R.pressupost_historial||[]).map(function(h){
+    return{data:_sbDD(h.creat_at),accio:h.accio,any:h.exercici_id,usuari:nomU(h.creat_per),email:emailU(h.creat_per),motiu:_sbS(h.motiu)};
+  });
+
+  // --- Regles d'importació
+  T['13 Regles CSV']=(R.regles_importacio||[]).slice().sort(function(a,b){return a.prioritat-b.prioritat;}).map(function(r){
+    const c=r.compte_id?comptes[r.compte_id]:null;
+    return{id:r.id,font:c?c.codi:'',patrons:(r.patrons||[]).join(','),areaId:_sbS(r.area_id),
+      areaNom:r.area_id&&arees[r.area_id]?arees[r.area_id].nom:'',delegacioId:_sbS(r.delegacio_id),
+      delegacioNom:r.delegacio_id&&delegs[r.delegacio_id]?delegs[r.delegacio_id].nom:'',concepte:_sbS(r.concepte),
+      tipus:r.tipus==='assignar'?'auto':r.tipus,movtype:r.sentit==='despesa'?'gast':r.sentit==='ingres'?'ing':'auto',
+      prioritat:_sbS(r.prioritat),activa:r.activa?'true':'false'};
+  });
+
+  // --- falles.app (passiu)
+  T['16 Fapp Passiu']=(R.fallesapp_passiu||[]).map(function(p){
+    return{data:_sbDD(p.data),total:_sbS(p.total),fallers:_sbS(p.fallers),anyFiscal:p.exercici_id};
+  });
+  return T;
+}
+
+// Els sis permisos antics (14 Rols). Els rols de sistema porten els valors d'avui (DEFAULT_ROLES: la matriu inicial els
+// reprodueix); un rol creat a mà els dedueix de la matriu rol × mòdul (aproximació fins que la UI llija la matriu).
+function sbFilesRols(R){
+  const mods={};
+  (R.rol_moduls||[]).forEach(function(m){(mods[m.rol_id]=mods[m.rol_id]||{})[m.modul_id]=m;});
+  const edita=function(rol,modul){const x=(mods[rol]||{})[modul];return!!(x&&x.nivell==='edicio');};
+  const files=(R.rols||[]).map(function(r){
+    const d=DEFAULT_ROLES[r.id];
+    const f=d?{canRegister:d.canRegister,canFons:d.canFons,canImport:d.canImport,canConfig:d.canConfig,canUsers:d.canUsers,viewAll:d.viewAll}
+      :{canRegister:edita(r.id,'moviments'),canFons:edita(r.id,'fons'),canImport:edita(r.id,'importacio'),
+        canConfig:edita(r.id,'configuracio'),canUsers:edita(r.id,'usuaris'),
+        viewAll:Object.keys(mods[r.id]||{}).some(function(k){return mods[r.id][k].abast==='tot';})};
+    return{id:r.id,label:r.nom,color:r.color||'p-gray',canRegister:String(f.canRegister),canFons:String(f.canFons),
+      canImport:String(f.canImport),canConfig:String(f.canConfig),canUsers:String(f.canUsers),viewAll:String(f.viewAll),
+      custom:String(!r.de_sistema)};
+  });
+  // «noauth» no és un rol de la base de dades (és no ser membre), però l'app el coneix.
+  const n=DEFAULT_ROLES.noauth;
+  files.push({id:n.id,label:n.label,color:n.color,canRegister:'false',canFons:'false',canImport:'false',canConfig:'false',canUsers:'false',viewAll:'false',custom:'false'});
+  return files;
+}
+// ===== ADAPTADOR SUPABASE · FI =====
+
+// Pestanyes de la darrera càrrega (les que ha construït sbPestanyes). readTab() ja no va a cap full.
+let _sbPestanyes=null;
+async function readTab(tabName){
+  if(!_sbPestanyes)throw new Error('Dades no carregades de Supabase');
+  return _sbPestanyes[tabName]||[];
 }
 async function writeTab(tabName,headers,rows){
   await esperarToken();   // abans de fer la foto de rows, no després
@@ -2717,7 +2944,7 @@ function updateLastGoodCfgExt(){
   if(DB.config.anyFiscal)_lastGoodCfgExt.anyFiscal=DB.config.anyFiscal;
 }
 
-// Fins que loadFromSheets() no ha acabat be almenys una vegada, DB no reflecteix
+// Fins que loadFromSupabase() no ha acabat be almenys una vegada, DB no reflecteix
 // el contingut del full. Com que save() reescriu pestanyes senceres, guardar en
 // eixe estat esborraria del full tot el que DB encara no havia arribat a llegir.
 let dadesCarregades=false;
@@ -2892,49 +3119,6 @@ const TABS_MIGRATION={
   'pres_historial':'12 Pressupostos Historial','regles':'13 Regles CSV'
 };
 
-async function initSheets(){
-  try{
-    const info=await sheetsReq('GET',SHEETS_API+'?fields=sheets.properties(title,sheetId)');
-    const existingSheets=info.sheets||[];
-    const existingNames=existingSheets.map(function(s){return s.properties.title;});
-    const neededNames=Object.values(TABS).map(function(t){return t.name;});
-    const toCreate=neededNames.filter(function(n){return!existingNames.includes(n);});
-    if(toCreate.length>0){
-      await sheetsReq('POST',SHEETS_API+':batchUpdate',{
-        requests:toCreate.map(function(title){return{addSheet:{properties:{title}}};})
-      });
-      for(const tabName of toCreate){
-        const tabKey=Object.keys(TABS).find(function(k){return TABS[k].name===tabName;});
-        if(tabKey){
-          await sheetsReq('PUT',SHEETS_API+'/values/'+sheetRangeUrl(tabName,'A1')+'?valueInputOption=RAW',
-            {range:sheetRange(tabName,'A1'),majorDimension:'ROWS',values:[TABS[tabKey].headers]});
-        }
-      }
-    }
-    // Migrar pestanyes antigues
-    for(const [oldName,newName] of Object.entries(TABS_MIGRATION)){
-      if(existingNames.includes(oldName)&&existingNames.includes(newName)){
-        try{
-          const oldData=await sheetsReq('GET',SHEETS_API+'/values/'+sheetTabUrl(oldName));
-          if(oldData.values&&oldData.values.length>1){
-            const newData=await sheetsReq('GET',SHEETS_API+'/values/'+encodeURIComponent("'"+newName+"'!A1:A2"));
-            if(!newData.values||newData.values.length<=1){
-              await sheetsReq('PUT',SHEETS_API+'/values/'+sheetRangeUrl(newName,'A1')+'?valueInputOption=RAW',
-                {range:sheetRange(newName,'A1'),majorDimension:'ROWS',values:oldData.values});
-            }
-          }
-          const oldSheet=existingSheets.find(function(s){return s.properties.title===oldName;});
-          if(oldSheet){
-            await sheetsReq('POST',SHEETS_API+':batchUpdate',{
-              requests:[{deleteSheet:{sheetId:oldSheet.properties.sheetId}}]
-            });
-          }
-        }catch(e){console.warn('Error migrant '+oldName,e);}
-      }
-    }
-  }catch(e){showToast('Error inicialitzant Sheets: '+e.message,true);}
-}
-
 function configToRows(){
   const cfg=DB.config;
   const arees=(cfg.areas||[]).map(function(a){return{id:a.id,nom:a.name,responsable:''};});
@@ -2966,8 +3150,8 @@ function rowsToConfig(arees,delegacions,events,bancs,usuaris,assignacions,regles
   };
 }
 
-async function loadFromSheets(){
-  await initSheets();
+async function loadFromSupabase(){
+  _sbPestanyes=sbPestanyes(await sbLligTot());
   // Swap atòmic: llegim tot en variables temporals i assignem a DB al final
   // Evita que una operació d'usuari concurrent veja DB en estat inconsistent
   const movsRows=await readTab(TABS.moviments.name);
@@ -7502,7 +7686,7 @@ function startPolling(){
     // Guardar snapshot per evitar UI buida durant la càrrega
     const _snapMovs=DB.moviments?[...DB.moviments]:[];
     const _snapFons=DB.fons?[...DB.fons]:[];
-    loadFromSheets().then(function(){
+    loadFromSupabase().then(function(){
       saveCache();
       setSyncing(false,true);
       const activePage=document.querySelector('.page.active');
@@ -7525,9 +7709,9 @@ function startPolling(){
 }
 
 async function manualRefresh(){
-  if(!accessToken)return;
+  if(!currentUser)return;
   setSyncing(true,true);
-  loadFromSheets().then(function(){
+  loadFromSupabase().then(function(){
     saveCache();
     setSyncing(false,true);
     initExerciciSelector();
