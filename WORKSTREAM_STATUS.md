@@ -53,8 +53,13 @@ des de Supabase (Users → Send magic link): **arriba, amb el logo i el remitent
 **Brossa analitzada (2026-10-14, encapçalament d'un correu a Hotmail)**: SPF, DKIM (el del domini i el d'Amazon SES) i DMARC
 surten `pass`, i el correu arriba amb `X-MS-Exchange-Organization-SCL: 5` i `RF:JunkEmail`: el DNS és correcte i és Outlook
 qui el posa a brossa per reputació (domini nou, IP compartida d'SES) o contingut. Remitent real: `no-respon@mail.fallaportal.es`.
-Mesures, per ordre: marcar "No és brossa" i afegir el remitent als contactes (els membres, el primer cop); provar un enviament
-a Gmail i iCloud; i, si persisteix, treure el logo extern (`raw.githubusercontent.com`) de la plantilla com a experiment.
+Prova comparativa (2026-10-15): el mateix codi enviat a Gmail (`it.fallaportal@gmail.com`) **arriba a la safata d'entrada**, així que el
+problema és de reputació d'Outlook/Hotmail amb un domini nou, no del DNS ni de Supabase. Mesures, per ordre: (1) enganxar la plantilla
+nova de `supabase/email/codi_entrada.html` (estructura HTML completa; el primer correu duia només un `<div>`) a Supabase →
+Authentication → Emails → "Magic link", des de `<!doctype html>`, i tornar a enviar un codi a Hotmail; (2) marcar "No és brossa" i
+afegir el remitent als contactes (els membres, el primer cop: avisar-los abans del tall); (3) si persisteix, treure el logo
+extern de la plantilla o servir-lo des del domini propi; (4) l'ús continuat millora la reputació. Files de prova a `usuaris`:
+`prova_emilio` (Hotmail, president) i `prova_gmail` (Gmail, board); s'esborren al buidatge del tall.
 
 **Fase 2 tancada (2026-10-14, Sonnet 5.5 · high) — branca `supabase`, v4.1.0, D-046**:
   - Fet: hook `app.hook_alta_usuari` (només els membres poden crear-se l'usuari d'Auth; migració aplicada a Supabase, 190 tests

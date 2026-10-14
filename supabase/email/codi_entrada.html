@@ -11,7 +11,20 @@
   (raw.githubusercontent.com, el repositori és públic) i no la del web publicat: no canvia el dia del tall (D-042) i no
   depén de GitHub Pages. Si el repositori es fa privat o canvia de nom, el logo deixa de veure's i s'ha de canviar l'adreça.
   Sense imatge (clients que la bloquegen) es veu el text "Falla Portal" i el codi segueix llegint-se.
+  Enganxa a Supabase només des de <!doctype html> en avall (no el comentari).
+  Estructura completa (doctype, html, head, body, title): el primer correu duia només un <div> i Outlook el va posar a brossa
+  tot i l'autenticació correcta (vegeu WORKSTREAM_STATUS). [Suposició] una estructura incompleta suma punts de brossa;
+  no està demostrat que siga la causa.
 -->
+<!doctype html>
+<html lang="ca">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>El teu codi d'accés a Falla Portal</title>
+</head>
+<body style="margin: 0; padding: 0; background: #ffffff;">
 <div style="font-family: -apple-system, 'Segoe UI', Roboto, Arial, sans-serif; max-width: 420px; margin: 0 auto; padding: 24px; color: #1f2937;">
   <div style="text-align: center; margin: 0 0 12px;">
     <img src="https://raw.githubusercontent.com/fallaportal/fallaportal/main/logo-mail.png" width="88" alt="Falla Portal" style="display: inline-block; width: 88px; height: auto; border: 0;">
@@ -22,3 +35,5 @@
   <p style="margin: 0 0 8px; font-size: 14px; line-height: 1.5; color: #4b5563;">Escriu-lo a l'app. Caduca d'ací a 15 minuts i només serveix una vegada.</p>
   <p style="margin: 0; font-size: 13px; line-height: 1.5; color: #6b7280;">Si no has demanat entrar tu, ignora aquest correu: ningú no pot entrar sense el codi. No el compartisques amb ningú.</p>
 </div>
+</body>
+</html>
