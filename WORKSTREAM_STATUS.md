@@ -207,6 +207,9 @@ abans de l'escriptura bolcava a la memòria el full d'abans (targeta encara visi
 hauria tornat a posar la retirada. Verificat: cas bo amb refresc concurrent (només `PUT`+`clear` de `01 Moviments`, 9 → 8 files, la resta
 idèntica, memòria igual que el full, 01 Banc +250 €), lectura pròpia fallida (no escriu), full ja corregit amb memòria antiga (no escriu),
 apunt ambigu (no apareix) i rol sense permís (no apareix). **Pendent d'Emilio: aplicar-la; després eliminar el codi.**
+Cas 1 tornat a confirmar per Emilio el mateix dia: la retirada de −250 € no té empremta d'importació (la va crear la correcció del 13/10);
+a l'extracte del 30/06 només hi ha els xecs de 502 € i 5.750 €. Els diners sí que van a la caixa (l'entrada de +250 € i el pagament de
+"Seguretat" es queden). La grua està pagada a part: 747,50 € de la caixa el 04/06 i 2.797 € avançats per Juanjo el 10/07.
 **Risc general trobat (pendent, cal la conformitat d'Emilio)**: el mateix passa amb els desats normals. `bgRefresh` i el polling no comencen
 mentre es desa, però una càrrega que ja estava en curs bolca en acabar el que havia llegit abans del desat. El moviment nou desapareix de la
 memòria fins al refresc següent i, si mentrestant es desa una altra cosa de moviments, s'esborra del full. Correcció proposada: que una
