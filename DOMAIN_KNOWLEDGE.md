@@ -68,10 +68,11 @@ Cremà (19/03) i el 31/03 serveixen per liquidar els pendents de Falles dins del
 
 ### Established Facts
 
-- **Versió en producció actual**: v4.0.84 (BUILD_VERSION `4084`) [TIME-SENSITIVE: 2026-10-27]; v4.0.85 (`4085`) preparada, pendent de publicar
-- **Una càrrega en curs trepitja el que s'acaba d'escriure** [trobat el 2026-10-27, pendent de corregir en general]: `bgRefresh`/polling no
-  comencen mentre es desa, però una càrrega ja començada bolca en acabar el full que havia llegit. `_carregant` (v4.0.84) compta les càrregues
-  en curs perquè una escriptura puntual les puga esperar.
+- **Versió en producció actual**: v4.0.84 (BUILD_VERSION `4084`) [TIME-SENSITIVE: 2026-10-27]; v4.0.85–86 preparades, pendents de publicar
+- **Una càrrega no trepitja un desat** [v4.0.86]: `loadFromSheets` ho llig tot abans d'assignar `DB` i descarta la lectura si `_genEscriptura`
+  ha canviat mentre llegia (el pugen `save`, `saveMoviment`, `saveFons` i el passiu de falles.app). Una càrrega fallida no toca `DB`, així que
+  ningú no restaura còpies. `_carregant` compta les càrregues en curs.
+- **Els informes encara compten els traspassos** com a ingrés i despesa (pas 3 pendent, marca "Traspàs entre comptes").
 - **Saldos protegits** [v4.0.83, després de l'incident del 2026-10-27]: `15 Saldos` es llig dins del swap atòmic i un error de lectura es
   propaga; `save('saldos')` es nega a escriure si falta algun saldo llegit el banc i l'exercici del qual encara existeixen.
 - **Quota de lectura de Sheets**: 60 lectures/minut per usuari; cada sessió oberta en fa ~40/minut (càrrega sencera cada 30 s). Dues sessions

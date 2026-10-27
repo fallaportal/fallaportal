@@ -1,6 +1,6 @@
 # Work Stream Status — Falla Portal
 ## Snapshot Date: 2026-10-27
-## Versió en producció: v4.0.84 (v4.0.85 preparada, pendent de publicar: fora el codi puntual dels traspassos)
+## Versió en producció: v4.0.84 (v4.0.85 i v4.0.86 preparades, pendents de publicar)
 
 > **Context de calendari**: període vacacional, ús baix de l'eina. Bon moment per a
 > canvis estructurals i per a la decisió pendent del Service Worker.
@@ -212,10 +212,17 @@ pagament de l'Arturo (no per la correcció). Codi puntual eliminat a la v4.0.85 
 Cas 1 tornat a confirmar per Emilio el mateix dia: la retirada de −250 € no té empremta d'importació (la va crear la correcció del 13/10);
 a l'extracte del 30/06 només hi ha els xecs de 502 € i 5.750 €. Els diners sí que van a la caixa (l'entrada de +250 € i el pagament de
 "Seguretat" es queden). La grua està pagada a part: 747,50 € de la caixa el 04/06 i 2.797 € avançats per Juanjo el 10/07.
-**Risc general trobat (pendent, cal la conformitat d'Emilio)**: el mateix passa amb els desats normals. `bgRefresh` i el polling no comencen
-mentre es desa, però una càrrega que ja estava en curs bolca en acabar el que havia llegit abans del desat. El moviment nou desapareix de la
-memòria fins al refresc següent i, si mentrestant es desa una altra cosa de moviments, s'esborra del full. Correcció proposada: que una
-càrrega descarte el que ha llegit si durant la lectura s'ha escrit alguna cosa.
+**Risc general trobat**: el mateix passava amb els desats normals. `bgRefresh` i el polling no comencen mentre es desa, però una càrrega que
+ja estava en curs bolcava en acabar el que havia llegit abans del desat: el moviment nou desapareixia de la memòria i, si abans del refresc
+següent es desava una altra cosa de moviments, s'esborrava del full. A més, si la càrrega fallava, `bgRefresh` i el polling restauraven una
+còpia de l'inici i desfeien el que s'haguera desat mentrestant.
+**v4.0.86 (2026-10-27) — una càrrega no trepitja un desat (conformitat d'Emilio)**: `loadFromSheets` llig les 17 pestanyes abans de tocar `DB`
+(cap espera entre la lectura i l'assignació) i, si mentre llegia ha pujat `_genEscriptura` (s'incrementa al principi de `save`, `saveMoviment`,
+`saveFons` i el desat del passiu de falles.app), descarta el llegit i torna a llegir (fins a 3 vegades; després falla sense tocar `DB`).
+`bgRefresh` i el polling ja no restauren cap còpia. Reproduït amb la v4.0.85 (refresc lent + moviment A desat enmig → A desapareix de la
+memòria i el desat de B l'esborra del full) i verificat amb la v4.0.86 amb la mateixa seqüència (A es conserva), amb `saveMoviment` +
+`bgRefresh`, amb un refresc normal, amb desats contínuament durant la lectura (descarta i falla sense tocar res), amb la protecció dels saldos
+i registrant un moviment des del formulari.
 
 **Pendents** (res d'això depén de codi):
 1. Extractes actuals: Caixabank ES06 2100 1958 3602 0008 8726 des del 29/9; Caixabank ES56 2100 7990 7413 0059 2938
