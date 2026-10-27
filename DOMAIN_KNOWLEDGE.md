@@ -68,7 +68,7 @@ Cremà (19/03) i el 31/03 serveixen per liquidar els pendents de Falles dins del
 
 ### Established Facts
 
-- **Versió en producció actual**: v4.0.87 (BUILD_VERSION `4087`) [TIME-SENSITIVE: 2026-10-27]; v4.0.88–89 preparades, pendents de publicar
+- **Versió en producció actual**: v4.0.89 (BUILD_VERSION `4089`) [TIME-SENSITIVE: 2026-10-27]; branca `supabase`: v4.1.4
 - **Una càrrega no trepitja un desat** [v4.0.86]: `loadFromSheets` ho llig tot abans d'assignar `DB` i descarta la lectura si `_genEscriptura`
   ha canviat mentre llegia (el pugen `save`, `saveMoviment`, `saveFons` i el passiu de falles.app). Una càrrega fallida no toca `DB`, així que
   ningú no restaura còpies. `_carregant` compta les càrregues en curs.

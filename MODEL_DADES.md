@@ -165,6 +165,7 @@ caixa esborra els moviments de l'operació `tancar_caixa`, no els que casen per 
 | `empremta` | text null | `bankHash` | **índex no únic** `(compte_id, empremta)` (A-04) |
 | `regla_id` | FK null | (`assignatPer`, es perdia) | quina regla l'ha classificat |
 | `motiu_sense_justificant` | text | `ticketMotiu` | |
+| `traspas` | boolean not null default false | `traspas` (`'true'`/buit, v4.0.87) | **traspàs entre comptes** (D-049): no compta com a ingrés ni despesa als informes; sí al saldo del compte. Només el canvia qui té l'Historial en edició (t30) |
 
 Es deixen fora `areaNom`, `delegacioNom`, `eventNom`, `responsable` i `ticketUrl` (passa a `justificants`).
 
@@ -235,7 +236,8 @@ són a `rol_moduls`.
 ### 4.5 Importació
 **`regles_importacio`**: `id`, `compte_id FK null` (null = tots els comptes), `patrons text[]`, `tipus` enum
 `assignar` \| `tpv` \| `ignorar`, `sentit` enum `ingres` \| `despesa` \| `qualsevol`, `area_id`, `delegacio_id`,
-`concepte`, `prioritat int`, `activa`. Com que no hi ha compte `app` (D-031), si el full té regles amb font `'app'`
+`concepte`, `prioritat int`, `activa`, `traspas boolean` (D-049: els moviments que casen es marquen com a traspàs).
+Com que no hi ha compte `app` (D-031), si el full té regles amb font `'app'`
 l'script de la Fase 5 les ha de llistar perquè Emilio decidisca.
 **`fallesapp_passiu`**: `id`, `exercici_id`, `data`, `total`, `fallers`, `operacio_id` — es guarda l'historial;
 la pantalla mostra l'últim de l'exercici (1:1).

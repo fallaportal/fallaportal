@@ -1,6 +1,6 @@
 # Work Stream Status — Falla Portal
 ## Snapshot Date: 2026-10-27
-## Versió en producció: v4.0.87 (v4.0.88 i v4.0.89 preparades, pendents de publicar)
+## Versió en producció: v4.0.89 (a `main`) · branca `supabase`: v4.1.4
 
 > **Context de calendari**: període vacacional, ús baix de l'eina. Bon moment per a
 > canvis estructurals i per a la decisió pendent del Service Worker.
@@ -248,7 +248,16 @@ i un rebut importa el primer marcat i el segon no; Resultats no compta el trasp�
 Regles, marcar com a traspàs les regles de traspassos propis (p. ex. `TRASPASO PROPIO`, `TRASPÀS PROPI`), i no les de "PAGO TRASPASOS" (pagaments
 a tercers). En importar l'extracte del 01 Banc des del 29/9, comprovar que l'entrada de 10.000 € del 26/10 queda marcada (si no, marcar-la a
 l'Historial): llavors el net dels traspassos del 26/27 serà 0.
-**Pendent**: portar les columnes `traspas` (moviments i regles) al model de Supabase (taules, `sbTaules`/`sbPestanyes`, MODEL_DADES).
+**v4.0.88–89 publicades el 2026-10-27.**
+**Branca `supabase` v4.1.4 (2026-10-27) — fusió de `main` (v4.0.80–89) i traspassos al model (D-049)**: la capa de dades es queda la de
+Supabase (desat per diferències, `loadFromSupabase` amb `_sbGen`, Realtime): no s'hi porten el comptador `_genEscriptura`, `_carregant` ni el
+desat per pestanyes de `main`. El cos de la càrrega llig de `_sbPestanyes` (variable `L`) sense cap espera i assigna `DB.saldos` al swap; es porta
+la guarda dels saldos (`_saldosPerduts`) a `save()` abans de `sbDesa()` (les diferències esborrarien els saldos perduts). Migració
+`20261027120000_traspassos.sql` (`moviments.traspas` i `regles_importacio.traspas`, boolean, per defecte false) **aplicada a Supabase**;
+adaptador (`sbPestanyes`/`sbTaules`) i `tools/supabase_carrega.mjs` porten la marca. Proves: `supabase_tests.mjs` 256 correctes en local i a
+Supabase (3 casos nous: el delegat no pot marcar, Tresoreria sí, per defecte no és traspàs); `supabase_roundtrip.mjs` amb l'export del 13/10:
+tot igual; `supabase_escriptura.mjs --accions`: tot en ordre (escenari nou: marcar i desmarcar un moviment i una regla de traspàs). Al navegador,
+la v4.1.4 carrega sense errors i Resultats i Bancs exclouen els traspassos amb el control a net 0.
 
 **Pendents** (res d'això depén de codi):
 1. Extractes actuals: Caixabank ES06 2100 1958 3602 0008 8726 des del 29/9; Caixabank ES56 2100 7990 7413 0059 2938
