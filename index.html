@@ -337,7 +337,7 @@ tr:hover td{background:var(--bg2)}
     <div class="login-logo">Falla <span>Portal</span></div>
     <div class="login-sub">Sistema de gestió financera</div>
     <div class="login-fiscal">Any fiscal 26/27 · Abr 2026 – Mar 2027</div>
-    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v4.0.87</div>
+    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v4.0.88</div>
     <button class="btn-google" onclick="signIn()">
       <svg viewBox="0 0 24 24" width="20" height="20"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
       Entrar amb Google
@@ -379,7 +379,7 @@ tr:hover td{background:var(--bg2)}
     <div class="sb-bottom">
       <div class="sync-ind" style="display:flex;align-items:center;justify-content:space-between"><div style="display:flex;align-items:center;gap:6px"><div class="sync-dot" id="sync-dot"></div><span id="sync-text">Sincronitzat</span></div><button onclick="manualRefresh()" title="Actualitzar dades" style="background:none;border:none;cursor:pointer;padding:2px 4px;color:var(--text2);font-size:14px;line-height:1"><i class="ti ti-refresh"></i></button></div>
       <button class="btn-logout" onclick="signOut()"><i class="ti ti-logout" style="font-size:14px"></i> Tancar sessió</button>
-      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v4.0.87</div>
+      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v4.0.88</div>
     </div>
   </div>
 
@@ -6618,95 +6618,6 @@ async function deleteRegla(id){
   save('regles').catch(function(e){console.warn(e);});
 }
 
-// ── Marca dels traspassos existents (2026-10-27) ── ELIMINAR després d'usar-la.
-// Els 30 apunts revisats amb Emilio el 27/10: 14 parelles, el xec 364930 (una eixida i dues entrades a la caixa) i el
-// −10.000 € del 03 Banc del 26/10, que té l'altre costat a l'extracte del 01 Banc encara per importar. Cadascun ha de casar
-// amb un sol moviment (data, compte, sentit, import i inici del concepte). Llig el full just abans, escriu i torna a llegir.
-const _MARCA_TRASP=[
-  ['02/11/2025','03 Banc','gast',10000,'TRASPAS'],['02/11/2025','01 Banc','ing',10000,'MOVIMENTS ENTRE BANCS'],
-  ['17/11/2025','03 Banc','ing',10000,'TRASPÀS PROPI'],['17/11/2025','01 Banc','gast',10000,'QUOTES'],
-  ['08/04/2026','01 Banc','ing',20000,'TRASPAS ENTRE BANCS'],['08/04/2026','03 Banc','gast',20000,'TRASPÀS PROPI'],
-  ['07/06/2026','01 Banc','gast',10000,'TRASPASO PROPIO'],['07/06/2026','03 Banc','ing',10000,'TRASPÀS PROPI'],
-  ['30/06/2026','01 Banc','gast',502,'CARG.CHEQUE 364931'],['30/06/2026','Efectiu','ing',502,'ENTRADA DE DINERS DEL BANC'],
-  ['30/06/2026','01 Banc','gast',5750,'CARG.CHEQUE 364930'],['30/06/2026','Efectiu','ing',5500,'ENTRADA DE DINERS DEL BANC'],
-  ['30/06/2026','Efectiu','ing',250,'ENTRADA DE DINERS DEL BANC'],
-  ['02/07/2026','TPV','ing',24,'TRASPASO PROPIO'],['02/07/2026','01 Banc','gast',24,'TRASPAS'],
-  ['08/07/2026','TPV','ing',10.89,'TRASPASO PROPIO'],['08/07/2026','01 Banc','gast',10.89,'TRASPASO PROPIO'],
-  ['10/07/2026','01 Banc','gast',860,'CARG.CHEQUE 364928'],['10/07/2026','Efectiu','ing',860,'ENTRADA DE DINERS DEL BANC'],
-  ['04/08/2026','TPV','ing',12.71,'TRASPASO PROPIO'],['04/08/2026','01 Banc','gast',12.71,'TRASPÀS'],
-  ['04/08/2026','01 Banc','ing',5000,'TRASPASO PROPIO'],['04/08/2026','03 Banc','gast',5000,'TRASPÀS'],
-  ['07/09/2026','TPV','ing',12,'TRASPASO PROPIO'],['07/09/2026','01 Banc','gast',12,'TRASPASO PROPIO'],
-  ['07/09/2026','01 Banc','gast',5000,'TRASPASO PROPIO'],['07/09/2026','03 Banc','ing',5000,'TRASPÀS PROPI'],
-  ['16/09/2026','01 Banc','gast',3000,'CARG.CHEQUE 364929'],['16/09/2026','Efectiu','ing',3000,'ENTRADA DE DINERS DEL BANC'],
-  ['26/10/2026','03 Banc','gast',10000,'TRASPÀS PROPI']
-];
-function _marcaTraspPla(files){
-  const data=function(m){const d=String(m.data||'');const p=d.match(/^(\d{4})-(\d{2})-(\d{2})/);return p?p[3]+'/'+p[2]+'/'+p[1]:d;};
-  const trobats=[];
-  for(let i=0;i<_MARCA_TRASP.length;i++){
-    const t=_MARCA_TRASP[i];
-    const c=files.filter(function(m){return data(m)===t[0]&&m.via===t[1]&&m.tipus===t[2]&&
-      Math.abs(Math.abs(parseFloat(m.import)||0)-t[3])<0.005&&String(m.concepte||'').toUpperCase().indexOf(t[4])===0;});
-    if(c.length!==1)return{ok:false,motiu:'l\'apunt '+t[1]+' '+t[0]+' de '+fmtD(t[3])+' casa amb '+c.length+' moviments'};
-    trobats.push(c[0]);
-  }
-  if(new Set(trobats.map(function(m){return m.id;})).size!==trobats.length)return{ok:false,motiu:'un moviment casa amb dos apunts'};
-  return{ok:true,trobats:trobats,pendents:trobats.filter(function(m){return!esTraspas(m);})};
-}
-function _marcaTraspVisible(){
-  const rol=getRol();
-  if(rol!=='president'&&rol!=='treasury')return null;
-  const p=_marcaTraspPla(DB.moviments||[]);
-  return p.ok&&p.pendents.length?p:null;
-}
-async function aplicaMarcaTraspassos(){
-  let p;
-  try{p=_marcaTraspVisible();}catch(e){showToast('Error comprovant la marca: '+e.message,true);return;}
-  if(!p){showToast('Marca no disponible (ja feta o les dades han canviat)',true);return;}
-  const af=getAnyFiscal();
-  const delAny=p.pendents.filter(function(m){return m.anyFiscal===af;});
-  const sumIng=delAny.filter(function(m){return m.tipus==='ing';}).reduce(function(s,m){return s+m.import;},0);
-  const sumGast=delAny.filter(function(m){return m.tipus==='gast';}).reduce(function(s,m){return s+m.import;},0);
-  const altres=p.pendents.length-delAny.length;
-  if(!confirm('Marcar '+p.pendents.length+' apunts com a traspàs entre comptes\n\n'+
-    '• Són els traspassos revisats el 27/10 ('+delAny.length+' del '+af+(altres?' i '+altres+' d\'altres exercicis':'')+').\n'+
-    '• Deixen de comptar com a ingrés i despesa als informes. Al '+af+': ingressos −'+fmtD(sumIng)+', despeses −'+fmtD(sumGast)+'.\n'+
-    '• Els saldos dels comptes no canvien.\n'+
-    (altres?'• Inclou el 25/26, que està tancat: és una excepció (el seu resultat no canvia).\n':'')+
-    '\nAbans d\'escriure es torna a llegir el full i després es comprova. Continuar?'))return;
-  await esperarToken();
-  _desantAraMateix++;   // cap refresc en segon pla comença mentre es marca
-  _genEscriptura++;     // i qualsevol càrrega en curs descarta el que ha llegit
-  setSyncing(true,true);
-  try{
-    // El full, no la memòria: es marca sobre el que hi ha ara mateix a 01 Moviments
-    const abans=await readTab(TABS.moviments.name);
-    const pf=_marcaTraspPla(abans);
-    if(!pf.ok)throw new Error('al full, '+pf.motiu+'; no s\'ha tocat res');
-    const ids=new Set(pf.trobats.map(function(m){return m.id;}));
-    const noves=abans.map(function(m){return ids.has(m.id)?Object.assign({},m,{traspas:'true'}):m;});
-    await writeTab(TABS.moviments.name,TABS.moviments.headers,noves);
-    const despres=await readTab(TABS.moviments.name);
-    const H=TABS.moviments.headers;
-    const fila=function(m){return H.map(function(h){return m[h]!==undefined?String(m[h]):'';}).join('\u0001');};
-    if(despres.length!==noves.length||despres.some(function(m,i){return fila(m)!==fila(noves[i]);}))
-      throw new Error('en tornar a llegir el full, els moviments no coincideixen amb el que s\'ha escrit');
-    // DB ha de quedar com el full: s'espera qualsevol càrrega en curs i es torna a llegir
-    while(_carregant>0)await new Promise(function(r){setTimeout(r,200);});
-    try{await loadFromSheets();}
-    catch(e){(DB.moviments||[]).forEach(function(m){if(ids.has(m.id))m.traspas='true';});}
-    saveCache();
-    setSyncing(false,true);
-    showToast(ids.size+' apunts marcats com a traspàs');
-    renderCfgExercicis();
-  }catch(e){
-    setSyncing(false,true);
-    showToast('Error marcant els traspassos: '+e.message+'. Recarrega i comprova.',true);
-  }finally{
-    _desantAraMateix--;
-  }
-}
-
 function renderCfgExercicis(){
   const container=document.getElementById('cfg-exercicis');
   if(!container){console.warn('cfg-exercicis-container no trobat');return;}
@@ -6716,14 +6627,6 @@ function renderCfgExercicis(){
   const estats=DB.config.estats_exercicis||{};
   let html='';
   if(canDo){
-    let mt=null;
-    try{mt=_marcaTraspVisible();}catch(e){}
-    if(mt){
-      html+='<div style="background:var(--amber-bg);border:1px solid var(--amber);border-radius:var(--r);padding:12px 14px;margin-bottom:16px;color:var(--amber-text);font-size:13px">'+
-        '<div style="font-weight:600;margin-bottom:4px"><i class="ti ti-alert-triangle"></i> Marcar els traspassos entre comptes ('+mt.pendents.length+' apunts)</div>'+
-        '<div style="margin-bottom:10px">Són els traspassos revisats el 27/10. Un cop marcats, deixen de comptar com a ingrés i despesa als informes; els saldos dels comptes no canvien.</div>'+
-        '<button class="btn btn-primary" onclick="aplicaMarcaTraspassos()"><i class="ti ti-arrows-exchange"></i> Revisar i aplicar</button></div>';
-    }
     html+='<div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">';
     html+='<button class="btn btn-primary" onclick="obrirNouExercici()"><i class="ti ti-calendar-plus"></i> Nou exercici</button>';
     html+='<button class="btn" onclick="openModalTancarExercici()" style="color:var(--amber)"><i class="ti ti-lock"></i> Tancar exercici actual</button>';

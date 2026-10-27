@@ -1,6 +1,6 @@
 # Work Stream Status — Falla Portal
 ## Snapshot Date: 2026-10-27
-## Versió en producció: v4.0.86 (v4.0.87 preparada, pendent de publicar: traspassos fora dels informes)
+## Versió en producció: v4.0.87 (v4.0.88 preparada: fora el codi puntual de la marca)
 
 > **Context de calendari**: període vacacional, ús baix de l'eina. Bon moment per a
 > canvis estructurals i per a la decisió pendent del Service Worker.
@@ -237,7 +237,10 @@ moviments normals); saldos i saldo final del Flux iguals; control amb net −10.
 30 marcats i la resta idèntica; casella de l'Historial (marcar/desmarcar, bloquejada per a `area`); "Banc → caixa" marca els dos costats;
 la targeta no apareix amb un apunt ambigu ni per al rol `area`; lectura fallida no escriu. Efecte previst a producció (26/27): ingressos
 −50.171,60 €, despeses −60.171,60 € (el −10.000 € del 26/10 queda sense parella fins a importar l'extracte del 01 Banc des del 29/9).
-**Pendent**: aplicar la targeta (Emilio) i eliminar-ne el codi; v4.0.88 (regles d'importació que marquen traspassos); portar la columna
+**Publicada i aplicada per Emilio el 2026-10-27** ("30 apunts marcats com a traspàs", missatge que només surt si la relectura del full
+coincideix fila per fila). Codi puntual eliminat a la v4.0.88. Últim apunt de l'extracte del 01 Banc: 28/09/2026 (després, 2 despeses
+manuals del 08/10: Filament 3D 214,95 € i Gorres negres 4.116,42 €); falta l'extracte des del 29/09.
+**Pendent**: v4.0.89 (regles d'importació que marquen traspassos); portar la columna
 `traspas` al model de Supabase (taula `moviments`, `sbTaules`/`sbPestanyes`, MODEL_DADES). Si s'apunta un "Banc → caixa" abans d'aplicar la
 targeta, la marca es pot perdre (la fila de capçaleres encara no té la columna i l'apunt s'afegeix sense reescriure-la).
 
