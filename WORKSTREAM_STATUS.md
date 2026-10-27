@@ -1,6 +1,6 @@
 # Work Stream Status — Falla Portal
 ## Snapshot Date: 2026-10-27
-## Versió en producció: v4.0.80 (v4.0.82 preparada, pendent de publicar: restauració de 15 Saldos)
+## Versió en producció: v4.0.82 (v4.0.83 preparada, pendent de publicar: protecció dels saldos)
 
 > **Context de calendari**: període vacacional, ús baix de l'eina. Bon moment per a
 > canvis estructurals i per a la decisió pendent del Service Worker.
@@ -185,11 +185,18 @@ d'Emilio; 02 Banc 26/27 a 24.542,39 €). No depén de `DB.saldos`: llig el full
 llegir per comprovar-ho; mentre restaura bloqueja els refrescos (`_desantAraMateix`). Verificat amb un full simulat que desa el que s'hi
 escriu: amb la memòria buidada i un refresc concurrent (restaura les 8 files; només `PUT`+`clear` de `15 Saldos`), amb la lectura pròpia
 fallida (429: no escriu res), i amb el full ja restaurat (no escriu res). Saldos previstos a producció: 01 Banc 9.141,88; 02 Banc 26.353,58;
-Efectiu 3.625,68; TPV 0; 03 Banc 26.298,99 (total 65.420,13 €). **Pendent d'Emilio: aplicar-la i comprovar cada compte amb el seu extracte**
-(els valors del 13/10 poden haver canviat: el del 02 Banc va canviar entre el 13/10 i el 27/10; el 03 Banc era a 10.190,87 € el 13/10).
-**Pendent de codi (causa arrel, cal la conformitat d'Emilio)**: `loadFromSheets` ha de llegir els saldos dins del swap atòmic i propagar
-l'error de lectura, i `save('saldos')` s'ha de negar a escriure si falta el saldo d'algun banc de l'any actiu. Mentrestant, qualsevol desat de
-saldos (editar un banc, nou exercici) després d'un refresc fallit pot tornar a esborrar la pestanya.
+Efectiu 3.625,68; TPV 0; 03 Banc 26.298,99 (total 65.420,13 €). **Aplicada per Emilio el 2026-10-27** (el primer intent va fallar per quota
+429 sense escriure res; el segon, amb una sola sessió oberta, va anar bé). Comprovat a producció: 8 saldos; 02 Banc i 03 Banc quadren amb els
+seus extractes (26.353,58 € a 3/10 i 26.298,99 € a 26/10). Codi puntual eliminat a la v4.0.83.
+**Quota de lectura**: Google limita a 60 lectures/minut per usuari i cada sessió oberta recarrega el full sencer (~20 lectures) cada 30 s; amb
+dues sessions del mateix compte se supera i les lectures fallen (429). La sessió de producció oberta per Claude al panell del navegador
+va contribuir a l'incident: no deixar-ne cap d'oberta més del temps de llegir.
+**v4.0.83 (2026-10-27) — causa arrel corregida**: `loadFromSheets` llig `15 Saldos` en una variable temporal i l'assigna al swap atòmic, i una
+lectura fallida es propaga (un refresc fallit ja no toca els saldos); `save('saldos')` es nega a escriure si falta algun saldo de l'última
+lectura o desat el banc i l'exercici del qual continuen existint (`_saldosPerduts`; esborrar un banc o un exercici sí que els treu). Reproduït
+amb la v4.0.82 (refresc amb 429 a `15 Saldos` → 0 saldos en memòria → el desat deixa el full amb 0 files) i verificat amb la v4.0.83 amb la
+mateixa seqüència (8 saldos intactes, 8 files), amb la memòria buidada a la força (no desa i ho avisa), editant un saldo, esborrant un banc,
+eliminant un exercici i amb `bgRefresh` real amb lectura fallida.
 
 **Pendents** (res d'això depén de codi):
 1. Extractes actuals: Caixabank ES06 2100 1958 3602 0008 8726 des del 29/9; Caixabank ES56 2100 7990 7413 0059 2938
@@ -206,8 +213,13 @@ saldos (editar un banc, nou exercici) després d'un refresc fallit pot tornar a 
 4. Avançament pendent d'A. Alario: 40 €.
 5. **02 Banc (D-029)**: fet el 2026-10-27 (v4.0.80): els 7 moviments d'abril–maig són al 26/27 i el saldo inicial 26/27 és 24.542,39 €
    (saldo real a 31/03). El 02 Banc dona 26.353,58 €, com l'extracte del 3/10.
-5b. **Restaurar `15 Saldos`** (v4.0.82, Configuració → Exercicis) i comprovar 01 Banc, Efectiu i 03 Banc amb els extractes; després eliminar el
-   codi puntual i corregir la causa arrel (vegeu l'incident del 2026-10-27).
+5b. **Traspassos (2026-10-27)**: 32 apunts amb pinta de traspàs; 14 parelles completes. Respostes d'Emilio als que no tenien parella:
+   xec 364930 → sobra la "Retirada del banc per a Juanjo" de −250 € al 01 Banc (els 250 € eren part del xec; sense ella el 01 Banc torna a
+   9.391,88 €); +5.000 € 03 Banc 30/06 = arres de la venda d'una propietat i +30.000 € 03 Banc 02/10 = resta de la venda (ingressos);
+   −20.000 € 03 Banc 08/07 = compra d'un solar (despesa); tots tres es queden a Tresoreria i només canvia el concepte; −408 € "PAGO TRASPASOS"
+   i +90,75 € "TRASPAS" (01 Banc) són pagament i cobrament amb tercers; +1.110,53 € "RECUP.SALDO.TARGETA" és un ingrés real. Queda sense
+   parella el −10.000 € del 03 Banc del 26/10 fins a importar l'extracte del 01 Banc des del 29/9. Ordre acordat: (1) protecció dels saldos
+   (v4.0.83), (2) correcció d'un sol ús dels casos (−250 € i 3 conceptes), (3) marca "Traspàs entre comptes" i informes sense traspassos.
 6. Decidir si les remeses de quotes (`FATIR…`) i els apunts del TPV tenen regla pròpia; les àrees confirmades són TPV →
    01 Tresoreria, WiFi COM.T → 07 Coordinació Tècnica, aigua → 01 Jurídica i Contractacions, quotes → 01 Secretaria.
 

@@ -68,9 +68,11 @@ Cremà (19/03) i el 31/03 serveixen per liquidar els pendents de Falles dins del
 
 ### Established Facts
 
-- **Versió en producció actual**: v4.0.80 (BUILD_VERSION `4080`) [TIME-SENSITIVE: 2026-10-27]; v4.0.82 (`4082`) preparada, pendent de publicar
-- **`loadFromSheets` posa `DB.saldos={}` a mitja càrrega i s'empassa una lectura fallida de `15 Saldos`** [v4.0.80, causa de l'incident del
-  2026-10-27]: després d'un refresc fallit, els saldos en memòria poden estar buits i un `save('saldos')` esborra la pestanya.
+- **Versió en producció actual**: v4.0.82 (BUILD_VERSION `4082`) [TIME-SENSITIVE: 2026-10-27]; v4.0.83 (`4083`) preparada, pendent de publicar
+- **Saldos protegits** [v4.0.83, després de l'incident del 2026-10-27]: `15 Saldos` es llig dins del swap atòmic i un error de lectura es
+  propaga; `save('saldos')` es nega a escriure si falta algun saldo llegit el banc i l'exercici del qual encara existeixen.
+- **Quota de lectura de Sheets**: 60 lectures/minut per usuari; cada sessió oberta en fa ~40/minut (càrrega sencera cada 30 s). Dues sessions
+  del mateix compte la superen i les lectures fallen amb 429.
 - **La caducitat del token de Google no tanca la sessió** [v4.0.47–48, D-020]:
   - Apareix un bàner i els guardats esperen el token nou.
   - `save()`/`writeTab()` esperen **abans** de fer la còpia de `DB`.
