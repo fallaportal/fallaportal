@@ -337,7 +337,7 @@ tr:hover td{background:var(--bg2)}
     <div class="login-logo">Falla <span>Portal</span></div>
     <div class="login-sub">Sistema de gestió financera</div>
     <div class="login-fiscal">Any fiscal 26/27 · Abr 2026 – Mar 2027</div>
-    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v4.0.83</div>
+    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v4.0.84</div>
     <button class="btn-google" onclick="signIn()">
       <svg viewBox="0 0 24 24" width="20" height="20"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
       Entrar amb Google
@@ -379,7 +379,7 @@ tr:hover td{background:var(--bg2)}
     <div class="sb-bottom">
       <div class="sync-ind" style="display:flex;align-items:center;justify-content:space-between"><div style="display:flex;align-items:center;gap:6px"><div class="sync-dot" id="sync-dot"></div><span id="sync-text">Sincronitzat</span></div><button onclick="manualRefresh()" title="Actualitzar dades" style="background:none;border:none;cursor:pointer;padding:2px 4px;color:var(--text2);font-size:14px;line-height:1"><i class="ti ti-refresh"></i></button></div>
       <button class="btn-logout" onclick="signOut()"><i class="ti ti-logout" style="font-size:14px"></i> Tancar sessió</button>
-      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v4.0.83</div>
+      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v4.0.84</div>
     </div>
   </div>
 
@@ -2905,7 +2905,14 @@ function rowsToConfig(arees,delegacions,events,bancs,usuaris,assignacions,regles
   };
 }
 
+// Càrregues en curs: qui escriu i vol deixar DB igual que el full ha d'esperar que acaben (una càrrega iniciada
+// abans d'una escriptura bolca el que va llegir en acabar i trepitjaria el que s'acaba d'escriure).
+let _carregant=0;
 async function loadFromSheets(){
+  _carregant++;
+  try{return await _loadFromSheetsCos();}finally{_carregant--;}
+}
+async function _loadFromSheetsCos(){
   await initSheets();
   // Swap atòmic: llegim tot en variables temporals i assignem a DB al final
   // Evita que una operació d'usuari concurrent veja DB en estat inconsistent
@@ -6558,6 +6565,92 @@ async function deleteRegla(id){
   save('regles').catch(function(e){console.warn(e);});
 }
 
+// ── Correcció dels casos dels traspassos (2026-10-27) ── ELIMINAR després d'usar-la.
+// Respostes d'Emilio: la retirada de 250 € per a Juanjo era part del xec 364930 (5.750 €) i comptava dues vegades al 01 Banc;
+// la venda d'una propietat (arres 5.000 € i resta 30.000 €) i la compra d'un solar (20.000 €) del 03 Banc no són traspassos:
+// es queden a Tresoreria amb un concepte clar. Llig el full just abans, bloqueja els refrescos, escriu i torna a llegir.
+const _CASOS_TRASP={
+  esborrar:{id:'m1791877040319_ppsp0.026796729502469585',via:'01 Banc',data:'30/06/2026',tipus:'gast',import:250,inici:'Retirada del banc per a Juanjo'},
+  conceptes:[
+    {via:'03 Banc',data:'30/06/2026',tipus:'ing',import:5000,inici:'TRASPAS',nou:'Arres venda propietat'},
+    {via:'03 Banc',data:'02/10/2026',tipus:'ing',import:30000,inici:'TRANSFER',nou:'Venda propietat (resta)'},
+    {via:'03 Banc',data:'08/07/2026',tipus:'gast',import:20000,inici:'COMPRA SOLAR',nou:'Compra solar C/ M'}
+  ]
+};
+// Busca els 4 apunts a una llista de moviments (DB o el full). Cadascun ha de casar amb un sol apunt.
+function _casosTraspPla(files){
+  const P=_CASOS_TRASP;
+  const data=function(m){const d=String(m.data||'');const p=d.match(/^(\d{4})-(\d{2})-(\d{2})/);return p?p[3]+'/'+p[2]+'/'+p[1]:d;};
+  const casa=function(m,c){return m.via===c.via&&data(m)===c.data&&m.tipus===c.tipus&&Math.abs(Math.abs(parseFloat(m.import)||0)-c.import)<0.005;};
+  const del=files.filter(function(m){return m.id===P.esborrar.id&&casa(m,P.esborrar)&&String(m.concepte||'').indexOf(P.esborrar.inici)===0;});
+  if(del.length!==1)return{ok:false,motiu:'no trobe la retirada de 250 € del 01 Banc (ja aplicat?)'};
+  const ren=[];
+  for(let i=0;i<P.conceptes.length;i++){
+    const c=P.conceptes[i];
+    const t=files.filter(function(m){return casa(m,c)&&String(m.concepte||'').toUpperCase().indexOf(c.inici)===0;});
+    if(t.length!==1)return{ok:false,motiu:'l\'apunt de '+fmtD(c.import)+' del '+c.data+' ('+c.via+') casa amb '+t.length+' moviments'};
+    ren.push({m:t[0],c:c});
+  }
+  return{ok:true,del:del[0],ren:ren};
+}
+function _casosTraspVisible(){
+  const rol=getRol();
+  if(rol!=='president'&&rol!=='treasury')return null;
+  const p=_casosTraspPla(DB.moviments||[]);
+  return p.ok?p:null;
+}
+async function aplicaCasosTraspassos(){
+  const P=_CASOS_TRASP;
+  let p;
+  try{p=_casosTraspVisible();}catch(e){showToast('Error comprovant la correcció: '+e.message,true);return;}
+  if(!p){showToast('Correcció no disponible (ja aplicada o les dades han canviat)',true);return;}
+  const b1=(DB.config.bancs||[]).find(function(b){return b.codi===P.esborrar.via;});
+  const af=getAnyFiscal();
+  const ini=b1&&DB.saldos[b1.id+'_'+af]?parseFloat(DB.saldos[b1.id+'_'+af].saldoInicial)||0:0;
+  const saldo01=ini+(DB.moviments||[]).filter(function(m){return m.via===P.esborrar.via&&(m.anyFiscal===af||!m.anyFiscal);})
+    .reduce(function(s,m){return s+(m.tipus==='ing'?1:-1)*m.import;},0);
+  if(!confirm('Correcció dels traspassos (respostes del 27/10)\n\n'+
+    '• S\'esborra "'+p.del.concepte+'" (−'+fmtD(P.esborrar.import)+', '+P.esborrar.data+', '+P.esborrar.via+'): era part del xec 364930 i comptava dues vegades.\n'+
+    '  Saldo del '+P.esborrar.via+': '+fmtD(saldo01)+'  →  '+fmtD(saldo01+P.esborrar.import)+'\n'+
+    p.ren.map(function(x){return'• '+x.c.via+' '+x.c.data+' ('+(x.c.tipus==='ing'?'+':'−')+fmtD(x.c.import)+'): "'+x.m.concepte+'" → "'+x.c.nou+'"';}).join('\n')+'\n\n'+
+    'Les àrees no canvien. Abans d\'escriure es torna a llegir el full i després es comprova. Continuar?'))return;
+  await esperarToken();
+  _desantAraMateix++;   // cap refresc en segon pla comença mentre es corregeix
+  setSyncing(true,true);
+  try{
+    // El full, no la memòria: s'aplica sobre el que hi ha ara mateix a 01 Moviments
+    const abans=await readTab(TABS.moviments.name);
+    const pf=_casosTraspPla(abans);
+    if(!pf.ok)throw new Error('al full, '+pf.motiu+'; no s\'ha tocat res');
+    const nous=new Map(pf.ren.map(function(x){return[x.m.id,x.c.nou];}));
+    const noves=abans.filter(function(m){return m.id!==pf.del.id;})
+      .map(function(m){return nous.has(m.id)?Object.assign({},m,{concepte:nous.get(m.id)}):m;});
+    await writeTab(TABS.moviments.name,TABS.moviments.headers,noves);
+    const despres=await readTab(TABS.moviments.name);
+    const H=TABS.moviments.headers;
+    const fila=function(m){return H.map(function(h){return m[h]!==undefined?String(m[h]):'';}).join('\u0001');};
+    if(despres.length!==noves.length||despres.some(function(m,i){return fila(m)!==fila(noves[i]);}))
+      throw new Error('en tornar a llegir el full, els moviments no coincideixen amb el que s\'ha escrit');
+    // DB ha de quedar com el full: s'espera que acabe qualsevol càrrega en curs (llegiria el full d'abans) i es torna a llegir.
+    while(_carregant>0)await new Promise(function(r){setTimeout(r,200);});
+    try{await loadFromSheets();}
+    catch(e){
+      // Si la relectura falla, s'aplica el canvi a la memòria: ja no hi ha cap càrrega en curs que el puga trepitjar.
+      DB.moviments=(DB.moviments||[]).filter(function(m){return m.id!==pf.del.id;});
+      DB.moviments.forEach(function(m){if(nous.has(m.id))m.concepte=nous.get(m.id);});
+    }
+    saveCache();
+    setSyncing(false,true);
+    showToast('Correcció aplicada: 1 apunt esborrat i 3 conceptes canviats');
+    renderCfgExercicis();
+  }catch(e){
+    setSyncing(false,true);
+    showToast('Error aplicant la correcció: '+e.message+'. Recarrega i comprova.',true);
+  }finally{
+    _desantAraMateix--;
+  }
+}
+
 function renderCfgExercicis(){
   const container=document.getElementById('cfg-exercicis');
   if(!container){console.warn('cfg-exercicis-container no trobat');return;}
@@ -6567,6 +6660,14 @@ function renderCfgExercicis(){
   const estats=DB.config.estats_exercicis||{};
   let html='';
   if(canDo){
+    let ct=null;
+    try{ct=_casosTraspVisible();}catch(e){}
+    if(ct){
+      html+='<div style="background:var(--amber-bg);border:1px solid var(--amber);border-radius:var(--r);padding:12px 14px;margin-bottom:16px;color:var(--amber-text);font-size:13px">'+
+        '<div style="font-weight:600;margin-bottom:4px"><i class="ti ti-alert-triangle"></i> Correcció dels traspassos (respostes del 27/10)</div>'+
+        '<div style="margin-bottom:10px">S\'esborra la retirada de 250 € del 01 Banc del 30/06 (era part del xec 364930 i comptava dues vegades) i es canvia el concepte de 3 apunts del 03 Banc: arres i resta de la venda d\'una propietat (5.000 € i 30.000 €) i compra d\'un solar (20.000 €). Les àrees no canvien.</div>'+
+        '<button class="btn btn-primary" onclick="aplicaCasosTraspassos()"><i class="ti ti-check"></i> Revisar i aplicar</button></div>';
+    }
     html+='<div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">';
     html+='<button class="btn btn-primary" onclick="obrirNouExercici()"><i class="ti ti-calendar-plus"></i> Nou exercici</button>';
     html+='<button class="btn" onclick="openModalTancarExercici()" style="color:var(--amber)"><i class="ti ti-lock"></i> Tancar exercici actual</button>';

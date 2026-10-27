@@ -1,6 +1,6 @@
 # Work Stream Status — Falla Portal
 ## Snapshot Date: 2026-10-27
-## Versió en producció: v4.0.82 (v4.0.83 preparada, pendent de publicar: protecció dels saldos)
+## Versió en producció: v4.0.83 (v4.0.84 preparada, pendent de publicar: correcció dels casos dels traspassos)
 
 > **Context de calendari**: període vacacional, ús baix de l'eina. Bon moment per a
 > canvis estructurals i per a la decisió pendent del Service Worker.
@@ -196,7 +196,21 @@ lectura fallida es propaga (un refresc fallit ja no toca els saldos); `save('sal
 lectura o desat el banc i l'exercici del qual continuen existint (`_saldosPerduts`; esborrar un banc o un exercici sí que els treu). Reproduït
 amb la v4.0.82 (refresc amb 429 a `15 Saldos` → 0 saldos en memòria → el desat deixa el full amb 0 files) i verificat amb la v4.0.83 amb la
 mateixa seqüència (8 saldos intactes, 8 files), amb la memòria buidada a la força (no desa i ho avisa), editant un saldo, esborrant un banc,
-eliminant un exercici i amb `bgRefresh` real amb lectura fallida.
+eliminant un exercici i amb `bgRefresh` real amb lectura fallida. **Publicada el 2026-10-27.**
+**v4.0.84 (2026-10-27) — correcció d'un sol ús dels casos dels traspassos**: targeta a Configuració → Exercicis ("Correcció dels traspassos")
+que esborra la retirada de −250 € del 01 Banc del 30/06 (`m1791877040319_ppsp0.026796729502469585`, part del xec 364930) i canvia el concepte de
+3 apunts del 03 Banc (+5.000 € 30/06 → "Arres venda propietat"; +30.000 € 02/10 → "Venda propietat (resta)"; −20.000 € 08/07 → "Compra solar
+C/ M"); les àrees no canvien. Cada apunt ha de casar amb un sol moviment (compte, data, sentit, import i inici del text). Llig `01 Moviments` just
+abans i aplica el canvi sobre el full, bloqueja refrescos, escriu, torna a llegir i compara fila per fila; després espera que acabe qualsevol
+càrrega en curs (`_carregant`, nou a `loadFromSheets`) i torna a carregar. **Troballa de la prova**: sense aquesta espera, un refresc iniciat
+abans de l'escriptura bolcava a la memòria el full d'abans (targeta encara visible, saldo sense canviar), i un desat posterior de moviments
+hauria tornat a posar la retirada. Verificat: cas bo amb refresc concurrent (només `PUT`+`clear` de `01 Moviments`, 9 → 8 files, la resta
+idèntica, memòria igual que el full, 01 Banc +250 €), lectura pròpia fallida (no escriu), full ja corregit amb memòria antiga (no escriu),
+apunt ambigu (no apareix) i rol sense permís (no apareix). **Pendent d'Emilio: aplicar-la; després eliminar el codi.**
+**Risc general trobat (pendent, cal la conformitat d'Emilio)**: el mateix passa amb els desats normals. `bgRefresh` i el polling no comencen
+mentre es desa, però una càrrega que ja estava en curs bolca en acabar el que havia llegit abans del desat. El moviment nou desapareix de la
+memòria fins al refresc següent i, si mentrestant es desa una altra cosa de moviments, s'esborra del full. Correcció proposada: que una
+càrrega descarte el que ha llegit si durant la lectura s'ha escrit alguna cosa.
 
 **Pendents** (res d'això depén de codi):
 1. Extractes actuals: Caixabank ES06 2100 1958 3602 0008 8726 des del 29/9; Caixabank ES56 2100 7990 7413 0059 2938
