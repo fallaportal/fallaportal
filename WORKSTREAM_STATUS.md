@@ -1,6 +1,6 @@
 # Work Stream Status — Falla Portal
 ## Snapshot Date: 2026-10-14
-## Versió en producció: v4.0.78
+## Versió en producció: v4.0.79
 
 > **Context de calendari**: període vacacional, ús baix de l'eina. Bon moment per a
 > canvis estructurals i per a la decisió pendent del Service Worker.
@@ -154,6 +154,16 @@ llançava un `TypeError` en calcular la llista de fons (tractava la directiva, q
 tallava `initApp`: no es veien fons, últims moviments ni despesa per àrea, i no es programava el refresc de 5 min ni
 l'ajust mòbil/escriptori del botó de registrar. Ara llig la directiva de l'any actiu. Reproduït amb la v4.0.77 i
 verificat amb la v4.0.78 per a `area`, `delegat` i `treasury`.
+
+**v4.0.79 (2026-10-27) — total a Configuració → Bancs**: nova fila "Total" amb la suma dels saldos actuals de tots els comptes i
+caixes, el saldo inicial total i la variació (és el resultat de l'exercici, vegeu D-029 i el model de saldos). Verificat amb
+dades sintètiques (4 comptes, total quadrat a mà) i sense escriptures al full.
+
+**Diagnòstic del 02 Banc (2026-10-27, extracte `ciaxapopularfalla_5419.xlsx` des de l'1/4 fins al 3/10)**: l'extracte acaba a
+26.353,58 € i l'app (còpia del 13/10) té el 02 Banc a 23.941,79 € sense cap moviment al 26/27. Falten 10 apunts, nets +2.411,79 €:
+Loteria 07/05 (+2.411,00), quotes del 03/06, 03/07, 03/08, 03/09 i 03/10 (−30,25 cadascuna), comissió GPRS 03/06 (−6,05), AEAT
+model 115 27/07 (−228,00), facturació comerç 27/09 (+387,50) i descomptes comerç 27/09 (−1,41). Els 7 d'abril–maig ja hi són (25/26).
+Cal importar-lo des d'Importar CSV (els 7 surten com a duplicats segurs). Pendent d'Emilio: importar-lo i comprovar el saldo.
 
 **Pendents** (res d'això depén de codi):
 1. Extractes actuals: Caixabank ES06 2100 1958 3602 0008 8726 des del 29/9; Caixabank ES56 2100 7990 7413 0059 2938
