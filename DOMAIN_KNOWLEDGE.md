@@ -68,7 +68,7 @@ Cremà (19/03) i el 31/03 serveixen per liquidar els pendents de Falles dins del
 
 ### Established Facts
 
-- **Versió en producció actual**: v4.0.79 (BUILD_VERSION `4079`) [TIME-SENSITIVE: 2026-10-27]
+- **Versió en producció actual**: v4.0.79 (BUILD_VERSION `4079`) [TIME-SENSITIVE: 2026-10-27]; v4.0.80 (`4080`) preparada, pendent de publicar
 - **La caducitat del token de Google no tanca la sessió** [v4.0.47–48, D-020]:
   - Apareix un bàner i els guardats esperen el token nou.
   - `save()`/`writeTab()` esperen **abans** de fer la còpia de `DB`.
@@ -98,7 +98,8 @@ Cremà (19/03) i el 31/03 serveixen per liquidar els pendents de Falles dins del
 - La conciliació és control, no comptable: els moviments compten als informes independentment del seu estat.
 - **Comptes bancaris** (a l'app, IBAN i via):
   - **01 Banc** Caixabank ES06 2100 1958 3602 0008 8726.
-  - **02 Banc** Caixa Popular ES82 3159 0076 6426 7219 1729.
+  - **02 Banc** Caixa Popular ES82 3159 0076 6426 7219 1729. Saldo real a l'1/4/2026: 24.542,39 € (extracte del 27/10/2026);
+    a 3/10/2026: 26.353,58 €. L'importador d'extractes imputa els apunts a l'**any actiu**, no segons la data (A-10).
   - **03 Banc** Caixabank ES56 2100 7990 7413 0059 2938.
   - **TPV targetes** (tipus `tpv`) Caixabank ES60 2100 7990 7802 0033 2534: només comissions del TPV i traspassos
     propis; saldo 0. L'IBAN s'ha de tenir configurat al banc: si no, `processXLSBanc` assigna el fitxer al primer

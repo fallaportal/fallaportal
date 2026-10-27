@@ -337,7 +337,7 @@ tr:hover td{background:var(--bg2)}
     <div class="login-logo">Falla <span>Portal</span></div>
     <div class="login-sub">Sistema de gestió financera</div>
     <div class="login-fiscal">Any fiscal 26/27 · Abr 2026 – Mar 2027</div>
-    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v4.0.79</div>
+    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v4.0.80</div>
     <button class="btn-google" onclick="signIn()">
       <svg viewBox="0 0 24 24" width="20" height="20"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
       Entrar amb Google
@@ -379,7 +379,7 @@ tr:hover td{background:var(--bg2)}
     <div class="sb-bottom">
       <div class="sync-ind" style="display:flex;align-items:center;justify-content:space-between"><div style="display:flex;align-items:center;gap:6px"><div class="sync-dot" id="sync-dot"></div><span id="sync-text">Sincronitzat</span></div><button onclick="manualRefresh()" title="Actualitzar dades" style="background:none;border:none;cursor:pointer;padding:2px 4px;color:var(--text2);font-size:14px;line-height:1"><i class="ti ti-refresh"></i></button></div>
       <button class="btn-logout" onclick="signOut()"><i class="ti ti-logout" style="font-size:14px"></i> Tancar sessió</button>
-      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v4.0.79</div>
+      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v4.0.80</div>
     </div>
   </div>
 
@@ -6536,6 +6536,87 @@ async function deleteRegla(id){
   save('regles').catch(function(e){console.warn(e);});
 }
 
+// ── 7 apunts del 02 Banc d'abril–maig de 2026 imputats al 25/26 (A-10, D-029, 2026-10-27) ── ELIMINAR després d'usar-la.
+// Es van importar el 25/05/2026 amb el 25/26 com a any actiu, però són posteriors a l'1/4 i són del 26/27.
+// Se'ls passa al 26/27 i el saldo inicial del 02 Banc 26/27 passa al saldo real de Caixa Popular a l'1/4 (24.542,39 €).
+// La targeta només apareix si els 7 apunts coincideixen (id, data, import i sentit), el saldo inicial actual és el
+// esperat i el tancament del 25/26 sense ells quadra amb el saldo real de l'1/4; un cop aplicada desapareix sola.
+const _MOURE_02B={
+  banc:'02 Banc',de:'25/26',a:'26/27',saldoActual:24536.34,saldoNou:24542.39,saldoData:'01/04/2026',
+  moviments:[
+    ["m17797162885530.02075420882888024","04/04/2026",6.05,"gast"],
+    ["m17797162885530.14602568567601304","04/04/2026",30.25,"gast"],
+    ["m17797162885530.7028116527560225","15/04/2026",150,"ing"],
+    ["m17797162885530.057140648181339015","22/04/2026",450,"gast"],
+    ["m17797162885530.9206137139257503","22/04/2026",228,"gast"],
+    ["m17797162885530.3130701724571129","03/05/2026",6.05,"gast"],
+    ["m17797162885530.24750294013221297","03/05/2026",30.25,"gast"]
+  ]
+};
+// Comprova el pla contra les dades actuals SENSE tocar res.
+function _moure02bPla(){
+  const P=_MOURE_02B;
+  const no=function(motiu){return{ok:false,motiu:motiu};};
+  const rol=getRol();
+  if(rol!=='president'&&rol!=='treasury')return no('Només President o Tresoreria');
+  if(getAnyFiscal()!==P.a)return no('Exercici actiu diferent de '+P.a);
+  const sg=function(m){return(m.tipus==='ing'?1:-1)*(parseFloat(m.import)||0);};
+  const suma=function(arr){return arr.reduce(function(s,m){return s+sg(m);},0);};
+  const r2=function(x){return Math.round(x*100)/100;};
+  const b=(DB.config.bancs||[]).find(function(x){return x.codi===P.banc;});
+  if(!b)return no('No trobe el '+P.banc);
+  const byId=new Map(DB.moviments.map(function(m){return[m.id,m];}));
+  const movs=P.moviments.map(function(d){
+    const m=byId.get(d[0]);
+    return m&&m.via===P.banc&&m.anyFiscal===P.de&&m.data===d[1]&&m.tipus===d[3]&&Math.abs((parseFloat(m.import)||0)-d[2])<0.005?m:null;
+  });
+  if(movs.some(function(m){return!m;}))return no('Els apunts no coincideixen (ja aplicat?)');
+  const ids=new Set(P.moviments.map(function(d){return d[0];}));
+  const clauDe=b.id+'_'+P.de,clauA=b.id+'_'+P.a;
+  const iniDe=parseFloat((DB.saldos[clauDe]||{}).saldoInicial);
+  const iniA=parseFloat((DB.saldos[clauA]||{}).saldoInicial);
+  if(isNaN(iniDe)||isNaN(iniA))return no('No trobe els saldos inicials del '+P.banc);
+  if(Math.abs(iniA-P.saldoActual)>=0.005)return no('El saldo inicial del '+P.a+' no és '+P.saldoActual);
+  const restaDe=DB.moviments.filter(function(m){return m.via===P.banc&&m.anyFiscal===P.de&&!ids.has(m.id);});
+  const tancamentDe=r2(iniDe+suma(restaDe));
+  if(Math.abs(tancamentDe-P.saldoNou)>=0.005)return no('El tancament del '+P.de+' sense els 7 apunts ('+tancamentDe+') no quadra amb el saldo real de l\'1/4');
+  const movsA=DB.moviments.filter(function(m){return m.via===P.banc&&(m.anyFiscal===P.a||!m.anyFiscal);});
+  return{ok:true,b:b,movs:movs,clauA:clauA,tancamentDe:tancamentDe,
+    actual:r2(iniA+suma(movsA)),previst:r2(P.saldoNou+suma(movsA)+suma(movs)),net:r2(suma(movs)),r2:r2,suma:suma};
+}
+async function mou02BancPuntual(){
+  const P=_MOURE_02B;
+  let p;
+  try{p=_moure02bPla();}catch(e){showToast('Error comprovant la correcció: '+e.message,true);return;}
+  if(!p.ok){showToast('Correcció no disponible: '+p.motiu,true);return;}
+  const resum='Passar 7 apunts del '+P.banc+' del '+P.de+' al '+P.a+'\n\n'+
+    '• Són d\'abril–maig de 2026 (posteriors a l\'1/4) i es van importar al '+P.de+' per error.\n'+
+    '• El saldo inicial del '+P.banc+' '+P.a+' passa de '+fmtD(P.saldoActual)+' a '+fmtD(P.saldoNou)+' (saldo real a l\'1/4).\n'+
+    '• Efecte: despesa neta del '+P.de+' −'+fmtD(Math.abs(p.net))+' i del '+P.a+' +'+fmtD(Math.abs(p.net))+'.\n'+
+    '• El '+P.de+' queda tancat a '+fmtD(p.tancamentDe)+'.\n\n'+
+    'Saldo del '+P.banc+' ('+P.a+'): '+fmtD(p.actual)+'  →  '+fmtD(p.previst)+'\n\n'+
+    'L\'exercici '+P.de+' està tancat: aquest canvi és una excepció.\n'+
+    'Abans es descarregaran dues còpies de seguretat (25/26 i 26/27). Continuar?';
+  if(!confirm(resum))return;
+  try{
+    exportSnapshotExercici(P.de);
+    await new Promise(function(r){setTimeout(r,800);});
+    exportSnapshotExercici(P.a);
+    await new Promise(function(r){setTimeout(r,800);});
+    p.movs.forEach(function(m){m.anyFiscal=P.a;});
+    DB.saldos[p.clauA]=Object.assign({},DB.saldos[p.clauA],{saldoInicial:P.saldoNou,saldoData:P.saldoData});
+    saveCache();
+    // Modifica moviments existents i un saldo: cal reescriure les dues pestanyes senceres
+    await save('moviments');
+    await save('saldos');
+    const fi=p.r2(P.saldoNou+p.suma(DB.moviments.filter(function(m){return m.via===P.banc&&(m.anyFiscal===P.a||!m.anyFiscal);})));
+    showToast('Apunts passats al '+P.a+'. Saldo del '+P.banc+': '+fmtD(fi));
+    renderCfgExercicis();
+  }catch(e){
+    showToast('Error aplicant la correcció: '+e.message+'. Recarrega i comprova les dades; tens les còpies de seguretat descarregades.',true);
+  }
+}
+
 function renderCfgExercicis(){
   const container=document.getElementById('cfg-exercicis');
   if(!container){console.warn('cfg-exercicis-container no trobat');return;}
@@ -6545,6 +6626,14 @@ function renderCfgExercicis(){
   const estats=DB.config.estats_exercicis||{};
   let html='';
   if(canDo){
+    let m02=null;
+    try{const pm=_moure02bPla();if(pm.ok)m02=pm;}catch(e){}
+    if(m02){
+      html+='<div style="background:var(--amber-bg);border:1px solid var(--amber);border-radius:var(--r);padding:12px 14px;margin-bottom:16px;color:var(--amber-text);font-size:13px">'+
+        '<div style="font-weight:600;margin-bottom:4px"><i class="ti ti-alert-triangle"></i> 7 apunts del 02 Banc d\'abril–maig imputats al 25/26</div>'+
+        '<div style="margin-bottom:10px">Són posteriors a l\'1/4 i pertanyen al 26/27. Se\'ls passa al 26/27 i el saldo inicial del 02 Banc 26/27 passa de '+fmtD(_MOURE_02B.saldoActual)+' a '+fmtD(_MOURE_02B.saldoNou)+' (saldo real a l\'1/4). Saldo del 02 Banc: '+fmtD(m02.actual)+' → '+fmtD(m02.previst)+'. El 25/26 és tancat: és una excepció. Es descarreguen còpies dels dos exercicis abans.</div>'+
+        '<button class="btn btn-primary" onclick="mou02BancPuntual()"><i class="ti ti-arrows-exchange"></i> Revisar i aplicar</button></div>';
+    }
     html+='<div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">';
     html+='<button class="btn btn-primary" onclick="obrirNouExercici()"><i class="ti ti-calendar-plus"></i> Nou exercici</button>';
     html+='<button class="btn" onclick="openModalTancarExercici()" style="color:var(--amber)"><i class="ti ti-lock"></i> Tancar exercici actual</button>';

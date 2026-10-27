@@ -1,6 +1,6 @@
 # Work Stream Status — Falla Portal
-## Snapshot Date: 2026-10-14
-## Versió en producció: v4.0.79
+## Snapshot Date: 2026-10-27
+## Versió en producció: v4.0.79 (v4.0.80 preparada, pendent de publicar)
 
 > **Context de calendari**: període vacacional, ús baix de l'eina. Bon moment per a
 > canvis estructurals i per a la decisió pendent del Service Worker.
@@ -159,11 +159,20 @@ verificat amb la v4.0.78 per a `area`, `delegat` i `treasury`.
 caixes, el saldo inicial total i la variació (és el resultat de l'exercici, vegeu D-029 i el model de saldos). Verificat amb
 dades sintètiques (4 comptes, total quadrat a mà) i sense escriptures al full.
 
-**Diagnòstic del 02 Banc (2026-10-27, extracte `ciaxapopularfalla_5419.xlsx` des de l'1/4 fins al 3/10)**: l'extracte acaba a
-26.353,58 € i l'app (còpia del 13/10) té el 02 Banc a 23.941,79 € sense cap moviment al 26/27. Falten 10 apunts, nets +2.411,79 €:
-Loteria 07/05 (+2.411,00), quotes del 03/06, 03/07, 03/08, 03/09 i 03/10 (−30,25 cadascuna), comissió GPRS 03/06 (−6,05), AEAT
-model 115 27/07 (−228,00), facturació comerç 27/09 (+387,50) i descomptes comerç 27/09 (−1,41). Els 7 d'abril–maig ja hi són (25/26).
-Cal importar-lo des d'Importar CSV (els 7 surten com a duplicats segurs). Pendent d'Emilio: importar-lo i comprovar el saldo.
+**Diagnòstic del 02 Banc (2026-10-27, extracte `ciaxapopularfalla_5419.xlsx` des de l'1/4 fins al 3/10; dades de producció llegides
+amb la sessió d'Emilio, només lectura)**: l'extracte acaba a 26.353,58 € i l'app mostrava 26.948,13 € (+594,55 €). Els 17 apunts de
+l'extracte hi són tots, sense cap de sobrant. La causa és el **saldo inicial del 02 Banc al 26/27: 24.536,34 €** (el saldo de l'extracte
+després del primer apunt, no el de l'1/4). Dos fets: (1) el saldo real de Caixa Popular a l'1/4 és **24.542,39 €** (D-029 confirmat);
+(2) 7 apunts d'abril–maig (net −600,60 €) són del 26/27 però estan imputats al 25/26: es van importar el 25/05/2026 amb el 25/26 actiu
+(l'importador usa l'any actiu, no la data; A-10) i el 25/26 es va tancar el 17/06 amb ells a dins. Amb ells fora, el 25/26 tanca a
+24.542,39 €, igual que el banc a 31/03. Una primera lectura (amb la còpia del 13/10) deia, erròniament, que faltaven 10 apunts.
+
+**v4.0.80 (2026-10-27) — correcció d'un sol ús dels 7 apunts del 02 Banc (A-10, D-029)**: targeta ambre a Configuració → Exercicis
+("Revisar i aplicar") que passa els 7 apunts del 25/26 al 26/27 i posa el saldo inicial del 02 Banc 26/27 a 24.542,39 € (01/04/2026);
+exercici tancat: excepció confirmada; descarrega còpia dels dos exercicis; escriu `01 Moviments` i `15 Saldos`. Només apareix si els
+7 apunts casen (id, data, import, sentit), el saldo inicial és 24.536,34 € i el tancament del 25/26 sense ells és 24.542,39 €.
+Verificat amb dades sintètiques (cas bo + 4 casos negatius; només es canvien els 7 apunts; 02 Banc 26.948,13 → 26.353,58 €). **Pendent
+d'Emilio: aplicar-la; després eliminar el codi (commit apart).** Efecte als informes: 25/26 −600,60 € de despesa neta, 26/27 +600,60 €.
 
 **Pendents** (res d'això depén de codi):
 1. Extractes actuals: Caixabank ES06 2100 1958 3602 0008 8726 des del 29/9; Caixabank ES56 2100 7990 7413 0059 2938
@@ -178,8 +187,9 @@ Cal importar-lo des d'Importar CSV (els 7 surten com a duplicats segurs). Penden
 3. A Configuració → Regles (Emilio): `T.PlanaMyCommerce` i `MANTENIMIENTO TPV` a 01 Tresoreria; esborrar `PR.DE;`;
    buidar el concepte de `PR.DE` i `DETIR`; allargar `RAMS`. Opcional: regla `FATIR` → 01 Secretaria (remeses de quotes).
 4. Avançament pendent d'A. Alario: 40 €.
-5. **02 Banc (D-029)**: obtindre el saldo real de Caixa Popular a 31/03/2026. Si és 24.542,39 €, els 7 moviments del 02 Banc
-   d'abril–maig de 2026 (600,60 € nets de despesa) passen del 25/26 al 26/27 i el saldo inicial 26/27 del 02 Banc a 24.542,39 €.
+5. **02 Banc (D-029)**: el saldo real a 31/03/2026 és 24.542,39 € (confirmat amb l'extracte del 27/10). Aplicar la targeta de la
+   v4.0.80 (Configuració → Exercicis): passa els 7 moviments d'abril–maig (−600,60 € nets) del 25/26 al 26/27 i posa el saldo inicial
+   26/27 a 24.542,39 €. Després, comprovar que el 02 Banc dona 26.353,58 € (extracte del 3/10) i eliminar el codi puntual.
 6. Decidir si les remeses de quotes (`FATIR…`) i els apunts del TPV tenen regla pròpia; les àrees confirmades són TPV →
    01 Tresoreria, WiFi COM.T → 07 Coordinació Tècnica, aigua → 01 Jurídica i Contractacions, quotes → 01 Secretaria.
 
