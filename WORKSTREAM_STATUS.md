@@ -1,6 +1,6 @@
 # Work Stream Status — Falla Portal
 ## Snapshot Date: 2026-10-27
-## Versió en producció: v4.0.87 (v4.0.88 preparada: fora el codi puntual de la marca)
+## Versió en producció: v4.0.87 (v4.0.88 i v4.0.89 preparades, pendents de publicar)
 
 > **Context de calendari**: període vacacional, ús baix de l'eina. Bon moment per a
 > canvis estructurals i per a la decisió pendent del Service Worker.
@@ -240,9 +240,15 @@ la targeta no apareix amb un apunt ambigu ni per al rol `area`; lectura fallida 
 **Publicada i aplicada per Emilio el 2026-10-27** ("30 apunts marcats com a traspàs", missatge que només surt si la relectura del full
 coincideix fila per fila). Codi puntual eliminat a la v4.0.88. Últim apunt de l'extracte del 01 Banc: 28/09/2026 (després, 2 despeses
 manuals del 08/10: Filament 3D 214,95 € i Gorres negres 4.116,42 €); falta l'extracte des del 29/09.
-**Pendent**: v4.0.89 (regles d'importació que marquen traspassos); portar la columna
-`traspas` al model de Supabase (taula `moviments`, `sbTaules`/`sbPestanyes`, MODEL_DADES). Si s'apunta un "Banc → caixa" abans d'aplicar la
-targeta, la marca es pot perdre (la fila de capçaleres encara no té la columna i l'apunt s'afegeix sense reescriure-la).
+**v4.0.89 (2026-10-27) — regles d'importació que marquen traspassos (pas 3b)**: nova columna `traspas` a `13 Regles CSV` i casella "Traspàs
+entre comptes de la falla" al formulari de regles (només per a regles de tipus "auto"); `aplicarReglesImportacio` copia la marca de la regla al
+moviment i la importació la desa. La previsualització compta els traspassos i els etiqueta; la llista de regles també. Verificat amb un full
+simulat sense la columna: marcar una regla existent ("TRASPASO PROPIO") la desa i la mostra; un extracte de Caixabank amb un "TRASPASO PROPIO"
+i un rebut importa el primer marcat i el segon no; Resultats no compta el traspàs i el saldo del banc sí. **Pendent d'Emilio**: a Configuració →
+Regles, marcar com a traspàs les regles de traspassos propis (p. ex. `TRASPASO PROPIO`, `TRASPÀS PROPI`), i no les de "PAGO TRASPASOS" (pagaments
+a tercers). En importar l'extracte del 01 Banc des del 29/9, comprovar que l'entrada de 10.000 € del 26/10 queda marcada (si no, marcar-la a
+l'Historial): llavors el net dels traspassos del 26/27 serà 0.
+**Pendent**: portar les columnes `traspas` (moviments i regles) al model de Supabase (taules, `sbTaules`/`sbPestanyes`, MODEL_DADES).
 
 **Pendents** (res d'això depén de codi):
 1. Extractes actuals: Caixabank ES06 2100 1958 3602 0008 8726 des del 29/9; Caixabank ES56 2100 7990 7413 0059 2938

@@ -126,7 +126,8 @@ despesa. Dashboard, Resultats, Flux, Pressupost, informes per event i despeses s
 de cada compte sí. Al Flux, cada compte mostra el net dels seus traspassos a part i el saldo final l'inclou (és 0 si
 cada traspàs té els dos costats). Resultats, Flux i Configuració → Bancs mostren una línia de control amb el nombre de
 traspassos i avisen si el net no és 0 (falta un costat o un extracte). La marca la posa sola l'origen "Banc" dels fons
-(els dos costats); a l'Historial, President i Tresoreria la poden posar o treure a mà. Les exportacions CSV els etiqueten
+(els dos costats) i, en importar un extracte, una regla marcada "Traspàs entre comptes" (v4.0.89); a l'Historial, President i
+Tresoreria la poden posar o treure a mà. Les exportacions CSV els etiqueten
 "Traspas (entrada)/(eixida)".
 **Status**: R1–R4 implementats. R5–R8 pendents.
 
