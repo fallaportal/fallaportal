@@ -1,6 +1,6 @@
 # Work Stream Status — Falla Portal
 ## Snapshot Date: 2026-10-27
-## Versió en producció: v4.0.84 (v4.0.85 i v4.0.86 preparades, pendents de publicar)
+## Versió en producció: v4.0.86 (v4.0.87 preparada, pendent de publicar: traspassos fora dels informes)
 
 > **Context de calendari**: període vacacional, ús baix de l'eina. Bon moment per a
 > canvis estructurals i per a la decisió pendent del Service Worker.
@@ -222,7 +222,24 @@ còpia de l'inici i desfeien el que s'haguera desat mentrestant.
 `bgRefresh` i el polling ja no restauren cap còpia. Reproduït amb la v4.0.85 (refresc lent + moviment A desat enmig → A desapareix de la
 memòria i el desat de B l'esborra del full) i verificat amb la v4.0.86 amb la mateixa seqüència (A es conserva), amb `saveMoviment` +
 `bgRefresh`, amb un refresc normal, amb desats contínuament durant la lectura (descarta i falla sense tocar res), amb la protecció dels saldos
-i registrant un moviment des del formulari.
+i registrant un moviment des del formulari. **v4.0.85 i v4.0.86 publicades el 2026-10-27.**
+**v4.0.87 (2026-10-27) — traspassos entre comptes fora dels informes (pas 3a)**: nova columna `traspas` a `01 Moviments` (`'true'` o buit;
+els apunts antics no en tenen i no són traspassos; la fila de capçaleres la reescriu el primer desat). `esTraspas(m)` i `netTraspassos()`.
+No compten com a ingrés ni despesa: Dashboard (mètriques i despesa per àrea), Historial (totals, "sense N traspassos"), Resultats, Flux
+(cobraments/pagaments; a cada compte "Traspassos (net)" i el saldo final l'inclou), Pressupost (real i còpia), fons gastat d'un delegat,
+informes per event i despeses sense justificant. Sí: saldos dels comptes i saldos inicials del nou exercici. Control a Resultats, Flux i
+Configuració → Bancs (nombre de traspassos i avís si el net no és 0). Marca: automàtica a `crearTraspasBancCaixa` (els dos costats, també
+quan reclassifica un moviment de l'extracte) i casella a l'edició de l'Historial (President i Tresoreria). CSV: "Traspas (entrada)/(eixida)".
+Targeta d'un sol ús a Configuració → Exercicis ("Marcar els traspassos entre comptes") amb els 30 apunts revisats (4 del 25/26 i 26 del 26/27),
+cadascun ha de casar amb un sol moviment; llig el full, marca, escriu, rellig i compara fila per fila, espera les càrregues en curs i recarrega.
+Verificat amb un full simulat sense la columna: abans 51.172 € d'ingressos i 60.472 € de despeses (inflats), després 1.000 € i 300 € (els
+moviments normals); saldos i saldo final del Flux iguals; control amb net −10.000 €; només `PUT`+`clear` de `01 Moviments`, capçalera nova,
+30 marcats i la resta idèntica; casella de l'Historial (marcar/desmarcar, bloquejada per a `area`); "Banc → caixa" marca els dos costats;
+la targeta no apareix amb un apunt ambigu ni per al rol `area`; lectura fallida no escriu. Efecte previst a producció (26/27): ingressos
+−50.171,60 €, despeses −60.171,60 € (el −10.000 € del 26/10 queda sense parella fins a importar l'extracte del 01 Banc des del 29/9).
+**Pendent**: aplicar la targeta (Emilio) i eliminar-ne el codi; v4.0.88 (regles d'importació que marquen traspassos); portar la columna
+`traspas` al model de Supabase (taula `moviments`, `sbTaules`/`sbPestanyes`, MODEL_DADES). Si s'apunta un "Banc → caixa" abans d'aplicar la
+targeta, la marca es pot perdre (la fila de capçaleres encara no té la columna i l'apunt s'afegeix sense reescriure-la).
 
 **Pendents** (res d'això depén de codi):
 1. Extractes actuals: Caixabank ES06 2100 1958 3602 0008 8726 des del 29/9; Caixabank ES56 2100 7990 7413 0059 2938
