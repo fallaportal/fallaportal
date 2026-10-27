@@ -68,7 +68,17 @@ Cremà (19/03) i el 31/03 serveixen per liquidar els pendents de Falles dins del
 
 ### Established Facts
 
-- **Versió en producció actual**: v4.0.79 (BUILD_VERSION `4079`) [TIME-SENSITIVE: 2026-10-27]
+- **Versió en producció actual**: v4.0.89 (BUILD_VERSION `4089`) [TIME-SENSITIVE: 2026-10-27]; branca `supabase`: v4.1.4
+- **Una càrrega no trepitja un desat** [v4.0.86]: `loadFromSheets` ho llig tot abans d'assignar `DB` i descarta la lectura si `_genEscriptura`
+  ha canviat mentre llegia (el pugen `save`, `saveMoviment`, `saveFons` i el passiu de falles.app). Una càrrega fallida no toca `DB`, així que
+  ningú no restaura còpies. `_carregant` compta les càrregues en curs.
+- **Traspàs entre comptes** [v4.0.87, decisió d'Emilio del 2026-10-27]: moure diners d'un compte de la falla a un altre no és ni ingrés
+  ni despesa. Camp `traspas` del moviment (`'true'`) i de les regles d'importació (v4.0.89); els informes no el compten i el saldo de cada compte sí. El net dels traspassos d'un
+  exercici ha de ser 0; si no, falta un costat (o un extracte per importar).
+- **Saldos protegits** [v4.0.83, després de l'incident del 2026-10-27]: `15 Saldos` es llig dins del swap atòmic i un error de lectura es
+  propaga; `save('saldos')` es nega a escriure si falta algun saldo llegit el banc i l'exercici del qual encara existeixen.
+- **Quota de lectura de Sheets**: 60 lectures/minut per usuari; cada sessió oberta en fa ~40/minut (càrrega sencera cada 30 s). Dues sessions
+  del mateix compte la superen i les lectures fallen amb 429.
 - **La caducitat del token de Google no tanca la sessió** [v4.0.47–48, D-020]:
   - Apareix un bàner i els guardats esperen el token nou.
   - `save()`/`writeTab()` esperen **abans** de fer la còpia de `DB`.
@@ -98,7 +108,8 @@ Cremà (19/03) i el 31/03 serveixen per liquidar els pendents de Falles dins del
 - La conciliació és control, no comptable: els moviments compten als informes independentment del seu estat.
 - **Comptes bancaris** (a l'app, IBAN i via):
   - **01 Banc** Caixabank ES06 2100 1958 3602 0008 8726.
-  - **02 Banc** Caixa Popular ES82 3159 0076 6426 7219 1729.
+  - **02 Banc** Caixa Popular ES82 3159 0076 6426 7219 1729. Saldo real a l'1/4/2026: 24.542,39 € (extracte del 27/10/2026);
+    a 3/10/2026: 26.353,58 €. L'importador d'extractes imputa els apunts a l'**any actiu**, no segons la data (A-10).
   - **03 Banc** Caixabank ES56 2100 7990 7413 0059 2938.
   - **TPV targetes** (tipus `tpv`) Caixabank ES60 2100 7990 7802 0033 2534: només comissions del TPV i traspassos
     propis; saldo 0. L'IBAN s'ha de tenir configurat al banc: si no, `processXLSBanc` assigna el fitxer al primer

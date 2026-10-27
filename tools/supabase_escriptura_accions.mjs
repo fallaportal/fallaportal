@@ -551,6 +551,24 @@ export const accions = [
     },
   },
   {
+    nom: 'Traspassos (D-049): marcar i desmarcar un moviment, i una regla que marca traspassos',
+    async executa(c) {
+      const p = persones(c);
+      let mid = null;
+      const r1 = await pas(c, inici(c), p.tresoreria.email, (T) => {
+        const m = T['01 Moviments'].find((x) => x.anyFiscal === '26/27' && x.via !== 'app' && x.traspas !== 'true');
+        mid = m.id; m.traspas = 'true';
+      });
+      afirma(r1.R2.moviments.find((m) => m.id === mid).traspas === true, 'marcar el moviment');
+      const r2 = await pas(c, r1, p.tresoreria.email, (T) => { T['01 Moviments'].find((x) => x.id === mid).traspas = ''; });
+      afirma(r2.R2.moviments.find((m) => m.id === mid).traspas === false, 'desmarcar el moviment');
+      const reg = { id: id('r'), font: '01 Banc', patrons: 'TRASPASO PROPIO PROVA', areaId: '01', areaNom: 'x', delegacioId: '0102', delegacioNom: 'x', concepte: '', tipus: 'auto', movtype: 'auto', prioritat: 5, activa: true, traspas: 'true' };
+      const r3 = await pas(c, r2, p.tresoreria.email, (T) => T['13 Regles CSV'].push(reg));
+      afirma(r3.R2.regles_importacio.find((r) => r.id === reg.id).traspas === true, 'regla de traspàs');
+      return { ok: true };
+    },
+  },
+  {
     nom: 'Rols: rol nou, permís, color i eliminar',
     async executa(c) {
       const p = persones(c);

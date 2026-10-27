@@ -1,5 +1,5 @@
 # Functional Design Document — Falla Portal
-## Generated: 2026-07-29 · Actualitzat: 2026-10-13 · v4.0.78
+## Generated: 2026-07-29 · Actualitzat: 2026-10-27 · v4.0.87
 
 ---
 
@@ -121,6 +121,14 @@ sobreescriu un pressupost bloquejat i avisa si el destí ja té línies (v4.0.75
 **Description**: Balanç, despesa per àrea, ingressos per font, evolució temporal.
 Inclou l'informe de **despeses sense justificant**, que és la xarxa de seguretat quan
 la pujada d'un justificant falla.
+**Traspassos entre comptes** (v4.0.87): un moviment marcat "Traspàs entre comptes de la falla" no és ni ingrés ni
+despesa. Dashboard, Resultats, Flux, Pressupost, informes per event i despeses sense justificant no el compten; el saldo
+de cada compte sí. Al Flux, cada compte mostra el net dels seus traspassos a part i el saldo final l'inclou (és 0 si
+cada traspàs té els dos costats). Resultats, Flux i Configuració → Bancs mostren una línia de control amb el nombre de
+traspassos i avisen si el net no és 0 (falta un costat o un extracte). La marca la posa sola l'origen "Banc" dels fons
+(els dos costats) i, en importar un extracte, una regla marcada "Traspàs entre comptes" (v4.0.89); a l'Historial, President i
+Tresoreria la poden posar o treure a mà. Les exportacions CSV els etiqueten
+"Traspas (entrada)/(eixida)".
 **Status**: R1–R4 implementats. R5–R8 pendents.
 
 ---

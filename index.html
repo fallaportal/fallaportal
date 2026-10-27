@@ -346,7 +346,7 @@ tr:hover td{background:var(--bg2)}
     <div class="login-logo">Falla <span>Portal</span></div>
     <div class="login-sub">Sistema de gestió financera</div>
     <div class="login-fiscal">Any fiscal 26/27 · Abr 2026 – Mar 2027</div>
-    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v4.1.3</div>
+    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v4.1.4</div>
     <div id="login-step-boot" class="login-boot">Comprovant la sessió…</div>
     <div id="login-step-email" class="hidden">
       <label class="login-lbl" for="login-email">Correu electrònic</label>
@@ -399,7 +399,7 @@ tr:hover td{background:var(--bg2)}
     <div class="sb-bottom">
       <div class="sync-ind" style="display:flex;align-items:center;justify-content:space-between"><div style="display:flex;align-items:center;gap:6px"><div class="sync-dot" id="sync-dot"></div><span id="sync-text">Sincronitzat</span></div><button onclick="manualRefresh()" title="Actualitzar dades" style="background:none;border:none;cursor:pointer;padding:2px 4px;color:var(--text2);font-size:14px;line-height:1"><i class="ti ti-refresh"></i></button></div>
       <button class="btn-logout" onclick="signOut()"><i class="ti ti-logout" style="font-size:14px"></i> Tancar sessió</button>
-      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v4.1.3</div>
+      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v4.1.4</div>
     </div>
   </div>
 
@@ -735,6 +735,10 @@ tr:hover td{background:var(--bg2)}
             <label>Import <span style="color:var(--text3);font-size:11px">(modifica amb precaució)</span></label>
             <input type="number" id="edit-mov-import" min="0.01" step="0.01" placeholder="0.00">
           </div>
+          <label style="display:flex;align-items:flex-start;gap:8px;font-size:13px;cursor:pointer">
+            <input type="checkbox" id="edit-mov-traspas" style="width:auto;margin-top:2px">
+            <span>Traspàs entre comptes de la falla<br><span style="font-size:11px;color:var(--text3)">No compta com a ingrés ni despesa als informes; sí al saldo del compte.</span></span>
+          </label>
         </div>
         <div class="modal-footer">
           <button class="btn" onclick="closeModal('modal-edit-mov')">Cancel·lar</button>
@@ -1278,6 +1282,10 @@ tr:hover td{background:var(--bg2)}
         <label>Concepte <span style="color:var(--text3);font-size:11px">(opcional)</span></label>
         <input type="text" id="mr-concepte" placeholder="p.e. Llum, Assegurances...">
       </div>
+      <label style="display:flex;align-items:flex-start;gap:8px;font-size:13px;cursor:pointer;margin-bottom:12px">
+        <input type="checkbox" id="mr-traspas" style="width:auto;margin-top:2px">
+        <span>Traspàs entre comptes de la falla<br><span style="font-size:11px;color:var(--text3)">Els moviments que casen es marquen com a traspàs: no compten com a ingrés ni despesa.</span></span>
+      </label>
     </div>
     <div class="field" style="display:flex;align-items:center;gap:10px">
       <input type="checkbox" id="mr-activa" checked style="width:auto;margin:0">
@@ -1543,7 +1551,7 @@ tr:hover td{background:var(--bg2)}
 
 <script>
 const TABS={
-  moviments:{name:'01 Moviments',headers:['id','data','tipus','via','areaId','areaNom','delegacioId','delegacioNom','eventId','eventNom','concepte','establiment','responsable','responsableEmail','import','notes','anyFiscal','origenFons','fontImport','bankHash','origen','ticketUrl','ticketMotiu','conciliacio']},
+  moviments:{name:'01 Moviments',headers:['id','data','tipus','via','areaId','areaNom','delegacioId','delegacioNom','eventId','eventNom','concepte','establiment','responsable','responsableEmail','import','notes','anyFiscal','origenFons','fontImport','bankHash','origen','ticketUrl','ticketMotiu','conciliacio','traspas']},
   fons:{name:'02 Fons',headers:['id','data','tipus','delegId','delegEmail','import','nota','registratPer','anyFiscal','movimentId','eventTancamentId']},
   tancaments:{name:'03 Tancaments',headers:['eventId','eventNom','data','efectiu','tpv','canvi','pagaments','tancat','estat','fonsId','concepte','registratPer','anyFiscal']},
   arees:{name:'04 Arees',headers:['id','nom','responsable']},
@@ -1556,7 +1564,7 @@ const TABS={
   pres_plans:{name:'10 Pressupostos Plans',headers:['any','delegacioId','delegacioNom','eventId','eventNom','concepte','tipus','importPla','notes']},
   pres_config:{name:'11 Pressupostos Config',headers:['any','estat','bloquejatPer','bloquejatEmail','data']},
   pres_historial:{name:'12 Pressupostos Historial',headers:['data','accio','any','usuari','email','motiu']},
-  regles:{name:'13 Regles CSV',headers:['id','font','patrons','areaId','areaNom','delegacioId','delegacioNom','concepte','tipus','movtype','prioritat','activa']},
+  regles:{name:'13 Regles CSV',headers:['id','font','patrons','areaId','areaNom','delegacioId','delegacioNom','concepte','tipus','movtype','prioritat','activa','traspas']},
   rols:{name:'14 Rols',headers:['id','label','color','canRegister','canFons','canImport','canConfig','canUsers','viewAll','custom']},
   saldos:{name:'15 Saldos',headers:['bancId','anyFiscal','saldoInicial','saldoData']},
   fapp_passiu:{name:'16 Fapp Passiu',headers:['data','total','fallers','anyFiscal']},
@@ -1750,6 +1758,13 @@ let DB={
 const fmt=v=>Math.abs(v).toLocaleString('ca-ES',{maximumFractionDigits:0})+' €';
 const fmtD=v=>Math.abs(v).toLocaleString('ca-ES',{minimumFractionDigits:2,maximumFractionDigits:2})+' €';
 const fmtS=v=>(v>=0?'+':'-')+fmt(v);
+// Traspàs entre comptes de la falla (v4.0.87): mou diners d'un compte a un altre però no és ni ingrés ni despesa.
+// El saldo de cada compte el compta; els informes, el pressupost i els justificants no.
+function esTraspas(m){return m.traspas===true||m.traspas==='true';}
+// Net dels traspassos d'una llista: ha de ser 0 si cada traspàs té els dos costats.
+function netTraspassos(movs){
+  return Math.round(movs.filter(esTraspas).reduce(function(s,m){return s+(m.tipus==='ing'?1:-1)*(parseFloat(m.import)||0);},0)*100)/100;
+}
 const today=()=>{const d=new Date();return String(d.getDate()).padStart(2,'0')+'/'+(String(d.getMonth()+1).padStart(2,'0'))+'/'+d.getFullYear();};
 const todayISO=()=>{const d=new Date();return d.getFullYear()+'-'+(String(d.getMonth()+1).padStart(2,'0'))+'-'+String(d.getDate()).padStart(2,'0');};
 // Convertir DD/MM/AAAA a AAAA-MM-DD (per a inputs type=date)
@@ -2524,8 +2539,8 @@ async function bgRefresh(forca){
   const now=Date.now();
   if(forca!==true&&now-_lastRefresh<REFRESH_MIN_GAP)return;
   _lastRefresh=now;
-  const _snapMovs=DB.moviments?[...DB.moviments]:[];
-  const _snapFons=DB.fons?[...DB.fons]:[];
+  // Si la càrrega falla, no ha tocat DB (ho llig tot abans d'assignar): no cal restaurar res. Restaurar una còpia
+  // de l'inici desfaria el que s'haguera desat mentre es llegia.
   try{
     await loadFromSupabase();
     buildNav();
@@ -2537,8 +2552,6 @@ async function bgRefresh(forca){
       if(renders[pid])renders[pid]();
     }
   }catch(e){
-    if(_snapMovs.length>0)DB.moviments=_snapMovs;
-    if(_snapFons.length>0)DB.fons=_snapFons;
     console.warn('bgRefresh error:',e);
   }
 }
@@ -2696,7 +2709,7 @@ function sbPestanyes(R){
       origenFons:m.font==='manual'?(origenFonsDe[m.pagament_efectiu]||''):o[2],
       fontImport:m.font==='extracte'?'xls_'+m.compte_id:o[1],
       bankHash:_sbS(m.empremta),origen:o[0],ticketUrl:j?_sbS(j.url_drive_original):'',
-      ticketMotiu:_sbS(m.motiu_sense_justificant),conciliacio:m.conciliacio};
+      ticketMotiu:_sbS(m.motiu_sense_justificant),conciliacio:m.conciliacio,traspas:m.traspas?'true':''};
   });
   (R.fallesapp_consums||[]).forEach(function(k){
     const ev=k.event_id?events[k.event_id]:null;
@@ -2706,7 +2719,7 @@ function sbPestanyes(R){
       eventId:_sbS(k.event_id),eventNom:ev?ev.nom:'',concepte:'Consums falles.app',establiment:'',
       responsable:nomU(k.creat_per),responsableEmail:emailU(k.creat_per),import:_sbS(k.import),notes:'',
       anyFiscal:k.exercici_id,origenFons:'',fontImport:'fallesapp_tickets',bankHash:'',origen:'App',ticketUrl:'',ticketMotiu:'',
-      conciliacio:'no_aplica'});
+      conciliacio:'no_aplica',traspas:''});
   });
   T['01 Moviments']=movs;
 
@@ -2760,7 +2773,7 @@ function sbPestanyes(R){
       areaNom:r.area_id&&arees[r.area_id]?arees[r.area_id].nom:'',delegacioId:_sbS(r.delegacio_id),
       delegacioNom:r.delegacio_id&&delegs[r.delegacio_id]?delegs[r.delegacio_id].nom:'',concepte:_sbS(r.concepte),
       tipus:r.tipus==='assignar'?'auto':r.tipus==='ignorar'?'ignore':r.tipus,movtype:r.sentit==='despesa'?'gast':r.sentit==='ingres'?'ing':'auto',
-      prioritat:_sbS(r.prioritat),activa:r.activa?'true':'false'};
+      prioritat:_sbS(r.prioritat),activa:r.activa?'true':'false',traspas:r.traspas?'true':''};
   });
 
   // --- falles.app (passiu)
@@ -2938,7 +2951,8 @@ function sbTaules(T,ctx){
     afegeix('regles_importacio',{id:r.id},{compte_id:compte,patrons:patrons,
       tipus:({auto:'assignar',assignar:'assignar',tpv:'tpv',ignore:'ignorar',ignorar:'ignorar'})[r.tipus]||'assignar',
       sentit:({gast:'despesa',ing:'ingres'})[r.movtype]||'qualsevol',area_id:area,delegacio_id:area?_sbTxt(r.delegacioId):null,
-      concepte:_sbTxt(r.concepte),prioritat:parseInt(r.prioritat,10)||100,activa:!(r.activa===false||String(r.activa)==='false')});
+      concepte:_sbTxt(r.concepte),prioritat:parseInt(r.prioritat,10)||100,activa:!(r.activa===false||String(r.activa)==='false'),
+      traspas:r.traspas===true||r.traspas==='true'});
   });
 
   // --- Caixes d'event
@@ -2982,7 +2996,8 @@ function sbTaules(T,ctx){
       event_id:events[m.eventId]?m.eventId:null,caixa_id:esCaixa?_sbTxt(m.eventId):null,font:font,
       pagament_efectiu:despesa&&font==='manual'?(origenFons[m.origenFons]||null):null,
       concepte:_sbTxt(m.concepte),establiment:_sbTxt(m.establiment),notes:_sbTxt(m.notes),
-      empremta:importat?_sbTxt(m.bankHash):null,motiu_sense_justificant:_sbTxt(m.ticketMotiu)},_sbImputacio(iso,m.anyFiscal,exLlista)));
+      empremta:importat?_sbTxt(m.bankHash):null,motiu_sense_justificant:_sbTxt(m.ticketMotiu),
+      traspas:m.traspas===true||m.traspas==='true'},_sbImputacio(iso,m.anyFiscal,exLlista)));
   });
 
   // --- Fons de persones i canvi de caixa
@@ -3294,6 +3309,21 @@ let dadesCarregades=false;
 
 // Nombre de desats en curs. Mentre n'hi haja algun, els refrescos en segon pla s'han d'esperar: substituirien DB.
 let _desantAraMateix=0;
+// Claus de saldos (bancId_XX/YY) de l'última lectura o desat bo de 15 Saldos.
+let _saldosLlegits=null;
+// Saldos llegits que ja no són a DB.saldos tot i que el banc i l'exercici continuen. Esborrar un banc o un
+// exercici treu els seus saldos legítimament; qualsevol altra absència és una pèrdua.
+function _saldosPerduts(){
+  if(!_saldosLlegits)return[];
+  const bancs=new Set((DB.config.bancs||[]).map(function(b){return b.id;}));
+  const anys=new Set(DB.config.exercicis||[]);
+  return Array.from(_saldosLlegits).filter(function(k){
+    if(DB.saldos&&DB.saldos[k]!=null)return false;
+    const m=k.match(/^(.*)_(\d{2}\/\d{2})$/);
+    if(!m)return false;
+    return bancs.has(m[1])&&(anys.size===0||anys.has(m[2]));
+  });
+}
 
 // Guarda a Supabase tot el que ha canviat a DB des de l'última lectura o desat (D-048). El paràmetre només diu qui ho demana:
 // els canvis són sempre tots, en una sola transacció i en l'ordre que demanen les claus foranes, de manera que una acció que
@@ -3307,7 +3337,12 @@ async function save(key){
   _desantAraMateix++;
   setSyncing(true,true);
   try{
+    // Mai desar sense un saldo que s'havia llegit, si el seu banc i el seu exercici encara existeixen: les diferències
+    // l'esborrarien de Supabase (incident del 2026-10-27 a la versió de Sheets).
+    const perduts=_saldosPerduts();
+    if(perduts.length)throw new Error('no es desen els saldos perquè en falten '+perduts.length+' ('+perduts.slice(0,3).join(', ')+'). Recarrega la pàgina');
     await sbDesa();
+    _saldosLlegits=new Set(Object.keys(DB.saldos||{}));
   }catch(e){
     showToast('Error guardant: '+e.message,true);
     throw e;
@@ -3392,9 +3427,15 @@ async function loadFromSupabase(){
   const R=await sbLligTot();
   if(dadesCarregades&&(gen!==_sbGen||_desantAraMateix>0||sbHiHaPendents()))return false;
   _sbPestanyes=sbPestanyes(R);
+  // Totes les pestanyes ja són a memòria: el cos següent no espera res i assigna DB de cop
+  const L={};
+  ['moviments','fons','tancaments','saldos','arees','delegacions','events','bancs','usuaris','usuaris_assignacions',
+    'pres_plans','pres_historial','pres_config','regles','rols','fapp_passiu','config_ext'].forEach(function(k){
+    L[k]=_sbPestanyes[TABS[k].name]||[];
+  });
   // Swap atòmic: llegim tot en variables temporals i assignem a DB al final
   // Evita que una operació d'usuari concurrent veja DB en estat inconsistent
-  const movsRows=await readTab(TABS.moviments.name);
+  const movsRows=L.moviments;
   const _newMoviments=movsRows.map(function(r){
     // Normalitzar dates: si és format ISO (AAAA-MM-DD), convertir a DD/MM/AAAA
     const rawData=r.data||'';
@@ -3407,22 +3448,22 @@ async function loadFromSupabase(){
   });
   // La migració del camp conciliacio es fa més avall, quan DB.config.bancs ja
   // està carregat des del full (vegeu el bloc just abans del swap atòmic).
-  const fonsRows=await readTab(TABS.fons.name);
+  const fonsRows=L.fons;
   const _newFons=fonsRows.map(function(r){return{...r,import:parseFloat(r.import)||0};});
-  const tancRows=await readTab(TABS.tancaments.name);
+  const tancRows=L.tancaments;
   const _newTancaments={};
   tancRows.forEach(function(r){_newTancaments[r.eventId]={...r,efectiu:parseFloat(r.efectiu)||0,tpv:parseFloat(r.tpv)||0,pagaments:parseFloat(r.pagaments)||0,canvi:parseFloat(r.canvi)||0};});
-  // Llegir saldos inicials per any fiscal
-  let saldosRows=[];
-  try{saldosRows=await readTab(TABS.saldos.name);}catch(e){saldosRows=[];}
-  DB.saldos={};// {bancId_anyFiscal: {saldoInicial, saldoData}}
-  saldosRows.forEach(function(r){DB.saldos[r.bancId+'_'+r.anyFiscal]={saldoInicial:parseFloat(r.saldoInicial)||0,saldoData:r.saldoData||''};});
-  const arees=await readTab(TABS.arees.name);
-  const delegacions=await readTab(TABS.delegacions.name);
-  const events=await readTab(TABS.events.name);
-  const bancs=await readTab(TABS.bancs.name);
-  const usuaris=await readTab(TABS.usuaris.name);
-  const assignacions=await readTab(TABS.usuaris_assignacions.name);
+  // Llegir saldos inicials per any fiscal. Van al swap atòmic i la lectura fallida es propaga (2026-10-27): abans es
+  // buidava DB.saldos aquí mateix i un error de lectura (quota 429) el deixava buit; el desat següent esborrava 15 Saldos.
+  const saldosRows=L.saldos;
+  const _newSaldos={};// {bancId_anyFiscal: {saldoInicial, saldoData}}
+  saldosRows.forEach(function(r){_newSaldos[r.bancId+'_'+r.anyFiscal]={saldoInicial:parseFloat(r.saldoInicial)||0,saldoData:r.saldoData||''};});
+  const arees=L.arees;
+  const delegacions=L.delegacions;
+  const events=L.events;
+  const bancs=L.bancs;
+  const usuaris=L.usuaris;
+  const assignacions=L.usuaris_assignacions;
   // Llegir regles d'importació — unificades a 13 Regles CSV (DB.regles), no cal llegir 08
   let reglesRows=[];
   if(arees.length>0||usuaris.length>0){
@@ -3457,16 +3498,16 @@ async function loadFromSupabase(){
       {id:'b4',codi:'TPV',nom:'TPV targetes',tipus:'tpv',saldoInicial:0,saldoData:''}
     ];
   }
-  const presRows=await readTab(TABS.pres_plans.name);
+  const presRows=L.pres_plans;
   DB.pres_plans=presRows.map(function(r){return{...r,importPla:parseFloat(r.importPla)||0};});
-  const presHistRows=await readTab(TABS.pres_historial.name);
+  const presHistRows=L.pres_historial;
   DB.pres_historial=presHistRows;
-  const presConfigRows=await readTab(TABS.pres_config.name);
+  const presConfigRows=L.pres_config;
   if(presConfigRows.length>0)DB.pres_config=presConfigRows[presConfigRows.length-1];
-  const mapReglesRows=await readTab(TABS.regles.name);
+  const mapReglesRows=L.regles;
   DB.regles=mapReglesRows.map(function(r){return{...r,prioritat:parseInt(r.prioritat)||10,activa:r.activa!=='false'};});
   if(!DB.regles.length)DB.regles=getDefaultRegles();   // només en memòria: no es desen fins que algú toca les regles
-  const rolsRows=await readTab(TABS.rols.name);
+  const rolsRows=L.rols;
   if(rolsRows.length>0){
     DB.config.rols={};
     rolsRows.forEach(function(r){
@@ -3477,7 +3518,7 @@ async function loadFromSupabase(){
     });
   }
   // Carregar passiu falles.app
-  const passRows=await readTab(TABS.fapp_passiu.name);
+  const passRows=L.fapp_passiu;
   if(passRows.length>0){
     DB.fapp_passius=passRows.map(function(r){return{data:r.data,total:parseFloat(r.total)||0,fallers:parseInt(r.fallers)||0,anyFiscal:r.anyFiscal};});
     const af2=getAnyFiscal();
@@ -3485,7 +3526,7 @@ async function loadFromSupabase(){
     if(last)DB.config.fappPassiu=last;
   }
   // Carregar config extesa (exercicis, anyFiscal, estats)
-  const cfgExtRows=await readTab(TABS.config_ext.name);
+  const cfgExtRows=L.config_ext;
   if(cfgExtRows.length>0){
     const cfgMap={};
     cfgExtRows.forEach(function(r){cfgMap[r.clau]=r.valor;});
@@ -3514,6 +3555,8 @@ async function loadFromSupabase(){
   DB.moviments=_newMoviments;
   DB.fons=_newFons;
   DB.tancaments=_newTancaments;
+  DB.saldos=_newSaldos;
+  _saldosLlegits=new Set(Object.keys(_newSaldos));
   // A partir d'aci DB reflecteix Supabase: ja es pot guardar sense perill. La foto de base és DB tal com acaba de quedar
   // (no les files cruses): el que la lectura normalitza no ha de comptar com a canvi de l'usuari.
   dadesCarregades=true;
@@ -3558,8 +3601,9 @@ function initFappDates(){
 function renderDashboard(){
   const af=getAnyFiscal();
   const movs=(DB.moviments||[]).filter(function(m){return (!m.anyFiscal||m.anyFiscal===''||m.anyFiscal===af)&&m.via!=='app';});
-  const ing=movs.filter(function(m){return m.tipus==='ing';}).reduce(function(s,m){return s+m.import;},0);
-  const gast=movs.filter(function(m){return m.tipus==='gast';}).reduce(function(s,m){return s+m.import;},0);
+  const movsRes=movs.filter(function(m){return!esTraspas(m);});// els traspassos no són ni ingrés ni despesa
+  const ing=movsRes.filter(function(m){return m.tipus==='ing';}).reduce(function(s,m){return s+m.import;},0);
+  const gast=movsRes.filter(function(m){return m.tipus==='gast';}).reduce(function(s,m){return s+m.import;},0);
   const net=ing-gast;
   // Mètriques
   // Actualitzar subtítol i badge any fiscal
@@ -3650,7 +3694,7 @@ function renderDashboard(){
   const elArees=document.getElementById('dash-areas');
   if(elArees){
     const gastArees=DB.config.areas.map(function(a){
-      const v=movs.filter(function(m){return m.tipus==='gast'&&m.areaId===a.id;}).reduce(function(s,m){return s+m.import;},0);
+      const v=movsRes.filter(function(m){return m.tipus==='gast'&&m.areaId===a.id;}).reduce(function(s,m){return s+m.import;},0);
       return{a,v};
     }).filter(function(x){return x.v>0;}).sort(function(a,b){return b.v-a.v;});
     if(!gastArees.length){
@@ -3676,8 +3720,9 @@ function renderDashboard(){
 function updateDashboardSilent(){
   const af=getAnyFiscal();
   const movs=(DB.moviments||[]).filter(function(m){return (!m.anyFiscal||m.anyFiscal===''||m.anyFiscal===af)&&m.via!=='app';});
-  const ing=movs.filter(function(m){return m.tipus==='ing';}).reduce(function(s,m){return s+m.import;},0);
-  const gast=movs.filter(function(m){return m.tipus==='gast';}).reduce(function(s,m){return s+m.import;},0);
+  const movsRes=movs.filter(function(m){return!esTraspas(m);});
+  const ing=movsRes.filter(function(m){return m.tipus==='ing';}).reduce(function(s,m){return s+m.import;},0);
+  const gast=movsRes.filter(function(m){return m.tipus==='gast';}).reduce(function(s,m){return s+m.import;},0);
   const net=ing-gast;
   const elIng=document.getElementById('m-ing');if(elIng)elIng.textContent=fmt(ing);
   const elGast=document.getElementById('m-gast');if(elGast)elGast.textContent=fmt(gast);
@@ -4132,6 +4177,8 @@ function openEditMov(id){
   const _canEditAssig=getRol()==='president'||getRol()==='treasury';
   document.getElementById('edit-mov-area').disabled=!_canEditAssig;
   document.getElementById('edit-mov-deleg').disabled=!_canEditAssig;
+  document.getElementById('edit-mov-traspas').checked=esTraspas(m);
+  document.getElementById('edit-mov-traspas').disabled=!_canEditAssig;
   openModal('modal-edit-mov');
 }
 
@@ -4159,6 +4206,7 @@ async function saveEditMov(){
   m.delegacioId=delegId;
   m.delegacioNom=deleg?deleg.name:'';
   if(concepte)m.concepte=concepte;
+  if(getRol()==='president'||getRol()==='treasury')m.traspas=document.getElementById('edit-mov-traspas').checked?'true':'';
   const nouImport=parseFloat(document.getElementById('edit-mov-import').value);
   if(nouImport&&nouImport>0)m.import=nouImport;
   // Si el moviment té fons associat, actualitzar-lo també
@@ -4249,10 +4297,11 @@ function filterHist(){
       '</td>'+
     '</tr>';
   }).join('');
-  const ti=movs.filter(m=>m.tipus==='ing').reduce((s,m)=>s+m.import,0);
-  const tg=movs.filter(m=>m.tipus==='gast').reduce((s,m)=>s+m.import,0);
+  const ti=movs.filter(m=>m.tipus==='ing'&&!esTraspas(m)).reduce((s,m)=>s+m.import,0);
+  const tg=movs.filter(m=>m.tipus==='gast'&&!esTraspas(m)).reduce((s,m)=>s+m.import,0);
+  const nt=movs.filter(esTraspas).length;
   document.getElementById('hist-count').textContent=movs.length+' moviments';
-  document.getElementById('hist-total').textContent='+'+fmt(ti)+' · -'+fmt(tg);
+  document.getElementById('hist-total').textContent='+'+fmt(ti)+' · -'+fmt(tg)+(nt?' (sense '+nt+' traspassos)':'');
 }
 
 // FONS DELEGATS
@@ -4325,7 +4374,7 @@ function renderFons(){
   }else{
     const email=currentUser?.email;
     const rebuts=(DB.fons||[]).filter(f=>f.delegEmail===email&&f.tipus==='lliurament').reduce((s,f)=>s+f.import,0);
-    const gastat=(DB.moviments||[]).filter(m=>m.responsableEmail===email&&m.tipus==='gast').reduce((s,m)=>s+m.import,0);
+    const gastat=(DB.moviments||[]).filter(m=>m.responsableEmail===email&&m.tipus==='gast'&&!esTraspas(m)).reduce((s,m)=>s+m.import,0);
     const devol=(DB.fons||[]).filter(f=>f.delegEmail===email&&f.tipus==='devolucio').reduce((s,f)=>s+f.import,0);
     var afF3=getAnyFiscal();
     var fA2=(DB.fons||[]).filter(function(f){return(!f.anyFiscal||f.anyFiscal===''||f.anyFiscal===afF3)&&(f.delegEmail||'').toLowerCase()===(email||'').toLowerCase();});
@@ -4528,7 +4577,7 @@ async function crearTraspasBancCaixa(imp,data,bancCodi,movExistentId,nomDelegat,
       eventId:'',eventNom:'',concepte:concepte,establiment:'',data:d,
       responsable:currentUser?.name||'',responsableEmail:currentUser?.email||'',
       import:imp,notes:'Traspàs banc → caixa per a '+nomDelegat,origenFons:'banc_caixa',
-      origen:'Manual',ticketUrl:'',ticketMotiu:'',conciliacio:calcConciliacio(via,'Manual')};
+      origen:'Manual',ticketUrl:'',ticketMotiu:'',conciliacio:calcConciliacio(via,'Manual'),traspas:'true'};
   };
   const nous=[];
   let reclassificat=false;
@@ -4537,6 +4586,7 @@ async function crearTraspasBancCaixa(imp,data,bancCodi,movExistentId,nomDelegat,
     bancMov.areaId=area.id||'';bancMov.areaNom=area.name||'';
     bancMov.delegacioId=deleg.id||'';bancMov.delegacioNom=deleg.name||'';
     bancMov.notes=((bancMov.notes||'')+' · Traspàs a caixa per a '+nomDelegat).replace(/^ · /,'');
+    bancMov.traspas='true';
     reclassificat=true;
   }else{
     bancMov=nou('gast',bancCodi,'Retirada del banc per a '+nomDelegat+(motiu?' ('+motiu+')':''),data);
@@ -5189,7 +5239,7 @@ function renderPressupostosEdit(){
   const areas=DB.config.areas.filter(a=>perm('viewAll')||getMyArees().includes(a.id));
   var afP=getAnyFiscal();
   var tPla=(DB.pres_plans||[]).filter(function(p){return p.any===afP;}).reduce(function(s,p){return s+p.importPla;},0);
-  var tReal=(DB.moviments||[]).filter(function(m){return(!m.anyFiscal||m.anyFiscal===''||m.anyFiscal===afP)&&m.tipus==='gast';}).reduce(function(s,m){return s+m.import;},0);
+  var tReal=(DB.moviments||[]).filter(function(m){return(!m.anyFiscal||m.anyFiscal===''||m.anyFiscal===afP)&&m.tipus==='gast'&&!esTraspas(m);}).reduce(function(s,m){return s+m.import;},0);
   var dif=tReal-tPla;
   var pctE=tPla>0?Math.min(100,Math.round(tReal/tPla*100)):(tReal>0?100:null);
   var cE=pctE===null?'var(--text3)':pctE>=100?'var(--red)':pctE>=75?'var(--amber)':'var(--green)';
@@ -5205,7 +5255,7 @@ function renderPressupostosEdit(){
     const delegs=DB.config.delegacions.filter(d=>d.areaId===a.id&&(perm('viewAll')||myDelegs.includes(d.id)));
     if(!delegs.length)return;
     var aPla=delegs.reduce(function(s,d){return s+(DB.pres_plans||[]).filter(function(p){return p.delegacioId===d.id&&p.any===afP;}).reduce(function(s2,p){return s2+p.importPla;},0);},0);
-    var aReal=delegs.reduce(function(s,d){return s+(DB.moviments||[]).filter(function(m){return m.delegacioId===d.id&&m.tipus==='gast'&&(!m.anyFiscal||m.anyFiscal===''||m.anyFiscal===afP);}).reduce(function(s2,m){return s2+m.import;},0);},0);
+    var aReal=delegs.reduce(function(s,d){return s+(DB.moviments||[]).filter(function(m){return m.delegacioId===d.id&&m.tipus==='gast'&&!esTraspas(m)&&(!m.anyFiscal||m.anyFiscal===''||m.anyFiscal===afP);}).reduce(function(s2,m){return s2+m.import;},0);},0);
     var aDif=aReal-aPla;
     var aCol=aDif>0?'var(--red)':aDif<0?'var(--green)':'var(--text2)';
     var aBlockId='pab'+a.id;
@@ -5231,7 +5281,7 @@ function renderPressupostosEdit(){
       const events=DB.config.events.filter(e=>e.delegId===d.id);
       const dPlans=DB.pres_plans.filter(p=>p.delegacioId===d.id&&p.any===getAnyFiscal());
       const totalPla=dPlans.reduce((s,p)=>s+p.importPla,0);
-      const af0=getAnyFiscal();const totalReal=(DB.moviments||[]).filter(m=>m.delegacioId===d.id&&m.tipus==='gast'&&(!m.anyFiscal||m.anyFiscal===''||m.anyFiscal===af0)).reduce((s,m)=>s+m.import,0);
+      const af0=getAnyFiscal();const totalReal=(DB.moviments||[]).filter(m=>m.delegacioId===d.id&&m.tipus==='gast'&&!esTraspas(m)&&(!m.anyFiscal||m.anyFiscal===''||m.anyFiscal===af0)).reduce((s,m)=>s+m.import,0);
       const pct=totalPla>0?Math.min(100,Math.round(totalReal/totalPla*100)):(totalReal>0?100:null);
       const bid='ped'+d.id;
       const canEdit=!bloquejat&&(perm('viewAll')||myDelegs.includes(d.id));
@@ -5754,7 +5804,9 @@ function renderResultats(){
   const afR=getAnyFiscal();
   const resSub=document.getElementById('res-sub');if(resSub)resSub.innerHTML='<span class="af-badge"><i class="ti ti-calendar" style="font-size:14px"></i> Any fiscal '+afR+'</span>';
   const myDelegsR=getMyDelegacions();
-  const movs=(perm('viewAll')?(DB.moviments||[]):(DB.moviments||[]).filter(m=>getMyArees().includes(m.areaId)&&(perm('viewAll')||myDelegsR.includes(m.delegacioId)||!m.delegacioId))).filter(m=>(m.anyFiscal===afR||!m.anyFiscal)&&m.via!=='app');
+  const movsTots=(perm('viewAll')?(DB.moviments||[]):(DB.moviments||[]).filter(m=>getMyArees().includes(m.areaId)&&(perm('viewAll')||myDelegsR.includes(m.delegacioId)||!m.delegacioId))).filter(m=>(m.anyFiscal===afR||!m.anyFiscal)&&m.via!=='app');
+  const movs=movsTots.filter(m=>!esTraspas(m));// els traspassos no són ni ingrés ni despesa
+  const nTrasp=movsTots.length-movs.length, netTrasp=netTraspassos(movsTots);
   const ing=movs.filter(m=>m.tipus==='ing').reduce((s,m)=>s+m.import,0);
   const gast=movs.filter(m=>m.tipus==='gast').reduce((s,m)=>s+m.import,0);
   const net=ing-gast;
@@ -5781,13 +5833,25 @@ function renderResultats(){
     '<span>Total despeses</span><span style="color:var(--red)">-'+fmt(gast)+'</span></div></div>'+
     '<div class="card"><div class="flow-row" style="font-size:15px;font-weight:500">'+
     '<span>Resultat exercici '+afR+'</span>'+
-    '<span style="color:'+(net>=0?'var(--green)':'var(--red)')+'">'+fmtS(net)+'</span></div></div>';
+    '<span style="color:'+(net>=0?'var(--green)':'var(--red)')+'">'+fmtS(net)+'</span></div>'+
+    (nTrasp?_htmlControlTraspassos(nTrasp,netTrasp):'')+'</div>';
+}
+// Línia de control dels traspassos: no compten com a ingrés ni despesa, i el seu net ha de ser 0.
+function _htmlControlTraspassos(n,net){
+  const desquadra=Math.abs(net)>=0.005;
+  return'<div style="font-size:12px;margin-top:8px;padding-top:8px;border-top:0.5px solid var(--border);color:'+(desquadra?'var(--amber)':'var(--text3)')+'">'+
+    (desquadra?'<i class="ti ti-alert-triangle"></i> ':'')+n+(n===1?' apunt':' apunts')+' de traspàs entre comptes, que no compten com a ingrés ni despesa'+
+    (desquadra?'. Net '+(net>=0?'+':'-')+fmtD(net)+': falta l\'altre costat d\'algun traspàs (o un extracte per importar).':' (net 0,00 €).')+'</div>';
 }
 function renderFlux(){
   const afF=getAnyFiscal();
   const fluxSub=document.getElementById('flux-sub');if(fluxSub)fluxSub.innerHTML='<span class="af-badge"><i class="ti ti-calendar" style="font-size:14px"></i> Any fiscal '+afF+'</span>';
   const myDelegsF=getMyDelegacions();
-  const movs=(DB.moviments||[]).filter(m=>(m.anyFiscal===afF||!m.anyFiscal)&&m.via!=='app'&&(perm('viewAll')||myDelegsF.includes(m.delegacioId)));
+  const movsTots=(DB.moviments||[]).filter(m=>(m.anyFiscal===afF||!m.anyFiscal)&&m.via!=='app'&&(perm('viewAll')||myDelegsF.includes(m.delegacioId)));
+  // Els traspassos no són cobraments ni pagaments, però sí que mouen diners entre comptes: el seu net entra al saldo
+  // final (és 0 si tenen els dos costats) i a cada compte es mostra a part.
+  const movs=movsTots.filter(m=>!esTraspas(m));
+  const nTrasp=movsTots.length-movs.length, tNet=netTraspassos(movsTots);
   const ing=movs.filter(m=>m.tipus==='ing').reduce((s,m)=>s+m.import,0);
   const gast=movs.filter(m=>m.tipus==='gast').reduce((s,m)=>s+m.import,0);
   const saldoIni=(DB.config.bancs||[]).reduce(function(s,b){
@@ -5799,18 +5863,20 @@ function renderFlux(){
   document.getElementById('flux-ini').className='metric-value '+(saldoIni>=0?'ok':'danger');
   document.getElementById('flux-ing').textContent=fmt(ing);
   document.getElementById('flux-gast').textContent=fmt(gast);
-  document.getElementById('flux-fin').textContent=fmtS(saldoIni+ing-gast);
-  document.getElementById('flux-fin').className='metric-value '+((saldoIni+ing-gast)>=0?'ok':'danger');
+  document.getElementById('flux-fin').textContent=fmtS(saldoIni+ing-gast+tNet);
+  document.getElementById('flux-fin').className='metric-value '+((saldoIni+ing-gast+tNet)>=0?'ok':'danger');
   document.getElementById('flux-container').innerHTML=['Efectiu','01 Banc','02 Banc','TPV'].map(v=>{
     const vi=movs.filter(m=>m.tipus==='ing'&&m.via===v).reduce((s,m)=>s+m.import,0);
     const vg=movs.filter(m=>m.tipus==='gast'&&m.via===v).reduce((s,m)=>s+m.import,0);
-    if(!vi&&!vg)return'';
+    const vt=netTraspassos(movsTots.filter(m=>m.via===v));
+    if(!vi&&!vg&&!vt)return'';
     return`<div class="card"><div class="card-title">${v}</div>
       ${vi>0?'<div class="flow-row"><span style="color:var(--text2)">Cobraments</span><span style="color:var(--green);font-weight:500">+'+fmt(vi)+'</span></div>':''}
       ${vg>0?'<div class="flow-row"><span style="color:var(--text2)">Pagaments</span><span style="color:var(--red);font-weight:500">-'+fmt(vg)+'</span></div>':''}
-      <div class="flow-row" style="font-weight:500"><span>Net ${v}</span><span style="color:${(vi-vg)>=0?'var(--green)':'var(--red)'}">${fmtS(vi-vg)}</span></div>
+      ${vt?'<div class="flow-row"><span style="color:var(--text2)">Traspassos (net)</span><span style="font-weight:500">'+fmtS(vt)+'</span></div>':''}
+      <div class="flow-row" style="font-weight:500"><span>Net ${v}</span><span style="color:${(vi-vg+vt)>=0?'var(--green)':'var(--red)'}">${fmtS(vi-vg+vt)}</span></div>
     </div>`;
-  }).join('');
+  }).join('')+(nTrasp?'<div class="card">'+_htmlControlTraspassos(nTrasp,tNet)+'</div>':'');
 }
 
 const MANUAL={
@@ -6032,11 +6098,11 @@ function exportCSV(tipus){
   let csv,fn;
   if(tipus==='resultats'){
     csv='Tipus,Area,Delegacio,Event,Concepte,Data,Via,Responsable,Import\n';
-    movs.forEach(m=>{csv+=`${m.tipus==='ing'?'Ingres':'Despesa'},${m.areaNom},${m.delegacioNom},${m.eventNom||''},${m.concepte},${m.data},${m.via},${m.responsable},${m.import}\n`;});
+    movs.forEach(m=>{csv+=`${esTraspas(m)?(m.tipus==='ing'?'Traspas (entrada)':'Traspas (eixida)'):(m.tipus==='ing'?'Ingres':'Despesa')},${m.areaNom},${m.delegacioNom},${m.eventNom||''},${m.concepte},${m.data},${m.via},${m.responsable},${m.import}\n`;});
     fn='estat_resultats_2627.csv';
   }else{
     csv='Via,Tipus,Concepte,Data,Import\n';
-    movs.forEach(m=>{csv+=`${m.via},${m.tipus==='ing'?'Cobrament':'Pagament'},${m.concepte},${m.data},${m.import}\n`;});
+    movs.forEach(m=>{csv+=`${m.via},${esTraspas(m)?(m.tipus==='ing'?'Traspas (entrada)':'Traspas (eixida)'):(m.tipus==='ing'?'Cobrament':'Pagament')},${m.concepte},${m.data},${m.import}\n`;});
     fn='flux_efectiu_2627.csv';
   }
   const a=document.createElement('a');
@@ -6438,6 +6504,9 @@ function renderCfgBancs(){
   // Botons invisibles perquè l'import quede alineat amb el de les files de dalt
   if(canEdit)html+='<span style="visibility:hidden"><button class="btn" style="font-size:12px;margin-right:6px" tabindex="-1"><i class="ti ti-edit"></i> Editar</button><button class="btn" style="font-size:12px" tabindex="-1"><i class="ti ti-trash"></i></button></span>';
   html+='</div>';
+  const movsAf=(DB.moviments||[]).filter(function(m){return(m.anyFiscal===getAnyFiscal()||!m.anyFiscal)&&m.via!=='app';});
+  const nTraspAf=movsAf.filter(esTraspas).length;
+  if(nTraspAf)html+='<div style="padding-left:32px">'+_htmlControlTraspassos(nTraspAf,netTraspassos(movsAf))+'</div>';
   document.getElementById('cfg-bancs').innerHTML=html;
 }
 
@@ -6652,7 +6721,8 @@ function renderCfgRegles(){
           html+='<div style="font-size:12px;color:var(--text2);margin-top:2px">'+
             (r.areaNom?r.areaNom+' · ':'')+
             (r.delegacioNom?r.delegacioNom:'')+
-            (r.concepte?' · '+r.concepte:'')+'</div>';
+            (r.concepte?' · '+r.concepte:'')+
+            (esTraspas(r)?' · <i class="ti ti-arrows-exchange"></i> Traspàs entre comptes':'')+'</div>';
         }
         _avisosRegla(r).forEach(function(a){
           html+='<div style="font-size:11px;color:var(--amber);margin-top:2px"><i class="ti ti-alert-triangle"></i> '+esc(a)+'</div>';
@@ -6752,7 +6822,7 @@ function renderCopyPresDeleg(){
       importBase=plans.reduce(function(s,p){return s+p.importPla;},0);
     }else if(base==='real'){
       importBase=(DB.moviments||[]).filter(function(m){
-        return m.delegacioId===d.id&&m.tipus==='gast'&&(m.anyFiscal===origen||(!m.anyFiscal&&origen===getAnyFiscal()));
+        return m.delegacioId===d.id&&m.tipus==='gast'&&!esTraspas(m)&&(m.anyFiscal===origen||(!m.anyFiscal&&origen===getAnyFiscal()));
       }).reduce(function(s,m){return s+m.import;},0);
     }
     if(importBase>0){
@@ -6810,7 +6880,7 @@ function updateCopyResum(){
       importBase=(DB.pres_plans||[]).filter(function(p){return p.delegacioId===d.id&&p.any===origen;}).reduce(function(s,p){return s+p.importPla;},0);
     }else{
       importBase=(DB.moviments||[]).filter(function(m){
-        return m.delegacioId===d.id&&m.tipus==='gast'&&(m.anyFiscal===origen||(!m.anyFiscal&&origen===getAnyFiscal()));
+        return m.delegacioId===d.id&&m.tipus==='gast'&&!esTraspas(m)&&(m.anyFiscal===origen||(!m.anyFiscal&&origen===getAnyFiscal()));
       }).reduce(function(s,m){return s+m.import;},0);
     }
     if(importBase>0){
@@ -6887,7 +6957,7 @@ async function executarCopyPres(){
       });
     }else if(base==='real'){
       const totalReal=(DB.moviments||[]).filter(function(m){
-        return m.delegacioId===d.id&&m.tipus==='gast'&&(m.anyFiscal===origen||(!m.anyFiscal&&origen===getAnyFiscal()));
+        return m.delegacioId===d.id&&m.tipus==='gast'&&!esTraspas(m)&&(m.anyFiscal===origen||(!m.anyFiscal&&origen===getAnyFiscal()));
       }).reduce(function(s,m){return s+m.import;},0);
       if(totalReal>0){
         const importNou=Math.round(totalReal*(1+pct/100));
@@ -6939,6 +7009,7 @@ function openModalRegla(id,font){
   document.getElementById('mr-tipus').value=r?r.tipus:'auto';
   document.getElementById('mr-prioritat').value=r?r.prioritat:10;
   document.getElementById('mr-activa').checked=r?r.activa:true;
+  document.getElementById('mr-traspas').checked=!!(r&&esTraspas(r));
   updateMrTipus();
   // Omplir àrees
   const mrArea=document.getElementById('mr-area');
@@ -6988,7 +7059,8 @@ async function saveRegla(){
     delegacioNom=deleg?deleg.name:'';
   }
   const movtype=document.getElementById('mr-movtype').value||'auto';
-  const regla={id:editReglaId||genId('r'),font,patrons,areaId,areaNom,delegacioId,delegacioNom,concepte,tipus,movtype,prioritat,activa};
+  const traspas=tipus==='auto'&&document.getElementById('mr-traspas').checked?'true':'';
+  const regla={id:editReglaId||genId('r'),font,patrons,areaId,areaNom,delegacioId,delegacioNom,concepte,tipus,movtype,prioritat,activa,traspas};
   if(editReglaId){
     const idx=DB.regles.findIndex(x=>x.id===editReglaId);
     if(idx>=0)DB.regles[idx]=regla;
@@ -9010,8 +9082,8 @@ function aplicarReglesImportacio(moviments,banc){
     const regla=regles.find(function(r){return _reglaCasa(r,m.concepte,m.import);});
     if(regla)return{...m,areaId:regla.areaId||'',areaNom:regla.areaNom||'',
       delegacioId:regla.delegacioId||'',delegacioNom:regla.delegacioNom||'',
-      concepte:regla.concepte||m.concepte,assignatPer:'regla_concepte'};
-    return{...m,areaId:'',areaNom:'',delegacioId:'',delegacioNom:'',assignatPer:'manual'};
+      concepte:regla.concepte||m.concepte,assignatPer:'regla_concepte',traspas:esTraspas(regla)?'true':''};
+    return{...m,areaId:'',areaNom:'',delegacioId:'',delegacioNom:'',assignatPer:'manual',traspas:''};
   });
 }
 
@@ -9057,6 +9129,8 @@ function mostrarPreviewImportacio(zona,moviments,assignats,banc,compteDetectat,f
   html+='<div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="color:var(--text2)">Ingressos (no duplicats)</span><span style="color:var(--green)">+'+fmtD(totIng)+'</span></div>';
   html+='<div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="color:var(--text2)">Pagaments (no duplicats)</span><span style="color:var(--red)">'+fmtD(totGast)+'</span></div>';
   html+='<div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="color:var(--text2)">Assignats automàticament</span><span style="color:var(--green);font-weight:500">'+nAssignats+' de '+totalImportables+'</span></div>';
+  const nTraspImp=assignats.filter(m=>esTraspas(m)&&m._dupTipus!=='duplicat_segur').length;
+  if(nTraspImp>0)html+='<div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="color:var(--text2)"><i class="ti ti-arrows-exchange"></i> Traspassos entre comptes (no compten com a ingrés ni despesa)</span><span style="font-weight:500">'+nTraspImp+'</span></div>';
   if(nExcepcions>0){
     html+='<div style="display:flex;justify-content:space-between"><span style="color:var(--text2)">Excepcions a revisar</span><span style="color:var(--amber);font-weight:500">'+nExcepcions+'</span></div>';
   }
@@ -9152,6 +9226,7 @@ function _impRowHtml(zona,idx,m,checked,sub){
   h+='<div class="imp-title">'+esc(m.data+' · '+concepte.substring(0,55)+(concepte.length>55?'…':''))+'</div>';
   if(m.masDades)h+='<div class="imp-mas"><span>Més dades</span> '+esc(m.masDades)+'</div>';
   if(sub)h+='<div class="imp-sub">'+esc(sub)+'</div>';
+  if(esTraspas(m))h+='<div class="imp-sub"><i class="ti ti-arrows-exchange"></i> Traspàs entre comptes: no comptarà com a ingrés ni despesa</div>';
   h+='</div>';
   h+='<span class="imp-amt" style="color:'+(m.import>0?'var(--green)':'var(--red)')+'">'+(m.import>0?'+':'')+fmtD(m.import)+'</span>';
   h+='<span class="imp-state">'+(checked?'S\'importarà':'S\'ometrà')+'</span>';
@@ -9279,6 +9354,7 @@ function crearReglaDesdeExcepcio(zona,idx){
     ?Math.max(1,(parseInt(casen[0].prioritat)||99)-1)
     :maxPr+10;
   document.getElementById('mr-activa').checked=true;
+  document.getElementById('mr-traspas').checked=false;
   // Botons per triar què s'usa com a patró
   const btns=document.getElementById('mr-patro-btns');
   const opcions=[['Moviment',sug.moviment],['Més dades',sug.masDades],['Moviment + Més dades',sug.tots]]
@@ -9333,7 +9409,7 @@ async function importarXLSZona(zona){
       fontImport:'xls_'+banc.id,
       bankHash:hashFinal,
       assignatPer:m.assignatPer||'manual',
-      origen:'CSV',ticketUrl:'',ticketMotiu:'',conciliacio:'conciliat'
+      origen:'CSV',ticketUrl:'',ticketMotiu:'',conciliacio:'conciliat',traspas:m.traspas||''
     });
     importats++;
     if(!m.areaId)excepcions++;
@@ -9756,9 +9832,9 @@ function renderReport3(){
 
   const rows=eventsFiltrats.map(ev=>{
     // Ingressos: moviments tipus 'ing' associats a l'event
-    const ing=moviments.filter(m=>m.eventId===ev.id&&m.tipus==='ing'&&(m.anyFiscal===afSel||!m.anyFiscal)).reduce((s,m)=>s+m.import,0);
+    const ing=moviments.filter(m=>m.eventId===ev.id&&!esTraspas(m)&&m.tipus==='ing'&&(m.anyFiscal===afSel||!m.anyFiscal)).reduce((s,m)=>s+m.import,0);
     // Despeses: moviments tipus 'gast' associats a l'event
-    const gast=moviments.filter(m=>m.eventId===ev.id&&m.tipus==='gast'&&(m.anyFiscal===afSel||!m.anyFiscal)).reduce((s,m)=>s+m.import,0);
+    const gast=moviments.filter(m=>m.eventId===ev.id&&!esTraspas(m)&&m.tipus==='gast'&&(m.anyFiscal===afSel||!m.anyFiscal)).reduce((s,m)=>s+m.import,0);
     // Pressupost despeses planificades per l'event
     const presPla=pres.filter(p=>p.eventId===ev.id&&p.any===afSel).reduce((s,p)=>s+p.importPla,0);
     // Resultat net
@@ -9848,8 +9924,8 @@ function exportRep3CSV(){
   const moviments=DB.moviments||[];
   const pres=DB.pres_plans||[];
   const rows=events.filter(e=>(e.anyFiscal||af)===af).map(ev=>{
-    const ing=moviments.filter(m=>m.eventId===ev.id&&m.tipus==='ing').reduce((s,m)=>s+m.import,0);
-    const gast=moviments.filter(m=>m.eventId===ev.id&&m.tipus==='gast').reduce((s,m)=>s+m.import,0);
+    const ing=moviments.filter(m=>m.eventId===ev.id&&!esTraspas(m)&&m.tipus==='ing').reduce((s,m)=>s+m.import,0);
+    const gast=moviments.filter(m=>m.eventId===ev.id&&!esTraspas(m)&&m.tipus==='gast').reduce((s,m)=>s+m.import,0);
     const presPla=pres.filter(p=>p.eventId===ev.id&&p.any===af).reduce((s,p)=>s+p.importPla,0);
     const resultat=ing-gast;
     const desv=presPla>0?gast-presPla:null;
@@ -9880,7 +9956,7 @@ function renderReport4(){
 
   // Moviments sense justificant: origen Manual, tipus gast, sense ticketUrl
   let movs=(DB.moviments||[]).filter(m=>
-    m.origen==='Manual' && m.tipus==='gast' &&
+    m.origen==='Manual' && m.tipus==='gast' && !esTraspas(m) &&
     (!m.ticketUrl||m.ticketUrl==='') &&
     (m.anyFiscal||'')=== af
   );
@@ -9904,7 +9980,7 @@ function renderReport4(){
 
   // Totals
   const totalImport=movs.reduce((s,m)=>s+(parseFloat(m.import)||0),0);
-  const totalGast=(DB.moviments||[]).filter(m=>m.anyFiscal===af&&m.tipus==='gast'&&m.origen==='Manual').reduce((s,m)=>s+(parseFloat(m.import)||0),0);
+  const totalGast=(DB.moviments||[]).filter(m=>m.anyFiscal===af&&m.tipus==='gast'&&m.origen==='Manual'&&!esTraspas(m)).reduce((s,m)=>s+(parseFloat(m.import)||0),0);
   const pct=totalGast>0?Math.round(totalImport/totalGast*100):0;
 
   // Àrees i delegacions per filtres
@@ -10021,7 +10097,7 @@ function r4UploadTicket(movId){
 
 function exportRep4CSV(){
   const af=getAnyFiscal();
-  const movs=(DB.moviments||[]).filter(m=>m.origen==='Manual'&&m.tipus==='gast'&&(!m.ticketUrl||m.ticketUrl==='')&&(m.anyFiscal||'')===af);
+  const movs=(DB.moviments||[]).filter(m=>m.origen==='Manual'&&m.tipus==='gast'&&!esTraspas(m)&&(!m.ticketUrl||m.ticketUrl==='')&&(m.anyFiscal||'')===af);
   const cap=['Data','Responsable','Area','Delegacio','Event','Concepte','Import','Via','Motiu excepcio'];
   const rows=movs.map(m=>[m.data,m.responsable||m.responsableEmail||'',m.areaNom||'',m.delegacioNom||'',m.eventNom||'',m.concepte||'',m.import,m.via||'',m.ticketMotiu||'']);
   const csv=[cap,...rows].map(r=>r.map(v=>'"'+(String(v).replace(/"/g,'""'))+'"').join(',')).join('\n');

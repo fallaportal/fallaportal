@@ -884,3 +884,27 @@ entitats alhora (tancar una caixa = moviments + canvi + estat de la caixa) i mol
   - Errors preexistents corregits de pas: el tros 1 va perdre `genId` i `calcSaldoDelegat` (cap alta no podia funcionar); `saveArea` llegia un
     camp `ma-resp` que no existeix; la clau de saldos `idBanc_XX/YY` es trencava amb els ids nous (`_`); eliminar un banc no n'eliminava els saldos;
     tancar un exercici cridava `save('config')` i no persistia (ara tot es desa).
+
+---
+
+### D-049: Un traspàs entre comptes de la falla no és ni ingrés ni despesa
+**Date**: 2026-10-27
+**Status**: Accepted (Emilio)
+**Context**: Els informes sumaven els traspassos entre comptes (entre bancs, del banc a la caixa) com a ingressos i com a despeses. El
+resultat no canviava, però els totals quedaven inflats: al 26/27, uns 50.172 € d'ingressos i 60.172 € de despeses que no ho eren.
+Paraules d'Emilio: «si jo tinc 60.000 € en dos bancs i passe 15.000 d'un a l'altre, em quede en 60.000 €; no puc tindre +15.000 d'ingressos
+i −15.000 de despeses, perquè no és real». A les dades no hi havia cap marca fiable: 32 apunts amb textos de tota mena
+("TRASPASO PROPIO", "Traspàs", xecs reclassificats, "Quotes"…), i algun "TRASPAS" era en realitat un cobrament o un pagament a tercers.
+**Decision**:
+  1. Marca explícita al moviment: "Traspàs entre comptes de la falla" (camp `traspas`). No es dedueix del text.
+  2. Els moviments marcats no compten com a ingrés ni despesa enlloc (Dashboard, Resultats, Flux, Pressupost, informes per event, despeses
+     sense justificant). El saldo de cada compte sí que els compta; al Flux, cada compte mostra el net dels seus traspassos a part.
+  3. Control: el net dels traspassos d'un exercici ha de ser 0; si no, l'app avisa (falta un costat o un extracte per importar).
+  4. Qui marca: l'origen "Banc" dels fons (els dos costats, D-022), les regles d'importació marcades com a traspàs i, a mà, President i
+     Tresoreria des de l'Historial (a Supabase, qui té l'Historial en edició).
+  5. Els existents es van revisar un per un amb Emilio el 2026-10-27: 30 apunts marcats (14 parelles, el xec 364930 amb dues entrades a la
+     caixa i un −10.000 € del 03 Banc que espera l'extracte del 01 Banc); la resta eren pagaments, cobraments o la venda d'una propietat.
+**Consequences**:
+  - Sheets: columna `traspas` a `01 Moviments` i a `13 Regles CSV` (v4.0.87–89). Supabase: `moviments.traspas` i `regles_importacio.traspas`
+    (`supabase/migrations/20261027120000_traspassos.sql`), adaptador i càrrega de l'export (`tools/supabase_carrega.mjs`) inclosos.
+  - Un traspàs registrat abans que la columna existisca al full, si s'afegeix sense reescriure la pestanya, pot perdre la marca.

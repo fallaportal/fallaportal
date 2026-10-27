@@ -200,6 +200,7 @@ for (const m of movSheet) {
     responsable_id: font === 'manual' ? usr?.id ?? null : null,
     conciliacio: ['pendent', 'conciliat', 'no_aplica'].includes(m.conciliacio) ? m.conciliacio : null,
     empremta: blanc(m.bankHash), motiu_sense_justificant: blanc(m.ticketMotiu),
+    traspas: String(m.traspas || '').trim() === 'true',   // D-049
     creat_per: (usr || uPerId.get('migracio')).id,
   });
   if (blanc(m.ticketUrl)) justificants.push({ moviment_id: m.id, url_drive_original: m.ticketUrl.trim() });
@@ -281,6 +282,7 @@ for (const r of tab('13 Regles CSV')) {
     sentit: { gast: 'despesa', ing: 'ingres' }[r.movtype] || 'qualsevol', area_id: area,
     delegacio_id: area && delegIds.has(r.delegacioId) ? r.delegacioId : null, concepte: blanc(r.concepte),
     prioritat: parseInt(r.prioritat, 10) || 100, activa: r.activa !== 'false',
+    traspas: String(r.traspas || '').trim() === 'true',   // D-049
   });
 }
 

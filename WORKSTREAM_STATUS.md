@@ -1,6 +1,6 @@
 # Work Stream Status — Falla Portal
 ## Snapshot Date: 2026-10-27
-## Versió en producció: v4.0.79 (a `main`) · branca `supabase`: v4.1.3
+## Versió en producció: v4.0.89 (a `main`) · branca `supabase`: v4.1.4
 
 > **Context de calendari**: període vacacional, ús baix de l'eina. Bon moment per a
 > canvis estructurals i per a la decisió pendent del Service Worker.
@@ -202,11 +202,105 @@ verificat amb la v4.0.78 per a `area`, `delegat` i `treasury`.
 caixes, el saldo inicial total i la variació (és el resultat de l'exercici, vegeu D-029 i el model de saldos). Verificat amb
 dades sintètiques (4 comptes, total quadrat a mà) i sense escriptures al full.
 
-**Diagnòstic del 02 Banc (2026-10-27, extracte `ciaxapopularfalla_5419.xlsx` des de l'1/4 fins al 3/10)**: l'extracte acaba a
-26.353,58 € i l'app (còpia del 13/10) té el 02 Banc a 23.941,79 € sense cap moviment al 26/27. Falten 10 apunts, nets +2.411,79 €:
-Loteria 07/05 (+2.411,00), quotes del 03/06, 03/07, 03/08, 03/09 i 03/10 (−30,25 cadascuna), comissió GPRS 03/06 (−6,05), AEAT
-model 115 27/07 (−228,00), facturació comerç 27/09 (+387,50) i descomptes comerç 27/09 (−1,41). Els 7 d'abril–maig ja hi són (25/26).
-Cal importar-lo des d'Importar CSV (els 7 surten com a duplicats segurs). Pendent d'Emilio: importar-lo i comprovar el saldo.
+**Diagnòstic del 02 Banc (2026-10-27, extracte `ciaxapopularfalla_5419.xlsx` des de l'1/4 fins al 3/10; dades de producció llegides
+amb la sessió d'Emilio, només lectura)**: l'extracte acaba a 26.353,58 € i l'app mostrava 26.948,13 € (+594,55 €). Els 17 apunts de
+l'extracte hi són tots, sense cap de sobrant. La causa és el **saldo inicial del 02 Banc al 26/27: 24.536,34 €** (el saldo de l'extracte
+després del primer apunt, no el de l'1/4). Dos fets: (1) el saldo real de Caixa Popular a l'1/4 és **24.542,39 €** (D-029 confirmat);
+(2) 7 apunts d'abril–maig (net −600,60 €) són del 26/27 però estan imputats al 25/26: es van importar el 25/05/2026 amb el 25/26 actiu
+(l'importador usa l'any actiu, no la data; A-10) i el 25/26 es va tancar el 17/06 amb ells a dins. Amb ells fora, el 25/26 tanca a
+24.542,39 €, igual que el banc a 31/03. Una primera lectura (amb la còpia del 13/10) deia, erròniament, que faltaven 10 apunts.
+
+**v4.0.80 (2026-10-27) — correcció d'un sol ús dels 7 apunts del 02 Banc (A-10, D-029)**: targeta ambre a Configuració → Exercicis
+("Revisar i aplicar") que passa els 7 apunts del 25/26 al 26/27 i posa el saldo inicial del 02 Banc 26/27 a 24.542,39 € (01/04/2026);
+exercici tancat: excepció confirmada; descarrega còpia dels dos exercicis; escriu `01 Moviments` i `15 Saldos`. Només apareix si els
+7 apunts casen (id, data, import, sentit), el saldo inicial és 24.536,34 € i el tancament del 25/26 sense ells és 24.542,39 €.
+**Aplicada per Emilio el 2026-10-27** (comprovat a producció: els 7 apunts al 26/27, 842 moviments = 560 + 282, cap duplicat; 02 Banc
+26.353,58 €). Efecte als informes: 25/26 −600,60 € de despesa neta, 26/27 +600,60 €. Codi puntual eliminat a la v4.0.81.
+
+**Incident (2026-10-27): la v4.0.80 va esborrar la pestanya `15 Saldos`**. En aplicar-la, el full es va quedar amb una sola fila (02 Banc
+26/27, 24.542,39 €); 01 Banc, Efectiu i 03 Banc es van veure en negatiu (només el net dels moviments). Causa: `loadFromSheets` fa
+`DB.saldos={}` a mitja càrrega (fora del swap atòmic) i s'empassa una lectura fallida de `15 Saldos` (`catch → []`); si el refresc falla
+després, `bgRefresh` restaura moviments i fons però no els saldos. Un refresc d'aquests va buidar `DB.saldos` mentre la targeta esperava
+les còpies de seguretat, i `save('saldos')` va escriure només el saldo que la targeta acabava de posar. La prova de la v4.0.80 tenia els
+refrescos desactivats i no ho podia veure. Les còpies de la targeta no es van descarregar (el navegador integrat no les desa).
+**v4.0.82 — restauració puntual de `15 Saldos`**: targeta a Configuració → Exercicis que escriu 8 saldos (valors de la còpia del 13/10, decisió
+d'Emilio; 02 Banc 26/27 a 24.542,39 €). No depén de `DB.saldos`: llig el full, només escriu si encara té l'única fila esperada, i torna a
+llegir per comprovar-ho; mentre restaura bloqueja els refrescos (`_desantAraMateix`). Verificat amb un full simulat que desa el que s'hi
+escriu: amb la memòria buidada i un refresc concurrent (restaura les 8 files; només `PUT`+`clear` de `15 Saldos`), amb la lectura pròpia
+fallida (429: no escriu res), i amb el full ja restaurat (no escriu res). Saldos previstos a producció: 01 Banc 9.141,88; 02 Banc 26.353,58;
+Efectiu 3.625,68; TPV 0; 03 Banc 26.298,99 (total 65.420,13 €). **Aplicada per Emilio el 2026-10-27** (el primer intent va fallar per quota
+429 sense escriure res; el segon, amb una sola sessió oberta, va anar bé). Comprovat a producció: 8 saldos; 02 Banc i 03 Banc quadren amb els
+seus extractes (26.353,58 € a 3/10 i 26.298,99 € a 26/10). Codi puntual eliminat a la v4.0.83.
+**Quota de lectura**: Google limita a 60 lectures/minut per usuari i cada sessió oberta recarrega el full sencer (~20 lectures) cada 30 s; amb
+dues sessions del mateix compte se supera i les lectures fallen (429). La sessió de producció oberta per Claude al panell del navegador
+va contribuir a l'incident: no deixar-ne cap d'oberta més del temps de llegir.
+**v4.0.83 (2026-10-27) — causa arrel corregida**: `loadFromSheets` llig `15 Saldos` en una variable temporal i l'assigna al swap atòmic, i una
+lectura fallida es propaga (un refresc fallit ja no toca els saldos); `save('saldos')` es nega a escriure si falta algun saldo de l'última
+lectura o desat el banc i l'exercici del qual continuen existint (`_saldosPerduts`; esborrar un banc o un exercici sí que els treu). Reproduït
+amb la v4.0.82 (refresc amb 429 a `15 Saldos` → 0 saldos en memòria → el desat deixa el full amb 0 files) i verificat amb la v4.0.83 amb la
+mateixa seqüència (8 saldos intactes, 8 files), amb la memòria buidada a la força (no desa i ho avisa), editant un saldo, esborrant un banc,
+eliminant un exercici i amb `bgRefresh` real amb lectura fallida. **Publicada el 2026-10-27.**
+**v4.0.84 (2026-10-27) — correcció d'un sol ús dels casos dels traspassos**: targeta a Configuració → Exercicis ("Correcció dels traspassos")
+que esborra la retirada de −250 € del 01 Banc del 30/06 (`m1791877040319_ppsp0.026796729502469585`, part del xec 364930) i canvia el concepte de
+3 apunts del 03 Banc (+5.000 € 30/06 → "Arres venda propietat"; +30.000 € 02/10 → "Venda propietat (resta)"; −20.000 € 08/07 → "Compra solar
+C/ M"); les àrees no canvien. Cada apunt ha de casar amb un sol moviment (compte, data, sentit, import i inici del text). Llig `01 Moviments` just
+abans i aplica el canvi sobre el full, bloqueja refrescos, escriu, torna a llegir i compara fila per fila; després espera que acabe qualsevol
+càrrega en curs (`_carregant`, nou a `loadFromSheets`) i torna a carregar. **Troballa de la prova**: sense aquesta espera, un refresc iniciat
+abans de l'escriptura bolcava a la memòria el full d'abans (targeta encara visible, saldo sense canviar), i un desat posterior de moviments
+hauria tornat a posar la retirada. Verificat: cas bo amb refresc concurrent (només `PUT`+`clear` de `01 Moviments`, 9 → 8 files, la resta
+idèntica, memòria igual que el full, 01 Banc +250 €), lectura pròpia fallida (no escriu), full ja corregit amb memòria antiga (no escriu),
+apunt ambigu (no apareix) i rol sense permís (no apareix). **Aplicada per Emilio el 2026-10-27**; comprovat a producció: retirada esborrada,
+3 conceptes nous, 01 Banc 9.391,88 €, 02 i 03 Banc igual que els extractes, 8 saldos. L'Efectiu va baixar 2.000 € entre les dues lectures per un
+pagament de l'Arturo (no per la correcció). Codi puntual eliminat a la v4.0.85 (es manté `_carregant`).
+Cas 1 tornat a confirmar per Emilio el mateix dia: la retirada de −250 € no té empremta d'importació (la va crear la correcció del 13/10);
+a l'extracte del 30/06 només hi ha els xecs de 502 € i 5.750 €. Els diners sí que van a la caixa (l'entrada de +250 € i el pagament de
+"Seguretat" es queden). La grua està pagada a part: 747,50 € de la caixa el 04/06 i 2.797 € avançats per Juanjo el 10/07.
+**Risc general trobat**: el mateix passava amb els desats normals. `bgRefresh` i el polling no comencen mentre es desa, però una càrrega que
+ja estava en curs bolcava en acabar el que havia llegit abans del desat: el moviment nou desapareixia de la memòria i, si abans del refresc
+següent es desava una altra cosa de moviments, s'esborrava del full. A més, si la càrrega fallava, `bgRefresh` i el polling restauraven una
+còpia de l'inici i desfeien el que s'haguera desat mentrestant.
+**v4.0.86 (2026-10-27) — una càrrega no trepitja un desat (conformitat d'Emilio)**: `loadFromSheets` llig les 17 pestanyes abans de tocar `DB`
+(cap espera entre la lectura i l'assignació) i, si mentre llegia ha pujat `_genEscriptura` (s'incrementa al principi de `save`, `saveMoviment`,
+`saveFons` i el desat del passiu de falles.app), descarta el llegit i torna a llegir (fins a 3 vegades; després falla sense tocar `DB`).
+`bgRefresh` i el polling ja no restauren cap còpia. Reproduït amb la v4.0.85 (refresc lent + moviment A desat enmig → A desapareix de la
+memòria i el desat de B l'esborra del full) i verificat amb la v4.0.86 amb la mateixa seqüència (A es conserva), amb `saveMoviment` +
+`bgRefresh`, amb un refresc normal, amb desats contínuament durant la lectura (descarta i falla sense tocar res), amb la protecció dels saldos
+i registrant un moviment des del formulari. **v4.0.85 i v4.0.86 publicades el 2026-10-27.**
+**v4.0.87 (2026-10-27) — traspassos entre comptes fora dels informes (pas 3a)**: nova columna `traspas` a `01 Moviments` (`'true'` o buit;
+els apunts antics no en tenen i no són traspassos; la fila de capçaleres la reescriu el primer desat). `esTraspas(m)` i `netTraspassos()`.
+No compten com a ingrés ni despesa: Dashboard (mètriques i despesa per àrea), Historial (totals, "sense N traspassos"), Resultats, Flux
+(cobraments/pagaments; a cada compte "Traspassos (net)" i el saldo final l'inclou), Pressupost (real i còpia), fons gastat d'un delegat,
+informes per event i despeses sense justificant. Sí: saldos dels comptes i saldos inicials del nou exercici. Control a Resultats, Flux i
+Configuració → Bancs (nombre de traspassos i avís si el net no és 0). Marca: automàtica a `crearTraspasBancCaixa` (els dos costats, també
+quan reclassifica un moviment de l'extracte) i casella a l'edició de l'Historial (President i Tresoreria). CSV: "Traspas (entrada)/(eixida)".
+Targeta d'un sol ús a Configuració → Exercicis ("Marcar els traspassos entre comptes") amb els 30 apunts revisats (4 del 25/26 i 26 del 26/27),
+cadascun ha de casar amb un sol moviment; llig el full, marca, escriu, rellig i compara fila per fila, espera les càrregues en curs i recarrega.
+Verificat amb un full simulat sense la columna: abans 51.172 € d'ingressos i 60.472 € de despeses (inflats), després 1.000 € i 300 € (els
+moviments normals); saldos i saldo final del Flux iguals; control amb net −10.000 €; només `PUT`+`clear` de `01 Moviments`, capçalera nova,
+30 marcats i la resta idèntica; casella de l'Historial (marcar/desmarcar, bloquejada per a `area`); "Banc → caixa" marca els dos costats;
+la targeta no apareix amb un apunt ambigu ni per al rol `area`; lectura fallida no escriu. Efecte previst a producció (26/27): ingressos
+−50.171,60 €, despeses −60.171,60 € (el −10.000 € del 26/10 queda sense parella fins a importar l'extracte del 01 Banc des del 29/9).
+**Publicada i aplicada per Emilio el 2026-10-27** ("30 apunts marcats com a traspàs", missatge que només surt si la relectura del full
+coincideix fila per fila). Codi puntual eliminat a la v4.0.88. Últim apunt de l'extracte del 01 Banc: 28/09/2026 (després, 2 despeses
+manuals del 08/10: Filament 3D 214,95 € i Gorres negres 4.116,42 €); falta l'extracte des del 29/09.
+**v4.0.89 (2026-10-27) — regles d'importació que marquen traspassos (pas 3b)**: nova columna `traspas` a `13 Regles CSV` i casella "Traspàs
+entre comptes de la falla" al formulari de regles (només per a regles de tipus "auto"); `aplicarReglesImportacio` copia la marca de la regla al
+moviment i la importació la desa. La previsualització compta els traspassos i els etiqueta; la llista de regles també. Verificat amb un full
+simulat sense la columna: marcar una regla existent ("TRASPASO PROPIO") la desa i la mostra; un extracte de Caixabank amb un "TRASPASO PROPIO"
+i un rebut importa el primer marcat i el segon no; Resultats no compta el traspàs i el saldo del banc sí. **Pendent d'Emilio**: a Configuració →
+Regles, marcar com a traspàs les regles de traspassos propis (p. ex. `TRASPASO PROPIO`, `TRASPÀS PROPI`), i no les de "PAGO TRASPASOS" (pagaments
+a tercers). En importar l'extracte del 01 Banc des del 29/9, comprovar que l'entrada de 10.000 € del 26/10 queda marcada (si no, marcar-la a
+l'Historial): llavors el net dels traspassos del 26/27 serà 0.
+**v4.0.88–89 publicades el 2026-10-27.**
+**Branca `supabase` v4.1.4 (2026-10-27) — fusió de `main` (v4.0.80–89) i traspassos al model (D-049)**: la capa de dades es queda la de
+Supabase (desat per diferències, `loadFromSupabase` amb `_sbGen`, Realtime): no s'hi porten el comptador `_genEscriptura`, `_carregant` ni el
+desat per pestanyes de `main`. El cos de la càrrega llig de `_sbPestanyes` (variable `L`) sense cap espera i assigna `DB.saldos` al swap; es porta
+la guarda dels saldos (`_saldosPerduts`) a `save()` abans de `sbDesa()` (les diferències esborrarien els saldos perduts). Migració
+`20261027120000_traspassos.sql` (`moviments.traspas` i `regles_importacio.traspas`, boolean, per defecte false) **aplicada a Supabase**;
+adaptador (`sbPestanyes`/`sbTaules`) i `tools/supabase_carrega.mjs` porten la marca. Proves: `supabase_tests.mjs` 256 correctes en local i a
+Supabase (3 casos nous: el delegat no pot marcar, Tresoreria sí, per defecte no és traspàs); `supabase_roundtrip.mjs` amb l'export del 13/10:
+tot igual; `supabase_escriptura.mjs --accions`: tot en ordre (escenari nou: marcar i desmarcar un moviment i una regla de traspàs). Al navegador,
+la v4.1.4 carrega sense errors i Resultats i Bancs exclouen els traspassos amb el control a net 0.
 
 **Pendents** (res d'això depén de codi):
 1. Extractes actuals: Caixabank ES06 2100 1958 3602 0008 8726 des del 29/9; Caixabank ES56 2100 7990 7413 0059 2938
@@ -221,8 +315,15 @@ Cal importar-lo des d'Importar CSV (els 7 surten com a duplicats segurs). Penden
 3. A Configuració → Regles (Emilio): `T.PlanaMyCommerce` i `MANTENIMIENTO TPV` a 01 Tresoreria; esborrar `PR.DE;`;
    buidar el concepte de `PR.DE` i `DETIR`; allargar `RAMS`. Opcional: regla `FATIR` → 01 Secretaria (remeses de quotes).
 4. Avançament pendent d'A. Alario: 40 €.
-5. **02 Banc (D-029)**: obtindre el saldo real de Caixa Popular a 31/03/2026. Si és 24.542,39 €, els 7 moviments del 02 Banc
-   d'abril–maig de 2026 (600,60 € nets de despesa) passen del 25/26 al 26/27 i el saldo inicial 26/27 del 02 Banc a 24.542,39 €.
+5. **02 Banc (D-029)**: fet el 2026-10-27 (v4.0.80): els 7 moviments d'abril–maig són al 26/27 i el saldo inicial 26/27 és 24.542,39 €
+   (saldo real a 31/03). El 02 Banc dona 26.353,58 €, com l'extracte del 3/10.
+5b. **Traspassos (2026-10-27)**: 32 apunts amb pinta de traspàs; 14 parelles completes. Respostes d'Emilio als que no tenien parella:
+   xec 364930 → sobra la "Retirada del banc per a Juanjo" de −250 € al 01 Banc (els 250 € eren part del xec; sense ella el 01 Banc torna a
+   9.391,88 €); +5.000 € 03 Banc 30/06 = arres de la venda d'una propietat i +30.000 € 03 Banc 02/10 = resta de la venda (ingressos);
+   −20.000 € 03 Banc 08/07 = compra d'un solar (despesa); tots tres es queden a Tresoreria i només canvia el concepte; −408 € "PAGO TRASPASOS"
+   i +90,75 € "TRASPAS" (01 Banc) són pagament i cobrament amb tercers; +1.110,53 € "RECUP.SALDO.TARGETA" és un ingrés real. Queda sense
+   parella el −10.000 € del 03 Banc del 26/10 fins a importar l'extracte del 01 Banc des del 29/9. Ordre acordat: (1) protecció dels saldos
+   (v4.0.83), (2) correcció d'un sol ús dels casos (−250 € i 3 conceptes), (3) marca "Traspàs entre comptes" i informes sense traspassos.
 6. Decidir si les remeses de quotes (`FATIR…`) i els apunts del TPV tenen regla pròpia; les àrees confirmades són TPV →
    01 Tresoreria, WiFi COM.T → 07 Coordinació Tècnica, aigua → 01 Jurídica i Contractacions, quotes → 01 Secretaria.
 
