@@ -1,6 +1,6 @@
 # Work Stream Status — Falla Portal
 ## Snapshot Date: 2026-10-27
-## Versió en producció: v4.0.79 (v4.0.80 preparada, pendent de publicar)
+## Versió en producció: v4.0.80 (v4.0.82 preparada, pendent de publicar: restauració de 15 Saldos)
 
 > **Context de calendari**: període vacacional, ús baix de l'eina. Bon moment per a
 > canvis estructurals i per a la decisió pendent del Service Worker.
@@ -171,8 +171,25 @@ després del primer apunt, no el de l'1/4). Dos fets: (1) el saldo real de Caixa
 ("Revisar i aplicar") que passa els 7 apunts del 25/26 al 26/27 i posa el saldo inicial del 02 Banc 26/27 a 24.542,39 € (01/04/2026);
 exercici tancat: excepció confirmada; descarrega còpia dels dos exercicis; escriu `01 Moviments` i `15 Saldos`. Només apareix si els
 7 apunts casen (id, data, import, sentit), el saldo inicial és 24.536,34 € i el tancament del 25/26 sense ells és 24.542,39 €.
-Verificat amb dades sintètiques (cas bo + 4 casos negatius; només es canvien els 7 apunts; 02 Banc 26.948,13 → 26.353,58 €). **Pendent
-d'Emilio: aplicar-la; després eliminar el codi (commit apart).** Efecte als informes: 25/26 −600,60 € de despesa neta, 26/27 +600,60 €.
+**Aplicada per Emilio el 2026-10-27** (comprovat a producció: els 7 apunts al 26/27, 842 moviments = 560 + 282, cap duplicat; 02 Banc
+26.353,58 €). Efecte als informes: 25/26 −600,60 € de despesa neta, 26/27 +600,60 €. Codi puntual eliminat a la v4.0.81.
+
+**Incident (2026-10-27): la v4.0.80 va esborrar la pestanya `15 Saldos`**. En aplicar-la, el full es va quedar amb una sola fila (02 Banc
+26/27, 24.542,39 €); 01 Banc, Efectiu i 03 Banc es van veure en negatiu (només el net dels moviments). Causa: `loadFromSheets` fa
+`DB.saldos={}` a mitja càrrega (fora del swap atòmic) i s'empassa una lectura fallida de `15 Saldos` (`catch → []`); si el refresc falla
+després, `bgRefresh` restaura moviments i fons però no els saldos. Un refresc d'aquests va buidar `DB.saldos` mentre la targeta esperava
+les còpies de seguretat, i `save('saldos')` va escriure només el saldo que la targeta acabava de posar. La prova de la v4.0.80 tenia els
+refrescos desactivats i no ho podia veure. Les còpies de la targeta no es van descarregar (el navegador integrat no les desa).
+**v4.0.82 — restauració puntual de `15 Saldos`**: targeta a Configuració → Exercicis que escriu 8 saldos (valors de la còpia del 13/10, decisió
+d'Emilio; 02 Banc 26/27 a 24.542,39 €). No depén de `DB.saldos`: llig el full, només escriu si encara té l'única fila esperada, i torna a
+llegir per comprovar-ho; mentre restaura bloqueja els refrescos (`_desantAraMateix`). Verificat amb un full simulat que desa el que s'hi
+escriu: amb la memòria buidada i un refresc concurrent (restaura les 8 files; només `PUT`+`clear` de `15 Saldos`), amb la lectura pròpia
+fallida (429: no escriu res), i amb el full ja restaurat (no escriu res). Saldos previstos a producció: 01 Banc 9.141,88; 02 Banc 26.353,58;
+Efectiu 3.625,68; TPV 0; 03 Banc 26.298,99 (total 65.420,13 €). **Pendent d'Emilio: aplicar-la i comprovar cada compte amb el seu extracte**
+(els valors del 13/10 poden haver canviat: el del 02 Banc va canviar entre el 13/10 i el 27/10; el 03 Banc era a 10.190,87 € el 13/10).
+**Pendent de codi (causa arrel, cal la conformitat d'Emilio)**: `loadFromSheets` ha de llegir els saldos dins del swap atòmic i propagar
+l'error de lectura, i `save('saldos')` s'ha de negar a escriure si falta el saldo d'algun banc de l'any actiu. Mentrestant, qualsevol desat de
+saldos (editar un banc, nou exercici) després d'un refresc fallit pot tornar a esborrar la pestanya.
 
 **Pendents** (res d'això depén de codi):
 1. Extractes actuals: Caixabank ES06 2100 1958 3602 0008 8726 des del 29/9; Caixabank ES56 2100 7990 7413 0059 2938
@@ -187,9 +204,10 @@ d'Emilio: aplicar-la; després eliminar el codi (commit apart).** Efecte als inf
 3. A Configuració → Regles (Emilio): `T.PlanaMyCommerce` i `MANTENIMIENTO TPV` a 01 Tresoreria; esborrar `PR.DE;`;
    buidar el concepte de `PR.DE` i `DETIR`; allargar `RAMS`. Opcional: regla `FATIR` → 01 Secretaria (remeses de quotes).
 4. Avançament pendent d'A. Alario: 40 €.
-5. **02 Banc (D-029)**: el saldo real a 31/03/2026 és 24.542,39 € (confirmat amb l'extracte del 27/10). Aplicar la targeta de la
-   v4.0.80 (Configuració → Exercicis): passa els 7 moviments d'abril–maig (−600,60 € nets) del 25/26 al 26/27 i posa el saldo inicial
-   26/27 a 24.542,39 €. Després, comprovar que el 02 Banc dona 26.353,58 € (extracte del 3/10) i eliminar el codi puntual.
+5. **02 Banc (D-029)**: fet el 2026-10-27 (v4.0.80): els 7 moviments d'abril–maig són al 26/27 i el saldo inicial 26/27 és 24.542,39 €
+   (saldo real a 31/03). El 02 Banc dona 26.353,58 €, com l'extracte del 3/10.
+5b. **Restaurar `15 Saldos`** (v4.0.82, Configuració → Exercicis) i comprovar 01 Banc, Efectiu i 03 Banc amb els extractes; després eliminar el
+   codi puntual i corregir la causa arrel (vegeu l'incident del 2026-10-27).
 6. Decidir si les remeses de quotes (`FATIR…`) i els apunts del TPV tenen regla pròpia; les àrees confirmades són TPV →
    01 Tresoreria, WiFi COM.T → 07 Coordinació Tècnica, aigua → 01 Jurídica i Contractacions, quotes → 01 Secretaria.
 

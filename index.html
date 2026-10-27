@@ -337,7 +337,7 @@ tr:hover td{background:var(--bg2)}
     <div class="login-logo">Falla <span>Portal</span></div>
     <div class="login-sub">Sistema de gestió financera</div>
     <div class="login-fiscal">Any fiscal 26/27 · Abr 2026 – Mar 2027</div>
-    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v4.0.81</div>
+    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v4.0.82</div>
     <button class="btn-google" onclick="signIn()">
       <svg viewBox="0 0 24 24" width="20" height="20"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
       Entrar amb Google
@@ -379,7 +379,7 @@ tr:hover td{background:var(--bg2)}
     <div class="sb-bottom">
       <div class="sync-ind" style="display:flex;align-items:center;justify-content:space-between"><div style="display:flex;align-items:center;gap:6px"><div class="sync-dot" id="sync-dot"></div><span id="sync-text">Sincronitzat</span></div><button onclick="manualRefresh()" title="Actualitzar dades" style="background:none;border:none;cursor:pointer;padding:2px 4px;color:var(--text2);font-size:14px;line-height:1"><i class="ti ti-refresh"></i></button></div>
       <button class="btn-logout" onclick="signOut()"><i class="ti ti-logout" style="font-size:14px"></i> Tancar sessió</button>
-      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v4.0.81</div>
+      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v4.0.82</div>
     </div>
   </div>
 
@@ -6536,6 +6536,74 @@ async function deleteRegla(id){
   save('regles').catch(function(e){console.warn(e);});
 }
 
+// ── Restauració de 15 Saldos (2026-10-27) ── ELIMINAR després d'usar-la.
+// La correcció puntual de la v4.0.80 va desar els saldos mentre un refresc en segon pla els tenia buidats (loadFromSheets
+// posa DB.saldos={} i s'empassa una lectura fallida de 15 Saldos) i el full va quedar amb una sola fila: 02 Banc 26/27.
+// Es restauren els valors de la còpia del 13/10/2026 (decisió d'Emilio); el 02 Banc 26/27 es queda en 24.542,39 €.
+// No depén de DB.saldos: llig el full, només escriu si encara té l'única fila esperada, i torna a llegir per comprovar-ho.
+const _REST_SALDOS=[
+  {bancId:'b1',anyFiscal:'25/26',saldoInicial:20241.08,saldoData:'01/04/2025'},
+  {bancId:'b2',anyFiscal:'25/26',saldoInicial:16517.63,saldoData:'01/04/2025'},
+  {bancId:'b1779146131300',anyFiscal:'25/26',saldoInicial:30190.87,saldoData:'01/04/2025'},
+  {bancId:'b1',anyFiscal:'26/27',saldoInicial:16374.02,saldoData:'01/04/2026'},
+  {bancId:'b2',anyFiscal:'26/27',saldoInicial:24542.39,saldoData:'01/04/2026'},
+  {bancId:'b3',anyFiscal:'26/27',saldoInicial:17856,saldoData:'01/04/2026'},
+  {bancId:'b4',anyFiscal:'26/27',saldoInicial:0,saldoData:'01/04/2026'},
+  {bancId:'b1779146131300',anyFiscal:'26/27',saldoInicial:30190.87,saldoData:'01/04/2026'}
+];
+// Les files del full tal com han quedat: només el 02 Banc 26/27 a 24.542,39 €.
+function _restSaldosDanyat(files){
+  return files.length===1&&files[0].bancId==='b2'&&files[0].anyFiscal==='26/27'&&
+    Math.abs((parseFloat(files[0].saldoInicial)||0)-24542.39)<0.005;
+}
+function _restSaldosIgual(files){
+  if(files.length!==_REST_SALDOS.length)return false;
+  return _REST_SALDOS.every(function(s){
+    return files.some(function(f){return f.bancId===s.bancId&&f.anyFiscal===s.anyFiscal&&
+      Math.abs((parseFloat(f.saldoInicial)||0)-s.saldoInicial)<0.005&&f.saldoData===s.saldoData;});
+  });
+}
+// La targeta es mostra amb el que hi ha en memòria; el botó torna a comprovar-ho contra el full.
+function _restSaldosVisible(){
+  const rol=getRol();
+  if(rol!=='president'&&rol!=='treasury')return false;
+  const ids=(DB.config.bancs||[]).map(function(b){return b.id;});
+  if(!_REST_SALDOS.every(function(s){return ids.includes(s.bancId);}))return false;
+  const files=Object.entries(DB.saldos||{}).map(function(e){
+    const p=e[0].split('_');return{bancId:p[0],anyFiscal:p.slice(1).join('_'),saldoInicial:e[1].saldoInicial};
+  });
+  return _restSaldosDanyat(files);
+}
+async function restauraSaldosPuntual(){
+  if(!_restSaldosVisible()){showToast('Restauració no disponible (ja feta o les dades han canviat)',true);return;}
+  const nom=function(id){const b=(DB.config.bancs||[]).find(function(x){return x.id===id;});return b?b.codi:id;};
+  const llista=_REST_SALDOS.map(function(s){return'• '+nom(s.bancId)+' '+s.anyFiscal+': '+fmtD(s.saldoInicial);}).join('\n');
+  if(!confirm('Restaurar els saldos inicials (pestanya 15 Saldos)\n\n'+
+    'Ara el full només té el saldo del 02 Banc 26/27. S\'hi escriuen aquests '+_REST_SALDOS.length+' saldos (còpia del 13/10, i el 02 Banc 26/27 a 24.542,39 €):\n\n'+
+    llista+'\n\nInclou el 25/26, que està tancat: és una excepció. Continuar?'))return;
+  _desantAraMateix++;   // cap refresc en segon pla comença mentre es restaura
+  setSyncing(true,true);
+  try{
+    // El full, no la memòria: un refresc pot haver deixat DB.saldos buit
+    const abans=await readTab(TABS.saldos.name);
+    if(!_restSaldosDanyat(abans))throw new Error('el full ja no té només la fila del 02 Banc 26/27; no s\'ha tocat res');
+    await writeTab(TABS.saldos.name,TABS.saldos.headers,_REST_SALDOS);
+    const despres=await readTab(TABS.saldos.name);
+    if(!_restSaldosIgual(despres))throw new Error('en tornar a llegir el full, els saldos no coincideixen');
+    DB.saldos={};
+    despres.forEach(function(r){DB.saldos[r.bancId+'_'+r.anyFiscal]={saldoInicial:parseFloat(r.saldoInicial)||0,saldoData:r.saldoData||''};});
+    saveCache();
+    setSyncing(false,true);
+    showToast('Saldos restaurats ('+despres.length+'). Recarrega la pàgina i comprova els bancs.');
+    renderCfgExercicis();
+  }catch(e){
+    setSyncing(false,true);
+    showToast('Error restaurant els saldos: '+e.message+'. Recarrega i comprova Configuració → Bancs.',true);
+  }finally{
+    _desantAraMateix--;
+  }
+}
+
 function renderCfgExercicis(){
   const container=document.getElementById('cfg-exercicis');
   if(!container){console.warn('cfg-exercicis-container no trobat');return;}
@@ -6545,6 +6613,14 @@ function renderCfgExercicis(){
   const estats=DB.config.estats_exercicis||{};
   let html='';
   if(canDo){
+    let rs=false;
+    try{rs=_restSaldosVisible();}catch(e){}
+    if(rs){
+      html+='<div style="background:var(--amber-bg);border:1px solid var(--amber);border-radius:var(--r);padding:12px 14px;margin-bottom:16px;color:var(--amber-text);font-size:13px">'+
+        '<div style="font-weight:600;margin-bottom:4px"><i class="ti ti-alert-triangle"></i> Saldos inicials esborrats (15 Saldos)</div>'+
+        '<div style="margin-bottom:10px">Només queda el saldo del 02 Banc 26/27; per això els altres comptes surten en negatiu. Es restauren els '+_REST_SALDOS.length+' saldos de la còpia del 13/10 (25/26 i 26/27), amb el 02 Banc 26/27 a 24.542,39 €. Abans d\'escriure es comprova el full i després es torna a llegir.</div>'+
+        '<button class="btn btn-primary" onclick="restauraSaldosPuntual()"><i class="ti ti-restore"></i> Revisar i aplicar</button></div>';
+    }
     html+='<div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">';
     html+='<button class="btn btn-primary" onclick="obrirNouExercici()"><i class="ti ti-calendar-plus"></i> Nou exercici</button>';
     html+='<button class="btn" onclick="openModalTancarExercici()" style="color:var(--amber)"><i class="ti ti-lock"></i> Tancar exercici actual</button>';

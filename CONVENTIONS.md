@@ -149,6 +149,10 @@ confirmar amb `repr()` abans de concloure que hi ha un error de sintaxi.
 18. **NO fer el commit si un pas anterior ha fallat** → les edicions amb scripts van en un fitxer (no heretdocs amb
     cometes) i la cadena és `set -e` / `&&` fins al `git push`. Dues vegades (v4.0.67, v4.0.75) es va publicar el codi
     sense la documentació perquè l'script de documentació havia fallat i el commit es va executar igualment.
+19. **NO escriure una pestanya sencera des d'una correcció puntual a partir de `DB` sense haver-la tornat a llegir del full** → un
+    refresc en segon pla pot haver buidat `DB.saldos` (s'empassa la lectura fallida). La correcció llig el full just abans, escriu
+    files construïdes (no la memòria), bloqueja refrescos i torna a llegir per comprovar. I la prova es fa **amb els refrescos
+    actius** i un full simulat que desa el que s'hi escriu: desactivar-los va amagar l'incident de la v4.0.80 (2026-10-27).
 
 ---
 
