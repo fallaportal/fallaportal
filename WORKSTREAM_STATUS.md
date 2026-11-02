@@ -1,6 +1,6 @@
 # Work Stream Status — Falla Portal
 ## Snapshot Date: 2026-11-02
-## Versió en producció: v4.0.89 (a `main`) · branca `supabase`: v4.1.6
+## Versió en producció: v4.0.89 (a `main`) · branca `supabase`: v4.1.7
 
 > **Context de calendari**: període vacacional, ús baix de l'eina. Bon moment per a
 > canvis estructurals i per a la decisió pendent del Service Worker.
@@ -93,7 +93,7 @@ extern de la plantilla o servir-lo des del domini propi; (4) l'ús continuat mil
   - **Pendent després d'aquest tros** (tancat el 2026-11-02, vegeu «Fase 3 tancada»): Fase 4 (justificants: pujar-ne falla amb missatge clar; les
     carpetes de Drive **no es desen**, l'app ho avisa) i esborrar els usuaris de prova d'Authentication (Emilio). Fets: matriu rol × mòdul al
     client, `operacions` en desar i textos del manual.
-  - Decisions pendents d'Emilio (no bloquegen): (1) Junta té `viewAll=false` al full real i la matriu carregada diu «tot»; (2) els consums de
+  - Decisions pendents d'Emilio (no bloquegen): (1) ~~Junta `viewAll`~~ decidit a D-053; (2) els consums de
     falles.app ja no desen empremta: com es detecten duplicats en reimportar (període + event + import?); (3) descartats a la càrrega: 4
     avançaments orfes i 12 canvis orfes (net zero); (4) regles d'importació amb font `app` (2) no es poden desar; (5) un responsable d'àrea que fa
     un traspàs banc → caixa reclassificant un moviment de l'extracte rep error de permís (només Historial en edició el pot canviar).
@@ -106,7 +106,7 @@ extern de la plantilla o servir-lo des del domini propi; (4) l'ús continuat mil
     delegat, delegat + junta: menú, barra, informes, edició de la matriu amb error del servidor, rol nou, usuari amb dos rols, 13 pantalles sense
     canvis fantasma).
   - **No verificat**: entrada real per correu amb cada rol (Fase 6) i que `/code-review` no trobe res.
-  - Pendents d'Emilio (no bloquegen): els de més amunt (Junta `viewAll`, duplicats de falles.app, orfes, regles `app`, traspàs d'un responsable
+  - Pendents d'Emilio (no bloquegen): els de més amunt (~~Junta `viewAll`~~ decidit a D-053, duplicats de falles.app, orfes, regles `app`, traspàs d'un responsable
     d'àrea) i esborrar els usuaris de prova d'Authentication. Els canvis D-038–D-041 (després del tall) ara es fan des de l'editor de rols.
 **Fase 4 feta (2026-11-02, Sonnet 5.5 · high; branca `supabase`, v4.1.6, D-051) — falta migrar els 24 justificants antics (Emilio)**:
   - Fet: bucket privat `justificants` (10 MB, imatges i PDF) amb polítiques de Storage (migració `20261102100000`, **aplicada al projecte**); client que puja,
@@ -129,8 +129,8 @@ extern de la plantilla o servir-lo des del domini propi; (4) l'ús continuat mil
   - **Falta (decideix Emilio)**: executar l'assaig sencer amb buidatge, **dues vegades seguides** (`node tools/supabase_assaig.mjs "<export.xlsx>" --vegades 2`). Esborra del
     projecte de proves tot el que hi ha (27 taules i 6.251 files del registre d'activitat, els 2 usuaris d'Auth) i el torna a crear amb les migracions; el sistema de
     permisos va bloquejar que ho llançara jo. `supabase_buida.mjs --aplica` no s'ha provat.
-  - Decisions d'Emilio noves: (1) la pestanya antiga `15 Fapp Passiu` (1 fila: 34.257,20 € de passiu del 25/26, 671 fallers) no es carrega: l'app actual no la llig; la vols portar?
-    (2) Junta: `viewAll` és `false` al full i `true` a la matriu (ja pendent).
+  - **Decidit per Emilio (D-053)**: (1) el passiu de falles.app és el que els fallers tenen a l'app falles.app: la pestanya antiga `15 Fapp Passiu` no es carrega i Emilio passarà la xifra
+    actual; (2) Junta «veu el que volem, no tot»: matriu amb abast `directiva` a Dashboard, Historial, Resultats i r1–r3 i sense Flux (migració `20261102110000`, v4.1.7; es pot canviar a «Rols i permisos»).
 **Propera sessió**: acabar l'assaig (net dues vegades) i la migració dels 24 justificants; després la Fase 6 (proves d'acceptació rol per rol amb
 `tools/supabase_escriptura.mjs` com a base). A la branca `supabase`, sense tocar `main`.
 **Blockers**:

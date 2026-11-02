@@ -313,7 +313,7 @@ const passiu = tab('16 Fapp Passiu').filter((p) => blanc(p.data)).map((p) => ({
   exercici_id: normAF(p.anyFiscal) || exercDeData(dataIso(p.data)), data: dataIso(p.data), total: dec(Math.max(0, num(p.total))), fallers: parseInt(p.fallers, 10) || 0,
   creat_per: 'migracio',
 }));
-if (tab('15 Fapp Passiu').length) avis(`«15 Fapp Passiu» (pestanya antiga) té ${tab('15 Fapp Passiu').length} fila(es) que l'app actual no llig (ho fa a «16 Fapp Passiu»): no es carreguen.`);
+if (tab('15 Fapp Passiu').length) avis(`«15 Fapp Passiu» (pestanya antiga) té ${tab('15 Fapp Passiu').length} fila(es) que l'app actual no llig (ho fa a «16 Fapp Passiu»): no es carreguen (D-053: el passiu real és la xifra actual de falles.app, que passa Emilio).`);
 const presHistorial = tab('12 Pressupostos Historial').filter((h) => blanc(h.accio)).map((h) => {
   const desbloq = /desbloq/i.test(h.accio);
   return {

@@ -387,17 +387,17 @@ comprovacions per nom de rol d'`index.html` v4.0.78.
 
 | Mòdul | President | Tresoreria | Àrea | Delegat | Junta | Ve de |
 |---|---|---|---|---|---|---|
-| dashboard | L | L | L d | L d | L | tothom |
+| dashboard | L | L | L d | L d | L d | tothom |
 | moviments | E | E | E d | E d | — | canRegister |
-| historial | E | E | L d | L d | L | `president`\|`treasury` |
+| historial | E | E | L d | L d | L d | `president`\|`treasury` |
 | fons | E | E | **E d** (*) | L d | — | canFons; Àrea pel botó de la targeta |
 | caixa_obrir | E | E | — | — | — | canFons\|canConfig |
 | caixa | E | E | E | E d | **E** (*) | tothom; el delegat, filtrat |
 | pressupostos | E | E | E d | E d | **E** (*) | viewAll o delegació pròpia |
 | pressupostos_aprovar | E | E | — | — | — | canFons |
 | fallesapp, importacio | E | E | — | — | — | canImport |
-| resultats, r1, r2, r3 | L / r1 E | L / r1 E | L d | L d | L | tothom; reobrir caixa: canConfig |
-| flux | L | L | — | — | L | viewAll |
+| resultats, r1, r2, r3 | L / r1 E | L / r1 E | L d | L d | L d | tothom; reobrir caixa: canConfig |
+| flux | L | L | — | — | — | viewAll |
 | r4 | E | E | **E** (*) | **E** (*) | **E** (*) | tothom pot adjuntar |
 | configuracio, rols | E | E | — | — | — | canConfig |
 | usuaris | E | — | — | — | — | canUsers |

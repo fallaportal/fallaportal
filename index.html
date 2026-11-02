@@ -346,7 +346,7 @@ tr:hover td{background:var(--bg2)}
     <div class="login-logo">Falla <span>Portal</span></div>
     <div class="login-sub">Sistema de gestió financera</div>
     <div class="login-fiscal">Any fiscal 26/27 · Abr 2026 – Mar 2027</div>
-    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v4.1.6</div>
+    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v4.1.7</div>
     <div id="login-step-boot" class="login-boot">Comprovant la sessió…</div>
     <div id="login-step-email" class="hidden">
       <label class="login-lbl" for="login-email">Correu electrònic</label>
@@ -399,7 +399,7 @@ tr:hover td{background:var(--bg2)}
     <div class="sb-bottom">
       <div class="sync-ind" style="display:flex;align-items:center;justify-content:space-between"><div style="display:flex;align-items:center;gap:6px"><div class="sync-dot" id="sync-dot"></div><span id="sync-text">Sincronitzat</span></div><button onclick="manualRefresh()" title="Actualitzar dades" style="background:none;border:none;cursor:pointer;padding:2px 4px;color:var(--text2);font-size:14px;line-height:1"><i class="ti ti-refresh"></i></button></div>
       <button class="btn-logout" onclick="signOut()"><i class="ti ti-logout" style="font-size:14px"></i> Tancar sessió</button>
-      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v4.1.6</div>
+      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v4.1.7</div>
     </div>
   </div>
 
@@ -1580,7 +1580,7 @@ const DEFAULT_ROLES={
   treasury:{id:'treasury',label:'Tresoreria',color:'p-info',canRegister:true,canFons:true,canImport:true,canConfig:true,canUsers:false,viewAll:true,custom:false},
   area:{id:'area',label:"Resp. d'Area",color:'p-ok',canRegister:true,canFons:false,canImport:false,canConfig:false,canUsers:false,viewAll:false,custom:false},
   delegat:{id:'delegat',label:'Resp. Delegacio',color:'p-warn',canRegister:true,canFons:false,canImport:false,canConfig:false,canUsers:false,viewAll:false,custom:false},
-  board:{id:'board',label:'Junta (lectura)',color:'p-gray',canRegister:false,canFons:false,canImport:false,canConfig:false,canUsers:false,viewAll:true,custom:false},
+  board:{id:'board',label:'Junta (lectura)',color:'p-gray',canRegister:false,canFons:false,canImport:false,canConfig:false,canUsers:false,viewAll:false,custom:false},
   noauth:{id:'noauth',label:'No autoritzat',color:'p-danger',canRegister:false,canFons:false,canImport:false,canConfig:false,canUsers:false,viewAll:false,custom:false}
 };
 

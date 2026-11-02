@@ -132,11 +132,13 @@ try {
   const ida = A.sbFilesDeMatriu(mat).length === R.rol_moduls.length;
   if (!ida) errors++;
   console.log(`  ${ida ? '✓' : '✗'} sbFilesDeMatriu(sbMatriuDeFiles(files)) = ${R.rol_moduls.length} files`);
-  // Diversos rols: el permís més alt (President + Delegat dona edició a tot; Delegat + Junta dona tot a la lectura del Dashboard)
+  // Diversos rols: el permís més alt (Delegat + President: edita Nou moviment a tot; Junta i Delegat tenen el Dashboard només de la seua directiva, D-053)
   const perf = A.sbPerfil(['delegat', 'board'], mat);
-  const bo2 = perf.dashboard && perf.dashboard.veuTot === true && perf.moviments && perf.moviments.nivell === 'edicio' && perf.moviments.editaTot === false && perf.flux && perf.flux.nivell === 'lectura';
+  const perf2 = A.sbPerfil(['delegat', 'president'], mat);
+  const bo2 = perf.dashboard && perf.dashboard.veuTot === false && perf.moviments && perf.moviments.nivell === 'edicio' && perf.moviments.editaTot === false && !perf.flux
+    && perf2.moviments.editaTot === true && perf2.flux && perf2.flux.nivell === 'lectura';
   if (!bo2) errors++;
-  console.log(`  ${bo2 ? '✓' : '✗'} sbPerfil([delegat, board]): veu tot el Dashboard i edita Nou moviment només a la directiva`);
+  console.log(`  ${bo2 ? '✓' : '✗'} sbPerfil: Junta no veu tot ni Flux (D-053) i amb President s'edita a tot`);
 
   // ---------------------------------------------------------------- 2. Cap canvi fantasma
   console.log('\n2. Cap canvi fantasma');

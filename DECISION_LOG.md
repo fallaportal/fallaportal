@@ -1010,3 +1010,21 @@ comprovava les sumes per exercici i tipus, però no tenia la validació completa
     registre d'activitat) i fa falta l'autorització d'Emilio. Per tant el criteri «net dues vegades seguides» **encara no es compleix** (n'hi ha un d'assaig net,
     sense buidar). `supabase_buida.mjs --aplica` no s'ha provat.
   - El token de Google i la clau `service_role` continuen sent d'Emilio (Fase 4: justificants antics; i el buidatge, si hi ha fitxers a Storage).
+
+---
+
+### D-053: Junta no veu tot (matriu) i el passiu de falles.app (decisions d'Emilio sobre D-052)
+**Date**: 2026-11-02
+**Status**: Accepted (Emilio)
+**Context**: La càrrega va avisar de dues coses: Junta tenia `viewAll=false` al full i `true` a la matriu, i la pestanya antiga `15 Fapp Passiu` (34.257,20 €, 25/26)
+no es llig a l'app actual.
+**Decision**:
+  - **Junta «veu el que volem, no tot»**: la matriu es porta al que feia l'app en producció (migració `20261102110000_junta_abast.sql`): Dashboard, Historial,
+    Resultats i r1–r3 amb abast `directiva` (només les àrees i delegacions que té assignades) i **sense Flux d'efectiu** (a l'app antiga només el veia qui tenia `viewAll`).
+    Què veu de veres Junta es decideix a Configuració → Rols i permisos, sense tocar l'SQL. Els permisos d'escriptura de Junta no canvien (D-038, després del tall).
+    `DEFAULT_ROLES.board.viewAll` passa a `false` (referència de les proves). Fora l'avís de la càrrega.
+  - **Passiu de falles.app**: és el que els fallers tenen a l'app falles.app (una xifra actual, no una dada històrica). La pestanya antiga `15 Fapp Passiu` **no es carrega**;
+    Emilio passarà la xifra actual i es posarà a `fallesapp_passiu` (des de la pantalla Falles.app de l'app, o amb la càrrega).
+**Consequences**:
+  - Una persona amb Junta que no tinga cap assignació a la directiva veurà el Dashboard buit, com a l'app antiga: cal assignar-li àrees o delegacions a Configuració → Directiva.
+  - Versió: v4.1.7. Proves: 278 en local i 275 a Supabase, en verd; la matriu torna intacta i la càrrega ja no té l'avís de Junta.
