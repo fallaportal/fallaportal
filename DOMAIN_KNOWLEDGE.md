@@ -71,7 +71,7 @@ Cremà (19/03) i el 31/03 serveixen per liquidar els pendents de Falles dins del
 
 ### Established Facts
 
-- **Versió en producció actual**: v4.0.89 (BUILD_VERSION `4089`) [TIME-SENSITIVE: 2026-10-27]; branca `supabase`: v4.1.5 (Fase 3 tancada, D-050)
+- **Versió en producció actual**: v4.0.89 (BUILD_VERSION `4089`) [TIME-SENSITIVE: 2026-10-27]; branca `supabase`: v4.1.6 (Fases 3 i 4 fetes; justificants a Storage, D-051)
 - **Una càrrega no trepitja un desat** [v4.0.86]: `loadFromSheets` ho llig tot abans d'assignar `DB` i descarta la lectura si `_genEscriptura`
   ha canviat mentre llegia (el pugen `save`, `saveMoviment`, `saveFons` i el passiu de falles.app). Una càrrega fallida no toca `DB`, així que
   ningú no restaura còpies. `_carregant` compta les càrregues en curs.
@@ -106,7 +106,9 @@ Cremà (19/03) i el 31/03 serveixen per liquidar els pendents de Falles dins del
 - `getMyArees()`/`getMyDelegacions()` tornen tot si el rol té `viewAll`; si no, consulten la Directiva.
 - L'email `it.fallaportal@gmail.com` rep rol **`treasury`**, no `president`.
 - Si `08 Usuaris` està buida, **qualsevol compte de Google que entre rep rol `president`** (bootstrap).
-- El scope `drive.file` no permet accedir a carpetes compartides. Cal scope `drive`.
+- El scope `drive.file` no permet accedir a carpetes compartides. Cal scope `drive`. (Només a `main`: a la branca `supabase` els justificants són a Storage, D-051.)
+- **Justificants a Supabase** [D-051]: fitxers al bucket privat `justificants` (`XX-YY/<moviment>.<ext>`, màxim 10 MB, imatges i PDF); `ticketUrl` d'un
+  moviment és `sb:<ruta>` o l'enllaç antic de Drive fins que `tools/supabase_justificants_drive.mjs` el migre.
 - No existeix entorn Dev separat. Les proves es fan en producció.
 - La conciliació és control, no comptable: els moviments compten als informes independentment del seu estat.
 - **Comptes bancaris** (a l'app, IBAN i via):

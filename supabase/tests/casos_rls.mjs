@@ -7,6 +7,7 @@
 //   prep     sentències prèvies executades com a servei (p. ex. bloquejar el pressupost)
 //   motiu    valor de app.motiu (excepció en un exercici tancat)
 //   verifica consulta final com a servei; si hi és, l'espera es compara amb el seu resultat
+//   nomesLocal  true: no s'executa amb --remot (Storage no deixa esborrar fitxers per SQL)
 //   jwt      claims del JWT en lloc dels per defecte ({role: 'authenticated', email: com, sub})
 //   espera   'error' | { error: 'text' } | { files: n } | { valor: 'x' } (primera columna de la primera fila)
 // Les sentències porten `returning 1` (mai una columna: amb `returning id` Postgres exigeix poder llegir la fila nova
@@ -43,6 +44,7 @@ function fons(o = {}) {
   return `insert into public.fons (${cols.join(', ')}) values (${cols.map((k) => q(c[k])).join(', ')}) returning 1`;
 }
 
+const obj = (n) => "insert into storage.objects (bucket_id, name) values ('justificants', '" + n + "')";
 const comptaMov = "select count(*) from public.moviments where id like 't\\_%'";
 
 
@@ -284,4 +286,28 @@ export const casos = [
   { nom: 'hook alta: un rol que s\'esborra a mitges no deixa passar (sense usuari_rols)', com: 'servei', prep: "delete from public.usuari_rols where usuari_id = 't_president'", sql: hookErr(P), espera: { valor: '403' } },
   { nom: 'hook alta: només el rol d\'Auth pot executar-lo', com: 'servei', sql: "select has_function_privilege('supabase_auth_admin', 'app.hook_alta_usuari(jsonb)', 'execute') and has_schema_privilege('supabase_auth_admin', 'app', 'usage') and not has_function_privilege('anon', 'app.hook_alta_usuari(jsonb)', 'execute') and not has_function_privilege('authenticated', 'app.hook_alta_usuari(jsonb)', 'execute') and not has_function_privilege('public', 'app.hook_alta_usuari(jsonb)', 'execute')", espera: { valor: 'true' } },
   { nom: 'hook alta: un membre no pot provar correus des de l\'API', com: D, sql: hookErr(N), espera: 'error' },
+
+  // ---------------------------------------------------------------- Fase 4 · justificants a Storage (D-051)
+  { nom: 'storage: el bucket és privat, amb límit de mida i només imatges i PDF', com: 'servei', sql: "select (not public) and file_size_limit = 10485760 and 'application/pdf' = any (allowed_mime_types) and not ('text/html' = any (allowed_mime_types)) from storage.buckets where id = 'justificants'", espera: { valor: 'true' } },
+  { nom: 'storage pujar: el delegat al seu moviment', com: D, sql: obj('91-92/t_m_del.jpg') + ' returning 1', espera: { files: 1 } },
+  { nom: 'storage pujar: r4 deixa pujar-ne a una despesa manual d\'un altre (com la taula)', com: D, sql: obj('91-92/t_m_tres.png') + ' returning 1', espera: { files: 1 } },
+  { nom: 'storage pujar: no a un moviment d\'extracte d\'un altre', com: D, sql: obj('91-92/t_m_ext.jpg') + ' returning 1', espera: 'error' },
+  { nom: 'storage pujar: qui té Historial en edició sí, a qualsevol moviment', com: T, sql: obj('91-92/t_m_ext.jpg') + ' returning 1', espera: { files: 1 } },
+  { nom: 'storage pujar: rol només lectura no', com: L, sql: obj('91-92/t_m_tres.png') + ' returning 1', espera: 'error' },
+  { nom: 'storage pujar: un usuari sense rol no', com: S, sql: obj('91-92/t_m_sensrol.jpg') + ' returning 1', espera: 'error' },
+  { nom: 'storage pujar: sense sessió no', com: 'anon', sql: obj('91-92/t_m_del.jpg') + ' returning 1', espera: 'error' },
+  { nom: 'storage pujar: la ruta ha de ser «XX-YY/<moviment>.<extensió>» (cap subcarpeta)', com: D, sql: obj('91-92/sub/t_m_del.jpg') + ' returning 1', espera: 'error' },
+  { nom: 'storage pujar: ni sense extensió', com: D, sql: obj('91-92/t_m_del') + ' returning 1', espera: 'error' },
+  { nom: 'storage pujar: ni a un moviment que no existeix', com: T, sql: obj('91-92/t_inexistent.jpg') + ' returning 1', espera: 'error' },
+  { nom: 'storage veure: un membre llig els fitxers', com: L, prep: obj('91-92/t_m_del.jpg'), sql: "select 1 from storage.objects where bucket_id = 'justificants'", espera: { files: 1 } },
+  { nom: 'storage veure: qui no és membre no en veu cap', com: S, prep: obj('91-92/t_m_del.jpg'), sql: "select 1 from storage.objects where bucket_id = 'justificants'", espera: { files: 0 } },
+  { nom: 'storage substituir: el creador del moviment sí', com: D, prep: obj('91-92/t_m_del.jpg'), sql: "update storage.objects set metadata = '{}'::jsonb where bucket_id = 'justificants' and name = '91-92/t_m_del.jpg' returning 1", espera: { files: 1 } },
+  { nom: 'storage substituir: no un fitxer d\'un moviment d\'extracte', com: D, prep: obj('91-92/t_m_ext.jpg'), sql: "update storage.objects set metadata = '{}'::jsonb where bucket_id = 'justificants' and name = '91-92/t_m_ext.jpg' returning 1", espera: { files: 0 } },
+  { nom: 'storage esborrar: el creador del moviment sí', com: D, prep: obj('91-92/t_m_del.jpg'), sql: "delete from storage.objects where bucket_id = 'justificants' and name = '91-92/t_m_del.jpg' returning 1", nomesLocal: true, espera: { files: 1 } },
+  { nom: 'storage esborrar: no el d\'un moviment d\'un altre', com: D, prep: obj('91-92/t_m_tres.jpg'), sql: "delete from storage.objects where bucket_id = 'justificants' and name = '91-92/t_m_tres.jpg' returning 1", nomesLocal: true, espera: { files: 0 } },
+  { nom: 'storage esborrar: qui té Historial en edició sí', com: T, prep: obj('91-92/t_m_tres.jpg'), sql: "delete from storage.objects where bucket_id = 'justificants' and name = '91-92/t_m_tres.jpg' returning 1", nomesLocal: true, espera: { files: 1 } },
+  { nom: 'storage esborrar: rol només lectura no', com: L, prep: obj('91-92/t_m_del.jpg'), sql: "delete from storage.objects where bucket_id = 'justificants' and name = '91-92/t_m_del.jpg' returning 1", nomesLocal: true, espera: { files: 0 } },
+  { nom: 'justificant: una fila no pot apuntar al fitxer d\'un altre moviment', com: D, sql: "insert into public.justificants (moviment_id, storage_path) values ('t_m_del', '91-92/t_m_tres.jpg') returning 1", espera: { error: 'ruta del fitxer' } },
+  { nom: 'justificant: una ruta sense la forma «XX-YY/<moviment>.<ext>» no', com: D, sql: "insert into public.justificants (moviment_id, storage_path) values ('t_m_del', 'altra/t_m_del.jpg') returning 1", espera: { error: 'ruta del fitxer' } },
+  { nom: 'justificant: la migració (servei) hi posa l\'enllaç antic de Drive i una ruta lliure', com: 'servei', sql: "insert into public.justificants (moviment_id, storage_path, url_drive_original) values ('t_m_del', 'migrat/qualsevol.jpg', 'https://drive.google.com/file/d/x/view') returning 1", espera: { files: 1 } },
 ];

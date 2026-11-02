@@ -117,6 +117,7 @@ try {
   await db.exec(llig(join(supabaseDir, 'tests', 'dades_prova.sql')));
   for (const cas of casos) {
     if (filtre && !cas.nom.includes(filtre)) continue;
+    if (remot && cas.nomesLocal) continue;   // p. ex. Storage no deixa esborrar fitxers per SQL (només per l'API)
     const r = await executaCas(db, cas);
     const problema = avalua(cas, r);
     if (problema) {

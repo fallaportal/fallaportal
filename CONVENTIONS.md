@@ -90,6 +90,8 @@ import d'un fons lligat) no s'envien mai. Mai assignar `DB` des d'una lectura me
 `historial`, `exercicis`, `directiva`, `registre`, `r1`…`r4`…); el menú de l'app els mapeja a `MODUL_MATRIU`. Un canvi de permisos es fa a l'editor
 (o a `rol_moduls`), no al codi. **Operacions (D-027)**: una acció nova que crea registres s'agrupa a `sbAgrupaOperacions`; si crea un tipus de registre nou, cal
 ensenyar-li-ho (si no, no tindrà operació). `VEU_OPERACIONS=1 node tools/supabase_escriptura.mjs --accions` mostra els tipus creats per escenari.
+**Justificants (D-051)**: mai un `<a href=ticketUrl>`: obrir amb `obreJustificant(movId)` (URL signada). Pujar amb `pujaJustificant(file, movId, any)` DESPRÉS d'haver desat
+el moviment (clau forana). Un test d'esborrat de Storage és `nomesLocal: true` (no corre amb `--remot`: Storage no deixa esborrar per SQL).
 **Fitxers amb accents**: no editar `index.html` amb scripts `python - <<EOF` amb barres invertides dins de cometes (el shell se'n menja
 una): usar l'eina d'edició, o escriure el tros a un fitxer i empalmar-lo.
 

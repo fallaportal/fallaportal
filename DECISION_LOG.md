@@ -942,3 +942,34 @@ permisos amb els sis booleans antics i un sol rol per persona, i la visibilitat 
   - Quedaven fora de la Fase 3: justificants (Fase 4), les decisions d'Emilio pendents (vegeu WORKSTREAM_STATUS) i la verificació amb entrada real per
     rol (Fase 6). El servidor és qui fa complir els permisos: el client només mostra o amaga.
   - Versió de la branca: v4.1.5.
+
+---
+
+### D-051: Fase 4: justificants a Supabase Storage (bucket privat, polítiques com les de la taula, migració des de Drive amb script)
+**Date**: 2026-11-02
+**Status**: Accepted (Emilio: «Sí, Fase 4»; el pla de la Fase 4 ja estava revisat des de D-021)
+**Context**: Sense Google no hi ha token per a Drive: pujar un justificant fallava amb un missatge i els 24 justificants existents eren enllaços de Drive
+(`justificants.url_drive_original`, cap amb `storage_path`).
+**Decision**:
+  - **Bucket privat `justificants`** (migració `20261102100000_justificants_storage.sql`, aplicada al projecte): màxim 10 MB per fitxer, només JPG, PNG, WebP,
+    HEIC/HEIF i PDF. Ruta `XX-YY/<id del moviment>.<ext>` (l'exercici 26/27 és la carpeta `26-27`). Mai públic: es veu amb una **URL signada de 5 minuts**
+    que demana l'app en obrir-lo.
+  - **Polítiques de `storage.objects`** (mateixes regles que les de la taula `justificants`, perquè fitxer i fila no divergisquen): veure = qualsevol membre
+    (D-035); pujar o substituir = qui té Historial en edició, qui ha creat el moviment, o qui té `r4` en edició si és una despesa manual (`app.pot_adjuntar`);
+    esborrar = Historial en edició o creador (`app.pot_esborrar_justificant`). El moviment s'ha de poder deduir de la ruta i **ha d'existir** (cap fitxer
+    orfe; un test ho va demostrar: Tresoreria podia pujar a un moviment inexistent). Una fila de `justificants` ha de dur la ruta del seu moviment
+    (trigger `t51_ruta`; el servei, és a dir la migració, no hi passa).
+  - **Client** (v4.1.6): `ticketUrl` = `sb:<ruta>` (Storage) o l'enllaç antic de Drive; si una fila té `storage_path`, la lectura el prefereix. `pujaJustificant`
+    puja el fitxer i crea la fila (si la fila falla, esborra el fitxer; si ja hi havia un justificant, el substitueix), `obreJustificant` obri la URL signada
+    i la previsualització del modal l'usa. En esborrar un moviment, el fitxer s'esborra DESPRÉS d'haver-lo desat (si el desat falla, el justificant es queda).
+    Fora les carpetes de Drive de Configuració → Justificants.
+  - **Migració dels antics**: `tools/supabase_justificants_drive.mjs` (prova per defecte; `--aplica` migra). Baixa cada fitxer de Drive amb un token de Google
+    d'Emilio (`GOOGLE_TOKEN`, variable d'entorn d'una hora), el puja amb `SUPABASE_SERVICE_KEY` (variable d'entorn o `tools/.env`, mai al repo) i completa la
+    fila (ruta, nom, tipus, mida); conserva l'enllaç antic i **no toca Drive**. Idempotent. Informe: pujats, no trobats, tipus no admès, massa grans, errors,
+    files sense fitxer, i amb `--carpeta <id>` els orfes de Drive (només es llisten).
+**Consequences**:
+  - Els fitxers que desapareixen per cascada (moviments d'una caixa o d'un exercici esborrats) deixen el fitxer orfe a Storage: no trenca res; un script de
+    neteja és deute tècnic. Qui només té `r4` pot pujar un fitxer però no esborrar-lo si la fila falla (queda orfe).
+  - Storage no deixa esborrar fitxers per SQL (només per l'API): els 4 tests d'esborrat són `nomesLocal` (PGlite) i no corren amb `--remot`.
+  - Pendent d'Emilio per a migrar els 24 antics: la clau `service_role`, un token de Google i executar l'script; després, verificar i retirar l'accés «qualsevol amb
+    l'enllaç» dels fitxers de Drive (no s'esborren). Pujar des de l'app amb entrada real es prova a la Fase 6.

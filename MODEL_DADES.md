@@ -450,6 +450,8 @@ Totes les decisions d'aquesta llista estan preses. Els quatre canvis s'apliquen 
 - **Escriptura des de l'app (Fase 3, D-048)**: la funció `public.guarda_canvis` (migració `20261015100000`, security invoker) és l'únic camí
   d'escriptura del client; aplica llistes d'altes/canvis/esborrats en una transacció amb els permisos de qui crida i falla si RLS filtra una
   operació. Tests a `supabase/tests/casos_guarda.mjs` (63). La migració `20261015110000` posa les taules a la publicació de Realtime.
+- **Storage (Fase 4, D-051)**: bucket privat `justificants`, ruta `XX-YY/<id del moviment>.<ext>`, polítiques de `storage.objects` com les de la taula
+  (`app.pot_adjuntar`, `app.pot_esborrar_justificant`, `app.moviment_de_ruta`) i trigger `t51_ruta` a `justificants` (migració `20261102100000`).
 - **Client (Fase 3 tancada, D-050)**: el client llig `rol_moduls` i `moduls` (`DB.config.matriu`, `DB.config.catModuls`) i en deriva els permisos de la persona
   amb tots els seus rols (`sbPerfil`); cada desat crea les `operacions` dels registres nous (`sbAgrupaOperacions`) i l'editor «Rols i permisos» desa
   `rol_moduls` per `guarda_canvis`. Els sis permisos antics i `modulVis`/`reportVis` ja no es desen.

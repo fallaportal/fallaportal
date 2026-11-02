@@ -346,7 +346,7 @@ tr:hover td{background:var(--bg2)}
     <div class="login-logo">Falla <span>Portal</span></div>
     <div class="login-sub">Sistema de gestió financera</div>
     <div class="login-fiscal">Any fiscal 26/27 · Abr 2026 – Mar 2027</div>
-    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v4.1.5</div>
+    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v4.1.6</div>
     <div id="login-step-boot" class="login-boot">Comprovant la sessió…</div>
     <div id="login-step-email" class="hidden">
       <label class="login-lbl" for="login-email">Correu electrònic</label>
@@ -399,7 +399,7 @@ tr:hover td{background:var(--bg2)}
     <div class="sb-bottom">
       <div class="sync-ind" style="display:flex;align-items:center;justify-content:space-between"><div style="display:flex;align-items:center;gap:6px"><div class="sync-dot" id="sync-dot"></div><span id="sync-text">Sincronitzat</span></div><button onclick="manualRefresh()" title="Actualitzar dades" style="background:none;border:none;cursor:pointer;padding:2px 4px;color:var(--text2);font-size:14px;line-height:1"><i class="ti ti-refresh"></i></button></div>
       <button class="btn-logout" onclick="signOut()"><i class="ti ti-logout" style="font-size:14px"></i> Tancar sessió</button>
-      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v4.1.5</div>
+      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v4.1.6</div>
     </div>
   </div>
 
@@ -1765,14 +1765,17 @@ async function saveWithToast(key,msgOk){
   try{
     await save(key);
     showToast(msgOk||'Guardat ✓');
+    return true;
   }catch(e1){
     showToastPersistent('Error de connexió, reintentant en 5s...','warn');
     await new Promise(function(r){setTimeout(r,5000);});
     try{
       await save(key);
       showToast(msgOk||'Guardat ✓');
+      return true;
     }catch(e2){
       showToastRetry('Error guardant: '+e2.message,function(){saveWithToast(key,msgOk);});
+      return false;
     }
   }
 }
@@ -2651,7 +2654,11 @@ function sbPestanyes(R){
 
   // --- Moviments (inclou, com a files via 'app', els consums de falles.app: r3 encara els llig d'ací)
   const justPer={};
-  (R.justificants||[]).forEach(function(j){if(!justPer[j.moviment_id])justPer[j.moviment_id]=j;});
+  // Un justificant per moviment; si n'hi ha més d'un, el de Storage (D-051) abans que l'enllaç antic de Drive.
+  (R.justificants||[]).forEach(function(j){
+    const p=justPer[j.moviment_id];
+    if(!p||(j.storage_path&&!p.storage_path))justPer[j.moviment_id]=j;
+  });
   const origenDe={ // font -> [origen, fontImport, origenFons]
     manual:['Manual','',''],ingres_tercer:['','','tercer'],traspas_banc_caixa:['Manual','','banc_caixa'],
     extracte:['CSV','',''],csv_generic:['CSV','csv',''],fallesapp_transaccions:['App','fallesapp',''],
@@ -2675,7 +2682,7 @@ function sbPestanyes(R){
       anyFiscal:m.exercici_id,
       origenFons:m.font==='manual'?(origenFonsDe[m.pagament_efectiu]||''):o[2],
       fontImport:m.font==='extracte'?'xls_'+m.compte_id:o[1],
-      bankHash:_sbS(m.empremta),origen:o[0],ticketUrl:j?_sbS(j.url_drive_original):'',
+      bankHash:_sbS(m.empremta),origen:o[0],ticketUrl:j?(j.storage_path?'sb:'+j.storage_path:_sbS(j.url_drive_original)):'',
       ticketMotiu:_sbS(m.motiu_sense_justificant),conciliacio:m.conciliacio,traspas:m.traspas?'true':''};
   });
   (R.fallesapp_consums||[]).forEach(function(k){
@@ -3421,27 +3428,87 @@ async function save(key){
   }
 }
 
-// ─── GOOGLE DRIVE — TICKETS ──────────────────────────────────────────────────
-
-// Cache de folder IDs per any fiscal
-const _driveFolderCache={};
-
-async function _driveGetTicketFolder(af){
-  // Retorna l'ID de la carpeta de tickets configurada per l'any fiscal
-  // Si no hi ha ID configurat, llança error
-  const folderId=getDriveFolderTickets(af);
-  if(!folderId)throw new Error('Cal configurar la carpeta Drive de Tickets per a l\'any fiscal '+af+' a Configuracio > Justificants');
-  return folderId;
+// ─── JUSTIFICANTS — Supabase Storage (Fase 4, D-051) ──────────────────────────
+// Els fitxers són al bucket privat `justificants`, a «XX-YY/<id del moviment>.<ext>» (XX-YY = l'exercici amb guionet). El camp
+// `ticketUrl` d'un moviment és «sb:<ruta>» si el fitxer és a Storage, o l'enllaç antic de Drive (justificants encara no migrats per
+// tools/supabase_justificants_drive.mjs). Per a obrir un fitxer de Storage cal una URL signada que caduca en 5 minuts.
+const JUST_BUCKET='justificants';
+const JUST_MIDA_MAX=10*1024*1024;   // el mateix límit que el bucket
+const JUST_TIPUS={jpg:'image/jpeg',png:'image/png',webp:'image/webp',heic:'image/heic',heif:'image/heif',pdf:'application/pdf'};
+function esJustificantStorage(u){return String(u||'').indexOf('sb:')===0;}
+function rutaDeJustificant(u){return esJustificantStorage(u)?String(u).slice(3):'';}
+function extDeJustificant(file){
+  const perTipus={'image/jpeg':'jpg','image/png':'png','image/webp':'webp','image/heic':'heic','image/heif':'heif','application/pdf':'pdf'}[file.type];
+  if(perTipus)return perTipus;
+  const e=String(file.name||'').split('.').pop().toLowerCase();   // alguns navegadors no informen del tipus
+  return e==='jpeg'?'jpg':(JUST_TIPUS[e]?e:'');
+}
+function missatgeStorage(err){
+  const m=(err&&err.message)||String(err);
+  if(/row-level security|permission|not authorized|Unauthorized/i.test(m))return'No tens permís per a adjuntar o canviar el justificant d\'aquest moviment.';
+  if(/mime/i.test(m))return'Només es poden adjuntar imatges (JPG, PNG, WebP, HEIC) o PDF.';
+  if(/exceeded|too large|maximum allowed size|payload/i.test(m))return'El fitxer pesa massa (màxim 10 MB).';
+  if(/Failed to fetch|NetworkError|Load failed/i.test(m))return'Sense connexió a internet';
+  return m;
 }
 
-async function _driveUploadTicket(file, movId, af){
-  // Els justificants passen de Drive a Supabase Storage a la Fase 4: sense Google no hi ha cap token per a Drive.
-  throw new Error('Els justificants encara no es poden pujar: passen a Supabase Storage (Fase 4).');
+// Puja el fitxer i en crea la fila a `justificants`. El moviment ha d'estar ja desat a Supabase (clau forana i política). Torna 'sb:<ruta>'.
+async function pujaJustificant(file,movId,af){
+  const ext=extDeJustificant(file);
+  if(!ext)throw new Error('Només es poden adjuntar imatges (JPG, PNG, WebP, HEIC) o PDF.');
+  if(file.size>JUST_MIDA_MAX)throw new Error('El fitxer pesa '+(file.size/1048576).toFixed(1)+' MB: el màxim és 10 MB.');
+  const ruta=String(af||'').replace('/','-')+'/'+movId+'.'+ext;
+  const tipus=file.type||JUST_TIPUS[ext];
+  const up=await sb.storage.from(JUST_BUCKET).upload(ruta,file,{contentType:tipus,upsert:true});
+  if(up.error)throw new Error(missatgeStorage(up.error));
+  const treu=function(){return sb.storage.from(JUST_BUCKET).remove([ruta]).catch(function(){});};
+  const ant=await sb.from('justificants').select('id,storage_path').eq('moviment_id',movId);
+  if(ant.error){await treu();throw new Error(missatgeStorage(ant.error));}
+  const files=ant.data||[];
+  const mateixa=files.find(function(r){return r.storage_path===ruta;});
+  if(mateixa){
+    // Mateixa ruta (fitxer substituït): només es posen al dia les dades; si no té permís, el fitxer ja és el nou.
+    await sb.from('justificants').update({nom_fitxer:file.name||null,tipus_mime:tipus,mida:file.size}).eq('id',mateixa.id);
+  }else{
+    const ins=await sb.from('justificants').insert({moviment_id:movId,storage_path:ruta,nom_fitxer:file.name||null,tipus_mime:tipus,mida:file.size});
+    if(ins.error){await treu();throw new Error(missatgeStorage(ins.error));}
+    // Un justificant anterior (un altre format o l'enllaç de Drive) ja no val: es lleva si es pot (si no, la lectura prefereix el de Storage).
+    for(const r of files){
+      await sb.from('justificants').delete().eq('id',r.id);
+      if(r.storage_path&&r.storage_path!==ruta)await sb.storage.from(JUST_BUCKET).remove([r.storage_path]).catch(function(){});
+    }
+  }
+  return'sb:'+ruta;
 }
 
-async function driveDeleteFile(ticketUrl){
-  // Fase 4: sense token de Google, el fitxer de Drive es queda com a còpia.
-  if(ticketUrl)console.warn('El fitxer de Drive no s\'esborra (Fase 4):',ticketUrl);
+// URL per a veure el justificant: signada (5 minuts) si és a Storage; l'enllaç de Drive tal qual.
+async function urlJustificant(ticketUrl){
+  if(!esJustificantStorage(ticketUrl))return String(ticketUrl||'').trim();
+  const r=await sb.storage.from(JUST_BUCKET).createSignedUrl(rutaDeJustificant(ticketUrl),300);
+  if(r.error)throw new Error(missatgeStorage(r.error));
+  return r.data.signedUrl;
+}
+async function obreJustificant(movId){
+  const m=(DB.moviments||[]).find(function(x){return x.id===movId;});
+  if(!m||!m.ticketUrl)return;
+  // La finestra s'obri abans de l'espera: després, el navegador la bloquejaria.
+  const w=window.open('','_blank');
+  try{
+    const u=await urlJustificant(m.ticketUrl);
+    if(w)w.location.href=u;else window.location.href=u;
+  }catch(e){
+    if(w)w.close();
+    showToast('No s\'ha pogut obrir el justificant: '+e.message,true);
+  }
+}
+
+// Esborra el fitxer de Storage d'un justificant (el de Drive es queda com a còpia). No llança: un fitxer orfe no trenca res.
+async function esborraFitxerJustificant(ticketUrl){
+  if(!esJustificantStorage(ticketUrl))return;
+  try{
+    const r=await sb.storage.from(JUST_BUCKET).remove([rutaDeJustificant(ticketUrl)]);
+    if(r.error)console.warn('No s\'ha pogut esborrar el fitxer del justificant:',r.error.message);
+  }catch(e){console.warn('No s\'ha pogut esborrar el fitxer del justificant:',e);}
 }
 
 // Els moviments i fons nous ja són a DB: desar-los és enviar les diferències (el mateix que save()).
@@ -3615,7 +3682,6 @@ async function loadFromSupabase(){
     if(cfgMap.estats_exercicis){try{DB.config.estats_exercicis=JSON.parse(cfgMap.estats_exercicis);}catch(e){}}
     if(cfgMap.fappPassiu){try{const fp=JSON.parse(cfgMap.fappPassiu);if(fp&&fp.total)DB.config.fappPassiu=fp;}catch(e){}}
     if(cfgMap.justificant){try{DB.config.justificant=JSON.parse(cfgMap.justificant);}catch(e){}}
-    if(cfgMap.drive_folders){try{DB.config.drive_folders=JSON.parse(cfgMap.drive_folders);}catch(e){}}
   }
   // Migració automàtica: assignar conciliacio als moviments que no en tenen.
   // Ha d'anar DESPRÉS de carregar DB.config.bancs des del full: si es fa abans,
@@ -4063,7 +4129,7 @@ async function doRegistrarMoviment(imp,areaId,area,delegId,deleg,event,eventId,u
   const origenLabel=usaFons===true?' (fons lliurats)':usaFons==='avanc'?' (avançament personal)':'';
   
 
-  // Pujar ticket a Drive si n'hi ha
+  // Pujar el justificant a Storage si n'hi ha
   const photoFile=document.getElementById('mov-photo')?.files?.[0];
   if(photoFile){
     // ORDRE IMPORTANT: primer guardem la despesa al full, i NOMES despres pugem
@@ -4084,7 +4150,7 @@ async function doRegistrarMoviment(imp,areaId,area,delegId,deleg,event,eventId,u
     }
     showToast('Despesa registrada. Pujant el justificant...');
     try{
-      const url=await _driveUploadTicket(photoFile, mov.id, af);
+      const url=await pujaJustificant(photoFile, mov.id, af);
       let idx=DB.moviments.findIndex(function(m){return m.id===mov.id;});
       if(idx<0){
         // No hauria de passar ara que guardem abans, pero si passa no ho callem.
@@ -4180,11 +4246,11 @@ async function deleteMoviment(id){
   if(exerciciTancatBloqueja(_mt&&_mt.anyFiscal))return;
   if(!confirm('Eliminar aquest moviment?'))return;
   const mov=DB.moviments.find(function(m){return m.id===id;});
-  // Si té ticket a Drive, preguntar si també s'esborra
-  if(mov&&mov.ticketUrl&&mov.ticketUrl.trim()){
-    if(confirm('Aquest moviment té un justificant adjunt a Drive.\nVols esborrar també el fitxer?')){
-      await driveDeleteFile(mov.ticketUrl).catch(function(e){console.warn('Error esborrant Drive:',e);});
-    }
+  // Si el justificant és un fitxer de Storage, preguntar si també s'esborra (després d'esborrar el moviment, no abans: si el desat
+  // falla, el justificant ha de continuar existint). El de Drive es queda sempre com a còpia.
+  let esborraFitxer=null;
+  if(mov&&esJustificantStorage(mov.ticketUrl)){
+    if(confirm('Aquest moviment té un justificant adjunt.\nVols esborrar també el fitxer?'))esborraFitxer=mov.ticketUrl;
   }
   // Si el moviment es va pagar amb fons lliurats o amb un avançament personal, eliminar també el registre de fons.
   // Abans només es feia amb fons lliurats: l'avançament es quedava orfe i desquadrava el saldo del delegat (A-24).
@@ -4206,7 +4272,8 @@ async function deleteMoviment(id){
   }else{
     showToast('Moviment eliminat');
   }
-  saveWithToast('moviments','Moviment eliminat ✓');
+  const desat=await saveWithToast('moviments','Moviment eliminat ✓');
+  if(desat&&esborraFitxer)await esborraFitxerJustificant(esborraFitxer);
 }
 
 let _editMovId=null;
@@ -4223,19 +4290,19 @@ function openEditMov(id){
   // Preview ticket
   const ticketDiv=document.getElementById('edit-mov-ticket');
   if(m.ticketUrl&&m.ticketUrl.trim()){
-    const url=m.ticketUrl.trim();
-    const esImatge=/\.(jpg|jpeg|png|gif|webp|heic)/i.test(url);
-    if(esImatge){
-      ticketDiv.innerHTML=
-        '<div style="font-size:12px;color:var(--text3);margin-bottom:6px"><i class="ti ti-photo"></i> Justificant adjunt</div>'+
-        '<img src="'+url+'" alt="Ticket" style="width:100%;max-height:220px;object-fit:contain;border-radius:var(--r);border:0.5px solid var(--border);background:var(--bg2)">'+
-        '<a href="'+url+'" target="_blank" style="display:block;margin-top:6px;font-size:12px;color:var(--accent);text-decoration:none"><i class="ti ti-external-link"></i> Obrir en Drive</a>';
-    }else{
-      ticketDiv.innerHTML=
-        '<div style="font-size:12px;color:var(--text3);margin-bottom:6px"><i class="ti ti-paperclip"></i> Justificant adjunt</div>'+
-        '<a href="'+url+'" target="_blank" class="btn" style="display:inline-flex;align-items:center;gap:6px;font-size:13px"><i class="ti ti-external-link"></i> Obrir justificant</a>';
-    }
+    const ticket=m.ticketUrl.trim();
+    const esImatge=/\.(jpg|jpeg|png|gif|webp|heic|heif)(\?|$)/i.test(esJustificantStorage(ticket)?ticket:ticket+'?');
+    const obre='<button class="btn" data-mid="'+m.id+'" onclick="obreJustificant(this.dataset.mid)" style="display:inline-flex;align-items:center;gap:6px;font-size:13px"><i class="ti ti-external-link"></i> Obrir justificant</button>';
+    const capcalera='<div style="font-size:12px;color:var(--text3);margin-bottom:6px"><i class="ti '+(esImatge?'ti-photo':'ti-paperclip')+'"></i> Justificant adjunt</div>';
+    ticketDiv.innerHTML=capcalera+obre;
     ticketDiv.style.display='block';
+    if(esImatge&&esJustificantStorage(ticket)){
+      // La previsualització necessita una URL signada: es posa quan arriba (si el modal ja és un altre moviment, no es toca).
+      urlJustificant(ticket).then(function(u){
+        if(_editMovId!==m.id)return;
+        ticketDiv.innerHTML=capcalera+'<img src="'+u+'" alt="Justificant" style="width:100%;max-height:220px;object-fit:contain;border-radius:var(--r);border:0.5px solid var(--border);background:var(--bg2);margin-bottom:6px">'+obre;
+      }).catch(function(e){console.warn('Previsualització del justificant:',e);});
+    }
   }else{
     ticketDiv.style.display='none';
     ticketDiv.innerHTML='';
@@ -4368,7 +4435,7 @@ function filterHist(){
       '<td style="text-align:right;font-weight:500;color:'+(m.tipus==='ing'?'var(--green)':'var(--red)')+'">'+
         (m.tipus==='ing'?'+':'-')+fmtD(m.import)+'</td>'+
       '<td style="display:flex;gap:4px">'+
-        (m.ticketUrl?'<a class="btn" href="'+m.ticketUrl+'" target="_blank" style="font-size:11px;padding:3px 8px;color:var(--accent)" title="Veure justificant"><i class="ti ti-paperclip"></i></a>':'')+
+        (m.ticketUrl?'<button class="btn" data-mid="'+m.id+'" onclick="obreJustificant(this.dataset.mid)" style="font-size:11px;padding:3px 8px;color:var(--accent)" title="Veure justificant"><i class="ti ti-paperclip"></i></button>':'')+
         (canEdit?'<button class="btn" style="font-size:11px;padding:3px 8px" data-mid="'+m.id+'" onclick="openEditMov(this.dataset.mid)" title="Editar moviment"><i class="ti ti-edit"></i></button>':'')+
         (canDel?'<button class="btn" style="font-size:11px;padding:3px 8px;color:var(--red)" data-mid="'+m.id+'" onclick="deleteMoviment(this.dataset.mid)"><i class="ti ti-trash"></i></button>':'')+
       '</td>'+
@@ -7467,12 +7534,7 @@ function openModalTancarExercici(){
 
 function renderCfgJustificants(){
   const cfg=DB.config.justificant||{mode:'mai',llindar:0};
-  const folders=DB.config.drive_folders||{};
   const canEdit=perm('canConfig');
-  const af=getAnyFiscal();
-  const k=af.replace('/','_');
-  const ticketId=folders['tickets_'+af]||'';
-  const facturaId=folders['factures_'+af]||'';
 
   let html='<div class="card" style="margin-bottom:12px"><div class="card-title"><i class="ti ti-receipt"></i> Obligatorietat del justificant</div>';
   html+='<p style="font-size:13px;color:var(--text2);margin-bottom:16px">Defineix quan cal adjuntar un ticket o albaran en registrar una despesa.</p>';
@@ -7489,14 +7551,7 @@ function renderCfgJustificants(){
   if(canEdit){html+='<button class="btn btn-primary" style="margin-top:12px" onclick="saveJustificantConfig()"><i class="ti ti-check"></i> Guardar</button>';}
   html+='</div>';
 
-  html+='<div class="card"><div class="card-title"><i class="ti ti-folder"></i> Carpetes Google Drive — '+af+'</div>';
-  html+='<p style="font-size:13px;color:var(--text2);margin-bottom:12px">Enganxa l\'ID de la carpeta (el que apareix a la URL despres de /folders/).</p>';
-  html+='<div class="mov-field"><label>Carpeta Tickets</label>';
-  html+='<input type="text" id="drive-tickets-'+k+'" value="'+ticketId+'" placeholder="ID de la carpeta de Drive..." style="font-size:13px;font-family:monospace" '+(canEdit?'':'disabled')+'></div>';
-  html+='<div class="mov-field"><label>Carpeta Factures</label>';
-  html+='<input type="text" id="drive-factures-'+k+'" value="'+facturaId+'" placeholder="ID de la carpeta de Drive..." style="font-size:13px;font-family:monospace" '+(canEdit?'':'disabled')+'></div>';
-  if(canEdit){html+='<button class="btn btn-primary" style="margin-top:4px" onclick="saveDriveFolders()"><i class="ti ti-check"></i> Guardar carpetes</button>';}
-  html+='</div>';
+  html+='<div class="info-box"><i class="ti ti-info-circle" style="flex-shrink:0"></i><div>Els justificants es guarden a Supabase (privats, fins a 10 MB: imatges o PDF). Ja no hi ha carpetes de Google Drive.</div></div>';
 
   document.getElementById('cfg-justificants').innerHTML=html;
 }
@@ -7515,38 +7570,6 @@ function saveJustificantConfig(){
   saveCache();
   save('config_ext').catch(function(e){showToast('Error guardant: '+e.message,true);});
   showToast('Configuracio de justificants guardada');
-}
-
-function _extractDriveId(val){
-  // Extreu l'ID de Drive d'una URL o retorna el valor directament si ja es un ID
-  if(!val)return '';
-  const m=val.match(/\/folders\/([a-zA-Z0-9_-]+)/);
-  if(m)return m[1];
-  const m2=val.match(/\/d\/([a-zA-Z0-9_-]+)/);
-  if(m2)return m2[1];
-  return val.trim();
-}
-
-function saveDriveFolders(){
-  const af=getAnyFiscal();
-  const k=af.replace('/','_');
-  const tEl=document.getElementById('drive-tickets-'+k);
-  const fEl=document.getElementById('drive-factures-'+k);
-  if(!DB.config)DB.config={};
-  if(!DB.config.drive_folders)DB.config.drive_folders={};
-  if(tEl)DB.config.drive_folders['tickets_'+af]=_extractDriveId(tEl.value);
-  if(fEl)DB.config.drive_folders['factures_'+af]=_extractDriveId(fEl.value);
-  saveCache();
-  save('config_ext').catch(function(e){showToast('Error guardant: '+e.message,true);});
-  showToast('Les carpetes de Drive ja no es desen: els justificants passen a Supabase Storage (Fase 4)',true);
-}
-
-function getDriveFolderTickets(af){
-  return (DB.config.drive_folders||{})['tickets_'+af]||null;
-}
-
-function getDriveFolderFactures(af){
-  return (DB.config.drive_folders||{})['factures_'+af]||null;
 }
 
 function renderCfgUsuaris(){
@@ -10013,7 +10036,7 @@ function r4UploadTicket(movId){
     showToast('Pujant justificant...');
     try{
       const af=mov.anyFiscal||getAnyFiscal();
-      const url=await _driveUploadTicket(file,movId,af);
+      const url=await pujaJustificant(file,movId,af);
       mov.ticketUrl=url;
       const idx=DB.moviments.findIndex(function(m){return m.id===movId;});
       if(idx>=0)DB.moviments[idx].ticketUrl=url;

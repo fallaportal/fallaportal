@@ -1,6 +1,6 @@
 # Work Stream Status — Falla Portal
 ## Snapshot Date: 2026-11-02
-## Versió en producció: v4.0.89 (a `main`) · branca `supabase`: v4.1.5
+## Versió en producció: v4.0.89 (a `main`) · branca `supabase`: v4.1.6
 
 > **Context de calendari**: període vacacional, ús baix de l'eina. Bon moment per a
 > canvis estructurals i per a la decisió pendent del Service Worker.
@@ -108,7 +108,19 @@ extern de la plantilla o servir-lo des del domini propi; (4) l'ús continuat mil
   - **No verificat**: entrada real per correu amb cada rol (Fase 6) i que `/code-review` no trobe res.
   - Pendents d'Emilio (no bloquegen): els de més amunt (Junta `viewAll`, duplicats de falles.app, orfes, regles `app`, traspàs d'un responsable
     d'àrea) i esborrar els usuaris de prova d'Authentication. Els canvis D-038–D-041 (després del tall) ara es fan des de l'editor de rols.
-**Propera sessió: Fase 4 (justificants a Storage)**; després Fases 5–6 (script de migració final, proves d'acceptació rol per rol amb
+**Fase 4 feta (2026-11-02, Sonnet 5.5 · high; branca `supabase`, v4.1.6, D-051) — falta migrar els 24 justificants antics (Emilio)**:
+  - Fet: bucket privat `justificants` (10 MB, imatges i PDF) amb polítiques de Storage (migració `20261102100000`, **aplicada al projecte**); client que puja,
+    substitueix, obri (URL signada de 5 minuts) i esborra justificants; fora les carpetes de Drive; `tools/supabase_justificants_drive.mjs`. Proves: 278 tests
+    en local i 274 a Supabase en verd (22 nous de Storage i de la ruta, 4 d'esborrat només en local); `supabase_roundtrip` i les 33 accions en verd;
+    provat al navegador amb Storage simulat (ruta, fila, tipus i mida rebutjats, error de permís, neteja si la fila falla, substitució, obrir, previsualitzar,
+    esborrar només després de desar). La prova en sec de l'script veu els 24 enllaços de Drive (tots reconeguts).
+  - **Pendent d'Emilio per a migrar els antics** (`node tools/supabase_justificants_drive.mjs` és la prova; `--aplica` la migració): (1) posar la clau
+    `service_role` (tauler de Supabase → Project Settings → API Keys) a `tools/.env` com a `SUPABASE_SERVICE_KEY=…` o com a variable d'entorn; (2) un
+    token d'accés de Google amb lectura de Drive (OAuth Playground, abast `drive.readonly`, vàlid una hora) a la variable `GOOGLE_TOKEN`; (3) executar-lo
+    i mirar l'informe (opcional `--carpeta <id>` per als orfes de Drive); (4) quan tot siga verd, retirar l'accés «qualsevol amb l'enllaç» dels fitxers de
+    Drive (no s'esborren).
+  - **No verificat**: pujar un justificant real des de l'app amb entrada per correu (Fase 6) ni l'script en mode `--aplica` (necessita les claus).
+**Propera sessió: Fase 5** (script de migració final i assajos, amb el buidatge del projecte), després la 6 (proves d'acceptació rol per rol amb
 `tools/supabase_escriptura.mjs` com a base). A la branca `supabase`, sense tocar `main`.
 **Blockers**:
   - Cap per a començar la Fase 3. El pendent de brossa no la bloqueja, però cal resoldre'l abans del tall: si els codis van
