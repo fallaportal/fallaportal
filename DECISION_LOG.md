@@ -973,3 +973,40 @@ permisos amb els sis booleans antics i un sol rol per persona, i la visibilitat 
   - Storage no deixa esborrar fitxers per SQL (només per l'API): els 4 tests d'esborrat són `nomesLocal` (PGlite) i no corren amb `--remot`.
   - Pendent d'Emilio per a migrar els 24 antics: la clau `service_role`, un token de Google i executar l'script; després, verificar i retirar l'accés «qualsevol amb
     l'enllaç» dels fitxers de Drive (no s'esborren). Pujar des de l'app amb entrada real es prova a la Fase 6.
+
+---
+
+### D-052: Fase 5: càrrega validada, export invers, buidatge i assaig complet del tall (sense passar pel full)
+**Date**: 2026-11-02
+**Status**: Accepted (Emilio: «Sí, Fase 5»); **assaig destructiu pendent de la seua autorització** (vegeu Consequences)
+**Context**: La Fase 5 demanava un script de migració idempotent amb la validació «sense perdre dades» (PLA §6), l'export invers per a la marxa arrere (§7)
+i el buidatge del projecte (D-043), tot assajat fins que isca net dues vegades seguides. `tools/supabase_carrega.mjs` (D-047) ja carregava en una transacció i
+comprovava les sumes per exercici i tipus, però no tenia la validació completa i ometia dues pestanyes.
+**Decision**:
+  - **Càrrega** (`tools/supabase_carrega.mjs`, amb la validació a `tools/f5_valida.mjs`): una transacció, idempotent (buida i torna a carregar). Valida abans de
+    confirmar i, si alguna comprovació falla, no confirma res: (1) files per taula i per pestanya (full = carregades + descartades a propòsit, que queden llistades);
+    (2) imports per exercici × tipus × àrea × via, al cèntim, comptats de la pestanya crua; (3) saldo de fons per delegat i exercici (els 4 avançaments
+    orfes descartats, A-24, es mostren: −205,82 €); (4) tots els id del full a la base de dades i cap clau forana trencada; (5) 20 moviments i 5 fons a
+    l'atzar (llavor fixa `--llavor`) camp a camp. Amb el full real: **50 comprovacions, 0 errors**.
+  - **Que no es perda res que abans s'ometia**: ara es carreguen `16 Fapp Passiu` i `12 Pressupostos Historial` (buides al full actual, però no al del tall) i els
+    rols propis de `14 Rols` (sense permisos: cal definir-los a l'editor). Avisos nous: la pestanya antiga `15 Fapp Passiu` (1 fila, 34.257,20 € de passiu del 25/26
+    que l'app actual no llig) no es carrega (decideix Emilio) i Junta té `viewAll=false` al full contra `true` a la matriu (decisió pendent).
+  - **Protecció**: `--definitiu` el dia del tall confirma la càrrega i la marca (config `carrega_definitiva`); des d'aleshores, carregar o buidar el projecte es nega
+    (`--ignora-definitiu`) perquè no s'esborren per error les dades reals d'ús.
+  - **Empremta** (`--empremta`): files i hash per taula (sense dates ni autors d'alta ni els id que genera la base de dades). Dues càrregues que han de ser iguals
+    tenen la mateixa empremta; es va comprovar que detecta un canvi d'un sol camp.
+  - **Export invers** (`tools/supabase_exporta_xlsx.mjs` + `tools/f5_escriu_xlsx.py`): Supabase → `.xlsx` amb les pestanyes i capçaleres de `TABS`, amb el
+    mateix adaptador que l'app. El justificant és l'enllaç de Drive si n'hi ha (si només és a Storage, `sb:<ruta>`). Verificat: carregar aquest export dona una
+    empremta **idèntica** a la de carregar el full original (21 taules, 1.227 files).
+  - **Buidatge** (`tools/supabase_buida.mjs`, prova per defecte, `--aplica` esborra): taules, funcions i seqüència de `public` (inclòs `audit_log`), l'esquema `app` (i
+    el hook d'alta), les polítiques i els fitxers de Storage dels justificants (per l'API: cal `SUPABASE_SERVICE_KEY`), els usuaris d'Auth i els apunts de les nostres
+    migracions. No toca extensions ni esquemes de Supabase.
+  - **Assaig** (`tools/supabase_assaig.mjs <export.xlsx> [--vegades n]`): buida → migracions des de zero → proves `--remot` → càrrega i validació → export invers →
+    càrrega de l'export (empremta idèntica) → 33 accions d'escriptura. `--sense-buidar` salta els dos primers passos.
+**Consequences**:
+  - **Fet i verificat**: càrrega validada (50/0), export invers i empremta idèntica, i un assaig complet **sense buidar** (carrega, valida, exporta, torna a
+    carregar, empremta idèntica, 33 accions en verd).
+  - **No fet**: el buidatge i el cicle des de zero **no s'han executat**: el sistema de permisos ha bloquejat l'ordre (esborra tot el projecte, els usuaris d'Auth i el
+    registre d'activitat) i fa falta l'autorització d'Emilio. Per tant el criteri «net dues vegades seguides» **encara no es compleix** (n'hi ha un d'assaig net,
+    sense buidar). `supabase_buida.mjs --aplica` no s'ha provat.
+  - El token de Google i la clau `service_role` continuen sent d'Emilio (Fase 4: justificants antics; i el buidatge, si hi ha fitxers a Storage).

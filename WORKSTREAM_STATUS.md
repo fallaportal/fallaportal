@@ -120,7 +120,18 @@ extern de la plantilla o servir-lo des del domini propi; (4) l'ús continuat mil
     i mirar l'informe (opcional `--carpeta <id>` per als orfes de Drive); (4) quan tot siga verd, retirar l'accés «qualsevol amb l'enllaç» dels fitxers de
     Drive (no s'esborren).
   - **No verificat**: pujar un justificant real des de l'app amb entrada per correu (Fase 6) ni l'script en mode `--aplica` (necessita les claus).
-**Propera sessió: Fase 5** (script de migració final i assajos, amb el buidatge del projecte), després la 6 (proves d'acceptació rol per rol amb
+**Fase 5 feta en part (2026-11-02, Sonnet 5.5 · high; branca `supabase`, D-052) — falta l'assaig destructiu (autorització d'Emilio)**:
+  - Fet: càrrega validada (`tools/supabase_carrega.mjs` + `tools/f5_valida.mjs`: files, sumes per exercici × tipus × àrea × via, saldos de fons, id, mostra de 20
+    files; **50 comprovacions, 0 errors** amb el full real), empremta de la base de dades, export invers (`tools/supabase_exporta_xlsx.mjs`; carregar-lo dona una
+    empremta **idèntica**: 21 taules, 1.227 files), buidatge (`tools/supabase_buida.mjs`) i orquestrador (`tools/supabase_assaig.mjs`). Un assaig complet **sense buidar**
+    ha eixit net (càrrega, validació, export, recàrrega, empremta, 33 accions). La càrrega ara també porta `16 Fapp Passiu`, `12 Pressupostos Historial` i els rols
+    propis (abans s'ometien).
+  - **Falta (decideix Emilio)**: executar l'assaig sencer amb buidatge, **dues vegades seguides** (`node tools/supabase_assaig.mjs "<export.xlsx>" --vegades 2`). Esborra del
+    projecte de proves tot el que hi ha (27 taules i 6.251 files del registre d'activitat, els 2 usuaris d'Auth) i el torna a crear amb les migracions; el sistema de
+    permisos va bloquejar que ho llançara jo. `supabase_buida.mjs --aplica` no s'ha provat.
+  - Decisions d'Emilio noves: (1) la pestanya antiga `15 Fapp Passiu` (1 fila: 34.257,20 € de passiu del 25/26, 671 fallers) no es carrega: l'app actual no la llig; la vols portar?
+    (2) Junta: `viewAll` és `false` al full i `true` a la matriu (ja pendent).
+**Propera sessió**: acabar l'assaig (net dues vegades) i la migració dels 24 justificants; després la Fase 6 (proves d'acceptació rol per rol amb
 `tools/supabase_escriptura.mjs` com a base). A la branca `supabase`, sense tocar `main`.
 **Blockers**:
   - Cap per a començar la Fase 3. El pendent de brossa no la bloqueja, però cal resoldre'l abans del tall: si els codis van

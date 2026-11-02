@@ -1,7 +1,14 @@
 // Càrrega de l'export del Google Sheet al projecte de Supabase (Fase 3 per a provar; creix fins a ser la Fase 5).
 //
-//   node tools/supabase_carrega.mjs "C:/ruta/Falla Portal DB.xlsx"            buida les dades i les torna a carregar
+//   node tools/supabase_carrega.mjs "C:/ruta/Falla Portal DB.xlsx"            buida les dades i les torna a carregar (assaig)
 //   node tools/supabase_carrega.mjs "C:/ruta/Falla Portal DB.xlsx" --simula   ho fa tot dins una transacció i la desfà
+//   --definitiu         el dia del tall: confirma la càrrega i la marca com a definitiva (config «carrega_definitiva»). Des d'aleshores el
+//                       script es nega a tornar a buidar les dades (cal --ignora-definitiu, que s'ha d'usar amb molta cura).
+//   --llavor <n>        llavor de la mostra a l'atzar de la validació (per defecte 20261102)
+//   --empremta <fitxer> desa l'empremta de la base de dades (files i hash per taula) en JSON, per a comparar dues càrregues
+//
+// Fase 5 (D-052): carrega i VALIDA (tools/f5_valida.mjs: files, sumes per exercici × tipus × àrea × via, saldos de fons, id, mostra de 20 files);
+// si alguna comprovació falla, no es confirma res.
 //
 // Transforma les pestanyes al model de MODEL_DADES.md (§4 i §6). Totes les dades van en UNA transacció: o es carrega tot
 // o no es carrega res. Connexió de servei (tools/.env): no passa per les regles d'usuari, però sí per l'autoria i pel
@@ -11,16 +18,22 @@
 // L'export conté dades reals: mai al repositori. Aquest script no desa res enlloc.
 
 import { execFileSync } from 'node:child_process';
+import { writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { connectaRemot } from './connexio.mjs';
+import { valida, empremta } from './f5_valida.mjs';
 
 const aqui = dirname(fileURLToPath(import.meta.url));
 const args = process.argv.slice(2);
-const xlsx = args.find((a) => !a.startsWith('--'));
+const xlsx = args.find((a, i) => !a.startsWith('--') && !['--llavor', '--empremta'].includes(args[i - 1]));
 const simula = args.includes('--simula');
+const definitiu = args.includes('--definitiu');
+const ignoraDefinitiu = args.includes('--ignora-definitiu');
+const llavor = args.includes('--llavor') ? parseInt(args[args.indexOf('--llavor') + 1], 10) : 20261102;
+const fitxerEmpremta = args.includes('--empremta') ? args[args.indexOf('--empremta') + 1] : null;
 if (!xlsx) {
-  console.log('Ús: node tools/supabase_carrega.mjs "<export.xlsx>" [--simula]');
+  console.log('Ús: node tools/supabase_carrega.mjs "<export.xlsx>" [--simula] [--definitiu] [--llavor n] [--empremta fitxer]');
   process.exit(2);
 }
 
@@ -32,6 +45,9 @@ const tab = (n) => H[n] || [];
 // ---------------------------------------------------------------- utilitats
 const avisos = [];
 const avis = (t) => avisos.push(t);
+const descarts = { fons: 0, canvis: 0, regles: 0, directiva: 0 };   // registres del full que no passen a la base de dades (llistats als avisos)
+const fonsDescartats = new Set();
+const reglesDescartades = new Set();
 const norm = (s) => String(s ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/\s+/g, ' ').trim();
 const blanc = (s) => (s === undefined || s === null || String(s).trim() === '' ? null : String(s).trim());
 function dataIso(s) {
@@ -108,6 +124,12 @@ function resolUsuari(s) {
 const creatPer = (s) => (resolUsuari(s) || uPerId.get('migracio')).id;
 
 const usuariRols = usuaris.filter((u) => u.rol && u.rol !== 'noauth').map((u) => ({ usuari_id: u.id, rol_id: u.rol }));
+// Rols del full (14 Rols): els de sistema ja són a la base de dades (migracions). Un rol creat a mà al full s'hi carrega SENSE permisos
+// (els sis permisos antics no es porten a la matriu automàticament): cal definir-los a Configuració → Rols i permisos.
+const ROLS_SISTEMA = ['president', 'treasury', 'area', 'delegat', 'board', 'noauth'];
+const rolsPropis = tab('14 Rols').filter((r) => r.id && !ROLS_SISTEMA.includes(r.id)).map((r) => ({ id: r.id, nom: r.label.trim(), color: blanc(r.color), de_sistema: false }));
+for (const r of rolsPropis) avis(`Rol «${r.id}» (${r.nom}) creat al full: es carrega sense permisos; cal donar-n'hi a Configuració → Rols i permisos.`);
+for (const u of usuaris) if (u.rol && u.rol !== 'noauth' && !ROLS_SISTEMA.includes(u.rol) && !rolsPropis.some((r) => r.id === u.rol)) throw new Error(`L'usuari ${u.email} té el rol «${u.rol}», que no existeix.`);
 
 // ---------------------------------------------------------------- organització
 const arees = tab('04 Arees').map((a, i) => ({ id: a.id, nom: a.nom.trim(), color: COLORS[a.id] || null, ordre: i + 1 }));
@@ -145,9 +167,9 @@ for (const a of tab('09 Usuaris Assignacions')) {
   const u = uPerId.get(a.userId);
   const ex = normAF(a.anyFiscal);
   const ok = u && exercicis.some((e) => e.id === ex) && (a.tipus === 'area' ? arees.some((x) => x.id === a.id) : delegIds.has(a.id));
-  if (!ok) { avis(`Directiva: assignació ignorada (${a.userNom} · ${a.tipus} ${a.id} · ${a.anyFiscal}).`); continue; }
+  if (!ok) { avis(`Directiva: assignació ignorada (${a.userNom} · ${a.tipus} ${a.id} · ${a.anyFiscal}).`); descarts.directiva++; continue; }
   const k = [ex, u.id, a.tipus, a.id].join('|');
-  if (dirVista.has(k)) continue;
+  if (dirVista.has(k)) { descarts.directiva++; continue; }
   dirVista.add(k);
   directiva.push({ exercici_id: ex, usuari_id: u.id, area_id: a.tipus === 'area' ? a.id : null, delegacio_id: a.tipus === 'delegacio' ? a.id : null });
 }
@@ -244,7 +266,7 @@ for (const f of fonsOrdenats) {
   const iso = dataIso(f.data);
   if (f.tipus === 'event_canvi' || f.tipus === 'event_canvi_devolucio') {
     const caixa = f.eventTancamentId;
-    if (!caixaIds.has(caixa)) { avis(`Canvi de caixa ${f.id}: la caixa ${caixa} no existeix; s'ignora (${f.import} €).`); continue; }
+    if (!caixaIds.has(caixa)) { avis(`Canvi de caixa ${f.id}: la caixa ${caixa} no existeix; s'ignora (${f.import} €).`); descarts.canvis++; fonsDescartats.add(f.id); continue; }
     let tipus = 'devolucio';
     if (f.tipus === 'event_canvi') { tipus = canvisPerCaixa.has(caixa) ? 'ampliacio' : 'lliurament'; canvisPerCaixa.set(caixa, true); }
     canvis.push({ id: f.id, caixa_id: caixa, data: iso, tipus, import: dec(num(f.import)), creat_per: creatPer(f.registratPer) });
@@ -252,9 +274,9 @@ for (const f of fonsOrdenats) {
   }
   const tipus = tipusFons[f.tipus];
   const delegat = uPerId.get(f.delegId) || resolUsuari(f.delegEmail);
-  if (!tipus || !delegat) { avis(`Fons ${f.id} (${f.tipus}, ${f.import} €): tipus o delegat desconegut; s'ignora.`); continue; }
+  if (!tipus || !delegat) { avis(`Fons ${f.id} (${f.tipus}, ${f.import} €): tipus o delegat desconegut; s'ignora.`); descarts.fons++; fonsDescartats.add(f.id); continue; }
   const lligat = tipus === 'despesa_fons' || tipus === 'avancament';
-  if (lligat && !movIds.has(f.movimentId)) { avis(`Fons ${f.id} (${f.tipus}, ${f.import} €, ${f.data}): la despesa ${f.movimentId || '(cap)'} no existeix; s'ignora (avançament orfe, A-24).`); continue; }
+  if (lligat && !movIds.has(f.movimentId)) { avis(`Fons ${f.id} (${f.tipus}, ${f.import} €, ${f.data}): la despesa ${f.movimentId || '(cap)'} no existeix; s'ignora (avançament orfe, A-24).`); descarts.fons++; fonsDescartats.add(f.id); continue; }
   fons.push({
     id: f.id, ...exercici(iso, f.anyFiscal), data: iso, tipus, delegat_id: delegat.id, import: dec(num(f.import)),
     origen: null, moviment_id: lligat ? f.movimentId : null, nota: blanc(f.nota), creat_per: creatPer(f.registratPer),
@@ -273,9 +295,9 @@ const presEstat = tab('11 Pressupostos Config').filter((p) => p.any).map((p) => 
 const regles = [];
 for (const r of tab('13 Regles CSV')) {
   const compte = blanc(r.font) ? compteDeCodi.get(r.font.trim()) : null;
-  if (blanc(r.font) && !compte) { avis(`Regla ${r.id} (font «${r.font}»): no és cap compte; s'ignora (decideix Emilio, D-031).`); continue; }
+  if (blanc(r.font) && !compte) { avis(`Regla ${r.id} (font «${r.font}»): no és cap compte; s'ignora (decideix Emilio, D-031).`); descarts.regles++; reglesDescartades.add(r.id); continue; }
   const patrons = String(r.patrons || '').split(/[,;\n]/).map((s) => s.trim()).filter(Boolean);
-  if (!patrons.length) { avis(`Regla ${r.id}: sense patrons; s'ignora.`); continue; }
+  if (!patrons.length) { avis(`Regla ${r.id}: sense patrons; s'ignora.`); descarts.regles++; reglesDescartades.add(r.id); continue; }
   const area = blanc(r.areaId);
   regles.push({
     id: r.id, compte_id: compte?.id ?? null, patrons, tipus: ['assignar', 'tpv', 'ignorar'].includes(r.tipus) ? r.tipus : 'assignar',
@@ -285,6 +307,27 @@ for (const r of tab('13 Regles CSV')) {
     traspas: String(r.traspas || '').trim() === 'true',   // D-049
   });
 }
+
+// Passiu de falles.app i historial del pressupost (abans no es carregaven: les dues pestanyes són buides al full actual, però no al del tall).
+const passiu = tab('16 Fapp Passiu').filter((p) => blanc(p.data)).map((p) => ({
+  exercici_id: normAF(p.anyFiscal) || exercDeData(dataIso(p.data)), data: dataIso(p.data), total: dec(Math.max(0, num(p.total))), fallers: parseInt(p.fallers, 10) || 0,
+  creat_per: 'migracio',
+}));
+if (tab('15 Fapp Passiu').length) avis(`«15 Fapp Passiu» (pestanya antiga) té ${tab('15 Fapp Passiu').length} fila(es) que l'app actual no llig (ho fa a «16 Fapp Passiu»): no es carreguen.`);
+const presHistorial = tab('12 Pressupostos Historial').filter((h) => blanc(h.accio)).map((h) => {
+  const desbloq = /desbloq/i.test(h.accio);
+  return {
+    exercici_id: normAF(h.any), accio: desbloq ? 'desbloquejat' : 'bloquejat',
+    motiu: blanc(h.motiu) || (desbloq ? 'Sense motiu al full' : null), creat_per: creatPer(h.email),
+  };
+});
+// Els sis permisos antics (14 Rols) contra la matriu de la base de dades: avisa de les diferències (p. ex. Junta amb «veu tot» desactivat al full).
+const permisAntic = (matriuRol) => {
+  const m = matriuRol || {};
+  const edita = (id, tot) => !!(m[id] && m[id].nivell === 'edicio' && (!tot || m[id].abast === 'tot'));
+  return { canRegister: edita('moviments'), canFons: edita('fons', true), canImport: edita('importacio') || edita('fallesapp'),
+    canConfig: edita('configuracio'), canUsers: edita('usuaris'), viewAll: !!(m.dashboard && m.dashboard.abast === 'tot') };
+};
 
 // ---------------------------------------------------------------- escriptura
 async function ins(db, taula, files, conflicte = '') {
@@ -304,12 +347,19 @@ let codi = 0;
 try {
   console.log(`Connectat: ${db.descripcio}${simula ? ' · SIMULACRE (es desfarà)' : ''}`);
   await db.exec('begin');
+  const jaDefinitiva = (await db.query("select valor from public.config where clau = 'carrega_definitiva'"))[0];
+  if (jaDefinitiva && !ignoraDefinitiu) {
+    throw new Error(`Aquest projecte ja té la càrrega definitiva (${JSON.stringify(jaDefinitiva.valor)}): tornar a carregar esborraria les dades reals d'ús. Si de veres cal, --ignora-definitiu.`);
+  }
   // Buidatge (de fills a pares). audit_log no s'esborra mai (és inalterable).
   for (const t of ['fallesapp_recarregues', 'fallesapp_consums', 'fallesapp_passiu', 'pressupost_historial', 'pressupost_estat', 'pressupost_linies',
     'justificants', 'fons', 'caixa_canvis', 'moviments', 'caixes', 'events', 'directiva', 'saldos_inicials', 'regles_importacio',
     'delegacions', 'arees', 'comptes', 'operacions', 'config', 'exercicis', 'usuari_rols', 'usuaris']) {
     await db.query(`delete from public.${t}`);
   }
+  // Rols propis d'una càrrega anterior (els de sistema no s'hi toquen)
+  await db.query("delete from public.rols where not de_sistema");
+  await ins(db, 'rols', rolsPropis);
   await ins(db, 'exercicis', exercicis);
   await ins(db, 'usuaris', usuaris.map(({ id, nom, email, actiu }) => ({ id, nom, email, actiu })));
   await ins(db, 'usuari_rols', usuariRols);
@@ -328,36 +378,53 @@ try {
   await ins(db, 'pressupost_linies', pressupost);
   await ins(db, 'pressupost_estat', presEstat);
   await ins(db, 'fallesapp_consums', consums);
+  await ins(db, 'fallesapp_passiu', passiu);
+  await ins(db, 'pressupost_historial', presHistorial);
   const actiu = normAF(cfg.anyFiscal) || llistaEx[llistaEx.length - 1];
   await db.query("insert into public.config (clau, valor) values ('exercici_actiu', $1::jsonb)", [JSON.stringify(actiu)]);
   const j = jsonDe(cfg.justificant, null);
   if (j) await db.query("insert into public.config (clau, valor) values ('justificant', $1::jsonb)", [JSON.stringify(j)]);
 
-  // Validació: sumes del full (menys els consums de falles.app, que van a una altra taula) contra la base de dades.
-  const origen = new Map();
-  for (const m of moviments) { const k = `${m.exercici_id} ${m.tipus}`; const v = origen.get(k) || { n: 0, s: 0 }; v.n++; v.s += m.import; origen.set(k, v); }
-  const dbSum = await db.query("select exercici_id, tipus, count(*)::int n, sum(import)::float8 s from public.moviments group by 1, 2 order by 1, 2");
-  console.log('\nMoviments per exercici i tipus (full → base de dades):');
-  let ok = true;
-  for (const r of dbSum) {
-    const o = origen.get(`${r.exercici_id} ${r.tipus}`) || { n: 0, s: 0 };
-    const igual = o.n === r.n && Math.abs(o.s - r.s) < 0.005;
-    if (!igual) ok = false;
-    console.log(`  ${igual ? '✓' : '✗'} ${r.exercici_id} ${r.tipus.padEnd(8)} ${String(r.n).padStart(4)} fila(es)  ${r.s.toFixed(2).padStart(12)} €${igual ? '' : `   (full: ${o.n} · ${o.s.toFixed(2)})`}`);
+  // Els sis permisos antics de «14 Rols» contra la matriu de la base de dades
+  const matriuBd = {};
+  for (const r of await db.query('select rol_id, modul_id, nivell, abast from public.rol_moduls')) (matriuBd[r.rol_id] = matriuBd[r.rol_id] || {})[r.modul_id] = r;
+  for (const r of tab('14 Rols')) {
+    if (r.id === 'noauth' || !matriuBd[r.id]) continue;
+    const esperat = { canRegister: bool(r.canRegister), canFons: bool(r.canFons), canImport: bool(r.canImport), canConfig: bool(r.canConfig), canUsers: bool(r.canUsers), viewAll: bool(r.viewAll) };
+    const obtingut = permisAntic(matriuBd[r.id]);
+    const difs = Object.keys(esperat).filter((k) => esperat[k] !== obtingut[k]);
+    if (difs.length) avis(`Rol ${r.id}: el full diu ${difs.map((k) => `${k}=${esperat[k]}`).join(', ')} i la matriu de Supabase ${difs.map((k) => `${k}=${obtingut[k]}`).join(', ')} (vegeu WORKSTREAM_STATUS: decisió pendent sobre Junta).`);
   }
+
+  // Validació «sense perdre dades» (PLA §6): si alguna comprovació falla, no es confirma res.
+  const errors = await valida(db, {
+    tab, exercicis, usuaris, usuariRols, arees, delegacions, comptes, saldos, directiva, events, regles, caixes, moviments, fons, canvis,
+    pressupost, presEstat, presHistorial, consums, passiu, justificants, descarts, fonsDescartats, reglesDescartades, compteDeCodi, uPerId,
+    resolUsuari, exercici, dataIso, blanc, num, llavor,
+  });
+  const ok = errors.length === 0;
   const t = (n, v) => console.log(`  ${n.padEnd(22)} ${v}`);
   console.log('\nFiles carregades:');
   t('exercicis', exercicis.length); t('usuaris (+rols)', `${usuaris.length} (+${usuariRols.length})`); t('àrees / delegacions', `${arees.length} / ${delegacions.length}`);
   t('comptes / saldos', `${comptes.length} / ${saldos.length}`); t('events', events.length); t('directiva', directiva.length);
   t('moviments', moviments.length); t('consums falles.app', `${consums.length} (${dec(consums.reduce((s, c) => s + c.import, 0))} €)`);
+  t('passiu falles.app', passiu.length); t('historial pressupost', presHistorial.length);
   t('justificants (Drive)', justificants.length); t('caixes / canvis', `${caixes.length} / ${canvis.length}`); t('fons', fons.length);
   t('pressupost', pressupost.length); t('regles', regles.length);
   const excepcions = moviments.filter((m) => m.imputacio_excepcional).length + fons.filter((f) => f.imputacio_excepcional).length;
   t('imputats a un altre exercici', excepcions);
   if (avisos.length) { console.log(`\n${avisos.length} avís(os):`); for (const a of avisos) console.log('  · ' + a); }
-  if (!ok) throw new Error('Les sumes no quadren: no es carrega res.');
-  if (simula) { await db.exec('rollback'); console.log('\nSimulacre acabat: s\'ha desfet tot.'); }
-  else { await db.exec('commit'); console.log('\nCarregat i confirmat.'); }
+  if (fitxerEmpremta) {
+    const e = await empremta(db);
+    writeFileSync(fitxerEmpremta, JSON.stringify(e, null, 1));
+    console.log(`\nEmpremta desada a ${fitxerEmpremta} (${Object.keys(e).length} taules).`);
+  }
+  if (!ok) throw new Error(`La validació ha fallat (${errors.length}): no es carrega res.`);
+  if (definitiu && !simula) {
+    await db.query("insert into public.config (clau, valor) values ('carrega_definitiva', $1::jsonb) on conflict (clau) do update set valor = excluded.valor", [JSON.stringify(new Date().toISOString())]);
+  }
+  if (simula) { await db.exec('rollback'); console.log("\nSimulacre acabat: s'ha desfet tot."); }
+  else { await db.exec('commit'); console.log(definitiu ? '\nCarregat, confirmat i marcat com a DEFINITIU.' : '\nCarregat i confirmat (assaig).'); }
 } catch (e) {
   try { await db.exec('rollback'); } catch { /* sense transacció */ }
   console.error('\nERROR: ' + e.message);

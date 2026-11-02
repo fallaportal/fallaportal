@@ -92,6 +92,10 @@ import d'un fons lligat) no s'envien mai. Mai assignar `DB` des d'una lectura me
 ensenyar-li-ho (si no, no tindrà operació). `VEU_OPERACIONS=1 node tools/supabase_escriptura.mjs --accions` mostra els tipus creats per escenari.
 **Justificants (D-051)**: mai un `<a href=ticketUrl>`: obrir amb `obreJustificant(movId)` (URL signada). Pujar amb `pujaJustificant(file, movId, any)` DESPRÉS d'haver desat
 el moviment (clau forana). Un test d'esborrat de Storage és `nomesLocal: true` (no corre amb `--remot`: Storage no deixa esborrar per SQL).
+**Fase 5 (D-052)**: `node tools/supabase_assaig.mjs "<export.xlsx>" [--vegades n] [--sense-buidar]` és l'assaig del tall (buidar → migrar → proves → carregar i validar → export invers →
+recarregar i comparar empremtes → 33 accions); `tools/supabase_carrega.mjs` valida sempre (50 comprovacions) i, amb `--definitiu`, marca la càrrega com a definitiva (després, carregar o buidar
+es neguen); `tools/supabase_buida.mjs` (prova per defecte) és destructiu: només al projecte de proves i mai després del tall; `tools/supabase_exporta_xlsx.mjs` fa l'export invers.
+Els exports contenen dades reals: mai al repositori.
 **Fitxers amb accents**: no editar `index.html` amb scripts `python - <<EOF` amb barres invertides dins de cometes (el shell se'n menja
 una): usar l'eina d'edició, o escriure el tros a un fitxer i empalmar-lo.
 
