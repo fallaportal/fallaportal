@@ -237,6 +237,27 @@ Decisió d'Emilio (2026-09-27): **entrada per email, sense Google**.
 5. La resta de la setmana és marge per a sorpreses. Es pot obrir abans si tot és verd.
 - **Model**: Opus 5.5 · **high** el dia del tall. **Sessions**: 1–2.
 
+#### Procediment del dia del tall (ordre exacte, amb les eines de la branca `supabase`; D-052)
+Abans de començar: tindre a mà `tools/.env` (cadena de connexió) i el certificat; per als justificants, `SUPABASE_SERVICE_KEY` i un `GOOGLE_TOKEN` d'una hora. Tot des de l'arrel del repo.
+
+**Una setmana abans**
+1. Avisar els usuaris (data i hora del tall, que s'entra amb el correu i un codi, que el correu pot anar a brossa: marcar «No és brossa»).
+2. Comprovar a Supabase que la configuració d'Auth és la de `MODEL_DADES.md` §9.6 (alta pública activada amb el hook «Before User Created», OTP de 6 xifres, SMTP de Resend, plantilles «Confirm sign up» i «Magic link» amb el codi).
+3. Provar l'entrada real amb un correu de cada rol (ara no hi ha usuaris d'Auth: es creen en la primera entrada).
+4. Tornar a exportar el full (Fitxer → Baixar → .xlsx) i **repetir l'assaig** amb l'export nou: `node tools/supabase_assaig.mjs "<export.xlsx>" --vegades 2` (neta dues vegades; compara informes vell/nou amb `tools/f6_extreu.js` si hi ha dubtes).
+
+**Dia 0, ordre**
+1. El full passa a **només lectura** (compartir com a lector) i es baixa l'export final `.xlsx` (fora del repo).
+2. `git checkout main && git tag pre-supabase && git push origin pre-supabase` (marxa arrere, §7).
+3. Buidar i recrear el projecte: `node tools/supabase_buida.mjs` (prova), `node tools/supabase_buida.mjs --aplica`, `node tools/supabase_migra.mjs aplica`, `node tools/supabase_tests.mjs --remot` (tot en verd).
+4. Carregar les dades **definitives**: `node tools/supabase_carrega.mjs "<export final.xlsx>" --simula` (mira els avisos i la validació, 0 errors) i després `node tools/supabase_carrega.mjs "<export final.xlsx>" --definitiu`. Des d'ací el projecte es nega a tornar a buidar-se.
+5. Justificants antics: `node tools/supabase_justificants_drive.mjs` (prova) i `GOOGLE_TOKEN=… node tools/supabase_justificants_drive.mjs --aplica`; informe sense errors.
+6. Còpia de seguretat de la base de dades: `node tools/supabase_exporta_xlsx.mjs "<còpia.xlsx>"` (fora del repo).
+7. Publicar l'app: a la branca `supabase`, passar `BASE` de `sw.js` i `start_url`/`scope` de `manifest.json` a l'arrel (`/`), afegir un fitxer `CNAME` amb `app.fallaportal.es`, pujar la versió; `git checkout main && git merge supabase && git push`. DNS: `CNAME app → fallaportal.github.io`; a GitHub → Settings → Pages: domini `app.fallaportal.es` i «Enforce HTTPS».
+8. Provar amb comptes reals de cada rol (entrada per correu, Nou moviment, justificant, informes) i només després avisar que s'ha obert.
+
+**Si cal tornar arrere**: abans d'obrir als usuaris, tornar al tag `pre-supabase` i reobrir el full en edició (no s'ha tocat). Després d'obrir: `tools/supabase_exporta_xlsx.mjs` regenera el `.xlsx` en el format del full.
+
 ### Fase 8 — Estabilització
 - Primeres dues setmanes: correccions amb Sonnet 5.5 · **medium**.
 - Reescriure el `TDD_FALLA_PORTAL.md` i actualitzar el continuity set: Sonnet 5.5 · **low**
