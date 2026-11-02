@@ -655,3 +655,14 @@ substituir l'array sencer. Més robust, però amb risc propi. Amb D-014 i D-015 
 problema pràctic ja està cobert.
 
 **Cas ambigu `1.234`**: risc acceptat conscientment a D-017.
+
+---
+
+### Fase 6 (en curs, 2026-11-02) — informes i inventari per rol
+- **Informes app vella (`main` v4.0.89 amb el full) vs nova (Supabase), mateixes dades** (Dashboard, Resultats, Flux, Fons delegats, r1–r4, exercicis 25/26 i 26/27): **idèntics** llevat de
+  tres diferències explicades: (1) saldo de fons de Juanjo Felis 205 € «disponible» (nou) contra 0 € «excedit» (vell): són els 4 avançaments orfes descartats a propòsit (A-24, D-047; 205,82 €);
+  total «en mans dels delegats» 3.455,48 € contra 3.249,66 €; (2) r2 25/26: l'app vella duplicava la fila d'Emilio David Grau (2 delegats; totals iguals); (3) noms del responsable (usuari actual, no text lliure) i ordre de files amb la mateixa data a r4. **Falta que Emilio accepte (1).**
+- **Inventari per rol amb l'app REAL i la base de dades REAL** (`tools/f6_pont.mjs` + `f6_client.js` + `f6_inventari.js`; transacció que es desfà): president, tresoreria, àrea, delegat i Junta **sense problemes**
+  (menú, barra, permisos, abast, pantalles sense errors ni canvis fantasma, Nou moviment pel formulari, canvi de Configuració rebutjat pel servidor).
+- **Discrepància OBERTA**: persona amb dos rols (Delegat + Junta, prova sintètica a la delegació 0603): Nou moviment no es desa (`pendents`, error en desar). Cal investigar (el delegat sol sí que desa).
+- Falta: investigar la discrepància, `/code-review`, acceptació d'Emilio del punt (1), i proves amb entrada real per correu el dia del tall.
