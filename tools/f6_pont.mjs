@@ -36,8 +36,8 @@ async function obri(c) {
     email = r[0].email;
   }
   if (c.crea) {
-    email = 'prova.' + (c.crea.rols || []).join('.') + '@prova.test';
-    const id = 'f6_' + Date.now();
+    const id = 'f6_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6);   // únic: una sessió penjada no pot bloquejar les altres
+    email = 'prova.' + (c.crea.rols || []).join('.') + '.' + id + '@prova.test';
     await db.query('insert into public.usuaris (id, nom, email) values ($1, $2, $3)', [id, 'Prova ' + (c.crea.rols || []).join('+'), email]);
     for (const r of c.crea.rols || []) await db.query('insert into public.usuari_rols (usuari_id, rol_id) values ($1, $2)', [id, r]);
     const ex = (await db.query("select valor #>> '{}' v from public.config where clau = 'exercici_actiu'"))[0].v;

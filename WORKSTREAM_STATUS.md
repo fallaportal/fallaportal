@@ -1,6 +1,6 @@
 # Work Stream Status — Falla Portal
 ## Snapshot Date: 2026-11-02
-## Versió en producció: v4.0.89 (a `main`) · branca `supabase`: v4.1.7
+## Versió en producció: v4.0.89 (a `main`) · branca `supabase`: v4.1.8
 
 > **Context de calendari**: període vacacional, ús baix de l'eina. Bon moment per a
 > canvis estructurals i per a la decisió pendent del Service Worker.
@@ -664,5 +664,6 @@ problema pràctic ja està cobert.
   total «en mans dels delegats» 3.455,48 € contra 3.249,66 €; (2) r2 25/26: l'app vella duplicava la fila d'Emilio David Grau (2 delegats; totals iguals); (3) noms del responsable (usuari actual, no text lliure) i ordre de files amb la mateixa data a r4. **Falta que Emilio accepte (1).**
 - **Inventari per rol amb l'app REAL i la base de dades REAL** (`tools/f6_pont.mjs` + `f6_client.js` + `f6_inventari.js`; transacció que es desfà): president, tresoreria, àrea, delegat i Junta **sense problemes**
   (menú, barra, permisos, abast, pantalles sense errors ni canvis fantasma, Nou moviment pel formulari, canvi de Configuració rebutjat pel servidor).
-- **Discrepància OBERTA**: persona amb dos rols (Delegat + Junta, prova sintètica a la delegació 0603): Nou moviment no es desa (`pendents`, error en desar). Cal investigar (el delegat sol sí que desa).
-- Falta: investigar la discrepància, `/code-review`, acceptació d'Emilio del punt (1), i proves amb entrada real per correu el dia del tall.
+- **Discrepància trobada i CORREGIDA (v4.1.8)**: no era del doble rol sinó un error de l'app: en entrar amb una pàgina nova, `initApp()` omplia els selectors de «Nou moviment» abans de carregar la directiva (ja no hi ha caché de `DB`), i un responsable d'àrea o de delegació es quedava amb **àrea i delegació buides**; el servidor rebutjava el moviment (`dins_abast(null, null)`). Ara `carregaInicial()` els torna a omplir en acabar de carregar. Comprovat amb una persona nova (Delegat + Junta) en una pàgina recent: Nou moviment es desa. El pont no deixava veure-ho abans perquè reutilitzava l'estat del perfil anterior.
+- Eina: el pont crea cada persona de prova amb un correu únic (una sessió penjada ja no bloqueja les altres).
+- Falta: `/code-review`, acceptació d'Emilio del punt (1) i proves amb entrada real per correu el dia del tall.
