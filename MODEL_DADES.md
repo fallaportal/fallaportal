@@ -1,5 +1,5 @@
 # Model de dades — Falla Portal a Supabase
-## Redactat: 2026-10-13 · Actualitzat: 2026-10-14 (Fase 1: SQL i permisos) · Decisions: D-021, D-024, D-025, D-027–D-031, D-035–D-037
+## Redactat: 2026-10-13 · Actualitzat: 2026-11-02 (Fase 3 tancada: matriu i `operacions` al client, D-050) · Decisions: D-021, D-024, D-025, D-027–D-031, D-035–D-037
 
 L'esquema implementat és a `supabase/migrations/` (8 fitxers) i els tests a `supabase/tests/` (§9.6). On aquest
 document i l'SQL no coincidisquen, mana l'SQL i cal corregir el document.
@@ -450,6 +450,9 @@ Totes les decisions d'aquesta llista estan preses. Els quatre canvis s'apliquen 
 - **Escriptura des de l'app (Fase 3, D-048)**: la funció `public.guarda_canvis` (migració `20261015100000`, security invoker) és l'únic camí
   d'escriptura del client; aplica llistes d'altes/canvis/esborrats en una transacció amb els permisos de qui crida i falla si RLS filtra una
   operació. Tests a `supabase/tests/casos_guarda.mjs` (63). La migració `20261015110000` posa les taules a la publicació de Realtime.
+- **Client (Fase 3 tancada, D-050)**: el client llig `rol_moduls` i `moduls` (`DB.config.matriu`, `DB.config.catModuls`) i en deriva els permisos de la persona
+  amb tots els seus rols (`sbPerfil`); cada desat crea les `operacions` dels registres nous (`sbAgrupaOperacions`) i l'editor «Rols i permisos» desa
+  `rol_moduls` per `guarda_canvis`. Els sis permisos antics i `modulVis`/`reportVis` ja no es desen.
 - **Projecte** `fallaportal` (D-043): organització AI4ALL (Pro), regió eu-west-1 (Irlanda), PostgreSQL 17.11, Data
   API activada, sense integració amb GitHub (les migracions s'apliquen a mà). "Automatically expose new tables" va quedar
   marcat i "Enable automatic RLS" sense marcar en crear-lo: no importa, perquè la migració de permisos treu els permisos

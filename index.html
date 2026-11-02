@@ -346,7 +346,7 @@ tr:hover td{background:var(--bg2)}
     <div class="login-logo">Falla <span>Portal</span></div>
     <div class="login-sub">Sistema de gestió financera</div>
     <div class="login-fiscal">Any fiscal 26/27 · Abr 2026 – Mar 2027</div>
-    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v4.1.4</div>
+    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v4.1.5</div>
     <div id="login-step-boot" class="login-boot">Comprovant la sessió…</div>
     <div id="login-step-email" class="hidden">
       <label class="login-lbl" for="login-email">Correu electrònic</label>
@@ -399,7 +399,7 @@ tr:hover td{background:var(--bg2)}
     <div class="sb-bottom">
       <div class="sync-ind" style="display:flex;align-items:center;justify-content:space-between"><div style="display:flex;align-items:center;gap:6px"><div class="sync-dot" id="sync-dot"></div><span id="sync-text">Sincronitzat</span></div><button onclick="manualRefresh()" title="Actualitzar dades" style="background:none;border:none;cursor:pointer;padding:2px 4px;color:var(--text2);font-size:14px;line-height:1"><i class="ti ti-refresh"></i></button></div>
       <button class="btn-logout" onclick="signOut()"><i class="ti ti-logout" style="font-size:14px"></i> Tancar sessió</button>
-      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v4.1.4</div>
+      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v4.1.5</div>
     </div>
   </div>
 
@@ -1059,8 +1059,6 @@ tr:hover td{background:var(--bg2)}
       <div id="cfg-bancs" class="hidden"></div>
       <div id="cfg-log" class="hidden"></div>
       <div id="cfg-rols" class="hidden"></div>
-      <div id="cfg-moduls" class="hidden"></div>
-      <div id="cfg-reports" class="hidden"></div>
       <div id="cfg-regles" class="hidden"></div>
       <div id="cfg-justificants" class="hidden"></div>
       <div id="cfg-usuaris" class="hidden"></div>
@@ -1143,14 +1141,8 @@ tr:hover td{background:var(--bg2)}
       <div class="field"><label>Nom complet</label><input type="text" id="mu-nom" placeholder="Nom i cognoms"></div>
       <div class="field"><label>Correu electrònic</label><input type="email" id="mu-email" placeholder="nom@correu.com"></div>
       <div class="field">
-        <label>Rol principal</label>
-        <select id="mu-rol">
-          <option value="president">President (acces total + gestio usuaris)</option>
-          <option value="treasury">Tresoreria (acces total financer)</option>
-          <option value="area">Responsable d'Area</option>
-          <option value="delegat">Responsable de Delegacio</option>
-          <option value="board">Junta (sols lectura)</option>
-        </select>
+        <label>Rols (si en té més d'un, val el permís més alt)</label>
+        <div id="mu-rols"></div>
       </div>
       <div class="info-box" style="font-size:12px;color:var(--text2)">
         <i class="ti ti-info-circle" style="flex-shrink:0"></i>
@@ -1581,8 +1573,8 @@ function saveBackground(key){
 }
 const AREA_COLORS={'01':'#1D9E75','02':'#7F77DD','03':'#378ADD','04':'#BA7517','05':'#D4537E','06':'#D85A30','07':'#888780'};
 
-// MESTRE DE ROLS — defineix els permisos de cada rol
-// Rols per defecte (fallback si no n'hi ha al Sheet)
+// MESTRE DE ROLS — els rols de sistema amb els permisos d'avui. Només són la base abans que arribe la lectura de Supabase i el
+// valor de referència de les proves (tools/supabase_escriptura.mjs); els permisos reals són la matriu rol × mòdul (D-036).
 const DEFAULT_ROLES={
   president:{id:'president',label:'President',color:'p-purple',canRegister:true,canFons:true,canImport:true,canConfig:true,canUsers:true,viewAll:true,custom:false},
   treasury:{id:'treasury',label:'Tresoreria',color:'p-info',canRegister:true,canFons:true,canImport:true,canConfig:true,canUsers:false,viewAll:true,custom:false},
@@ -1606,22 +1598,6 @@ const REPORTS_DEF=[
   {id:'r4',icon:'ti-receipt-off',    label:'Sense justificant'}
 ];
 
-function getDefaultReportVis(){
-  const vis={};
-  Object.keys(DEFAULT_ROLES).filter(function(r){return r!=='noauth';}).forEach(function(rolId){
-    vis[rolId]={};
-    REPORTS_DEF.forEach(function(r){
-      vis[rolId][r.id]={visible:true};
-    });
-  });
-  return vis;
-}
-
-function getReportVis(){
-  const v=DB.config.reportVis||{};
-  if(Object.keys(v).length>0)return v;
-  return getDefaultReportVis();
-}
 const MODULS_DEF=[
   {id:'dashboard',        label:'Dashboard',         labelCurt:'Inici',      icon:'ti-home',            page:'dashboard',         seccio:'Principal'},
   {id:'moviments',        label:'Nou moviment',       labelCurt:'Moviment',   icon:'ti-plus',            page:'moviments',         seccio:'Principal'},
@@ -1637,51 +1613,6 @@ const MODULS_DEF=[
   {id:'configuracio',     label:'Configuració',       labelCurt:'Config.',    icon:'ti-settings',        page:'configuracio',      seccio:'Sistema'},
   {id:'manual',           label:"Manual d'usuari",    labelCurt:'Ajuda',      icon:'ti-help-circle',     page:'manual',            seccio:'Ajuda'}
 ];
-
-// Visibilitat per defecte — replica el comportament actual hardcoded
-function getDefaultModulVis(){
-  const vis={};
-  // Mòduls que van a la barra inferior per defecte
-  const barraDef=['dashboard','moviments','lliurament','tancament'];
-  // Mòduls que van al menú hamburguesa per defecte (els que no van a la barra)
-  const mesDef=['pressupostos-edit','historial','fallesapp','importacio','resultats','flux','reports','configuracio','manual'];
-  Object.keys(DEFAULT_ROLES).filter(function(r){return r!=='noauth';}).forEach(function(rolId){
-    const can=DEFAULT_ROLES[rolId]||{};
-    vis[rolId]={};
-    MODULS_DEF.forEach(function(m){
-      let show=false;
-      if(rolId==='president'){show=true;}
-      else{
-        switch(m.id){
-          case 'dashboard':         show=true; break;
-          case 'moviments':         show=!!can.canRegister; break;
-          case 'lliurament':        show=!!(can.canFons||can.canRegister); break;
-          case 'tancament':         show=true; break;
-          case 'pressupostos-edit': show=true; break;
-          case 'historial':         show=true; break;
-          case 'fallesapp':         show=!!can.canImport; break;
-          case 'importacio':        show=!!can.canImport; break;
-          case 'resultats':         show=true; break;
-          case 'flux':              show=!!can.viewAll; break;
-          case 'reports':           show=true; break;
-          case 'configuracio':      show=!!can.canConfig; break;
-          case 'manual':            show=true; break;
-        }
-      }
-      const barra=barraDef.includes(m.id)?show:false;
-      const mes=mesDef.includes(m.id)?show:false;
-      vis[rolId][m.id]={desktop:show,barra:barra,mes:mes};
-    });
-  });
-  return vis;
-}
-
-// Retorna la visibilitat activa (del Sheet si n'hi ha, per defecte si no)
-function getModulVis(){
-  const v=DB.config.modulVis||{};
-  if(Object.keys(v).length>0)return v;
-  return getDefaultModulVis();
-}
 
 let currentUser=null;
 // Sheets centralitzat - no cal driveIds
@@ -1750,7 +1681,7 @@ let DB={
       {id:'b3',codi:'Efectiu',nom:'Caixa efectiu',tipus:'cash'},
       {id:'b4',codi:'TPV',nom:'TPV targetes',tipus:'tpv'}
     ],
-    usuaris:[],anyFiscal:'',exercicis:[],directiva:{},estats_exercicis:{},rols:{},modulVis:{},reportVis:{}
+    usuaris:[],anyFiscal:'',exercicis:[],directiva:{},estats_exercicis:{},rols:{},matriu:{},catModuls:[]
   },
   moviments:[],fons:[],tancaments:{},pres_plans:[],pres_config:{any:'',estat:'obert',bloquejatPer:'',bloquejatEmail:'',data:''},pres_historial:[],regles:[]
 };
@@ -1987,7 +1918,12 @@ async function carregaMembre(email){
   const u=(r.data||[])[0];
   const rols=u?(u.usuari_rols||[]).map(function(x){return x.rol_id;}):[];
   if(!u||!rols.length)return null;
-  // L'app encara coneix un sol rol per persona (Fase 3: permisos de la matriu rol × mòdul, D-036).
+  // La matriu rol × mòdul (D-036) abans que res: el menú i els permisos depenen d'ella i la resta de dades arriben després.
+  const rm=await sb.from('rol_moduls').select('rol_id,modul_id,nivell,abast,barra');
+  if(rm.error)throw rm.error;
+  DB.config.matriu=sbMatriuDeFiles((rm.data||[]).map(function(m){return{rolId:m.rol_id,modulId:m.modul_id,nivell:m.nivell,abast:m.abast,barra:!!m.barra};}));
+  _matriuGen++;
+  // `rol` és el de més prioritat (els filtres per nom de rol) i `rols` tots: els permisos els decideix la matriu.
   const rol=ROL_PRIORITAT.find(function(x){return rols.indexOf(x)>=0;})||rols.slice().sort()[0];
   return{id:u.id,nom:u.nom,email:u.email,rol:rol,rols:rols,arees:[],delegacions:[]};
 }
@@ -2120,8 +2056,7 @@ function exerciciTancatBloqueja(any){
   const af=any||getAnyFiscal();
   const e=(DB.config.estats_exercicis||{})[af];
   if(!e||!e.tancat)return false;
-  const rol=getRol();
-  if(rol==='president'||rol==='treasury'){
+  if(modulEdita('exercicis')){
     // Com a excepció (D-029) cal un motiu: viatja amb el guardat i queda al registre d'activitat.
     const motiu=prompt('L\'exercici '+af+' està tancat.\n\nPer fer aquest canvi com a excepció, escriu-ne el motiu (queda al registre d\'activitat):');
     if(!motiu||!motiu.trim())return true;
@@ -2156,8 +2091,7 @@ function canviarExercici(any,silent){
 }
 
 function obrirNouExercici(){
-  const canDo=getRol()==='president'||getRol()==='treasury';
-  if(!canDo){showToast('Sols President o Tresoreria poden fer aquesta accio',true);return;}
+  if(!modulEdita('exercicis')){showToast('No tens permís per a crear exercicis',true);return;}
   const current=getAnyFiscal();
   const parts=current.split('/');
   const nextStart=parseInt(parts[0])+1;
@@ -2298,11 +2232,44 @@ function calcDataObertura(anyFiscal){
   }
   return today();
 }
-function perm(p){return getRoles()[getRol()]?.[p]||false;}
+// Permisos (D-036): la matriu rol × mòdul del servidor, combinada amb TOTS els rols de la persona (el permís més alt).
+// El servidor és qui decideix de veres (RLS); això només mostra o amaga pantalles i botons.
+let _matriuGen=0,_perfilCache=null;   // _matriuGen puja cada vegada que canvia la matriu (lectura o edició)
+function getRolsPropis(){
+  const u=getUsuari();if(!u)return[];
+  if(Array.isArray(u.rols)&&u.rols.length)return u.rols;
+  return u.rol&&u.rol!=='noauth'?[u.rol]:[];
+}
+function getPerfil(){
+  const rols=getRolsPropis(),clau=_matriuGen+'|'+rols.join(',');
+  if(!_perfilCache||_perfilCache.clau!==clau)_perfilCache={clau:clau,perfil:sbPerfil(rols,DB.config.matriu||{})};
+  return _perfilCache.perfil;
+}
+function modulVeu(mid){return!!getPerfil()[mid];}
+// tot=true: només si l'edició és sobre tot (no limitada a les seues àrees i delegacions)
+function modulEdita(mid,tot){const p=getPerfil()[mid];return!!(p&&p.nivell==='edicio'&&(!tot||p.editaTot));}
+function tensRol(){const ids=Array.prototype.slice.call(arguments);return getRolsPropis().some(function(r){return ids.indexOf(r)>=0;});}
+// Una persona qualsevol (de DB.config.usuaris) té algun d'aquests rols?
+function usuariTe(u){
+  const ids=Array.prototype.slice.call(arguments,1),rols=Array.isArray(u.rols)&&u.rols.length?u.rols:[u.rol];
+  return rols.some(function(r){return ids.indexOf(r)>=0;});
+}
+// Els permisos antics, deduïts de la matriu (mateixes regles que sbPermisosAntics).
+function perm(p){
+  switch(p){
+    case'canRegister':return modulEdita('moviments');
+    case'canFons':return modulEdita('fons',true);
+    case'canImport':return modulEdita('importacio')||modulEdita('fallesapp');
+    case'canConfig':return modulEdita('configuracio');
+    case'canUsers':return modulEdita('usuaris');
+    case'viewAll':{const d=getPerfil().dashboard;return!!(d&&d.veuTot);}
+  }
+  return false;
+}
 
 function getMyArees(){
   const u=getUsuari();if(!u)return[];
-  if(getRoles()[u.rol]?.viewAll)return DB.config.areas.map(a=>a.id);
+  if(perm('viewAll'))return DB.config.areas.map(a=>a.id);
   // Obtenir àrees des de la directiva de l'any fiscal actiu
   const af=getAnyFiscal();
   const assigns=getDirectivaAny(af);
@@ -2322,7 +2289,7 @@ function getMyArees(){
 
 function getMyDelegacions(){
   const u=getUsuari();if(!u)return[];
-  if(getRoles()[u.rol]?.viewAll)return DB.config.delegacions.map(d=>d.id);
+  if(perm('viewAll'))return DB.config.delegacions.map(d=>d.id);
   // Obtenir delegacions des de la directiva de l'any fiscal actiu
   const af=getAnyFiscal();
   const assigns=getDirectivaAny(af);
@@ -2341,16 +2308,26 @@ function getMyDelegacions(){
 }
 
 // NAV DINÀMIC segons permisos
+// Menú de l'app → mòduls de la matriu (D-036). Un element del menú pot dependre de diversos mòduls (Reports = r1…r4).
+const MODUL_MATRIU={dashboard:['dashboard'],moviments:['moviments'],lliurament:['fons'],tancament:['caixa'],'pressupostos-edit':['pressupostos'],
+  historial:['historial'],fallesapp:['fallesapp'],importacio:['importacio'],resultats:['resultats'],flux:['flux'],reports:['r1','r2','r3','r4'],
+  configuracio:['configuracio'],manual:['manual']};
+function navVeu(mid){return(MODUL_MATRIU[mid]||[]).some(modulVeu);}
+// Barra inferior del mòbil: els mòduls visibles que algun rol de la persona hi posa, com a molt 4. La resta, al menú «Més».
+function navBarraIds(){
+  const p=getPerfil();
+  return MODULS_DEF.map(function(m){return m.id;}).filter(function(mid){
+    return navVeu(mid)&&(MODUL_MATRIU[mid]||[]).some(function(x){return p[x]&&p[x].barra;});
+  }).slice(0,4);
+}
+function navMesIds(){
+  const barra=navBarraIds();
+  return MODULS_DEF.map(function(m){return m.id;}).filter(function(mid){return navVeu(mid)&&barra.indexOf(mid)<0;});
+}
+
 function buildNav(){
   const nav=document.getElementById('sb-nav');
-  const rol=getRol();
-  const vis=getModulVis();
-  const rolVis=vis[rol]||{};
-  function canSeeDesktop(mid){
-    if(rol==='president')return true;
-    const v=rolVis[mid];
-    return v?v.desktop!==false:false;
-  }
+  function canSeeDesktop(mid){return navVeu(mid);}
   const seccions=[
     {label:'Principal',   mods:['dashboard','moviments','lliurament','tancament']},
     {label:'Gestió',      mods:['pressupostos-edit','historial','fallesapp','importacio']},
@@ -2374,21 +2351,8 @@ function buildNav(){
 }
 
 function buildMobBar(){
-  const rol=getRol();
-  const vis=getModulVis();
-  const rolVis=vis[rol]||{};
-  function canBarra(mid){
-    if(rol==='president')return true;
-    const v=rolVis[mid];
-    return v?!!v.barra:false;
-  }
-  function canMes(mid){
-    if(rol==='president')return true;
-    const v=rolVis[mid];
-    return v?!!v.mes:false;
-  }
   // Generar botons de la barra inferior
-  const barraIds=MODULS_DEF.map(function(m){return m.id;}).filter(canBarra).slice(0,4);
+  const barraIds=navBarraIds();
   let html='';
   barraIds.forEach(function(mid){
     const m=MODULS_DEF.find(function(x){return x.id===mid;});
@@ -2398,25 +2362,18 @@ function buildMobBar(){
   const barEl=document.getElementById('mob-bar-items');
   if(barEl)barEl.innerHTML=html;
   // Mostrar/ocultar botó Més
-  const mesIds=MODULS_DEF.map(function(m){return m.id;}).filter(canMes);
+  const mesIds=navMesIds();
   const mesBtn=document.getElementById('mob-mes');
   if(mesBtn)mesBtn.style.display=mesIds.length?'':'none';
   buildMobMenu();
 }
 
 function buildMobMenu(){
-  const rol=getRol();
-  const vis=getModulVis();
-  const rolVis=vis[rol]||{};
-  function canMes(mid){
-    if(rol==='president')return true;
-    const v=rolVis[mid];
-    return v?!!v.mes:false;
-  }
+  const mes=navMesIds();
   const s='padding:12px 20px;font-size:14px;display:flex;align-items:center;gap:12px;cursor:pointer';
   const ic='font-size:18px;color:var(--text2)';
   let html='';
-  MODULS_DEF.filter(function(m){return canMes(m.id);}).forEach(function(m){
+  MODULS_DEF.filter(function(m){return mes.indexOf(m.id)>=0;}).forEach(function(m){
     html+=`<div onclick="showPageMob('${m.page}','');closeMobMenu()" style="${s}"><i class="ti ${m.icon}" style="${ic}"></i> ${m.label}</div>`;
   });
   const el=document.getElementById('mob-menu-items');
@@ -2437,7 +2394,8 @@ function initApp(){
   const rolDef=getRoles()[rol];
   document.getElementById('sb-name').textContent=u?.nom||currentUser.name;
   document.getElementById('sb-av').textContent=currentUser.initials;
-  document.getElementById('sb-role').textContent=rolDef?.label||rol;
+  // Amb diversos rols, tots (D-036)
+  document.getElementById('sb-role').textContent=getRolsPropis().map(function(r){return(getRoles()[r]||{}).label||r;}).join(' · ')||rolDef?.label||rol;
   document.getElementById('mov-data').value=todayISO();
   document.getElementById('ll-data').value=todayISO();
   document.getElementById('dev-data').value=todayISO();
@@ -2595,7 +2553,7 @@ const SB_ORDRES={
   delegacions:['id'],comptes:['id'],saldos_inicials:['compte_id','exercici_id'],directiva:['id'],events:['id'],
   regles_importacio:['id'],caixes:['id'],moviments:['id'],justificants:['id'],fons:['id'],caixa_canvis:['id'],
   pressupost_linies:['id'],pressupost_estat:['exercici_id'],pressupost_historial:['id'],fallesapp_passiu:['id'],
-  fallesapp_consums:['id'],config:['clau']
+  fallesapp_consums:['id'],config:['clau'],moduls:['ordre']
 };
 async function sbLligTaula(taula){
   const out=[];
@@ -2672,8 +2630,9 @@ function sbPestanyes(R){
   });
 
   // --- Persones, rols i directiva (un sol rol per persona de moment: el de més prioritat)
+  // `rol` és el de més prioritat (el que fan servir els filtres per nom de rol) i `rols` tots, separats per comes (D-036).
   T['08 Usuaris']=(R.usuaris||[]).filter(function(u){return u.actiu&&(rolsDe[u.id]||[]).length;}).map(function(u){
-    return{id:u.id,nom:u.nom,email:u.email,rol:sbRolPrincipal(rolsDe[u.id])};
+    return{id:u.id,nom:u.nom,email:u.email,rol:sbRolPrincipal(rolsDe[u.id]),rols:rolsDe[u.id].slice().sort().join(',')};
   });
   T['09 Usuaris Assignacions']=(R.directiva||[]).map(function(d){
     const area=d.area_id?arees[d.area_id]:null,deleg=d.delegacio_id?delegs[d.delegacio_id]:null;
@@ -2681,6 +2640,14 @@ function sbPestanyes(R){
       nom:(area||deleg||{}).nom||'',anyFiscal:d.exercici_id};
   });
   T['14 Rols']=sbFilesRols(R);
+  // Matriu rol × mòdul (D-036): una fila per rol i mòdul amb accés (sense fila = cap accés) i el catàleg fix de mòduls.
+  T['14b Matriu']=(R.rol_moduls||[]).map(function(m){
+    return{rolId:m.rol_id,modulId:m.modul_id,nivell:m.nivell,abast:m.abast,barra:m.barra?'true':'false'};
+  });
+  T['14c Moduls']=(R.moduls||[]).map(function(m){
+    return{id:m.id,nom:m.nom,ordre:_sbS(m.ordre),admetEdicio:m.admet_edicio?'true':'false',admetAbast:m.admet_abast?'true':'false',
+      queEdicio:_sbS(m.que_permet_edicio)};
+  });
 
   // --- Moviments (inclou, com a files via 'app', els consums de falles.app: r3 encara els llig d'ací)
   const justPer={};
@@ -2783,18 +2750,19 @@ function sbPestanyes(R){
   return T;
 }
 
-// Els sis permisos antics (14 Rols). Els rols de sistema porten els valors d'avui (DEFAULT_ROLES: la matriu inicial els
-// reprodueix); un rol creat a mà els dedueix de la matriu rol × mòdul (aproximació fins que la UI llija la matriu).
+// Els rols (14 Rols). Els sis permisos antics (canRegister…) ja no es desen: es dedueixen de la matriu rol × mòdul amb les mateixes
+// regles que perm() (D-036), de manera que les pantalles que encara miren `getRoles()[rol]` veuen el que diu la matriu.
+function sbPermisosAntics(matriuRol){
+  const m=matriuRol||{};
+  const edita=function(mid,tot){const x=m[mid];return!!(x&&x.nivell==='edicio'&&(!tot||x.abast==='tot'));};
+  return{canRegister:edita('moviments'),canFons:edita('fons',true),canImport:edita('importacio')||edita('fallesapp'),
+    canConfig:edita('configuracio'),canUsers:edita('usuaris'),viewAll:!!(m.dashboard&&m.dashboard.abast==='tot')};
+}
 function sbFilesRols(R){
   const mods={};
   (R.rol_moduls||[]).forEach(function(m){(mods[m.rol_id]=mods[m.rol_id]||{})[m.modul_id]=m;});
-  const edita=function(rol,modul){const x=(mods[rol]||{})[modul];return!!(x&&x.nivell==='edicio');};
   const files=(R.rols||[]).map(function(r){
-    const d=DEFAULT_ROLES[r.id];
-    const f=d?{canRegister:d.canRegister,canFons:d.canFons,canImport:d.canImport,canConfig:d.canConfig,canUsers:d.canUsers,viewAll:d.viewAll}
-      :{canRegister:edita(r.id,'moviments'),canFons:edita(r.id,'fons'),canImport:edita(r.id,'importacio'),
-        canConfig:edita(r.id,'configuracio'),canUsers:edita(r.id,'usuaris'),
-        viewAll:Object.keys(mods[r.id]||{}).some(function(k){return mods[r.id][k].abast==='tot';})};
+    const f=sbPermisosAntics(mods[r.id]);
     return{id:r.id,label:r.nom,color:r.color||'p-gray',canRegister:String(f.canRegister),canFons:String(f.canFons),
       canImport:String(f.canImport),canConfig:String(f.canConfig),canUsers:String(f.canUsers),viewAll:String(f.viewAll),
       custom:String(!r.de_sistema)};
@@ -2818,9 +2786,42 @@ const SB_ORDRE_TAULES=['exercicis','config','usuaris','rols','usuari_rols','rol_
 const SB_ALTA_O_CANVI={config:1,pressupost_estat:1};                 // si la fila ja hi és es canvia, si no es crea
 const SB_NO_S_ESBORREN={pressupost_estat:1,pressupost_historial:1,fallesapp_passiu:1};   // només creixen (historial)
 const SB_SENSE_ID={pressupost_historial:1,fallesapp_passiu:1};        // files iguals = la mateixa; només altes
-// Els sis permisos antics de «14 Rols» i els mòduls de la matriu que governen (MODEL_DADES §9.3).
-const SB_PERMISOS_MODULS={canRegister:['moviments'],canFons:['fons','caixa_obrir','pressupostos_aprovar'],canImport:['fallesapp','importacio'],
-  canConfig:['configuracio','rols','r1','exercicis','directiva','registre'],canUsers:['usuaris']};
+
+// La matriu com a objecte {rol:{mòdul:{nivell,abast,barra}}} i com a files de pestanya (14b Matriu). Pures.
+function sbMatriuDeFiles(files){
+  const M={};
+  (files||[]).forEach(function(f){
+    (M[f.rolId]=M[f.rolId]||{})[f.modulId]={nivell:f.nivell,abast:f.abast,barra:f.barra==='true'||f.barra===true};
+  });
+  return M;
+}
+function sbFilesDeMatriu(M){
+  const out=[];
+  Object.keys(M||{}).forEach(function(r){
+    Object.keys(M[r]).forEach(function(mid){
+      const x=M[r][mid];
+      out.push({rolId:r,modulId:mid,nivell:x.nivell,abast:x.abast,barra:x.barra?'true':'false'});
+    });
+  });
+  return out;
+}
+// Permisos efectius d'una persona amb diversos rols (D-036), per mòdul: el nivell més alt (edició > lectura); `editaTot` si algun rol
+// amb edició té abast «tot»; `veuTot` si algun rol, de qualsevol nivell, té abast «tot»; `barra` si algun rol el posa a la barra
+// inferior del mòbil. Sense entrada = cap accés. Són les mateixes regles que app.pot / app.pot_editar_tot al servidor (el servidor és
+// qui decideix de veres: això només serveix per a mostrar o amagar pantalles i botons). Pura.
+function sbPerfil(rols,matriu){
+  const P={};
+  (rols||[]).forEach(function(r){
+    const m=(matriu||{})[r]||{};
+    Object.keys(m).forEach(function(mid){
+      const x=m[mid],p=P[mid]=P[mid]||{nivell:'lectura',veuTot:false,editaTot:false,barra:false};
+      if(x.nivell==='edicio'){p.nivell='edicio';if(x.abast==='tot')p.editaTot=true;}
+      if(x.abast==='tot')p.veuTot=true;
+      if(x.barra)p.barra=true;
+    });
+  });
+  return P;
+}
 
 const _sbIso=function(s){
   s=String(s===null||s===undefined?'':s).trim();
@@ -2899,13 +2900,20 @@ function sbTaules(T,ctx){
   };
   usuaris.forEach(function(u){
     afegeix('usuaris',{id:u.id},{nom:_sbTxt(u.nom),email:String(u.email||'').trim().toLowerCase(),actiu:true});
-    if(u.rol&&u.rol!=='noauth')afegeix('usuari_rols',{usuari_id:u.id,rol_id:u.rol},{});
+    const rolsU=Array.isArray(u.rols)?u.rols:String(u.rols||'').split(',');
+    const ids=rolsU.map(function(x){return String(x).trim();}).filter(Boolean);
+    if(!ids.length&&u.rol)ids.push(u.rol);
+    ids.filter(function(x,i){return x!=='noauth'&&ids.indexOf(x)===i;}).forEach(function(rolId){afegeix('usuari_rols',{usuari_id:u.id,rol_id:rolId},{});});
   });
   (T['14 Rols']||[]).forEach(function(r){
     if(!r.id||r.id==='noauth')return;
     afegeix('rols',{id:r.id},{nom:_sbTxt(r.label)||r.id,color:_sbTxt(r.color),de_sistema:!_sbOk(r.custom)});
-    afegeix('rol_perms',{rol_id:r.id},{canRegister:_sbOk(r.canRegister),canFons:_sbOk(r.canFons),canImport:_sbOk(r.canImport),
-      canConfig:_sbOk(r.canConfig),canUsers:_sbOk(r.canUsers)});
+  });
+  // Matriu rol × mòdul (D-036): una fila per rol i mòdul amb accés.
+  (T['14b Matriu']||[]).forEach(function(m){
+    if(!m.rolId||m.rolId==='noauth'||!m.modulId)return;
+    afegeix('rol_moduls',{rol_id:m.rolId,modul_id:m.modulId},{nivell:m.nivell==='edicio'?'edicio':'lectura',
+      abast:m.abast==='directiva'?'directiva':'tot',barra:_sbOk(m.barra)});
   });
 
   // --- Organització i comptes
@@ -3051,6 +3059,77 @@ function _sbIgual(a,b){
   return JSON.stringify(a)===JSON.stringify(b);
 }
 
+// Operacions (D-027): el desat per diferències no sap quina acció ha fet l'usuari, així que ho dedueix de les ALTES d'aquest desat.
+// Cada acció d'usuari que crea registres els agrupa sota una operació (taula `operacions`), per a esborrar-los, desfer-los o
+// auditar-los junts. Una deducció errònia només canvia l'etiqueta (`tipus`): mai afecta a les xifres.
+// Només es tracten registres NOUS: els existents no es toquen i les operacions antigues són les que la migració va reconstruir.
+// Retorna {noves:[fila d'operació], de:Map(entrada d'alta → id d'operació)}. Pura (sense xarxa ni DOM).
+let _sbOpN=0;
+function sbAgrupaOperacions(alta){
+  const noves=[],de=new Map();
+  const nova=function(tipus,entrades,resum){
+    const ex=entrades.map(function(e){return e.f&&e.f.exercici_id;}).find(Boolean)||null;
+    const o={id:'o'+Date.now().toString(36)+(++_sbOpN).toString(36)+Math.random().toString(36).slice(2,5),tipus:tipus,exercici_id:ex};
+    if(resum)o.resum=resum;
+    noves.push(o);
+    entrades.forEach(function(e){de.set(e,o.id);});
+    return o;
+  };
+  const movs=alta.moviments||[],fons=alta.fons||[],canvis=alta.caixa_canvis||[];
+  const lliurats=new Set();   // entrades ja agrupades
+  const movPerId={};
+  movs.forEach(function(e){movPerId[e.k.id]=e;});
+
+  // Fons de persones: una despesa amb fons o un avançament porta el seu moviment; la resta (lliurament, devolució, reintegrament)
+  // és una acció per si sola. Les regularitzacions no tenen tipus d'operació.
+  const tipusFons={lliurament:'lliurament',devolucio:'devolucio',reintegrament:'reintegrament',despesa_fons:'despesa_amb_fons',avancament:'avancament'};
+  fons.forEach(function(e){
+    const tipus=tipusFons[e.f.tipus];
+    if(!tipus)return;
+    const entrades=[e],m=e.f.moviment_id?movPerId[e.f.moviment_id]:null;
+    if(m)entrades.push(m);
+    nova(tipus,entrades);
+    entrades.forEach(function(x){lliurats.add(x);});
+  });
+
+  // Caixes d'event: tancar (el moviment de tancament amb el canvi que es torna), obrir (el primer canvi), ampliar el canvi i retirar efectiu.
+  const tancar={};
+  movs.forEach(function(e){
+    if(lliurats.has(e)||e.f.font!=='tancament_caixa'||!e.f.caixa_id)return;
+    (tancar[e.f.caixa_id]=tancar[e.f.caixa_id]||[]).push(e);
+  });
+  canvis.forEach(function(e){
+    if(e.f.tipus==='devolucio'&&tancar[e.f.caixa_id])tancar[e.f.caixa_id].push(e);
+  });
+  Object.keys(tancar).forEach(function(c){nova('tancar_caixa',tancar[c]);tancar[c].forEach(function(x){lliurats.add(x);});});
+  canvis.forEach(function(e){
+    if(lliurats.has(e))return;
+    const tipus=e.f.tipus==='lliurament'?'obrir_caixa':e.f.tipus==='ampliacio'?'ampliar_canvi':null;
+    if(tipus){nova(tipus,[e]);lliurats.add(e);}
+  });
+
+  // Moviments que queden: una acció cadascun, llevat de les importacions i dels traspassos banc → caixa, que són una per desat
+  // (els dos costats del traspàs i tots els apunts d'un fitxer).
+  const perDesat={};
+  const importacio={extracte:'importacio_extracte',csv_generic:'importacio_csv',fallesapp_transaccions:'importacio_fallesapp',
+    fallesapp_bonificacio:'importacio_fallesapp',traspas_banc_caixa:'traspas_banc_caixa'};
+  movs.forEach(function(e){
+    if(lliurats.has(e))return;
+    const f=e.f.font;
+    if(f==='retirada_caixa'){nova('retirada_caixa',[e]);return;}
+    if(f==='ingres_tercer'){nova('ingres_tercer',[e]);return;}
+    if(f==='manual'){nova('moviment_manual',[e]);return;}
+    if(importacio[f])(perDesat[importacio[f]]=perDesat[importacio[f]]||[]).push(e);
+  });
+  (alta.fallesapp_consums||[]).forEach(function(e){(perDesat.importacio_fallesapp=perDesat.importacio_fallesapp||[]).push(e);});
+  Object.keys(perDesat).forEach(function(tipus){
+    const es=perDesat[tipus];
+    nova(tipus,es,tipus.indexOf('importacio_')===0?{importades:es.length}:null);
+  });
+  (alta.fallesapp_passiu||[]).forEach(function(e){nova('passiu_fallesapp',[e]);});
+  return{noves:noves,de:de};
+}
+
 // Diferències entre dues fotos (base i ara) → llista ordenada d'operacions per a guarda_canvis.
 // Ordre: primer els canvis que han de passar abans (desmarcar l'event per defecte antic), després els esborrats (fills
 // abans que pares), després les altes (pares abans que fills) i al final els canvis. Així tancar una caixa afegeix els seus
@@ -3067,7 +3146,7 @@ function sbCanvis(base,ara){
   };
   const del={},alta={},canvi={},previs=[];
   const esborrats={moviments:{},caixes:{},exercicis:{}};
-  const taules=SB_ORDRE_TAULES.concat(['rol_perms']);
+  const taules=SB_ORDRE_TAULES;
   const M={};
   taules.forEach(function(t){
     const mb=mapa(base[t]),mn=mapa(ara[t]);
@@ -3111,10 +3190,14 @@ function sbCanvis(base,ara){
       op(t,'d',e.k);
     });
   });
-  // 3) altes, pares abans que fills
+  // 3) altes, pares abans que fills. Primer les operacions (D-027): els registres nous hi fan referència amb `operacio_id`, que
+  // s'afegeix només a la còpia que s'envia (la foto `ara`, que passa a ser la base, no el porta: la lectura no el torna).
+  const grups=sbAgrupaOperacions(alta);
+  grups.noves.forEach(function(o){op('operacions','i',{},o);});
   SB_ORDRE_TAULES.forEach(function(t){
     (alta[t]||[]).forEach(function(e){
       const fila=Object.assign({},e.k||{},e.f);
+      if(grups.de.has(e))fila.operacio_id=grups.de.get(e);
       op(t,SB_ALTA_O_CANVI[t]?'s':'i',e.k||{},SB_ALTA_O_CANVI[t]?e.f:fila);
     });
   });
@@ -3126,21 +3209,6 @@ function sbCanvis(base,ara){
       if(t==='fons'&&(e.fila.tipus==='despesa_fons'||e.fila.tipus==='avancament'))delete f.import;
       if(!Object.keys(f).length)return;
       op(t,SB_ALTA_O_CANVI[t]?'s':'u',e.k,f);
-    });
-  });
-  // 5) els sis permisos antics d'un rol → mòduls de la matriu (lectura/edició)
-  const permisos=function(rolId,perm,sera){
-    SB_PERMISOS_MODULS[perm].forEach(function(modul){
-      if(sera)op('rol_moduls','s',{rol_id:rolId,modul_id:modul},{nivell:'edicio'});
-      else op('rol_moduls','d',{rol_id:rolId,modul_id:modul});
-    });
-  };
-  const rolsBase=M.rol_perms.b;
-  M.rol_perms.n.forEach(function(e,id){
-    const b=rolsBase.get(id);
-    Object.keys(SB_PERMISOS_MODULS).forEach(function(perm){
-      const abans=b?!!b.f[perm]:false,ara2=!!e.f[perm];
-      if(abans!==ara2)permisos(e.k.rol_id,perm,ara2);
     });
   });
   return ops;
@@ -3194,6 +3262,7 @@ function sbPestanyesActuals(){
     return{id:r.id,label:r.label,color:r.color||'p-gray',canRegister:String(r.canRegister),canFons:String(r.canFons),
       canImport:String(r.canImport),canConfig:String(r.canConfig),canUsers:String(r.canUsers),viewAll:String(r.viewAll),custom:String(r.custom||false)};
   });
+  T['14b Matriu']=sbFilesDeMatriu(DB.config.matriu);
   const cfg=[{clau:'anyFiscal',valor:DB.config.anyFiscal||''},
     {clau:'exercicis',valor:JSON.stringify(DB.config.exercicis||[])},
     {clau:'estats_exercicis',valor:JSON.stringify(DB.config.estats_exercicis||{})}];
@@ -3395,7 +3464,9 @@ function configToRows(){
   const events=(cfg.events||[]).map(function(e){return{id:e.id,delegId:e.delegId,nom:e.name,year:e.anyFiscal||e.year||'',responsable:e.resp||'',status:e.status||'pendent',dataInici:e.dataInici||'',horaInici:e.horaInici||'20:00',dataFi:e.dataFi||'',horaFi:e.horaFi||'02:00',anyFiscal:e.anyFiscal||e.year||'',perDefecte:e.perDefecte?'true':''};});
   const bancs=(cfg.bancs||[]).map(function(b){return{id:b.id,codi:b.codi,nom:b.nom,tipus:b.tipus,compte:b.compte||''};});
   const reglesImportacio=[];// deprecated — unificat a DB.regles (13 Regles CSV)
-  const usuaris=(cfg.usuaris||[]).map(function(u){return{id:u.id,nom:u.nom,email:u.email,rol:u.rol};});
+  const usuaris=(cfg.usuaris||[]).map(function(u){
+    return{id:u.id,nom:u.nom,email:u.email,rol:u.rol,rols:(Array.isArray(u.rols)&&u.rols.length?u.rols:[u.rol]).join(',')};
+  });
   const assignacions=[];
   const directiva=cfg.directiva||{};
   Object.entries(directiva).forEach(function(entry){
@@ -3414,7 +3485,10 @@ function rowsToConfig(arees,delegacions,events,bancs,usuaris,assignacions,regles
     events:events.map(function(r){return{id:r.id,delegId:r.delegId,name:r.nom,year:r.anyFiscal||r.year||'',anyFiscal:r.anyFiscal||r.year||'',resp:r.responsable,status:r.status,dataInici:r.dataInici||'',horaInici:r.horaInici||'20:00',dataFi:r.dataFi||'',horaFi:r.horaFi||'02:00',perDefecte:r.perDefecte==='true'||r.perDefecte===true};}),
     bancs:bancs.map(function(r){return{id:r.id,codi:r.codi,nom:r.nom,tipus:r.tipus,compte:r.compte||'',saldoInicial:parseFloat(r.saldoInicial)||0,saldoData:r.saldoData||''};}),
     reglesImportacio:[],// deprecated — unificat a DB.regles
-    usuaris:usuaris.map(function(u){return{id:u.id,nom:u.nom,email:u.email,rol:u.rol,arees:[],delegacions:[]};}),
+    usuaris:usuaris.map(function(u){
+      const rols=String(u.rols||u.rol||'').split(',').map(function(x){return x.trim();}).filter(Boolean);
+      return{id:u.id,nom:u.nom,email:u.email,rol:u.rol,rols:rols,arees:[],delegacions:[]};
+    }),
     directiva:buildDirectivaFromRows(assignacions)
   };
 }
@@ -3517,6 +3591,12 @@ async function loadFromSupabase(){
         canUsers:r.canUsers==='true',viewAll:r.viewAll==='true',custom:r.custom==='true'};
     });
   }
+  // Matriu rol × mòdul i catàleg de mòduls (D-036): decideixen què veu i què pot fer cada persona.
+  DB.config.matriu=sbMatriuDeFiles(_sbPestanyes['14b Matriu']);
+  DB.config.catModuls=(_sbPestanyes['14c Moduls']||[]).map(function(m){
+    return{id:m.id,nom:m.nom,ordre:parseInt(m.ordre,10)||0,admetEdicio:m.admetEdicio==='true',admetAbast:m.admetAbast==='true',queEdicio:m.queEdicio||''};
+  });
+  _matriuGen++;
   // Carregar passiu falles.app
   const passRows=L.fapp_passiu;
   if(passRows.length>0){
@@ -3536,9 +3616,6 @@ async function loadFromSupabase(){
     if(cfgMap.fappPassiu){try{const fp=JSON.parse(cfgMap.fappPassiu);if(fp&&fp.total)DB.config.fappPassiu=fp;}catch(e){}}
     if(cfgMap.justificant){try{DB.config.justificant=JSON.parse(cfgMap.justificant);}catch(e){}}
     if(cfgMap.drive_folders){try{DB.config.drive_folders=JSON.parse(cfgMap.drive_folders);}catch(e){}}
-    // Actualitzar snapshot de valors bons per a protecció defensiva
-    if(cfgMap.modulVis){try{DB.config.modulVis=JSON.parse(cfgMap.modulVis);}catch(e){}}
-    if(cfgMap.reportVis){try{DB.config.reportVis=JSON.parse(cfgMap.reportVis);}catch(e){}}
   }
   // Migració automàtica: assignar conciliacio als moviments que no en tenen.
   // Ha d'anar DESPRÉS de carregar DB.config.bancs des del full: si es fa abans,
@@ -4174,7 +4251,7 @@ function openEditMov(id){
   document.getElementById('edit-mov-concepte').value=m.concepte||'';
   document.getElementById('edit-mov-import').value=m.import||'';
   // Àrea i delegació només editables per president/treasury
-  const _canEditAssig=getRol()==='president'||getRol()==='treasury';
+  const _canEditAssig=modulEdita('historial');
   document.getElementById('edit-mov-area').disabled=!_canEditAssig;
   document.getElementById('edit-mov-deleg').disabled=!_canEditAssig;
   document.getElementById('edit-mov-traspas').checked=esTraspas(m);
@@ -4206,7 +4283,7 @@ async function saveEditMov(){
   m.delegacioId=delegId;
   m.delegacioNom=deleg?deleg.name:'';
   if(concepte)m.concepte=concepte;
-  if(getRol()==='president'||getRol()==='treasury')m.traspas=document.getElementById('edit-mov-traspas').checked?'true':'';
+  if(modulEdita('historial'))m.traspas=document.getElementById('edit-mov-traspas').checked?'true':'';
   const nouImport=parseFloat(document.getElementById('edit-mov-import').value);
   if(nouImport&&nouImport>0)m.import=nouImport;
   // Si el moviment té fons associat, actualitzar-lo també
@@ -4277,9 +4354,9 @@ function filterHist(){
   });
   const rol=getRol();
   const myEmail=(currentUser?.email||'').toLowerCase();
-  const canEditAssig=rol==='president'||rol==='treasury';
+  const canEditAssig=modulEdita('historial');
   document.getElementById('hist-tbody').innerHTML=movs.map(function(m){
-    const canDel=rol==='president'||rol==='treasury'||((m.responsableEmail||'').toLowerCase()===myEmail);
+    const canDel=canEditAssig||((m.responsableEmail||'').toLowerCase()===myEmail);
     const canEdit=canEditAssig||((m.responsableEmail||'').toLowerCase()===myEmail);
     return '<tr style="white-space:nowrap">'+
       '<td>'+m.data+'</td>'+
@@ -4343,7 +4420,7 @@ function renderFons(){
       renderFonsEvents()+
       (delegats.length?delegats.map(function(u){return renderFonsCard(u);}).join(''):'<div class="card"><div style="color:var(--text3)">No hi ha delegats configurats.</div></div>');
     populateDelegatSelects();
-  }else if(getRol()==='area'){
+  }else if(tensRol('area')){
     // Responsable d'àrea: veu fons de tots els delegats de les seues delegacions
     const myDelegsF=getMyDelegacions();
     const af=getAnyFiscal();
@@ -4445,7 +4522,7 @@ function renderFonsCard(u){
   const histHtml=fonsArr.length?
     '<div style="margin-top:10px;border-top:0.5px solid var(--border);padding-top:8px">'+
     fonsArr.sort(sortByData).map(function(f){
-      const canDel=rol==='president'||rol==='treasury'||((f.registratPer||'').toLowerCase()===myEmail);
+      const canDel=modulEdita('fons',true)||((f.registratPer||'').toLowerCase()===myEmail);
       const isLl=f.tipus==='lliurament'||f.tipus==='regularitzacio';
       const isGastF=f.tipus==='gast_fons';
       const isAvanc=f.tipus==='avanc';
@@ -5882,7 +5959,7 @@ function renderFlux(){
 const MANUAL={
   intro:`<h3 style="margin-bottom:12px">Benvingut a Falla Portal</h3>
     <p style="color:var(--text2);line-height:1.6;margin-bottom:12px">Sistema de gestió financera de la Falla Portal per a l'any fiscal actiu. Totes les dades es guarden automàticament a Supabase i estan disponibles en temps real per a tots els usuaris autoritzats.</p>
-    <div style="background:var(--blue-bg);border-radius:var(--r);padding:12px;font-size:13px;color:var(--blue-text);margin-bottom:12px"><strong>Primer pas:</strong> El President o Tresorera han de donar d'alta els usuaris a <strong>Configuració → Usuaris</strong>, indicant el seu email de Google i rol assignat.</div>
+    <div style="background:var(--blue-bg);border-radius:var(--r);padding:12px;font-size:13px;color:var(--blue-text);margin-bottom:12px"><strong>Primer pas:</strong> El President o Tresorera han de donar d'alta els usuaris a <strong>Configuració → Usuaris</strong>, indicant el correu on rebran el codi d'entrada i els seus rols (en poden tindre diversos: val el permís més alt).</div>
     <div style="font-size:13px;line-height:2">
       <div>📊 <strong>Dashboard</strong> — resum global de l'exercici actiu</div>
       <div>➕ <strong>Nou moviment</strong> — registrar ingressos i despeses</div>
@@ -6031,9 +6108,9 @@ const MANUAL={
       <div>• <strong>Àrees</strong> — crea, edita o elimina àrees i delegacions</div>
       <div>• <strong>Events</strong> — gestiona events per exercici; copia entre exercicis</div>
       <div>• <strong>Bancs</strong> — vies de pagament amb saldo inicial i actual</div>
-      <div>• <strong>Mestre de Rols</strong> — edita els permisos de cada rol</div>
+      <div>• <strong>Rols i permisos</strong> — per a cada rol, quins mòduls veu i quins pot editar (i quins van a la barra inferior del mòbil)</div>
       <div>• <strong>Regles CSV</strong> — regles de mapeig per importació bancària</div>
-      <div>• <strong>Usuaris</strong> — alta, edició i eliminació d'usuaris autoritzats</div>
+      <div>• <strong>Usuaris</strong> — alta, edició i eliminació d'usuaris autoritzats, cadascun amb els seus rols</div>
       <div style="font-weight:500;margin:10px 0 6px">Gestió d'exercicis fiscals:</div>
       <div>• <strong>Nou exercici</strong> — crea un nou any fiscal (pot ser de prova/test)</div>
       <div>• <strong>Tancar exercici</strong> — tanca definitivament l'exercici actiu</div>
@@ -6133,13 +6210,11 @@ function renderConfig(){
     {id:'areas',label:'Àrees'},
     {id:'events',label:'Events'},
     {id:'bancs',label:'Bancs'},
-    {id:'rols',label:'Mestre de Rols'},
-    {id:'moduls',label:'Mòduls'},
-    {id:'reports',label:'Reports'},
+    ...(modulVeu('rols')?[{id:'rols',label:'Rols i permisos'}]:[]),
     {id:'regles',label:'Regles CSV'},
     {id:'justificants',label:'Justificants'},
     ...(canUsers?[{id:'usuaris',label:'Usuaris'}]:[]),
-    ...((getRol()==='president'||getRol()==='treasury')?[{id:'log',label:'🔍 Log'}]:[])
+    ...(modulVeu('registre')?[{id:'log',label:'🔍 Log'}]:[])
   ];
   const tabsBtns=tabs.map(function(t,i){
     return '<button class="btn'+(i===0?' btn-primary':'')+'" id="cfg-tab-'+t.id+'" data-tab="'+t.id+'" onclick="showCfgTab(this.dataset.tab)">'+t.label+'</button>';
@@ -6150,14 +6225,14 @@ function renderConfig(){
 
 function showCfgTab(tab){
   window._activeCfgTab=tab;
-  ['exercicis','areas','events','bancs','rols','moduls','reports','regles','justificants','usuaris','log'].forEach(function(t){
+  ['exercicis','areas','events','bancs','rols','regles','justificants','usuaris','log'].forEach(function(t){
     const el=document.getElementById('cfg-'+t);
     const btn=document.getElementById('cfg-tab-'+t);
     if(el)el.classList.toggle('hidden',t!==tab);
     if(btn)btn.className='btn'+(t===tab?' btn-primary':'');
   });
   const renders={exercicis:renderCfgExercicis,areas:renderCfgAreas,events:renderCfgEvents,bancs:renderCfgBancs,
-    rols:renderCfgRols,moduls:renderCfgModuls,reports:renderCfgReports,regles:renderCfgRegles,justificants:renderCfgJustificants,usuaris:renderCfgUsuaris,log:renderCfgLog};
+    rols:renderCfgRols,regles:renderCfgRegles,justificants:renderCfgJustificants,usuaris:renderCfgUsuaris,log:renderCfgLog};
   try{(renders[tab]||function(){})();}catch(e){console.error('Error renderCfg '+tab,e);}
 }
 
@@ -6371,7 +6446,7 @@ function openModalEvent(id){
   const respSel=document.getElementById('mev-resp');
   respSel.innerHTML='<option value="">— Selecciona responsable —</option>'+
     (DB.config.usuaris||[])
-    .filter(function(u){return u.rol==='president'||u.rol==='treasury'||u.rol==='area';})
+    .filter(function(u){return usuariTe(u,'president','treasury','area');})
     .sort(function(a,b){return a.nom.localeCompare(b.nom,'ca');})
     .map(function(u){return'<option value="'+u.nom+'">'+u.nom+'</option>';})
     .join('');
@@ -7201,27 +7276,25 @@ function renderDirectiva(){
     }).join('');
   }
   const anyF=sel?sel.value:getAnyFiscal();
-  const isPresident=getRol()==='president';
-  const isTreasury=getRol()==='treasury';
   const myArees=getMyArees();
   const usuaris=DB.config.usuaris||[];
 
   // Usuaris filtrats per rol, ordenats alfabèticament
   const usuarisArea=usuaris.filter(function(u){
-    return u.rol==='president'||u.rol==='treasury'||u.rol==='area';
+    return usuariTe(u,'president','treasury','area');
   }).sort(function(a,b){return a.nom.localeCompare(b.nom,'ca');});
 
   const usuarisDeleg=usuaris.filter(function(u){
-    return u.rol==='president'||u.rol==='treasury'||u.rol==='area'||u.rol==='delegat';
+    return usuariTe(u,'president','treasury','area','delegat');
   }).sort(function(a,b){return a.nom.localeCompare(b.nom,'ca');});
 
-  const canEditArea=isPresident||isTreasury;
+  const canEditArea=modulEdita('directiva');
 
   let html='';
   DB.config.areas.forEach(function(a){
     const col=({'01':'#1D9E75','02':'#7F77DD','03':'#378ADD','04':'#BA7517','05':'#D4537E','06':'#D85A30','07':'#888780'})[a.id]||'#888';
     const delegs=DB.config.delegacions.filter(function(d){return d.areaId===a.id;});
-    const canEditDeleg=canEditArea||(getRol()==='area'&&myArees.includes(a.id));
+    const canEditDeleg=canEditArea||(tensRol('area')&&myArees.includes(a.id));
 
     // Responsables actuals d'àrea
     const respsArea=getDirectivaAny(anyF).filter(function(x){return x.tipus==='area'&&x.id===a.id;});
@@ -7477,20 +7550,21 @@ function getDriveFolderFactures(af){
 }
 
 function renderCfgUsuaris(){
-  const ROL_LABELS={'president':'President','treasury':'Tresoreria','area':'Resp. d\'Area','delegat':'Resp. Delegacio','board':'Junta'};
-  const ROL_COLORS={'president':'p-purple','treasury':'p-info','area':'p-ok','delegat':'p-warn','board':'p-gray'};
-  let html='<div class="info-box">L\'email ha de coincidir exactament amb el correu on el membre rebrà el codi d\'entrada.</div>';
+  const rols=getRoles();
+  let html='<div class="info-box">L\'email ha de coincidir exactament amb el correu on el membre rebrà el codi d\'entrada. Una persona pot tindre diversos rols: val el permís més alt.</div>';
   html+='<button class="btn btn-primary" style="margin-bottom:12px" onclick="openModalUsuari(null)"><i class="ti ti-plus"></i> Afegir usuari</button>';
   html+='<div class="card"><div class="table-wrap"><table>';
-  html+='<thead><tr><th>Nom</th><th>Email</th><th>Rol</th><th></th></tr></thead><tbody>';
+  html+='<thead><tr><th>Nom</th><th>Email</th><th>Rols</th><th></th></tr></thead><tbody>';
   (DB.config.usuaris||[]).forEach(function(u){
-    const rols=getRoles();
-    const rolLabel=(rols[u.rol]?.label)||ROL_LABELS[u.rol]||u.rol;
-    const rolColor=(rols[u.rol]?.color)||ROL_COLORS[u.rol]||'p-gray';
+    const ids=Array.isArray(u.rols)&&u.rols.length?u.rols:[u.rol];
+    const pills=ids.map(function(rid){
+      const r=rols[rid];
+      return'<span class="pill '+((r&&r.color)||'p-gray')+'" style="margin-right:4px">'+esc((r&&r.label)||rid)+'</span>';
+    }).join('');
     html+='<tr>'+
-      '<td style="font-weight:500">'+u.nom+'</td>'+
-      '<td style="color:var(--text2)">'+u.email+'</td>'+
-      '<td><span class="pill '+rolColor+'">'+rolLabel+'</span></td>'+
+      '<td style="font-weight:500">'+esc(u.nom)+'</td>'+
+      '<td style="color:var(--text2)">'+esc(u.email)+'</td>'+
+      '<td>'+pills+'</td>'+
       '<td style="white-space:nowrap">'+
         '<button class="btn" style="font-size:12px;padding:3px 8px;margin-right:4px" data-uid="'+u.id+'" onclick="openModalUsuari(this.dataset.uid)"><i class="ti ti-edit"></i></button>'+
         '<button class="btn" style="font-size:12px;padding:3px 8px" data-uid="'+u.id+'" onclick="deleteUsuari(this.dataset.uid)"><i class="ti ti-trash"></i></button>'+
@@ -7502,285 +7576,113 @@ function renderCfgUsuaris(){
 }
 
 function renderCfgRols(){
-  const canEdit=perm('canConfig');
+  const canEdit=modulEdita('rols');
   const rols=getRoles();
-  const permisos=[
-    {key:'canRegister',label:'Registra moviments'},
-    {key:'canFons',label:'Lliura fons'},
-    {key:'canImport',label:'Importa CSV'},
-    {key:'canConfig',label:'Configuració'},
-    {key:'canUsers',label:'Gestió usuaris'},
-    {key:'viewAll',label:'Veu tot'}
-  ];
-  const colors=['p-purple','p-info','p-ok','p-warn','p-gray','p-danger'];
-
-  let html='';
-  if(canEdit){
-    html+='<div style="margin-bottom:14px"><button class="btn btn-primary" onclick="openModalRol(null)"><i class="ti ti-plus"></i> Nou rol</button></div>';
-  }
-  html+='<div class="card" style="padding:0;overflow:hidden"><div class="table-wrap"><table>';
-  html+='<thead><tr><th>Rol</th>';
-  permisos.forEach(function(p){html+='<th style="text-align:center;font-size:12px">'+p.label+'</th>';});
-  if(canEdit)html+='<th></th>';
-  html+='</tr></thead><tbody>';
-
-  Object.entries(rols).filter(function(e){return e[0]!=='noauth';}).forEach(function(entry){
-    const key=entry[0],r=entry[1];
-    html+='<tr>';
-    html+='<td><span class="pill '+(r.color||'p-gray')+'">'+r.label+'</span></td>';
-    permisos.forEach(function(p){
-      const val=r[p.key]||false;
-      if(canEdit){
-        html+='<td style="text-align:center"><input type="checkbox"'+(val?' checked':'')+
-          ' data-rol="'+key+'" data-perm="'+p.key+'" onchange="togglePerm(this)"'+
-          ' style="width:16px;height:16px;cursor:pointer"></td>';
-      }else{
-        html+='<td style="text-align:center">'+(val?'<i class="ti ti-check" style="color:var(--green)"></i>':'<i class="ti ti-x" style="color:var(--text3)"></i>')+'</td>';
-      }
-    });
-    if(canEdit){
-      html+='<td style="white-space:nowrap">';
-      html+='<button class="btn" style="font-size:12px;padding:3px 8px;margin-right:4px" data-rid="'+key+'" onclick="openModalRol(this.dataset.rid)"><i class="ti ti-edit"></i></button>';
-      if(r.custom){
-        html+='<button class="btn" style="font-size:12px;padding:3px 8px" data-rid="'+key+'" onclick="deleteRol(this.dataset.rid)"><i class="ti ti-trash"></i></button>';
-      }
-      html+='</td>';
-    }
-    html+='</tr>';
+  const ids=Object.keys(rols).filter(function(r){return r!=='noauth';});
+  if(!window._matriuRol||ids.indexOf(window._matriuRol)<0)window._matriuRol=ids[0]||null;
+  const sel=window._matriuRol,r=sel?rols[sel]:null;
+  const cat=DB.config.catModuls||[];
+  let html='<div class="info-box" style="margin-bottom:14px"><i class="ti ti-info-circle" style="flex-shrink:0"></i><div>'+
+    'Cada rol té, per a cada mòdul, <strong>cap accés</strong>, <strong>lectura</strong> (veu la pantalla) o <strong>edició</strong> (crea, modifica i esborra). '+
+    'Si una persona té diversos rols, val el permís més alt. Amb abast <strong>directiva</strong>, només a les àrees i delegacions que té assignades a l\'exercici actiu. '+
+    '<strong>Barra</strong> = botó de la barra inferior del mòbil (màxim 4). Els permisos els fa complir el servidor.</div></div>';
+  html+='<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:14px">';
+  ids.forEach(function(id){
+    html+='<button class="btn'+(id===sel?' btn-primary':'')+'" data-rid="'+id+'" onclick="selRolMatriu(this.dataset.rid)">'+esc(rols[id].label)+'</button>';
   });
-  html+='</tbody></table></div></div>';
-  html+='<div class="info-box" style="margin-top:12px;font-size:12px"><i class="ti ti-info-circle" style="flex-shrink:0"></i>Els rols base (President, Tresoreria, etc.) no es poden eliminar pero si editar. Els rols personalitzats es poden eliminar.</div>';
+  if(canEdit)html+='<button class="btn" onclick="openModalRol(null)"><i class="ti ti-plus"></i> Nou rol</button>';
+  html+='</div>';
+  if(!r){document.getElementById('cfg-rols').innerHTML=html+'<div class="info-box">No hi ha cap rol.</div>';return;}
+  if(!cat.length){document.getElementById('cfg-rols').innerHTML=html+'<div class="info-box">El catàleg de mòduls no s\'ha carregat.</div>';return;}
+
+  html+='<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap">';
+  html+='<span class="pill '+(r.color||'p-gray')+'">'+esc(r.label)+'</span>';
+  if(canEdit){
+    html+='<button class="btn" style="font-size:12px;padding:3px 8px" data-rid="'+sel+'" onclick="openModalRol(this.dataset.rid)"><i class="ti ti-edit"></i> Nom i color</button>';
+    if(r.custom)html+='<button class="btn" style="font-size:12px;padding:3px 8px" data-rid="'+sel+'" onclick="deleteRol(this.dataset.rid)"><i class="ti ti-trash"></i> Eliminar rol</button>';
+  }
+  html+='<span style="font-size:12px;color:var(--text3)">Barra inferior: '+barraDelRol(sel)+'/4</span>';
+  html+='</div>';
+
+  const mat=(DB.config.matriu||{})[sel]||{};
+  const dis=canEdit?'':' disabled';
+  html+='<div class="card" style="padding:0;overflow:auto"><table style="min-width:620px"><thead><tr>'+
+    '<th style="min-width:200px">Mòdul</th><th>Accés</th><th>Abast</th><th style="text-align:center">Barra</th></tr></thead><tbody>';
+  cat.forEach(function(m){
+    const x=mat[m.id],nivell=x?x.nivell:'';
+    html+='<tr><td style="padding:6px 10px;font-size:13px">'+esc(m.nom)+
+      (m.queEdicio?'<div style="font-size:11px;color:var(--text3);margin-top:2px;max-width:520px">Edició: '+esc(m.queEdicio)+'</div>':'')+'</td>';
+    html+='<td><select data-rid="'+sel+'" data-mid="'+m.id+'" onchange="matriuAcces(this)" style="min-width:110px"'+dis+'>'+
+      '<option value=""'+(!nivell?' selected':'')+'>Cap accés</option>'+
+      '<option value="lectura"'+(nivell==='lectura'?' selected':'')+'>Lectura</option>'+
+      (m.admetEdicio?'<option value="edicio"'+(nivell==='edicio'?' selected':'')+'>Edició</option>':'')+'</select></td>';
+    html+='<td>'+(nivell&&abastTriable(m.id)?'<select data-rid="'+sel+'" data-mid="'+m.id+'" onchange="matriuAbast(this)" style="min-width:110px"'+dis+'>'+
+      '<option value="tot"'+(x.abast==='tot'?' selected':'')+'>Tot</option>'+
+      '<option value="directiva"'+(x.abast==='directiva'?' selected':'')+'>Directiva</option></select>':'<span style="color:var(--text3)">—</span>')+'</td>';
+    html+='<td style="text-align:center">'+(nivell&&modulAmbMenu(m.id)?'<input type="checkbox" data-rid="'+sel+'" data-mid="'+m.id+'"'+(x.barra?' checked':'')+
+      ' onchange="matriuBarra(this)"'+dis+' style="width:15px;height:15px">':'<span style="color:var(--text3)">—</span>')+'</td></tr>';
+  });
+  html+='</tbody></table></div>';
   document.getElementById('cfg-rols').innerHTML=html;
 }
 
-function renderCfgModuls(){
-  const canEdit=perm('canConfig');
-  const rols=getRoles();
-  const vis=getModulVis();
-  const rolIds=Object.keys(rols).filter(function(r){return r!=='noauth';});
-
-  function countBarra(rid){
-    if(rid==='president')return MODULS_DEF.length;
-    const rv=vis[rid]||{};
-    return MODULS_DEF.filter(function(m){return rv[m.id]&&rv[m.id].barra;}).length;
-  }
-
-  let html='';
-  html+='<div class="info-box" style="margin-bottom:14px"><i class="ti ti-info-circle" style="flex-shrink:0"></i>';
-  html+='<div><strong>D</strong> = menú lateral desktop. <strong>Barra</strong> = botó barra inferior mòbil (màx.4, mínim 1). <strong>Més</strong> = menú hamburguesa. ';
-  html+='El rol <strong>President</strong> sempre veu tot.</div></div>';
-
-  html+='<div class="card" style="padding:0;overflow:auto"><table style="min-width:700px">';
-  html+='<thead><tr><th style="min-width:160px">Mòdul</th>';
-  rolIds.forEach(function(rid){
-    const r=rols[rid];
-    const locked=rid==='president';
-    const cnt=countBarra(rid);
-    const cntColor=cnt>4?'var(--red)':cnt===0?'var(--amber)':' var(--text3)';
-    html+='<th colspan="3" style="text-align:center;padding:6px 4px;border-left:1px solid var(--border)">';
-    html+='<span class="pill '+(r.color||'p-gray')+'" style="font-size:11px">'+r.label+'</span>';
-    if(locked){html+='<div style="font-size:10px;color:var(--text3);margin-top:2px">sempre tot</div>';}
-    else{html+='<div style="font-size:10px;color:'+cntColor+';margin-top:2px">barra: '+cnt+'/4</div>';}
-    html+='</th>';
-  });
-  html+='</tr><tr><th></th>';
-  rolIds.forEach(function(){
-    html+='<th style="text-align:center;font-size:10px;color:var(--text3);font-weight:500;padding:2px 4px;border-left:1px solid var(--border)">D</th>';
-    html+='<th style="text-align:center;font-size:10px;color:var(--text3);font-weight:500;padding:2px 4px">Barra</th>';
-    html+='<th style="text-align:center;font-size:10px;color:var(--text3);font-weight:500;padding:2px 4px">Més</th>';
-  });
-  html+='</tr></thead><tbody>';
-
-  const seccions=['Principal','Gestió','Reportes','Sistema','Ajuda'];
-  seccions.forEach(function(sec){
-    const mods=MODULS_DEF.filter(function(m){return m.seccio===sec;});
-    if(!mods.length)return;
-    html+='<tr><td colspan="'+(1+rolIds.length*3)+'" style="background:var(--bg2);font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;padding:5px 10px">'+sec+'</td></tr>';
-    mods.forEach(function(m){
-      html+='<tr>';
-      html+='<td style="padding:6px 10px;font-size:13px"><i class="ti '+m.icon+'" style="margin-right:6px;color:var(--text3)"></i>'+m.label+'</td>';
-      rolIds.forEach(function(rid){
-        const locked=rid==='president';
-        const rv=(vis[rid]||{});
-        const mv=rv[m.id]||{desktop:false,barra:false,mes:false};
-        const dis='opacity:.4';const cur='cursor:pointer';
-        const dAttr=locked||!canEdit?'disabled':'data-rol="'+rid+'" data-mid="'+m.id+'" data-plat="desktop" onchange="toggleModulVis(this)"';
-        const bAttr=locked||!canEdit?'disabled':'data-rol="'+rid+'" data-mid="'+m.id+'" data-plat="barra" onchange="toggleModulVisBarra(this)"';
-        const eAttr=locked||!canEdit?'disabled':'data-rol="'+rid+'" data-mid="'+m.id+'" data-plat="mes" onchange="toggleModulVis(this)"';
-        html+='<td style="text-align:center;border-left:1px solid var(--border)">';
-        html+='<input type="checkbox"'+(locked||!!mv.desktop?' checked':'')+' '+dAttr+' style="width:15px;height:15px;'+(locked||!canEdit?dis:cur)+'">';
-        html+='</td><td style="text-align:center">';
-        html+='<input type="checkbox"'+(locked||!!mv.barra?' checked':'')+' '+bAttr+' style="width:15px;height:15px;'+(locked||!canEdit?dis:cur)+'">';
-        html+='</td><td style="text-align:center">';
-        html+='<input type="checkbox"'+(locked||!!mv.mes?' checked':'')+' '+eAttr+' style="width:15px;height:15px;'+(locked||!canEdit?dis:cur)+'">';
-        html+='</td>';
-      });
-      html+='</tr>';
-    });
-  });
-  html+='</tbody></table></div>';
-  if(canEdit){
-    html+='<div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">';
-    html+='<button class="btn btn-primary" onclick="saveModulVis()"><i class="ti ti-device-floppy"></i> Guardar canvis</button>';
-    html+='<button class="btn" onclick="resetModulVis()"><i class="ti ti-refresh"></i> Restaurar valors per defecte</button>';
-    html+='</div>';
-  }
-  document.getElementById('cfg-moduls').innerHTML=html;
+// L'abast (tot / directiva) té sentit als mòduls de dades; no als d'administració.
+function abastTriable(mid){return['configuracio','rols','usuaris','exercicis','directiva','registre','pressupostos_aprovar'].indexOf(mid)<0;}
+// Mòduls que tenen botó al menú de l'app (només aquests poden anar a la barra inferior).
+function modulAmbMenu(mid){
+  return Object.keys(MODUL_MATRIU).some(function(k){return MODUL_MATRIU[k].indexOf(mid)>=0;});
 }
-
-function toggleModulVis(cb){
-  const rid=cb.getAttribute('data-rol');
-  const mid=cb.getAttribute('data-mid');
-  const plat=cb.getAttribute('data-plat');
-  if(!DB.config.modulVis)DB.config.modulVis=getDefaultModulVis();
-  if(!DB.config.modulVis[rid])DB.config.modulVis[rid]={};
-  if(!DB.config.modulVis[rid][mid])DB.config.modulVis[rid][mid]={desktop:false,barra:false,mes:false};
-  DB.config.modulVis[rid][mid][plat]=cb.checked;
-  saveCache();
+// Botons de la barra inferior d'un rol: elements del menú amb algun mòdul seu a la barra.
+function barraDelRol(rid){
+  const M=(DB.config.matriu||{})[rid]||{};
+  return MODULS_DEF.filter(function(m){return(MODUL_MATRIU[m.id]||[]).some(function(x){return M[x]&&M[x].barra;});}).length;
 }
+function selRolMatriu(id){window._matriuRol=id;renderCfgRols();}
 
-function toggleModulVisBarra(cb){
-  const rid=cb.getAttribute('data-rol');
-  const mid=cb.getAttribute('data-mid');
-  if(!DB.config.modulVis)DB.config.modulVis=getDefaultModulVis();
-  if(!DB.config.modulVis[rid])DB.config.modulVis[rid]={};
-  if(!DB.config.modulVis[rid][mid])DB.config.modulVis[rid][mid]={desktop:false,barra:false,mes:false};
-  const cnt=MODULS_DEF.filter(function(m){
-    const v=DB.config.modulVis[rid][m.id]||{};
-    return v.barra;
-  }).length;
-  if(cb.checked&&cnt>=4){
-    cb.checked=false;
-    showToast('Màxim 4 mòduls a la barra inferior',true);
-    return;
-  }
-  DB.config.modulVis[rid][mid].barra=cb.checked;
-  // Actualitzar comptador visual
-  saveCache();
-  renderCfgModuls();
-}
-
-async function saveModulVis(){
-  if(!DB.config.modulVis)DB.config.modulVis=getDefaultModulVis();
-  // Validació: mínim 1 mòdul a la barra per cada rol
-  const rols=Object.keys(getRoles()).filter(function(r){return r!=='noauth'&&r!=='president';});
-  for(let i=0;i<rols.length;i++){
-    const rid=rols[i];
-    const cnt=MODULS_DEF.filter(function(m){
-      const v=(DB.config.modulVis[rid]||{})[m.id]||{};
-      return v.barra;
-    }).length;
-    if(cnt===0){
-      showToast('El rol "'+getRoles()[rid]?.label+'" necessita almenys 1 mòdul a la barra',true);
-      return;
-    }
-  }
-  try{
-    await save('config_ext');
-    showToast('Visibilitat de mòduls aplicada només en aquesta sessió: encara no es desa a Supabase (pendent de la matriu de permisos)',true);
-    buildNav();
-  }catch(e){showToast('Error guardant: '+e.message,true);}
-}
-
-async function resetModulVis(){
-  if(!confirm('Restaurar els valors per defecte de visibilitat de mòduls?'))return;
-  DB.config.modulVis=getDefaultModulVis();
-  saveCache();
-  await save('config_ext');
-  showToast('Valors per defecte restaurats només en aquesta sessió (encara no es desa a Supabase)',true);
-  renderCfgModuls();
+// Aplica un canvi a la matriu (nou=null lleva l'accés), el desa i, si el servidor el rebutja, torna al valor anterior.
+async function matriuAplica(rid,mid,nou){
+  if(!modulEdita('rols')){showToast('No tens permís per a canviar rols',true);renderCfgRols();return;}
+  const M=DB.config.matriu||(DB.config.matriu={});
+  const fila=M[rid]||(M[rid]={});
+  const abans=fila[mid]?Object.assign({},fila[mid]):null;
+  const posa=function(v){if(v)fila[mid]=v;else delete fila[mid];_matriuGen++;};
+  posa(nou);
   buildNav();
-}
-
-function renderCfgReports(){
-  const canEdit=perm('canConfig');
-  const rols=getRoles();
-  const vis=getReportVis();
-  const rolIds=Object.keys(rols).filter(function(r){return r!=='noauth';});
-
-  let html='';
-  html+='<div class="info-box" style="margin-bottom:14px"><i class="ti ti-info-circle" style="flex-shrink:0"></i>';
-  html+='<div>Controla quins informes pot veure cada rol dins del mòdul Reports. ';
-  html+='El rol <strong>President</strong> sempre veu tots els informes.</div></div>';
-
-  html+='<div class="card" style="padding:0;overflow:auto"><table style="min-width:500px">';
-  html+='<thead><tr><th style="min-width:180px">Informe</th>';
-  rolIds.forEach(function(rid){
-    const r=rols[rid];
-    const locked=rid==='president';
-    html+='<th style="text-align:center;padding:6px 8px;border-left:1px solid var(--border)">';
-    html+='<span class="pill '+(r.color||'p-gray')+'" style="font-size:11px">'+r.label+'</span>';
-    if(locked)html+='<div style="font-size:10px;color:var(--text3);margin-top:2px">sempre tot</div>';
-    html+='</th>';
-  });
-  html+='</tr></thead><tbody>';
-
-  REPORTS_DEF.forEach(function(rep){
-    html+='<tr>';
-    html+='<td style="padding:8px 10px;font-size:13px"><i class="ti '+rep.icon+'" style="margin-right:6px;color:var(--text3)"></i>'+rep.label+'</td>';
-    rolIds.forEach(function(rid){
-      const locked=rid==='president';
-      const rv=(vis[rid]||{});
-      const v=rv[rep.id]||{visible:true};
-      const checked=locked?true:!!v.visible;
-      const attr=locked||!canEdit?'disabled':'data-rol="'+rid+'" data-rid="'+rep.id+'" onchange="toggleReportVis(this)"';
-      html+='<td style="text-align:center;border-left:1px solid var(--border)">';
-      html+='<input type="checkbox"'+(checked?' checked':'')+' '+attr+' style="width:16px;height:16px;'+(locked||!canEdit?'opacity:.4':'cursor:pointer')+'">';
-      html+='</td>';
-    });
-    html+='</tr>';
-  });
-
-  html+='</tbody></table></div>';
-  if(canEdit){
-    html+='<div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">';
-    html+='<button class="btn btn-primary" onclick="saveReportVis()"><i class="ti ti-device-floppy"></i> Guardar canvis</button>';
-    html+='<button class="btn" onclick="resetReportVis()"><i class="ti ti-refresh"></i> Restaurar valors per defecte</button>';
-    html+='</div>';
-  }
-  document.getElementById('cfg-reports').innerHTML=html;
-}
-
-function toggleReportVis(cb){
-  const rid=cb.getAttribute('data-rol');
-  const repId=cb.getAttribute('data-rid');
-  if(!DB.config.reportVis)DB.config.reportVis=getDefaultReportVis();
-  if(!DB.config.reportVis[rid])DB.config.reportVis[rid]={};
-  DB.config.reportVis[rid][repId]={visible:cb.checked};
-  saveCache();
-}
-
-async function saveReportVis(){
-  if(!DB.config.reportVis)DB.config.reportVis=getDefaultReportVis();
   try{
-    await save('config_ext');
-    showToast('Visibilitat de reports aplicada només en aquesta sessió: encara no es desa a Supabase (pendent de la matriu de permisos)',true);
-    renderReports();
-  }catch(e){showToast('Error guardant: '+e.message,true);}
-}
-
-async function resetReportVis(){
-  if(!confirm('Restaurar els valors per defecte de visibilitat de reports?'))return;
-  DB.config.reportVis=getDefaultReportVis();
-  saveCache();
-  await save('config_ext');
-  showToast('Valors per defecte restaurats només en aquesta sessió (encara no es desa a Supabase)',true);
-  renderCfgReports();
-}
-
-async function togglePerm(cb){
-  const rolId=cb.getAttribute('data-rol');
-  const permKey=cb.getAttribute('data-perm');
-  const val=cb.checked;
-  if(!DB.config.rols||!DB.config.rols[rolId]){
-    // Copiar des de defaults
-    if(!DB.config.rols)DB.config.rols={};
-    DB.config.rols[rolId]={...DEFAULT_ROLES[rolId]||{}};
+    await save('rols');
+    showToast('Permís actualitzat');
+  }catch(e){
+    posa(abans);
+    buildNav();
+    showToast('No s\'ha pogut desar: '+e.message,true);
   }
-  DB.config.rols[rolId][permKey]=val;
-  saveCache();
-  showToast('Permís actualitzat');
-  save('rols').catch(function(e){showToast('Error: '+e.message,true);});
+  renderCfgRols();
+}
+function matriuAcces(sel){
+  const rid=sel.dataset.rid,mid=sel.dataset.mid,v=sel.value;
+  if(!v)return matriuAplica(rid,mid,null);
+  const ant=((DB.config.matriu||{})[rid]||{})[mid];
+  // Sense edició, l'abast no es pot triar (el servidor només l'aplica a mòduls amb abast)
+  return matriuAplica(rid,mid,{nivell:v,abast:ant?ant.abast:'tot',barra:ant?!!ant.barra:false});
+}
+function matriuAbast(sel){
+  const rid=sel.dataset.rid,mid=sel.dataset.mid,ant=((DB.config.matriu||{})[rid]||{})[mid];
+  if(!ant)return;
+  return matriuAplica(rid,mid,{nivell:ant.nivell,abast:sel.value,barra:!!ant.barra});
+}
+function matriuBarra(cb){
+  const rid=cb.dataset.rid,mid=cb.dataset.mid,ant=((DB.config.matriu||{})[rid]||{})[mid];
+  if(!ant)return;
+  if(cb.checked&&barraDelRol(rid)>=4){
+    // Un mòdul que ja compta (el mateix botó de menú) no suma: només bloqueja si afegeix un botó nou
+    const M=(DB.config.matriu||{})[rid]||{};
+    const jaCompta=MODULS_DEF.some(function(m){
+      const mods=MODUL_MATRIU[m.id]||[];
+      return mods.indexOf(mid)>=0&&mods.some(function(x){return x!==mid&&M[x]&&M[x].barra;});
+    });
+    if(!jaCompta){cb.checked=false;showToast('Màxim 4 mòduls a la barra inferior',true);return;}
+  }
+  return matriuAplica(rid,mid,{nivell:ant.nivell,abast:ant.abast,barra:cb.checked});
 }
 
 var editRolId=null;
@@ -7802,27 +7704,56 @@ async function saveRol(){
   const color=document.getElementById('mrol-color').value;
   if(!id||!label){showToast('ID i etiqueta son obligatoris',true);return;}
   if(!DB.config.rols)DB.config.rols={};
-  if(editRolId&&DB.config.rols[editRolId]){
-    DB.config.rols[editRolId].label=label;
-    DB.config.rols[editRolId].color=color;
-  }else{
-    // Nou rol personalitzat
-    const defaults={id,label,color,canRegister:false,canFons:false,canImport:false,canConfig:false,canUsers:false,viewAll:false,custom:true};
-    DB.config.rols[id]=defaults;
+  const nou=!(editRolId&&DB.config.rols[editRolId]);
+  if(nou&&!/^[a-z0-9_]+$/.test(id)){showToast('L\'identificador només pot dur minúscules, números i _',true);return;}
+  if(nou&&DB.config.rols[id]){showToast('Ja hi ha un rol amb eixe identificador',true);return;}
+  const rid=nou?id:editRolId;
+  if(Object.keys(DB.config.rols).some(function(k){return k!==rid&&String(DB.config.rols[k].label).toLowerCase()===label.toLowerCase();})){
+    showToast('Ja hi ha un rol amb eixe nom',true);return;
   }
-  saveCache();closeModal('modal-rol');renderCfgRols();
-  showToast('Rol guardat');
-  save('rols').catch(function(e){showToast('Error: '+e.message,true);});
+  const abans=nou?null:Object.assign({},DB.config.rols[rid]);
+  if(nou){
+    // Un rol nou no té cap permís: se li'n donen a la matriu.
+    DB.config.rols[rid]={id:rid,label:label,color:color,canRegister:false,canFons:false,canImport:false,canConfig:false,canUsers:false,viewAll:false,custom:true};
+    if(!DB.config.matriu)DB.config.matriu={};
+    DB.config.matriu[rid]={};
+    window._matriuRol=rid;
+  }else{
+    DB.config.rols[rid].label=label;
+    DB.config.rols[rid].color=color;
+  }
+  closeModal('modal-rol');renderCfgRols();
+  try{
+    await save('rols');
+    showToast('Rol guardat');
+  }catch(e){
+    if(nou){delete DB.config.rols[rid];delete DB.config.matriu[rid];}else DB.config.rols[rid]=abans;
+    renderCfgRols();
+    showToast('No s\'ha pogut desar el rol: '+e.message,true);
+  }
 }
 
 async function deleteRol(id){
   const r=getRoles()[id];
   if(!r||!r.custom){showToast('No es pot eliminar un rol base',true);return;}
+  const quants=(DB.config.usuaris||[]).filter(function(u){return usuariTe(u,id);}).length;
+  if(quants){showToast('Aquest rol el tenen '+quants+' persones: lleva-l\'hi abans',true);return;}
   if(!confirm('Eliminar el rol '+r.label+'?'))return;
-  if(DB.config.rols)delete DB.config.rols[id];
-  saveCache();renderCfgRols();
-  showToast('Rol eliminat');
-  save('rols').catch(function(e){showToast('Error: '+e.message,true);});
+  const abansRol=DB.config.rols[id],abansMatriu=(DB.config.matriu||{})[id];
+  delete DB.config.rols[id];
+  if(DB.config.matriu)delete DB.config.matriu[id];
+  _matriuGen++;
+  renderCfgRols();
+  try{
+    await save('rols');
+    showToast('Rol eliminat');
+  }catch(e){
+    DB.config.rols[id]=abansRol;
+    if(abansMatriu){if(!DB.config.matriu)DB.config.matriu={};DB.config.matriu[id]=abansMatriu;}
+    _matriuGen++;
+    renderCfgRols();
+    showToast('No s\'ha pogut eliminar el rol: '+e.message,true);
+  }
 }
 function showFappTab(t){['trans','saldos','tickets','bonif'].forEach(function(x){const el=document.getElementById('fapp-'+x);const btn=document.getElementById('fapp-tab-'+x);if(el)el.style.display=x===t?'block':'none';if(btn)btn.className=x===t?'btn btn-primary':'btn';});if(t==='bonif')initBonifSelectors();}
 function loadFappFile(e,z){const f=e.target.files[0];if(f)processFappFile(f,z);}
@@ -8529,7 +8460,13 @@ function openModalUsuari(id){
   document.getElementById('mu-nom').value=u?u.nom:'';
   document.getElementById('mu-email').value=u?u.email:'';
   document.getElementById('mu-email').disabled=!!uid;
-  document.getElementById('mu-rol').value=u?u.rol:'delegat';
+  // Rols: tants com calga (D-036); un de nou, per defecte, Resp. Delegació
+  const rols=getRoles();
+  const tinc=u?(Array.isArray(u.rols)&&u.rols.length?u.rols:[u.rol]):['delegat'];
+  document.getElementById('mu-rols').innerHTML=Object.keys(rols).filter(function(r){return r!=='noauth';}).map(function(rid){
+    return'<label style="display:flex;align-items:center;gap:8px;font-size:13px;margin:5px 0;cursor:pointer"><input type="checkbox" value="'+rid+'"'+
+      (tinc.indexOf(rid)>=0?' checked':'')+' style="width:16px;height:16px"> '+esc(rols[rid].label)+'</label>';
+  }).join('');
   window._editUserId=uid;
   openModal('modal-usuari');
 }
@@ -8537,15 +8474,18 @@ function openModalUsuari(id){
 async function saveUsuari(){
   const nom=document.getElementById('mu-nom').value.trim();
   const email=document.getElementById('mu-email').value.trim().toLowerCase();
-  const rol=document.getElementById('mu-rol').value;
+  const rols=Array.prototype.slice.call(document.querySelectorAll('#mu-rols input:checked')).map(function(c){return c.value;});
   if(!nom||!email){showToast('Nom i email son obligatoris',true);return;}
+  if(!rols.length){showToast('Cal almenys un rol: sense rol la persona no podria entrar',true);return;}
+  const rol=sbRolPrincipal(rols);   // el de més prioritat: el que miren els filtres per nom de rol
   if(!DB.config.usuaris)DB.config.usuaris=[];
   if(window._editUserId){
     const u=DB.config.usuaris.find(function(x){return x.id===window._editUserId;});
-    if(u){u.nom=nom;u.rol=rol;}
+    if(u){u.nom=nom;u.rol=rol;u.rols=rols;}
   }else{
-    DB.config.usuaris.push({id:genId('u'),nom,email,rol,arees:[],delegacions:[]});
+    DB.config.usuaris.push({id:genId('u'),nom,email,rol,rols,arees:[],delegacions:[]});
   }
+  _matriuGen++;   // si és la persona que ha entrat, els seus permisos poden haver canviat
   saveCache();
   closeModal('modal-usuari');
   renderCfgUsuaris();
@@ -9444,15 +9384,8 @@ function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').
 var _repTab='r1'; // tab activa per defecte
 
 function renderReports(){
-  const rol=getRol();
-  const vis=getReportVis();
-  const rolVis=vis[rol]||{};
-  // Filtrar tabs visibles per aquest rol
-  const tabs=REPORTS_DEF.filter(function(t){
-    if(rol==='president')return true;
-    const v=rolVis[t.id];
-    return v?v.visible!==false:true;
-  });
+  // Informes visibles segons la matriu: cada report (r1…r4) és un mòdul
+  const tabs=REPORTS_DEF.filter(function(t){return modulVeu(t.id);});
   const bar=document.getElementById('rep-tabs-bar');
   if(bar){
     bar.innerHTML=tabs.map(t=>'<button onclick="repTab(\''+t.id+'\')" id="repbtn-'+t.id+'" style="padding:6px 14px;border-radius:20px;border:none;cursor:pointer;font-size:13px;font-weight:500;display:flex;align-items:center;gap:6px;background:'+(_repTab===t.id?'var(--red)':'var(--bg2)')+';color:'+(_repTab===t.id?'#fff':'var(--text2)')+'"><i class=\"ti '+t.icon+'\"></i>'+t.label+'</button>').join('');

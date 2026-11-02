@@ -1,6 +1,6 @@
 # Work Stream Status — Falla Portal
-## Snapshot Date: 2026-10-27
-## Versió en producció: v4.0.89 (a `main`) · branca `supabase`: v4.1.4
+## Snapshot Date: 2026-11-02
+## Versió en producció: v4.0.89 (a `main`) · branca `supabase`: v4.1.5
 
 > **Context de calendari**: període vacacional, ús baix de l'eina. Bon moment per a
 > canvis estructurals i per a la decisió pendent del Service Worker.
@@ -79,9 +79,8 @@ extern de la plantilla o servir-lo des del domini propi; (4) l'ús continuat mil
   - **Pendents d'Emilio**: esborrar els usuaris de prova d'Authentication → Users (el de la prova antiga i
     emilio.grau@hotmail.com; es tornarà a crear en entrar) i, abans del tall, resoldre la brossa (el codi va a "No deseados"
     a Hotmail: vegeu l'anàlisi més amunt). La fila `prova_emilio` de `usuaris` s'esborra al buidatge del tall (D-043).
-  - Pendent de la Fase 3: llegir les dades de Supabase, la matriu de permisos al client, treure `saveCache`/`loadCache` i la capa
-    de Sheets (`sheetsReq`, `tokenVigent`/`esperarToken` provisionals), i el bàner.
-  - Una persona només té un rol a l'app (prioritat president > treasury > area > delegat > board) fins a la Fase 3.
+  - (La resta de la Fase 3 —lectura, matriu de permisos al client, fora la capa de Sheets— es va fer després; vegeu «Fase 3 tancada».)
+  - Fins a la Fase 3 una persona només tenia un rol a l'app; des de la v4.1.5 en pot tindre diversos (el de més prioritat és `rol`).
 **Fase 3 (2026-10-15, Sonnet 5.5 · high; branca `supabase`, v4.1.2, D-047 i D-048): lectura i escriptura fetes**:
   - Tros 1 (lectura): dades reals a Supabase (`node tools/supabase_carrega.mjs "<export.xlsx>"`, l'export és a `~/Downloads/Falla Portal DB.xlsx`,
     fora del repo), adaptador `sbPestanyes()`, `loadFromSupabase()` paginat, prova `tools/supabase_roundtrip.mjs`.
@@ -91,15 +90,26 @@ extern de la plantilla o servir-lo des del domini propi; (4) l'ús continuat mil
     (33 escenaris de l'inventari §4 contra les dades reals, en transacció que es desfà). Provat al navegador amb entrada real (vegeu PLA §11).
     Es van trobar i corregir errors preexistents (D-048): `genId` i `calcSaldoDelegat` perduts al tros 1, `saveArea`, claus de saldos amb `_`,
     saldos d'un banc esborrat, i una cursa entre lectura i desat.
-  - **Pendent**: (a) Fase 4: justificants (pujar-ne falla amb missatge clar); (b) matriu rol × mòdul al client i pantalles de permisos
-    (`modulVis`/`reportVis` i carpetes de Drive **no es desen**, l'app ho avisa); (c) crear `operacions` en desar (D-027); (d) retocar els textos
-    «Sheets/Drive» que queden al manual; (e) esborrar els usuaris de prova d'Authentication (Emilio).
+  - **Pendent després d'aquest tros** (tancat el 2026-11-02, vegeu «Fase 3 tancada»): Fase 4 (justificants: pujar-ne falla amb missatge clar; les
+    carpetes de Drive **no es desen**, l'app ho avisa) i esborrar els usuaris de prova d'Authentication (Emilio). Fets: matriu rol × mòdul al
+    client, `operacions` en desar i textos del manual.
   - Decisions pendents d'Emilio (no bloquegen): (1) Junta té `viewAll=false` al full real i la matriu carregada diu «tot»; (2) els consums de
     falles.app ja no desen empremta: com es detecten duplicats en reimportar (període + event + import?); (3) descartats a la càrrega: 4
     avançaments orfes i 12 canvis orfes (net zero); (4) regles d'importació amb font `app` (2) no es poden desar; (5) un responsable d'àrea que fa
     un traspàs banc → caixa reclassificant un moviment de l'extracte rep error de permís (només Historial en edició el pot canviar).
-**Propera sessió: Fase 4 (justificants a Storage)** i, en paral·lel, la matriu de permisos al client; després Fases 5–6 (script de migració
-final, proves d'acceptació rol per rol amb `tools/supabase_escriptura.mjs` com a base). A la branca `supabase`, sense tocar `main`.
+**Fase 3 tancada (2026-11-02, Sonnet 5.5 · high; branca `supabase`, v4.1.5, D-050)**:
+  - Fet: `operacions` es creen en desar (`sbAgrupaOperacions`); la matriu rol × mòdul i el catàleg de mòduls es llegeixen al client; `perm()`, el
+    menú, la barra del mòbil, els informes i les comprovacions per nom de rol (`president`/`treasury`) passen a la matriu; diversos rols per persona
+    (`rols` a `08 Usuaris`, caselles al formulari d'usuari); editor Configuració → «Rols i permisos» (substitueix Mestre de Rols, Mòduls i
+    Reports); textos del manual retocats. Proves: `tools/supabase_escriptura.mjs --accions` en verd (33 escenaris, amb comprovació de cada operació
+    i de la matriu: `rol_moduls` 80 → 80, permisos antics deduïts = `DEFAULT_ROLES`); provat al navegador amb el client simulat (president,
+    delegat, delegat + junta: menú, barra, informes, edició de la matriu amb error del servidor, rol nou, usuari amb dos rols, 13 pantalles sense
+    canvis fantasma).
+  - **No verificat**: entrada real per correu amb cada rol (Fase 6) i que `/code-review` no trobe res.
+  - Pendents d'Emilio (no bloquegen): els de més amunt (Junta `viewAll`, duplicats de falles.app, orfes, regles `app`, traspàs d'un responsable
+    d'àrea) i esborrar els usuaris de prova d'Authentication. Els canvis D-038–D-041 (després del tall) ara es fan des de l'editor de rols.
+**Propera sessió: Fase 4 (justificants a Storage)**; després Fases 5–6 (script de migració final, proves d'acceptació rol per rol amb
+`tools/supabase_escriptura.mjs` com a base). A la branca `supabase`, sense tocar `main`.
 **Blockers**:
   - Cap per a començar la Fase 3. El pendent de brossa no la bloqueja, però cal resoldre'l abans del tall: si els codis van
     a brossa, la gent no entrarà.

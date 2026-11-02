@@ -28,9 +28,11 @@ no siga un error tècnic.
 | `board` | Membre de junta | Visibilitat, sense edició |
 
 **Notes importants**:
-- L'email `it.fallaportal@gmail.com` rep rol **`treasury`**, no `president`.
-- Si la pestanya `08 Usuaris` està buida, **el primer que entre rep `president`**
-  (bootstrap). Val la pena saber que aquesta finestra existeix.
+- A la branca `supabase` (v4.1.x) els permisos són una **matriu rol × mòdul** (lectura o edició, abast tot o directiva) que President edita a
+  Configuració → «Rols i permisos», i una persona pot tindre diversos rols (val el permís més alt). La taula d'ací dalt són els rols de sistema amb els
+  valors inicials (D-036, D-050). Els permisos els fa complir el servidor; l'app només mostra o amaga.
+- A `main` (Google): l'email `it.fallaportal@gmail.com` rep rol **`treasury`**, no `president`; si la pestanya `08 Usuaris` està buida, **el primer que
+  entre rep `president`** (bootstrap). A la branca `supabase` ja no hi ha cap dels dos casos (D-046).
 
 ---
 

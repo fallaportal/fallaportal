@@ -31,7 +31,7 @@ const r1 = html.indexOf('\n};', r0) + 3;
 const c0 = html.indexOf('const AREA_COLORS=');
 const c1 = html.indexOf('\n', c0);
 if ([a, b, r0, c0].some((x) => x < 0)) throw new Error('No trobe l\'adaptador, DEFAULT_ROLES o AREA_COLORS a index.html');
-const A = new Function(`const sb=null;\n${html.slice(r0, r1)}\n${html.slice(c0, c1)}\n${html.slice(a, b)}\nreturn {sbPestanyes,sbTaules,sbCanvis,SB_ORDRES,AREA_COLORS,SB_ORDRE_TAULES};`)();
+const A = new Function(`const sb=null;\n${html.slice(r0, r1)}\n${html.slice(c0, c1)}\n${html.slice(a, b)}\nreturn {sbPestanyes,sbTaules,sbCanvis,SB_ORDRES,AREA_COLORS,SB_ORDRE_TAULES,sbPerfil,sbPermisosAntics,sbMatriuDeFiles,sbFilesDeMatriu,DEFAULT_ROLES};`)();
 
 const lit = (s) => "'" + String(s).replace(/'/g, "''") + "'";
 const clona = (x) => JSON.parse(JSON.stringify(x));
@@ -78,12 +78,13 @@ try {
     caixa_canvis: ['caixa_id', 'data', 'tipus', 'import'],
     pressupost_linies: ['tipus', 'import', 'notes'],
     fallesapp_consums: ['exercici_id', 'event_id', 'area_id', 'delegacio_id', 'import'],
+    rol_moduls: ['nivell', 'abast', 'barra'],
   };
   const CLAU_R = {
     exercicis: ['id'], usuaris: ['id'], rols: ['id'], arees: ['id'], delegacions: ['id'], comptes: ['id'], events: ['id'], regles_importacio: ['id'],
     caixes: ['id'], moviments: ['id'], fons: ['id'], caixa_canvis: ['id'], fallesapp_consums: ['id'],
     saldos_inicials: ['compte_id', 'exercici_id'], pressupost_linies: ['exercici_id', 'delegacio_id', 'event_id', 'concepte'],
-    usuari_rols: ['usuari_id', 'rol_id'], directiva: ['exercici_id', 'usuari_id', 'area_id', 'delegacio_id'],
+    rol_moduls: ['rol_id', 'modul_id'], usuari_rols: ['usuari_id', 'rol_id'], directiva: ['exercici_id', 'usuari_id', 'area_id', 'delegacio_id'],
   };
   for (const [t, cols] of Object.entries({ ...COLS, usuari_rols: [], directiva: [] })) {
     const mapa = new Map((base[t] || []).map((e) => [clau(t, e), e]));
@@ -116,6 +117,26 @@ try {
     console.log(`  ${bo ? '✓' : '✗'} ${t.padEnd(22)} R ${String((R[t] || []).length).padStart(4)} → files ${String((base[t] || []).length).padStart(4)}` +
       (bo ? '' : `   falten ${falten} · diferents ${dif} · sobren ${sobren}\n      ${exemple.join('\n      ')}`));
   }
+
+  // ---------------------------------------------------------------- 1b. Permisos (D-036)
+  console.log('\n1b. La matriu: els permisos antics deduïts de la matriu són els de DEFAULT_ROLES, i la matriu torna intacta');
+  const mat = A.sbMatriuDeFiles(T['14b Matriu']);
+  for (const rol of ['president', 'treasury', 'area', 'delegat', 'board']) {
+    const d = A.DEFAULT_ROLES[rol];
+    const esperat = { canRegister: d.canRegister, canFons: d.canFons, canImport: d.canImport, canConfig: d.canConfig, canUsers: d.canUsers, viewAll: d.viewAll };
+    const obtingut = A.sbPermisosAntics(mat[rol]);
+    const bo = JSON.stringify(esperat) === JSON.stringify(obtingut);
+    if (!bo) errors++;
+    console.log(`  ${bo ? '✓' : '✗'} ${rol.padEnd(10)}${bo ? '' : ' esperat ' + JSON.stringify(esperat) + ' obtingut ' + JSON.stringify(obtingut)}`);
+  }
+  const ida = A.sbFilesDeMatriu(mat).length === R.rol_moduls.length;
+  if (!ida) errors++;
+  console.log(`  ${ida ? '✓' : '✗'} sbFilesDeMatriu(sbMatriuDeFiles(files)) = ${R.rol_moduls.length} files`);
+  // Diversos rols: el permís més alt (President + Delegat dona edició a tot; Delegat + Junta dona tot a la lectura del Dashboard)
+  const perf = A.sbPerfil(['delegat', 'board'], mat);
+  const bo2 = perf.dashboard && perf.dashboard.veuTot === true && perf.moviments && perf.moviments.nivell === 'edicio' && perf.moviments.editaTot === false && perf.flux && perf.flux.nivell === 'lectura';
+  if (!bo2) errors++;
+  console.log(`  ${bo2 ? '✓' : '✗'} sbPerfil([delegat, board]): veu tot el Dashboard i edita Nou moviment només a la directiva`);
 
   // ---------------------------------------------------------------- 2. Cap canvi fantasma
   console.log('\n2. Cap canvi fantasma');

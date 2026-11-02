@@ -56,7 +56,10 @@ Cremà (19/03) i el 31/03 serveixen per liquidar els pendents de Falles dins del
 
 **Pressupost** — Planificació per àrea/delegació. `pres_plans`, `pres_config`, `pres_historial`.
 
-**Rol d'usuari** — Rols reals al codi: `president`, `treasury`, `area`, `delegat`, `board`, `noauth`.
+**Rol d'usuari** — Rols de sistema: `president`, `treasury`, `area`, `delegat`, `board` (`noauth` = no ser membre; no és a la base de dades). Una persona
+  en pot tindre diversos (`usuari_rols`; a `DB.config.usuaris`, `rols` i `rol` = el de més prioritat). El que pot fer cada rol és la **matriu rol × mòdul**
+  (`rol_moduls`: per mòdul, lectura o edició, abast tot o directiva, i barra del mòbil); amb diversos rols val el permís més alt (D-036, D-050).
+  Es dissenya a Configuració → «Rols i permisos».
 
 **`fontImport`** — Origen específic: `tancament`, `retirada_caixa`, `fallesapp_*`, `xls_[bancId]`.
 
@@ -68,7 +71,7 @@ Cremà (19/03) i el 31/03 serveixen per liquidar els pendents de Falles dins del
 
 ### Established Facts
 
-- **Versió en producció actual**: v4.0.89 (BUILD_VERSION `4089`) [TIME-SENSITIVE: 2026-10-27]; branca `supabase`: v4.1.4
+- **Versió en producció actual**: v4.0.89 (BUILD_VERSION `4089`) [TIME-SENSITIVE: 2026-10-27]; branca `supabase`: v4.1.5 (Fase 3 tancada, D-050)
 - **Una càrrega no trepitja un desat** [v4.0.86]: `loadFromSheets` ho llig tot abans d'assignar `DB` i descarta la lectura si `_genEscriptura`
   ha canviat mentre llegia (el pugen `save`, `saveMoviment`, `saveFons` i el passiu de falles.app). Una càrrega fallida no toca `DB`, així que
   ningú no restaura còpies. `_carregant` compta les càrregues en curs.

@@ -85,6 +85,11 @@ Qualsevol canvi a `sbPestanyes()`, `sbTaules()`, `sbCanvis()` o a la càrrega s'
 **Desat (D-048)**: `save(clau)` desa TOT el que ha canviat a `DB` (no només la clau). Una acció nova només ha de deixar `DB` com vol i cridar
 `save`; si escriu una columna nova, cal ensenyar-la a `sbTaules()`. Les columnes que posa el servidor (creat_per, responsable, conciliació,
 import d'un fons lligat) no s'envien mai. Mai assignar `DB` des d'una lectura mentre hi ha un desat en curs o canvis sense desar.
+**Permisos al client (D-050)**: mai comprovar el nom d'un rol (`getRol()==='president'`); usar el mòdul de la matriu: `modulVeu(id)`, `modulEdita(id[, tot])`,
+`perm('viewAll')` (Dashboard amb abast tot), `usuariTe(persona, ...rols)` per a filtrar persones. Els ids de mòdul són els de `moduls` (`fons`, `caixa`,
+`historial`, `exercicis`, `directiva`, `registre`, `r1`…`r4`…); el menú de l'app els mapeja a `MODUL_MATRIU`. Un canvi de permisos es fa a l'editor
+(o a `rol_moduls`), no al codi. **Operacions (D-027)**: una acció nova que crea registres s'agrupa a `sbAgrupaOperacions`; si crea un tipus de registre nou, cal
+ensenyar-li-ho (si no, no tindrà operació). `VEU_OPERACIONS=1 node tools/supabase_escriptura.mjs --accions` mostra els tipus creats per escenari.
 **Fitxers amb accents**: no editar `index.html` amb scripts `python - <<EOF` amb barres invertides dins de cometes (el shell se'n menja
 una): usar l'eina d'edició, o escriure el tros a un fitxer i empalmar-lo.
 
@@ -131,6 +136,7 @@ una): usar l'eina d'edició, o escriure el tros a un fitxer i empalmar-lo.
 | `directiva` | Mapeja usuaris a àrees/delegacions (tab 09) |
 | `bankHash` | Hash per detectar duplicats en importació CSV |
 | `writeTab` | (històric, eliminat a la v4.1.2) escrivia la pestanya sencera; ara `save()` envia diferències a `guarda_canvis` |
+| `matriu` | `DB.config.matriu` = `{rol:{mòdul:{nivell,abast,barra}}}`; `sbPerfil` la combina per als rols d'una persona |
 | `_sbBase` | Foto (files de taules) de l'última lectura o desat; la diferència amb `DB` és el que s'envia |
 | swap atòmic | Llegir tot en temporals i assignar a `DB` al final |
 | `dadesCarregades` | Pany: fals fins que una càrrega acaba bé |

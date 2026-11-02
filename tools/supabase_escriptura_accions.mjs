@@ -31,6 +31,18 @@ async function pas(c, estat, email, muta, { motiu = null, espera = null } = {}) 
     throw new Error(`${e.message}\n      operacions:\n        ${resum}`);
   }
   await c.db.exec('reset role');
+  // Operacions (D-027): cada operació enviada s'ha creat, amb el tipus i el creador (el posa el servidor), i cada registre nou que
+  // en porta una la té desada.
+  const noves = ops.filter((o) => o.t === 'operacions');
+  for (const o of noves) {
+    const r = await c.db.query('select tipus, creat_per from public.operacions where id = $1', [o.f.id]);
+    if (r.length !== 1 || r[0].tipus !== o.f.tipus || !r[0].creat_per) throw new Error(`L'operació ${o.f.id} (${o.f.tipus}) no s'ha desat bé: ${JSON.stringify(r)}`);
+  }
+  for (const o of ops.filter((x) => x.a === 'i' && x.f && x.f.operacio_id)) {
+    const r = await c.db.query(`select operacio_id from public.${o.t} where ${Object.keys(o.k).length ? Object.keys(o.k).map((k, i) => `${k} = $${i + 1}`).join(' and ') : 'false'}`, Object.values(o.k));
+    if (r.length && r[0].operacio_id !== o.f.operacio_id) throw new Error(`${o.t} ${JSON.stringify(o.k)} hauria de ser de l'operació ${o.f.operacio_id}`);
+  }
+  if (process.env.VEU_OPERACIONS && noves.length) console.log(`      operacions: ${noves.map((o) => o.f.tipus + (o.f.resum ? JSON.stringify(o.f.resum) : '')).join(', ')}`);
   await c.db.exec('release savepoint pas');
   if (espera) throw new Error(`Esperava un error amb «${espera}» i ha anat bé.\n        ${resum}`);
   const R2 = await c.llig(c.db);
@@ -530,7 +542,11 @@ export const accions = [
       afirma(s && s.email === 'persona.prova@exemple.com' && r1.R2.usuari_rols.some((r) => r.usuari_id === nou.id && r.rol_id === 'delegat'), 'alta');
       const r2 = await pas(c, r1, p.president.email, (T) => { const u = T['08 Usuaris'].find((x) => x.id === nou.id); u.rol = 'area'; u.nom = 'Persona Canviada'; });
       afirma(r2.R2.usuari_rols.filter((r) => r.usuari_id === nou.id).map((r) => r.rol_id).join() === 'area', 'rol');
-      const r3 = await pas(c, r2, p.president.email, (T) => { T['08 Usuaris'] = T['08 Usuaris'].filter((x) => x.id !== nou.id); });
+      const r2b = await pas(c, r2, p.president.email, (T) => { const u = T['08 Usuaris'].find((x) => x.id === nou.id); u.rols = 'area,board'; u.rol = 'area'; });
+      afirma(r2b.R2.usuari_rols.filter((r) => r.usuari_id === nou.id).map((r) => r.rol_id).sort().join() === 'area,board', 'diversos rols');
+      const r2c = await pas(c, r2b, p.president.email, (T) => { const u = T['08 Usuaris'].find((x) => x.id === nou.id); u.rols = 'area'; });
+      afirma(r2c.R2.usuari_rols.filter((r) => r.usuari_id === nou.id).map((r) => r.rol_id).join() === 'area', 'treure un rol');
+      const r3 = await pas(c, r2c, p.president.email, (T) => { T['08 Usuaris'] = T['08 Usuaris'].filter((x) => x.id !== nou.id); });
       afirma(r3.R2.usuaris.find((u) => u.id === nou.id).actiu === false && !r3.R2.usuari_rols.some((r) => r.usuari_id === nou.id), 'baixa');
       return { ok: true };
     },
@@ -569,19 +585,36 @@ export const accions = [
     },
   },
   {
-    nom: 'Rols: rol nou, permís, color i eliminar',
+    nom: 'Rols i matriu (D-036): rol nou, permisos per mòdul (nivell, abast, barra), color i eliminar',
     async executa(c) {
       const p = persones(c);
       const rol = { id: 'rol_prova', label: 'Rol de prova', color: 'p-ok', canRegister: 'false', canFons: 'false', canImport: 'false', canConfig: 'false', canUsers: 'false', viewAll: 'false', custom: 'true' };
       const r1 = await pas(c, inici(c), p.president.email, (T) => T['14 Rols'].push(rol));
       afirma(r1.R2.rols.find((r) => r.id === 'rol_prova').de_sistema === false, 'rol');
-      const r2 = await pas(c, r1, p.president.email, (T) => { const r = T['14 Rols'].find((x) => x.id === 'rol_prova'); r.canRegister = 'true'; r.canImport = 'true'; r.color = 'p-warn'; });
-      const mods = r2.R2.rol_moduls.filter((m) => m.rol_id === 'rol_prova').map((m) => m.modul_id + ':' + m.nivell).sort().join();
-      afirma(mods === 'fallesapp:edicio,importacio:edicio,moviments:edicio', 'permisos: ' + mods);
-      const r3 = await pas(c, r2, p.president.email, (T) => { T['14 Rols'].find((x) => x.id === 'rol_prova').canImport = 'false'; });
-      afirma(r3.R2.rol_moduls.filter((m) => m.rol_id === 'rol_prova').length === 1, 'treure permís');
-      const r4 = await pas(c, r3, p.president.email, (T) => { T['14 Rols'] = T['14 Rols'].filter((x) => x.id !== 'rol_prova'); });
+      afirma(!r1.R2.rol_moduls.some((m) => m.rol_id === 'rol_prova'), 'un rol nou no té cap permís');
+      const r2 = await pas(c, r1, p.president.email, (T) => {
+        const r = T['14 Rols'].find((x) => x.id === 'rol_prova'); r.color = 'p-warn';
+        T['14b Matriu'].push({ rolId: 'rol_prova', modulId: 'moviments', nivell: 'edicio', abast: 'directiva', barra: 'true' },
+          { rolId: 'rol_prova', modulId: 'dashboard', nivell: 'lectura', abast: 'tot', barra: 'false' },
+          { rolId: 'rol_prova', modulId: 'importacio', nivell: 'edicio', abast: 'tot', barra: 'false' });
+      });
+      const mods = r2.R2.rol_moduls.filter((m) => m.rol_id === 'rol_prova').map((m) => `${m.modul_id}:${m.nivell}:${m.abast}:${m.barra}`).sort().join();
+      afirma(mods === 'dashboard:lectura:tot:false,importacio:edicio:tot:false,moviments:edicio:directiva:true', 'permisos: ' + mods);
+      const r3 = await pas(c, r2, p.president.email, (T) => {
+        T['14b Matriu'] = T['14b Matriu'].filter((m) => !(m.rolId === 'rol_prova' && m.modulId === 'importacio'));
+        const m = T['14b Matriu'].find((x) => x.rolId === 'rol_prova' && x.modulId === 'moviments'); m.abast = 'tot'; m.barra = 'false';
+      });
+      const m3 = r3.R2.rol_moduls.filter((m) => m.rol_id === 'rol_prova').map((m) => `${m.modul_id}:${m.nivell}:${m.abast}:${m.barra}`).sort().join();
+      afirma(m3 === 'dashboard:lectura:tot:false,moviments:edicio:tot:false', 'treure un permís i canviar abast i barra: ' + m3);
+      const r4 = await pas(c, r3, p.president.email, (T) => {
+        T['14 Rols'] = T['14 Rols'].filter((x) => x.id !== 'rol_prova');
+        T['14b Matriu'] = T['14b Matriu'].filter((m) => m.rolId !== 'rol_prova');
+      });
       afirma(!r4.R2.rols.some((r) => r.id === 'rol_prova') && !r4.R2.rol_moduls.some((m) => m.rol_id === 'rol_prova'), 'eliminar');
+      // Qui no té «rols» en edició no pot canviar la matriu
+      const r5 = await pas(c, inici(c), p.delegat.email, (T) => { T['14b Matriu'].push({ rolId: 'delegat', modulId: 'configuracio', nivell: 'edicio', abast: 'tot', barra: 'false' }); },
+        { espera: 'rol_moduls' });
+      afirma(r5.error && /permís|row-level/i.test(r5.error), 'un delegat no pot donar-se permisos: ' + r5.error);
       return { ok: true };
     },
   },

@@ -65,6 +65,7 @@ usuari autenticat podria escriure al full igualment; la Fase 1 ho ha de trasllad
 - Les dades arriben **senceres** al navegador de tothom; el filtre és visual.
 
 ### 1.5 Visibilitat de mòduls i reports
+- *(Inventari de la v4.0.78. A la branca `supabase`, `modulVis`, `reportVis` i els sis permisos els substitueix la matriu rol × mòdul, D-050.)*
 - `modulVis[rol][mòdul] = {desktop, barra, mes}` a `00 Config`. Màxim 4 mòduls a la barra inferior
   i com a mínim 1 per rol (excepte `president`). Valors per defecte a 1649.
 - `reportVis[rol][r1..r4] = {visible}` a `00 Config`.

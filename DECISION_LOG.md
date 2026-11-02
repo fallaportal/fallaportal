@@ -878,9 +878,9 @@ entitats alhora (tancar una caixa = moviments + canvi + estat de la caixa) i mol
     pausa; segueixen el refresc cada 5 min i en canviar de pantalla. Fora la capa de Sheets (`sheetsReq`, `writeTab`, `appendRow`, token).
 **Consequences**:
   - **No persisteixen** (no tenen taula al model): visibilitat de mòduls i reports per rol (`modulVis`, `reportVis`: la matriu del servidor
-    els substitueix; l'app ho avisa), carpetes de Drive, regles amb font `app` (D-031), notes/establiment/empremta dels consums de falles.app.
+    els substitueix; des de D-050 l'app els ha eliminat), carpetes de Drive, regles amb font `app` (D-031), notes/establiment/empremta dels consums de falles.app.
   - Els justificants (Drive → Storage) són la Fase 4: pujar-ne un falla amb un missatge clar; esborrar-ne el fitxer de Drive ja no es fa.
-  - `operacions` (D-027) encara no es creen en desar: els moviments nous tenen `operacio_id` nul.
+  - ~~`operacions` (D-027) encara no es creen en desar~~ — **superat per D-050 (2026-11-02)**: ara es creen en desar.
   - Errors preexistents corregits de pas: el tros 1 va perdre `genId` i `calcSaldoDelegat` (cap alta no podia funcionar); `saveArea` llegia un
     camp `ma-resp` que no existeix; la clau de saldos `idBanc_XX/YY` es trencava amb els ids nous (`_`); eliminar un banc no n'eliminava els saldos;
     tancar un exercici cridava `save('config')` i no persistia (ara tot es desa).
@@ -908,3 +908,37 @@ i −15.000 de despeses, perquè no és real». A les dades no hi havia cap marc
   - Sheets: columna `traspas` a `01 Moviments` i a `13 Regles CSV` (v4.0.87–89). Supabase: `moviments.traspas` i `regles_importacio.traspas`
     (`supabase/migrations/20261027120000_traspassos.sql`), adaptador i càrrega de l'export (`tools/supabase_carrega.mjs`) inclosos.
   - Un traspàs registrat abans que la columna existisca al full, si s'afegeix sense reescriure la pestanya, pot perdre la marca.
+
+---
+
+### D-050: Fase 3, tancament: `operacions` en desar i permisos del client des de la matriu rol × mòdul
+**Date**: 2026-11-02
+**Status**: Accepted (Emilio: «Sí, endavant» al pla de tancar la Fase 3)
+**Context**: Després de D-048 quedaven tres coses de la Fase 3: els registres nous no pertanyien a cap `operacions` (D-027), el client encara decidia
+permisos amb els sis booleans antics i un sol rol per persona, i la visibilitat de mòduls i reports (`modulVis`, `reportVis`) no es desava.
+**Decision**:
+  - **Operacions**: `sbAgrupaOperacions(alta)` (a l'adaptador, pura) dedueix l'acció de les ALTES de cada desat i les agrupa sota una operació nova
+    (`operacions` s'insereix abans dels seus fills; `operacio_id` només va a la còpia que s'envia, mai a la foto de base). Tipus: despesa_amb_fons i
+    avancament (fons + moviment), lliurament, devolucio, reintegrament, ingres_tercer, obrir_caixa, ampliar_canvi, retirada_caixa, tancar_caixa
+    (moviment de tancament + canvi que es torna), moviment_manual, i **una per desat** per a importacio_extracte / importacio_csv /
+    importacio_fallesapp (amb `resum.importades`) i traspas_banc_caixa; passiu_fallesapp. Una deducció errònia només canvia l'etiqueta, mai les xifres.
+    No es creen per a registres que ja existeixen ni per a regularitzacions. Esborrar l'última fila d'una operació no n'esborra l'operació (queda
+    buida, inofensiva); «esborrar l'operació sencera» i «desfer importació» (MODEL_DADES §4.2) queden per a després.
+  - **Permisos al client**: la matriu del servidor (`rol_moduls`, `moduls`) es llig en entrar (`carregaMembre`, abans de pintar el menú) i amb la resta
+    de dades; `DB.config.matriu` i `DB.config.catModuls`. `sbPerfil(rols, matriu)` combina TOTS els rols de la persona amb les regles del servidor
+    (nivell més alt; `editaTot` si algun rol amb edició té abast tot; `veuTot` si algun rol en té). `perm()` (els sis permisos antics) i `modulVeu` /
+    `modulEdita(mòdul, tot)` / `tensRol` / `usuariTe` en deriven; les comprovacions per nom de rol (`president`/`treasury`) passen a mòduls
+    (`exercicis`, `historial`, `directiva`, `registre`, `fons` amb abast tot). El menú, la barra inferior del mòbil («Més» = visibles que no són a la
+    barra) i els informes (r1–r4) surten de la matriu.
+  - **Editor**: Configuració → «Rols i permisos» (substitueix «Mestre de Rols», «Mòduls» i «Reports»): per a cada rol, accés (cap / lectura / edició),
+    abast (tot / directiva) i barra (màx. 4) per mòdul; cada canvi es desa a l'acte i, si el servidor el rebutja, es torna al valor anterior. Rol nou
+    (id `[a-z0-9_]+`, sense permisos), nom i color, eliminar un rol propi (no si el té alguna persona). Fora `modulVis`, `reportVis` i els sis
+    permisos com a dada: ja no es desen, es dedueixen de la matriu (`sbPermisosAntics`).
+  - **Diversos rols per persona**: `08 Usuaris` porta `rols` (llista) a més de `rol` (el de més prioritat, que fan servir els filtres per nom); el
+    formulari d'usuari té caselles de rols (almenys un).
+**Consequences**:
+  - Amb els valors inicials de la matriu, cada rol veu i pot fer el mateix que a v4.1.4 (comprovat: menú, barra, informes i permisos antics; proves
+    `tools/supabase_escriptura.mjs` §1b). Les decisions D-038–D-041 (després del tall) es fan ara des de l'editor, sense tocar l'SQL.
+  - Quedaven fora de la Fase 3: justificants (Fase 4), les decisions d'Emilio pendents (vegeu WORKSTREAM_STATUS) i la verificació amb entrada real per
+    rol (Fase 6). El servidor és qui fa complir els permisos: el client només mostra o amaga.
+  - Versió de la branca: v4.1.5.
