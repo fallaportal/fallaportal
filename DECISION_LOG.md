@@ -847,6 +847,9 @@ forma del full (`via`, `areaNom`, dates DD/MM/AAAA, imports en text). Reescriure
     i la matriu carregada reprodueix el valor per defecte (true): decisió pendent d'Emilio. Una persona té un sol rol a l'app
     (prioritat president > treasury > area > delegat > board).
   - S'elimina la caché de `DB` a `localStorage` (deute 1-bis): només es guarda la sessió.
+  - **Comprovat a la Fase 6 (2026-11-02)**: els 4 avançaments orfes descartats (205,82 €, tots de Juanjo Felis) són duplicats d'avançaments que ja existeixen amb un altre id
+    (mateix concepte i import); descartar-los és correcte. El saldo de Juanjo a Supabase (+205,47 €) reflectia que la regularització del 25/09 els havia cobert de més; Emilio
+    la va corregir amb una regularització de −205 € el 25/10, posterior a l'export del 13/10.
   - Els noms desnormalitzats (`areaNom`, `delegacioNom`, `eventNom`, `userNom`) ara són els actuals (A-14); el creador d'un fons és
     el seu email (A-07).
 
