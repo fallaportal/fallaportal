@@ -978,7 +978,7 @@ permisos amb els sis booleans antics i un sol rol per persona, i la visibilitat 
 
 ### D-052: Fase 5: càrrega validada, export invers, buidatge i assaig complet del tall (sense passar pel full)
 **Date**: 2026-11-02
-**Status**: Accepted (Emilio: «Sí, Fase 5»); **assaig destructiu pendent de la seua autorització** (vegeu Consequences)
+**Status**: Accepted (Emilio: «Sí, Fase 5»); assaig destructiu autoritzat per Emilio i **fet el 2026-11-02: net dues vegades seguides**
 **Context**: La Fase 5 demanava un script de migració idempotent amb la validació «sense perdre dades» (PLA §6), l'export invers per a la marxa arrere (§7)
 i el buidatge del projecte (D-043), tot assajat fins que isca net dues vegades seguides. `tools/supabase_carrega.mjs` (D-047) ja carregava en una transacció i
 comprovava les sumes per exercici i tipus, però no tenia la validació completa i ometia dues pestanyes.
@@ -1006,9 +1006,7 @@ comprovava les sumes per exercici i tipus, però no tenia la validació completa
 **Consequences**:
   - **Fet i verificat**: càrrega validada (50/0), export invers i empremta idèntica, i un assaig complet **sense buidar** (carrega, valida, exporta, torna a
     carregar, empremta idèntica, 33 accions en verd).
-  - **No fet**: el buidatge i el cicle des de zero **no s'han executat**: el sistema de permisos ha bloquejat l'ordre (esborra tot el projecte, els usuaris d'Auth i el
-    registre d'activitat) i fa falta l'autorització d'Emilio. Per tant el criteri «net dues vegades seguides» **encara no es compleix** (n'hi ha un d'assaig net,
-    sense buidar). `supabase_buida.mjs --aplica` no s'ha provat.
+  - **Assaig complet fet (2026-11-02, autoritzat per Emilio): NET DUES VEGADES SEGUIDES.** Cada assaig: buidar el projecte, aplicar les 11 migracions des de zero, 275 proves `--remot` en verd, carregar el full real amb validació (50 comprovacions, 0 errors), export invers, recàrrega amb empremta **idèntica** (21 taules, 1.227 files) i les 33 accions d'escriptura. `supabase_buida.mjs --aplica` queda provat. El projecte de proves ha quedat amb les dades del full carregades; els usuaris d'Auth s'han esborrat (es tornen a crear en la primera entrada de cada persona) i el registre d'activitat ha tornat a començar.
   - El token de Google i la clau `service_role` continuen sent d'Emilio (Fase 4: justificants antics; i el buidatge, si hi ha fitxers a Storage).
 
 ---
