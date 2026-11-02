@@ -49,7 +49,7 @@ try {
   const definitiva = existeixConfig ? (await db.query("select valor from public.config where clau = 'carrega_definitiva'"))[0] : null;
   const usuarisAuth = (await un('select count(*)::int n from auth.users')).n;
   const fitxers = (await db.query("select name from storage.objects where bucket_id = 'justificants' order by name")).map((r) => r.name);
-  const migracions = (await un(`select count(*)::int n from supabase_migrations.schema_migrations where version = any ($1)`.replace('$1', `array[${versions.map((v) => `'${v}'`).join(',')}]`))).n;
+  const migracions = (await db.query('select count(*)::int n from supabase_migrations.schema_migrations where version = any ($1)', [versions]))[0].n;
   const funcionsApp = (await un("select count(*)::int n from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'app'")).n;
   console.log(`\nHi ha: ${taules.length} taules a public · ${funcionsApp} funcions a app · ${usuarisAuth} usuaris d'Auth · ${fitxers.length} fitxers a Storage · ${migracions} migracions anotades`);
   if (existeixConfig) console.log(`Moviments: ${(await un('select count(*)::int n from public.moviments')).n} · registre d'activitat: ${(await un('select count(*)::int n from public.audit_log')).n} files`);

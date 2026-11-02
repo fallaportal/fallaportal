@@ -1029,3 +1029,8 @@ no es llig a l'app actual.
 **Consequences**:
   - Una persona amb Junta que no tinga cap assignació a la directiva veurà el Dashboard buit, com a l'app antiga: cal assignar-li àrees o delegacions a Configuració → Directiva.
   - Versió: v4.1.7. Proves: 278 en local i 275 a Supabase, en verd; la matriu torna intacta i la càrrega ja no té l'avís de Junta.
+
+**Revisió de codi (/code-review high, 2026-11-02)**: 8 troballes. Corregides a la v4.1.9: en substituir un justificant ja no s'esborra la fila amb l'enllaç antic de Drive (es conserva com a còpia) i un sol
+`delete … in(…)`; `supabase_buida.mjs` usa un paràmetre. **Obertes (baixa prioritat, per a després del tall)**: la marca `carrega_definitiva` viu a una taula editable per administradors (millor
+fora de `config`); `permisAntic` del carregador duplica `sbPermisosAntics`; `matriuAplica` desa amb `save('rols')` tot el que estiga pendent; els selectors de Nou moviment no es refresquen si la directiva
+canvia amb l'app oberta; el pont no prova l'esborrat de Storage.
