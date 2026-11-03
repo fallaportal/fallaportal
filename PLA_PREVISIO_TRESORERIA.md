@@ -34,10 +34,10 @@ Que l'app responga «puc gastar X € el dia D?» (exemples d'Emilio: una plataf
 | # | Peça | Emilio | Proposta |
 |---|---|---|---|
 | 1 | Diners lliures | Es pot tindre | Fase 1 |
-| 2 | Compromisos | Base: despeses de l'any passat? | **Sí per al pressupost i el calendari, no per als compromisos.** El real del 25/26 proposa les línies de despesa i el patró mensual de cada delegació. Els compromisos són només els contractes signats (monument, música, pirotècnia, lloguers, carpa…): poques línies, imports grans i dates concretes que l'any passat no pot endevinar |
+| 2 | Compromisos | Base: despeses de l'any passat? | **Sí per al pressupost i el calendari, no per als compromisos.** El real del 25/26 proposa les línies de despesa i el patró mensual de cada delegació en la part pagada pel banc; la pagada en efectiu no es va registrar i s'estima amb el 26/27 (§10.1). Els compromisos són només els contractes signats (monument, música, pirotècnia, lloguers, carpa…): poques línies, imports grans i dates concretes que l'any passat no pot endevinar |
 | 3 | Previsió | Es pot muntar si es fa el 2 | Sí, amb el 2 i el 4. Fase 3 |
 | 4 | Ingressos | Quotes, loteria i subvencions se saben; events varien, però es poden mirar anys anteriors | Línies d'ingrés amb mes previst per a quotes, loteria i subvencions. Events: el real de l'any anterior (els anys d'abans de l'app, consultats a mà a la Fase 0) per un **factor de prudència** |
-| 5 | Ordinari i extraordinari | Lloguers, llum, aigua… | Cada delegació té una naturalesa per defecte (`fixa`, `variable`, `inversio`); una línia de pressupost o un moviment la poden canviar |
+| 5 | Ordinari i extraordinari | Lloguers, llum, aigua… | Cada ingrés i cada despesa té una naturalesa: `fixa`, `variable` o `extraordinaria` (inversions, venda de patrimoni, fets puntuals). La posa la regla d'importació pel concepte, amb la delegació com a valor per defecte; una línia de pressupost o un moviment la poden canviar (D-055) |
 
 **Principi de prudència**: els ingressos incerts es preveuen a la baixa i les despeses al 100 %.
 
@@ -64,13 +64,15 @@ ingressos previstos(m) = línies d'ingrés amb calendari, menys el que ja s'ha c
 pagaments previstos(m) = terminis de compromisos amb data al mes
                        + per a cada línia de despesa: (pressupost − executat − compromisos pendents vinculats),
                          repartit pel calendari de la línia o, si no en té, pel patró mensual de la delegació l'any anterior
+                         (la part que es paga en efectiu: patró del 26/27, perquè l'efectiu del 25/26 no es va registrar)
 marge(m)               = saldo(m) − passiu de falles.app − reserva mínima
 punt mínim             = el marge més baix i el mes on cau
 ```
 Una línia mai es compta dues vegades: el que ja s'ha pagat i el que està compromés es resten de la línia.
 
-**Resultat ordinari** = ingressos ordinaris − despeses `fixa` − despeses `variable`. Les `inversio` van a part, contra
-reserves. Es mostra per exercici: real (25/26), previst (26/27) i, a la Fase 4, el següent.
+**Resultat ordinari** = ingressos `fixa` i `variable` − despeses `fixa` i `variable`. Els ingressos i les despeses
+`extraordinaria` (inversions, venda de patrimoni, fets puntuals com un aniversari) van a part: surten de les reserves o hi
+entren. Es mostra per exercici: real (25/26, només el banc), previst (26/27) i, a la Fase 4, el següent.
 
 **Regla de decisió (simulador)**
 - Despesa d'una vegada X el dia D: es torna a calcular la previsió amb X a D. Si el punt mínim continua ≥ 0, sí. Si no,
@@ -81,10 +83,11 @@ reserves. Es mostra per exercici: real (25/26), previst (26/27) i, a la Fase 4, 
 ## 5. Fases
 
 ### Fase 0 — Dades i decisions (sense codi; pot anar durant l'estabilització del tall)
-1. **Claude**: perfil del 25/26 com a base. Ingressos i despeses per delegació i mes; apunts que distorsionen el patró
-   (xecs sense revisar, inversions puntuals, apunts sense data, imputacions creuades). Resultat: patró mensual per
-   delegació i llista d'apunts a reclassificar.
-2. **Claude proposa, Emilio i la junta decideixen**: naturalesa de cada delegació (`fixa`/`variable`/`inversio`).
+1. **Claude** (fet, §10.1): perfil del 25/26 com a base. Ingressos i despeses per partida, delegació i mes; apunts que
+   distorsionen el patró (xecs sense revisar, inversions puntuals, apunts sense data, imputacions creuades). Resultat: patró
+   mensual i llista d'apunts a revisar.
+2. **Claude proposa, Emilio i la junta decideixen**: naturalesa de cada partida (`fixa`/`variable`/`extraordinaria`), al full
+   «Naturalesa» de l'informe del perfil.
 3. **Tresoreria**: compromisos signats del 26/27 (proveïdor, import, terminis, què s'ha pagat ja).
 4. **Tresoreria**: ingressos coneguts del 26/27: quotes (import i calendari de remeses), loteria, subvencions (import i mes).
 5. **Junta**: reserva mínima (§8).
@@ -109,14 +112,17 @@ tests de RLS (primer el que demostra el forat), `supabase_escriptura.mjs --accio
 verd; provat al navegador. **Sessions**: 2. **Model**: Opus 5.5 (esquema i RLS) + Sonnet 5.5 (pantalles), high.
 
 ### Fase 2 — Pressupost complet
-- `pressupost_linies.sentit` (`ingres`/`despesa`, entra a la clau única), `naturalesa` a `delegacions`, `pressupost_linies`
-  i `moviments` (les dues últimes opcionals: hereten de la delegació), taula `pressupost_calendari`.
+- `pressupost_linies.sentit` (`ingres`/`despesa`, entra a la clau única) i taula `pressupost_calendari`.
+- `naturalesa` (`fixa`/`variable`/`extraordinaria`, per a ingressos i despeses) a `regles_importacio`, `delegacions`,
+  `pressupost_linies` i `moviments`. Un moviment importat la pren de la regla; si no en té, val la de la delegació; la línia
+  i el moviment la poden canviar. Classificació inicial de les regles i dels moviments del 25/26 i el 26/27 amb les
+  decisions del full «Naturalesa» de la Fase 0.
 - Pressupostos: pestanya d'**Ingressos**; calendari opcional per línia; botó **«Proposar des del real de l'any anterior»**
   (línies amb el real per delegació i event, arrodonides a l'euro, amb les proteccions de la còpia de pressupost: mai sobre
   un pressupost bloquejat i avís si el destí ja té línies, A-11).
-- Resultat previst de l'exercici; Estat de Resultats separa ordinari i inversions.
+- Resultat previst de l'exercici; Estat de Resultats separa ordinari i extraordinari.
 
-**Fet quan**: pressupost 26/27 amb ingressos introduït; Resultats separa ordinari i inversions; la proposta no
+**Fet quan**: pressupost 26/27 amb ingressos introduït; Resultats separa ordinari i extraordinari; la proposta no
 sobreescriu cap pressupost bloquejat; proves com a la Fase 1. **Sessions**: 2. **Model**: Sonnet 5.5 · high (Opus per a la
 clau única i la migració de les línies existents).
 
@@ -150,8 +156,9 @@ clau única i la migració de les línies existents).
 | `extractes_saldos` | `compte_id`, `data`, `saldo`, operació d'importació |
 | `pressupost_linies` | + `sentit` (`ingres`/`despesa`, per defecte `despesa`; entra a la clau única), + `naturalesa null` |
 | `pressupost_calendari` | `linia_id`, `mes` (primer dia del mes), `import`; sense files = patró de l'any anterior |
-| `delegacions` | + `naturalesa` (`fixa`/`variable`/`inversio`, per defecte `variable`) |
-| `moviments` | + `naturalesa null` (excepció a la de la delegació) |
+| `regles_importacio` | + `naturalesa null` (la que reben els moviments que casen) |
+| `delegacions` | + `naturalesa` (`fixa`/`variable`/`extraordinaria`, per defecte `variable`) |
+| `moviments` | + `naturalesa null` (la posa la regla en importar o la persona a mà; null = la de la delegació) |
 | `config` | `reserva_minima`, `factor_prudencia_events`, `fallers_actius`, `dies_avis_extracte` |
 | Mòduls nous | `compromisos` (edició: President i Tresoreria), `previsio` (lectura: §8.4) |
 
@@ -168,7 +175,8 @@ han d'incloure-les: l'export és la còpia de seguretat i, sense elles, no les g
 - No comença fins que s'acabe l'estabilització (Fase 8 del `PLA_MIGRACIO_SUPABASE.md`, dues setmanes). La Fase 0 no toca
   codi i pot anar abans.
 
-**Calendari orientatiu** [Suposició: els pagaments grans de Falles es concentren entre gener i març]:
+**Calendari orientatiu** [Probable, pel perfil del 25/26: els moments més justos són finals d'octubre i primers de maig, i
+convé tindre la previsió abans dels pagaments de Falles i de l'abril]:
 
 | Quan | Què |
 |---|---|
@@ -189,7 +197,8 @@ han d'incloure-les: l'export és la còpia de seguretat i, sense elles, no les g
 
 ## 9. Riscos
 
-- **Base d'un sol any**: el 25/26 és l'únic complet i es va carregar en bloc. La Fase 0 el revisa; des del 27/28 hi haurà
+- **Base d'un sol any i només del banc**: el 25/26 és l'únic complet, es va carregar en bloc i no té els pagaments en efectiu
+  (§10.1). La part d'efectiu s'estima amb el 26/27 i la tresoreria; des del 27/28 hi haurà
   dos exercicis complets.
 - **Saldos desfasats** si no s'importen els extractes: el control de saldo de l'extracte ho fa visible.
 - **Compromisos oblidats**: un contracte no introduït fa la previsió optimista. Revisar la llista a cada junta; en un
@@ -232,7 +241,7 @@ Troballes:
 9. El **−40.200,46 € del 13/10** (resultat del 26/27) es va calcular amb el 80 % dels saldos sense confirmar; des d'aleshores el
    02 i el 03 Banc s'han quadrat amb els extractes. El full manual de la Fase 0 el torna a calcular amb l'export del tall.
 
-### 10.2 Ajustos proposats al pla (pendents de confirmació d'Emilio)
+### 10.2 Ajustos al pla (confirmats per Emilio el 2026-11-03, D-055; ja aplicats a §3–§6 i §9)
 - A. La naturalesa s'aplica a **ingressos i despeses** i els valors són `fixa`, `variable` i **`extraordinaria`** (en lloc
   d'`inversio`: inclou les inversions i els fets puntuals com el 50è aniversari o la venda de la propietat).
 - B. La naturalesa la posa sobretot la **regla d'importació** (per concepte), amb la delegació com a valor per defecte; la
@@ -248,7 +257,7 @@ Troballes:
 
 | Fase | Estat | Data | Notes |
 |---|---|---|---|
-| 0 Dades i decisions | En curs | 2026-11-03 | Pas 1 fet (perfil del 25/26, §10.1); ajustos proposats a §10.2 |
+| 0 Dades i decisions | En curs | 2026-11-03 | Pas 1 fet (perfil del 25/26, §10.1); ajustos aplicats (§10.2, D-055) |
 | 1 Compromisos i diners lliures | Pendent | | |
 | 2 Pressupost complet | Pendent | | |
 | 3 Previsió | Pendent | | |

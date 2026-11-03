@@ -1057,3 +1057,23 @@ despeses i sense dates, i l'app no sap res dels contractes signats pendents de p
   - Ajustos i un possible avançament del calendari queden oberts (Emilio). La Fase 0 no toca codi i pot començar abans; el codi, després de
     l'estabilització del tall.
   - Cada taula nova ha d'entrar a l'adaptador del client i a l'export invers (`tools/supabase_exporta_xlsx.mjs`), que és la còpia de seguretat.
+
+---
+
+### D-055: Ajustos a la previsió de tresoreria després del perfil del 25/26 (sobre D-054)
+**Date**: 2026-11-03
+**Status**: Accepted (Emilio: «Sí, aplica'ls»)
+**Context**: El perfil del 25/26 (`tools/previsio_f0_perfil.py`, `PLA_PREVISIO_TRESORERIA.md` §10.1) va trobar que hi ha ingressos
+extraordinaris (13.000 € d'«Assegurances» al 25/26; venda d'una propietat i compra d'un solar al 26/27), que una delegació barreja
+despeses fixes i variables (Jurídica i Contractacions: orquestres amb llum, aigua, assegurances i WiFi) i que al 25/26 no es van
+registrar com a mínim 131.918,20 € de pagaments en efectiu.
+**Decision**:
+  - A. La **naturalesa** s'aplica a ingressos i despeses i els valors són `fixa`, `variable` i `extraordinaria` (en lloc
+    d'`inversio`). El resultat ordinari només compta `fixa` i `variable`.
+  - B. La naturalesa la posa sobretot la **regla d'importació** pel concepte (`regles_importacio.naturalesa`); la delegació és el
+    valor per defecte i la línia de pressupost o el moviment la poden canviar.
+  - C. La part d'**efectiu** de la base (bar, casal i events) s'estima amb el 26/27 i la tresoreria, no amb el 25/26.
+**Consequences**:
+  - La Fase 2 inclou la classificació inicial de les regles i dels moviments del 25/26 i el 26/27, amb les decisions del full
+    «Naturalesa» de l'informe del perfil.
+  - El resultat ordinari real del 25/26 només es pot donar per al banc fins que se sàpia l'efectiu de l'1/4/2025.
