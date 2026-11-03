@@ -238,7 +238,7 @@ Decisió d'Emilio (2026-09-27): **entrada per email, sense Google**.
 - **Model**: Opus 5.5 · **high** el dia del tall. **Sessions**: 1–2.
 
 #### Procediment del dia del tall (ordre exacte, amb les eines de la branca `supabase`; D-052)
-**Dia 0 fixat: dilluns 9 de novembre de 2026** (decidit per Emilio el 3/11). Avís als usuaris el 3/11; proves d'entrada real per correu i xifra del passiu de falles.app abans del 6/11; nou export del full i nou assaig entre el 5 i el 8/11; des del matí del 9/11 no es fan apunts al portal antic.
+**Dia 0 fixat: dilluns 9 de novembre de 2026** (decidit per Emilio el 3/11). Avís als usuaris el 3/11; proves d'entrada real per correu i xifra del passiu de falles.app abans del 6/11; nou export del full i nou assaig entre el 5 i el 8/11; des del matí del 9/11 no es fan apunts al portal antic. **El full passa a només lectura el dilluns 9/11 a les 9:00** (compartir com a lector, Emilio es queda editor) i només després es baixa l'export final. **Proves d'entrada real el dia 0** (pas 8, amb les dades definitives, abans d'avisar que s'ha obert): Emilio (president, Hotmail), Juanba Mafé (tresoreria, Gmail) i Juanjo Felis (àrea Festejos i Gastronomia, Gmail); els dos últims només miren (entrada, menú, «Nou moviment» amb l'àrea i la delegació omplides) i no desen res; el moviment de prova el desa i l'esborra el president. El correu pot anar a brossa a Hotmail/Outlook.
 Abans de començar: tindre a mà `tools/.env` (cadena de connexió) i el certificat; per als justificants, `SUPABASE_SERVICE_KEY` i un `GOOGLE_TOKEN` d'una hora. Tot des de l'arrel del repo.
 
 **Una setmana abans**
