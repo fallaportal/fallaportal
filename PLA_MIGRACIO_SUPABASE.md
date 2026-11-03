@@ -238,6 +238,7 @@ Decisió d'Emilio (2026-09-27): **entrada per email, sense Google**.
 - **Model**: Opus 5.5 · **high** el dia del tall. **Sessions**: 1–2.
 
 #### Procediment del dia del tall (ordre exacte, amb les eines de la branca `supabase`; D-052)
+**Dia 0 fixat: dilluns 9 de novembre de 2026** (decidit per Emilio el 3/11). Avís als usuaris el 3/11; proves d'entrada real per correu i xifra del passiu de falles.app abans del 6/11; nou export del full i nou assaig entre el 5 i el 8/11; des del matí del 9/11 no es fan apunts al portal antic.
 Abans de començar: tindre a mà `tools/.env` (cadena de connexió) i el certificat; per als justificants, `SUPABASE_SERVICE_KEY` i un `GOOGLE_TOKEN` d'una hora. Tot des de l'arrel del repo.
 
 **Una setmana abans**
