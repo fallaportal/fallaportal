@@ -1,5 +1,5 @@
 # Work Stream Status — Falla Portal
-## Snapshot Date: 2026-11-02
+## Snapshot Date: 2026-11-03
 ## Versió en producció: v4.0.89 (a `main`) · branca `supabase`: v4.1.8
 
 > **Context de calendari**: període vacacional, ús baix de l'eina. Bon moment per a
@@ -547,6 +547,18 @@ càrrega inicial fallida, i camí bo sense regressió (13 pàgines, cap error de
 **Correccions de documentació**: D-006 descrivia `writeTab` al revés; l'email admin
 rep `treasury` i no `president`; el rol es diu `board` i no `junta`; hi ha dues
 pestanyes numerades `08`; `18 Audit Log` continua al codi tot i D-007.
+
+---
+
+### Planificat — WS-PREVISIO (previsió de tresoreria i capacitat de despesa, 2026-11-03)
+
+**Objective**: que l'app responga «puc gastar X € el dia D?» (plataforma de 2.700 €, ampliar la carpa per 12.000 €) amb el
+punt mínim de la previsió de tresoreria i el resultat ordinari.
+**Current State**: pla proposat a `PLA_PREVISIO_TRESORERIA.md`, pendent d'aprovació d'Emilio. Emilio (3/11): els diners
+lliures, el pressupost d'ingressos (quotes, loteria, subvencions; events des d'anys anteriors) i la classificació de
+despeses fixes (lloguers, llum, aigua) es poden tindre.
+**Next**: Fase 0 (dades i decisions, sense codi) durant l'estabilització del tall; Fase 1 des de la setmana del 23/11.
+**Blockers**: el tall del 9/11 i les dues setmanes d'estabilització.
 
 ---
 

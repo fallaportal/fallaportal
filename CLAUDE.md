@@ -38,6 +38,7 @@ fitxer i el continuity set (§2) sencer** abans de tocar res.
 | `INVENTARI_FUNCIONAL.md` | Inventari de funcionalitats, rols i camins d'escriptura (Fase 0); llista d'acceptació de la Fase 6. |
 | `MODEL_DADES.md` | Model de dades proposat per a Supabase (taules, claus, vistes, correspondència amb el full). |
 | `INFORME_ANOMALIES_F0.md` | Anomalies i proteccions implícites trobades a la Fase 0, amb tractament i decisions pendents. |
+| `PLA_PREVISIO_TRESORERIA.md` | Pla de previsió de tresoreria i capacitat de despesa (WS-PREVISIO, després del tall): fases, fórmules, model i seguiment. |
 
 Mai crear duplicats paral·lels (com `index1.html`, `index2.html` — ja n'hi ha i cal
 evitar que se'n generen més sense necessitat). Les actualitzacions són
