@@ -557,7 +557,11 @@ punt mínim de la previsió de tresoreria i el resultat ordinari.
 **Current State**: pla **aprovat** per Emilio el 3/11 (D-054, `PLA_PREVISIO_TRESORERIA.md`) amb els valors recomanats; farà
 ajustos i potser avançarà el calendari. Emilio: els diners lliures, el pressupost d'ingressos (quotes, loteria, subvencions;
 events des d'anys anteriors) i la classificació de despeses fixes (lloguers, llum, aigua) es poden tindre.
-**Next**: Fase 0 (dades i decisions, sense codi) durant l'estabilització del tall; Fase 1 des de la setmana del 23/11.
+**Fase 0, pas 1 fet (3/11)**: perfil del 25/26 amb `tools/previsio_f0_perfil.py` (informe `.xlsx` fora del repo; resultats a
+`PLA_PREVISIO_TRESORERIA.md` §10). El banc quadra i serveix de base; l'efectiu no (≥ 131.918,20 € de pagaments en efectiu sense
+registrar). Proposats tres ajustos al pla (§10.2), pendents d'Emilio.
+**Next**: confirmar els ajustos; Emilio: efectiu a l'1/4/2025 i els 13.000 € d'«Assegurances» del 25/26; resta de la Fase 0
+durant l'estabilització; tornar a passar el perfil amb l'export del tall; Fase 1 des de la setmana del 23/11.
 **Blockers**: el tall del 9/11 i les dues setmanes d'estabilització.
 
 ---

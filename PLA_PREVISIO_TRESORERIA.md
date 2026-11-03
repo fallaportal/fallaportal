@@ -197,11 +197,58 @@ han d'incloure-les: l'export és la còpia de seguretat i, sense elles, no les g
 - **Falsa precisió**: la previsió és una estimació. Sempre amb la data de les dades i el factor de prudència a la vista.
 - **Còpia de seguretat**: taules noves fora de l'export invers no es guardarien (§6).
 
-## 10. Seguiment
+## 10. Resultats de la Fase 0
+
+### 10.1 Perfil del 25/26 (2026-11-03)
+Eina: `python -I tools/previsio_f0_perfil.py "<export.xlsx>" [exercici]`. Escriu l'informe `.xlsx` al costat de l'export
+(fora del repo): resum i quadrament dels comptes, partides per mes, delegacions per mes, apunts a revisar i naturalesa
+proposada per partida. Feta amb l'export del 13/10 (anterior a les correccions del 13 i el 27/10, que l'eina aplica soles:
+117 recàrregues TPV duplicades, 7 apunts del 26/27, 4 traspassos). **S'ha de tornar a passar amb l'export del dia del tall.**
+
+Troballes:
+1. **El costat del banc és complet i quadra**: saldo inicial + moviments = saldo inicial del 26/27 en els tres bancs (01 Banc
+   −0,01 € per arrodoniment; 02 Banc, 600,60 €: la correcció del 27/10, que l'export encara no porta). Resultat dels bancs al
+   25/26: **+4.157,70 €**.
+2. **El costat de l'efectiu no serveix de base**: al 25/26 hi ha 149.943,20 € de recàrregues en efectiu de falles.app i només
+   669 € de pagaments en efectiu registrats. Amb 17.856 € a l'1/4/2026, **com a mínim 131.918,20 € de pagaments en efectiu no es
+   van registrar** (més el que hi haguera a l'1/4/2025, que l'app no té, A-28). La despesa del bar, el casal i els events pagada
+   en efectiu s'ha d'estimar amb el 26/27 (caixes i fons ja es registren) i amb la tresoreria. El «resultat» del 25/26 segons
+   l'app (+121.964,69 €) no és real; el real és +4.157,70 € + (17.856 € − efectiu a l'1/4/2025).
+3. **Calendari d'ingressos**: quatre remeses de quotes de ≈ 28.100–29.500 € (mitjan maig, agost, novembre i febrer; 116.698 € en
+   total, més 11.226 € de pagaments individuals i −3.101 € de devolucions); loteria al novembre; recàrregues de falles.app de
+   gener a març; vendes amb targeta als events sobretot al novembre, desembre i març.
+4. **Calendari de despeses**: orquestres de setembre a desembre i al març (52.003 €); monument gran a 2.000 €/mes de juliol a
+   febrer i 6.000 € al març, i infantil a 950 €/mes de juliol a març (són terminis: compromisos de manual); beguda de les Falles
+   pagada a l'abril de l'exercici següent (16.188 €); app i polseres de gener a març.
+5. **Mesos amb més eixides que entrades registrades**: abril, juny, juliol, setembre, octubre i desembre; de gener a març no es pot
+   saber per l'efectiu no registrat (troballa 2). [Probable: és un sol any] El punt mínim cau just abans d'una remesa: finals
+   d'octubre (setembre i octubre gairebé sense ingressos) i primers de maig (la beguda de les Falles es paga a l'abril).
+6. **La bonificació del 40 % dels moneders** (31.967,20 €, `via:'Virtual'`) és despesa però no efectiu: va al resultat, no a la
+   previsió.
+7. **La delegació no basta per a la naturalesa**: Jurídica i Contractacions barreja orquestres (variable) amb llum, aigua,
+   assegurances i WiFi (fixa); Tresoreria barreja quotes, comissions i recàrregues. La partida ix del concepte.
+8. **Hi ha ingressos extraordinaris**, no només despeses: 13.000 € d'«Assegurances» al 25/26 (a confirmar) i, al 26/27, la venda
+   d'una propietat (+35.000 €) i la compra d'un solar (−20.000 €).
+9. El **−40.200,46 € del 13/10** (resultat del 26/27) es va calcular amb el 80 % dels saldos sense confirmar; des d'aleshores el
+   02 i el 03 Banc s'han quadrat amb els extractes. El full manual de la Fase 0 el torna a calcular amb l'export del tall.
+
+### 10.2 Ajustos proposats al pla (pendents de confirmació d'Emilio)
+- A. La naturalesa s'aplica a **ingressos i despeses** i els valors són `fixa`, `variable` i **`extraordinaria`** (en lloc
+  d'`inversio`: inclou les inversions i els fets puntuals com el 50è aniversari o la venda de la propietat).
+- B. La naturalesa la posa sobretot la **regla d'importació** (per concepte), amb la delegació com a valor per defecte; la
+  línia de pressupost i el moviment la poden canviar.
+- C. La part d'efectiu de la base (bar, casal i events) s'estima amb el 26/27 i la tresoreria, no amb el 25/26.
+
+### 10.3 Pendent de la Fase 0
+- Emilio: l'efectiu de la falla a l'1/4/2025 (aproximat), i què van ser els 12.000 € + 1.000 € d'«Assegurances» del 25/26.
+- Emilio i la junta: revisar la columna «Decisió» del full «Naturalesa» de l'informe.
+- Passos 3–7 de la Fase 0 (compromisos, ingressos coneguts, reserva mínima, anys anteriors, full manual).
+
+## 11. Seguiment
 
 | Fase | Estat | Data | Notes |
 |---|---|---|---|
-| 0 Dades i decisions | Pendent | | |
+| 0 Dades i decisions | En curs | 2026-11-03 | Pas 1 fet (perfil del 25/26, §10.1); ajustos proposats a §10.2 |
 | 1 Compromisos i diners lliures | Pendent | | |
 | 2 Pressupost complet | Pendent | | |
 | 3 Previsió | Pendent | | |
