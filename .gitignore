@@ -23,3 +23,6 @@ FallaPortal_export*.xlsx
 tools/node_modules/
 tools/.env
 tools/*.crt
+
+# Cache de Python (eines de tools/)
+__pycache__/
