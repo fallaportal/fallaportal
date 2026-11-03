@@ -135,7 +135,8 @@ Cremà (19/03) i el 31/03 serveixen per liquidar els pendents de Falles dins del
 - **Resultat de l'exercici** (reserves gastades): és la variació de la suma de tots els saldos (a 13/10/2026:
   −40.200,46 €, amb el 80 % dels saldos sense confirmar) i només és fiable quan els saldos de tots els comptes estan confirmats.
 - **Exercici 25/26 com a base** (perfil del 3/11/2026, `PLA_PREVISIO_TRESORERIA.md` §10): els bancs quadren (resultat dels bancs
-  +4.157,70 €); l'efectiu no: ≥ 131.918,20 € de pagaments en efectiu no registrats. Quotes: quatre remeses a l'any (mitjan maig,
+  +4.157,70 €); l'efectiu no: ≥ 131.918,20 € de pagaments en efectiu no registrats, i l'efectiu a l'1/4/2025 no el sap ningú
+  (Emilio, 3/11), així que el resultat real del 25/26 només es coneix per al banc. Quotes: quatre remeses a l'any (mitjan maig,
   agost, novembre i febrer). La bonificació del 40 % dels moneders de falles.app és despesa `Virtual` (31.967,20 € al 25/26).
 - **L'any fiscal actiu és global**: l'escriu qualsevol admin a `00 Config` i tots els usuaris el prenen al refresc.
 - **`bankHash`** = id del banc | data DD/MM/AAAA | import abs amb 2 decimals | concepte normalitzat. No inclou el

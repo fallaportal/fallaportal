@@ -561,7 +561,8 @@ events des d'anys anteriors) i la classificació de despeses fixes (lloguers, ll
 `PLA_PREVISIO_TRESORERIA.md` §10). El banc quadra i serveix de base; l'efectiu no (≥ 131.918,20 € de pagaments en efectiu sense
 registrar). Tres ajustos aplicats al pla (D-055): naturalesa `fixa`/`variable`/`extraordinaria` per a ingressos i despeses,
 posada per la regla d'importació; l'efectiu de la base s'estima amb el 26/27.
-**Next**: Emilio: efectiu a l'1/4/2025 i els 13.000 € d'«Assegurances» del 25/26; full «Naturalesa» de l'informe; resta de la Fase 0
+L'efectiu a l'1/4/2025 no el sap ningú (Emilio, 3/11): el resultat real del 25/26 només es dona per al banc.
+**Next**: Emilio pregunta què van ser els 13.000 € d'«Assegurances» del 25/26 i revisa el full «Naturalesa» de l'informe; resta de la Fase 0
 durant l'estabilització; tornar a passar el perfil amb l'export del tall; Fase 1 des de la setmana del 23/11.
 **Blockers**: el tall del 9/11 i les dues setmanes d'estabilització.
 

@@ -1077,3 +1077,4 @@ registrar com a mínim 131.918,20 € de pagaments en efectiu.
   - La Fase 2 inclou la classificació inicial de les regles i dels moviments del 25/26 i el 26/27, amb les decisions del full
     «Naturalesa» de l'informe del perfil.
   - El resultat ordinari real del 25/26 només es pot donar per al banc fins que se sàpia l'efectiu de l'1/4/2025.
+  - **Nota (2026-11-03)**: Emilio: l'efectiu a l'1/4/2025 no el sap ningú. El resultat real del 25/26 queda només per al banc.

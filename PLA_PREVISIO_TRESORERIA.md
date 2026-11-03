@@ -222,7 +222,7 @@ Troballes:
    669 € de pagaments en efectiu registrats. Amb 17.856 € a l'1/4/2026, **com a mínim 131.918,20 € de pagaments en efectiu no es
    van registrar** (més el que hi haguera a l'1/4/2025, que l'app no té, A-28). La despesa del bar, el casal i els events pagada
    en efectiu s'ha d'estimar amb el 26/27 (caixes i fons ja es registren) i amb la tresoreria. El «resultat» del 25/26 segons
-   l'app (+121.964,69 €) no és real; el real és +4.157,70 € + (17.856 € − efectiu a l'1/4/2025).
+   l'app (+121.964,69 €) no és real; el real és +4.157,70 € + (17.856 € − efectiu a l'1/4/2025, que no se sap).
 3. **Calendari d'ingressos**: quatre remeses de quotes de ≈ 28.100–29.500 € (mitjan maig, agost, novembre i febrer; 116.698 € en
    total, més 11.226 € de pagaments individuals i −3.101 € de devolucions); loteria al novembre; recàrregues de falles.app de
    gener a març; vendes amb targeta als events sobretot al novembre, desembre i març.
@@ -249,8 +249,10 @@ Troballes:
 - C. La part d'efectiu de la base (bar, casal i events) s'estima amb el 26/27 i la tresoreria, no amb el 25/26.
 
 ### 10.3 Pendent de la Fase 0
-- Emilio: l'efectiu de la falla a l'1/4/2025 (aproximat), i què van ser els 12.000 € + 1.000 € d'«Assegurances» del 25/26.
-- Emilio i la junta: revisar la columna «Decisió» del full «Naturalesa» de l'informe.
+- **L'efectiu de la falla a l'1/4/2025 no se sap** (Emilio, 3/11: ningú no ho sap). El resultat real del 25/26 només es
+  pot donar per al banc (+4.157,70 €); el de l'efectiu queda desconegut i la base de l'efectiu s'estima amb el 26/27 (D-055 C).
+- Emilio ho preguntarà: què van ser els 12.000 € + 1.000 € d'«Assegurances» del 25/26.
+- Emilio revisa la columna «Decisió» del full «Naturalesa» de l'informe (després, la junta).
 - Passos 3–7 de la Fase 0 (compromisos, ingressos coneguts, reserva mínima, anys anteriors, full manual).
 
 ## 11. Seguiment
