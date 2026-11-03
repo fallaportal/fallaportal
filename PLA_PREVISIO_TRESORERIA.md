@@ -1,5 +1,5 @@
 # Pla — Previsió de tresoreria i capacitat de despesa (WS-PREVISIO)
-## Redactat: 2026-11-03 · Estat: proposta, pendent d'aprovació d'Emilio · Comença després del tall del 9/11/2026
+## Redactat: 2026-11-03 · Estat: **aprovat per Emilio el 2026-11-03** (D-054), obert a ajustos i a avançar el calendari · Comença després del tall del 9/11/2026
 
 ---
 
@@ -93,7 +93,7 @@ reserves. Es mostra per exercici: real (25/26), previst (26/27) i, a la Fase 4, 
 7. **Claude**: full manual amb diners lliures i previsió fins al 31/03 amb les dades de 1–6. Valida les fórmules abans de
    programar-les i ja respon les preguntes de la carpa i la plataforma.
 
-**Fet quan**: Emilio ha revisat el full manual i les decisions de §8 estan preses. **Sessions**: 1 (més el temps de la
+**Fet quan**: Emilio ha revisat el full manual i la junta ha fixat la reserva mínima (la resta de §8 ja està aprovada). **Sessions**: 1 (més el temps de la
 junta). **Model**: Opus 5.5 · high.
 
 ### Fase 1 — Compromisos i diners lliures
@@ -177,9 +177,9 @@ han d'incloure-les: l'export és la còpia de seguretat i, sense elles, no les g
 | Desembre | Fases 2 i 3 |
 | Gener | Fase 4 |
 
-## 8. Decisions pendents (s'assumeix el valor recomanat si no es diu res)
+## 8. Decisions (aprovades amb el valor recomanat el 2026-11-03, D-054; es poden ajustar)
 
-1. **Reserva mínima**: la decideix la junta. Proposta: les despeses fixes de 6 mesos; la xifra ix de la Fase 0.
+1. **Reserva mínima**: la fixa la junta. Proposta de partida: les despeses fixes de 6 mesos; la xifra ix de la Fase 0.
 2. **Passiu de falles.app**: es resta sencer (recomanat, prudent), no només el cost del que es consumirà.
 3. **Factor de prudència dels ingressos d'events**: 90 % del real de l'any anterior.
 4. **Qui veu Previsió i simulador**: President i Tresoreria. Junta, a decidir (es canvia a la matriu sense codi).

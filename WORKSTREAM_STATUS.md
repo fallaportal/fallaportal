@@ -554,9 +554,9 @@ pestanyes numerades `08`; `18 Audit Log` continua al codi tot i D-007.
 
 **Objective**: que l'app responga «puc gastar X € el dia D?» (plataforma de 2.700 €, ampliar la carpa per 12.000 €) amb el
 punt mínim de la previsió de tresoreria i el resultat ordinari.
-**Current State**: pla proposat a `PLA_PREVISIO_TRESORERIA.md`, pendent d'aprovació d'Emilio. Emilio (3/11): els diners
-lliures, el pressupost d'ingressos (quotes, loteria, subvencions; events des d'anys anteriors) i la classificació de
-despeses fixes (lloguers, llum, aigua) es poden tindre.
+**Current State**: pla **aprovat** per Emilio el 3/11 (D-054, `PLA_PREVISIO_TRESORERIA.md`) amb els valors recomanats; farà
+ajustos i potser avançarà el calendari. Emilio: els diners lliures, el pressupost d'ingressos (quotes, loteria, subvencions;
+events des d'anys anteriors) i la classificació de despeses fixes (lloguers, llum, aigua) es poden tindre.
 **Next**: Fase 0 (dades i decisions, sense codi) durant l'estabilització del tall; Fase 1 des de la setmana del 23/11.
 **Blockers**: el tall del 9/11 i les dues setmanes d'estabilització.
 

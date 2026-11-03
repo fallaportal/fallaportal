@@ -1034,3 +1034,26 @@ no es llig a l'app actual.
 `delete … in(…)`; `supabase_buida.mjs` usa un paràmetre. **Obertes (baixa prioritat, per a després del tall)**: la marca `carrega_definitiva` viu a una taula editable per administradors (millor
 fora de `config`); `permisAntic` del carregador duplica `sbPermisosAntics`; `matriuAplica` desa amb `save('rols')` tot el que estiga pendent; els selectors de Nou moviment no es refresquen si la directiva
 canvia amb l'app oberta; el pont no prova l'esborrat de Storage.
+
+---
+
+### D-054: Previsió de tresoreria i capacitat de despesa (WS-PREVISIO), després del tall
+**Date**: 2026-11-03
+**Status**: Accepted (Emilio: «Aprovat, encara que després farem ajustos, tal volta accelerem el pla»)
+**Context**: Emilio vol saber si la falla es pot gastar, per exemple, 2.700 € en una plataforma nova o 12.000 € en ampliar la carpa. El saldo
+dels comptes no ho diu: inclou el passiu de falles.app (26.000,20 € el 3/11), el resultat del 26/27 era −40.200,46 € a 13/10, el pressupost només té
+despeses i sense dates, i l'app no sap res dels contractes signats pendents de pagar.
+**Decision**: s'aprova `PLA_PREVISIO_TRESORERIA.md` (Fases 0–4) amb els valors recomanats de les decisions pendents:
+  1. **Reserva mínima**: la fixa la junta; proposta de partida, les despeses fixes de 6 mesos (la xifra ix de la Fase 0).
+  2. **Passiu de falles.app**: es resta sencer dels diners lliures.
+  3. **Ingressos d'events**: 90 % del real de l'any anterior (factor de prudència, paràmetre).
+  4. **Previsió i simulador**: els veuen President i Tresoreria; Junta, a la matriu quan es decidisca.
+  5. **Fallers en actiu** per a l'import per faller: paràmetre manual (762 el 3/11).
+  6. **Recàrregues de falles.app** a la previsió: com a ingrés dels events (consums de l'any anterior per event).
+  7. **Branca `previsio`** després del tall, fusionada a `main` fase a fase.
+  - El real del 25/26 serveix de base per proposar el pressupost i per repartir pel calendari les línies sense mes; els compromisos (contractes
+    signats amb terminis) s'introdueixen a mà.
+**Consequences**:
+  - Ajustos i un possible avançament del calendari queden oberts (Emilio). La Fase 0 no toca codi i pot començar abans; el codi, després de
+    l'estabilització del tall.
+  - Cada taula nova ha d'entrar a l'adaptador del client i a l'export invers (`tools/supabase_exporta_xlsx.mjs`), que és la còpia de seguretat.
