@@ -209,3 +209,24 @@ Pestanyes Google Sheets:
 - **Sheets API v4**: `https://sheets.googleapis.com/v4/spreadsheets/{SHEET_ID}/values/`
 - **Drive API v3**: `https://www.googleapis.com/drive/v3/files`
 - **Admin email**: `it.fallaportal@gmail.com` (rol `treasury`)
+
+### Cens de fallers i certificats d'antiguitat (2026-11-04)
+
+El cens de fallers **no és a l'app**: viu al programa de cens de la falla i Emilio n'exporta fitxers a
+`Downloads` (fora del repo, dades personals). Per a un certificat d'antiguitat:
+
+- **`Altes.xlsx`** (762 fallers actius) i **`Baixes.xlsx`** (720 baixes): una fila per faller, mateixes columnes
+  (`CodFaller`, `Nombre`, `Apellidos`, `FechaNacimiento`, `Alta`, `FechaAlta`, `FechaBaja`, `AntiguitatPrevia`…).
+  Només hi ha **una data d'alta i una de baixa** per persona (no hi ha històric de reingressos). Cap `CodFaller` és a
+  les dues. Alguns tenen la data buida (1 a Altes, 20 a Baixes sense alta, 15 sense baixa) i els cognoms poden estar
+  en ordre invertit (la baixa `840` és `GOMEZ GASCON` per a una persona que la falla coneix com a Gascón Gómez).
+- **`Cens 2027.xlsx`** (`Año`, `NumeroCens`, `CodFaller`, `IdCategoria`, `Major_Infantil`): una fila per faller i any
+  de cens, però **incomplet**: `Año` és un número d'ordre (`Año 1` = 1977; inferit, no documentat), ~500 files/any fins
+  a l'`Año 46` (2022) i quasi res després; hi falten també fallers actius i alguns anys de baixes. **No serveix per
+  a certificar els anys**, només per a orientar-se (el `NumeroCens` pot canviar d'un any a l'altre).
+- **«Fitxa de Faller» de la JCF** (PDF de la Secretaria Virtual de la Junta Central Fallera): és la font fiable dels
+  **anys de cens (historial), el número de cens JCF, la comissió (INFANTILS/…) i el càrrec**, i du el número de cens
+  de la falla. La falla és la **23801 «Portal de Valldigna»**. Per a fallers actius es demana la fitxa a Emilio.
+- **Certificat**: `tools/certificat_faller.mjs` (Word) + `tools/certificat_pdf.ps1` (PDF per a signar amb Autofirma).
+  Signen el/la president/a i el/la secretari/a (noms en blanc: es signa amb certificat digital). Vore
+  `WORKSTREAM_STATUS.md`.

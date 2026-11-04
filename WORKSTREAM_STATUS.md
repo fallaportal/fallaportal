@@ -7,6 +7,21 @@
 
 ---
 
+### Eina puntual — Certificats d'antiguitat de fallers (2026-11-04)
+
+Emilio necessita certificats de que un/a faller/a és (o va ser) de la falla des d'un any. Eina local, fora de l'app:
+`tools/certificat_faller.mjs` genera el Word (1 pàgina A4, escut a `tools/assets/escut_falla.png`; dependència `docx`
+a `tools/package.json`) i `tools/certificat_pdf.ps1` l'exporta a PDF amb Word per a signar-lo amb Autofirma. Fets:
+Macarena Gimeno Giménez (infantil, vocal, alta 01/03/2023, cens falla 591, JCF 626167) i Jennifer Gascón Gómez (baixa
+`840`: alta 01/03/2012, baixa 25/05/2018, comissió major segons el Cens; **no apareix a la JCF** (baixa anterior al cens informatitzat), així que el
+certificat té l'alta i la baixa d'Altes/Baixes i els números de cens de la falla per any que Emilio va treure del
+programa de cens: 139 (2012–13), 140 (2014–15), 141 (2016–17), 138 (2018), opció `--cens-anys`; sense cens JCF ni càrrec). Fonts de dades i límits: `DOMAIN_KNOWLEDGE.md` («Cens de fallers i certificats»). Els `Certificat_*.docx/pdf` són
+dades personals: al `.gitignore`.
+
+Pendent: si es repeteix molt, plantejar-ho com a funció de l'app (D-021, dades al Supabase) en lloc d'eina local.
+
+---
+
 ### Actiu — WS-SUPABASE (nou, 2026-09-27)
 
 **Objective**: Migrar de Google Sheets + OAuth de Google a Supabase sense perdre dades

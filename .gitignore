@@ -26,3 +26,7 @@ tools/*.crt
 
 # Cache de Python (eines de tools/)
 __pycache__/
+
+# Certificats de fallers (dades personals, nomes en local)
+Certificat_*.docx
+Certificat_*.pdf
