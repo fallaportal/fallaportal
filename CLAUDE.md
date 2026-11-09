@@ -11,14 +11,17 @@ fitxer i el continuity set (§2) sencer** abans de tocar res.
 
 - **Arquitectura**: un sol `index.html` (~9.400 línies) + `sw.js`. Sense bundler,
   framework ni backend propi (D-001, `DECISION_LOG.md`).
-- **Dades**: Google Sheets com a única base de dades via Sheets API v4 (D-002).
-  `writeTab` reescriu pestanyes senceres — no hi ha escriptura incremental.
-- **Auth**: Google OAuth. No funciona en `localhost` (client OAuth de producció no
-  l'autoritza) — vore `.claude/skills/verify/SKILL.md` pel procediment exacte per
-  simular sessió i provar la UI real.
+- **Dades**: Supabase (Postgres amb RLS, Storage per als justificants) des del tall
+  del 9/11/2026 (D-021, D-056). El full de Google és només un arxiu en només lectura
+  (D-002 superat). L'app desa per diferències amb `public.guarda_canvis`.
+- **Auth**: Supabase Auth, entrada amb correu i codi de 6 xifres (D-046); només els
+  membres de `usuaris` poden entrar. Per a provar la UI vore
+  `.claude/skills/verify/SKILL.md` (simulació del client de Supabase o pont amb RLS real).
 - **Desplegament**: GitHub Pages des de la branca `main` del repo
-  `fallaportal/fallaportal`. Un `push` a `main` és el que es publica — no hi ha
-  entorn intermedi ni CI que ho filtre.
+  `fallaportal/fallaportal`, al domini `app.fallaportal.es`. Un `push` a `main` és el
+  que es publica — no hi ha entorn intermedi ni CI que ho filtre. Després del tall no
+  hi ha projecte de Supabase de proves: els canvis d'esquema es proven en local (PGlite)
+  i només després s'apliquen al projecte (`supabase_migra.mjs aplica`).
 - **Dades sensibles fora del repo**: extractes bancaris i fulls de moviments
   (`Moviments_compte_*.xlsx/.xls`, `movimientos.xlsx`, `Book1/2.xlsx`, `eventos
   entradas portal*.csv`) viuen només en local, mai es commitegen (vore
@@ -50,8 +53,8 @@ anterior".
 
 No hi ha suite de tests. Qualsevol canvi que afecte la UI o el flux de dades s'ha
 de provar executant l'app real al navegador (servidor `falla-static`,
-`.claude/launch.json`, port 8899) seguint el bypass d'OAuth (a `main`) o la simulació del client de Supabase (a la
-branca `supabase`) documentats a `.claude/skills/verify/SKILL.md`. No es dona per tancada una tasca només perquè el
+`.claude/launch.json`, port 8899) seguint la simulació del client de Supabase o el pont amb RLS real
+documentats a `.claude/skills/verify/SKILL.md` (el bypass d'OAuth només val per a l'etiqueta `pre-supabase`). No es dona per tancada una tasca només perquè el
 fitxer "es veu bé".
 
 L'esquema de Supabase (`supabase/`, migració D-021) es prova amb `node tools/supabase_tests.mjs` (PGlite en local;
@@ -73,9 +76,9 @@ confirmat. Un tancament que es queda en el commit local deixa la propera sessió
 reescriu sencer a cada tancament (no per línies), la primera divergència real
 produeix un conflicte de fitxer complet, no una fusió trivial de git. Per això:
 
-**Branca `supabase` (D-046)**: la migració a Supabase es desenvolupa a la branca `supabase`, que no es publica. Mai
-`push` a `main` amb codi de Supabase. A l'inici fes `git pull` a la branca on treballes; al tancament el push i la
-comprovació (`git log origin/<branca> -1`) són els de la branca. Els canvis que van a producció abans del tall van a `main`.
+**Branques (després del tall, D-056)**: `main` és producció (ja porta Supabase) i la branca `supabase` queda com a
+còpia al mateix punt del tall; el treball nou va a `main`. Un `push` a `main` publica: comprova'l abans de fer-lo.
+L'etiqueta `pre-supabase` és la versió amb Google Sheets (marxa arrere).
 
 1. `git add` + `git commit` dels documents actualitzats i el codi.
 2. `git push`.

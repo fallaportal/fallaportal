@@ -1078,3 +1078,25 @@ registrar com a mínim 131.918,20 € de pagaments en efectiu.
     «Naturalesa» de l'informe del perfil.
   - El resultat ordinari real del 25/26 només es pot donar per al banc fins que se sàpia l'efectiu de l'1/4/2025.
   - **Nota (2026-11-03)**: Emilio: l'efectiu a l'1/4/2025 no el sap ningú. El resultat real del 25/26 queda només per al banc.
+
+---
+
+### D-056: Tall del 9/11/2026: producció passa a Supabase (v4.2.0) i la càrrega definitiva necessita una clau de `config` més
+**Date**: 2026-11-09
+**Status**: Accepted (Emilio: «avant» a buidar i carregar, «publica» a la fusió)
+**Context**: Dia 0 del procediment de la Fase 7 (D-052). L'assaig complet no usava `--definitiu`; en el tall, la càrrega real va fallar en
+l'últim pas (`config_clau_check` només admetia `exercici_actiu` i `justificant`) i es va desfer sencera (transacció), sense deixar dades.
+**Decision**:
+  - A. Migració `20261109100000_config_carrega_definitiva.sql`: la clau `carrega_definitiva` es pot desar a `config`. 279 proves en local i 275
+    a Supabase en verd. Lliçó: assajar també els flags del dia real (`--definitiu`) i no només el camí comú.
+  - B. Ordre real: full en només lectura i export final (`Falla Portal DB (1).xlsx`, 9/11 09:37) → etiqueta `pre-supabase` (`680d8a1` de `main`) →
+    `supabase_buida.mjs --aplica` + migracions + 275 proves `--remot` → `supabase_carrega.mjs --definitiu` (845 moviments, 77 fons, 50 comprovacions
+    sense errors, 16 avisos coneguts) → 28 justificants de Drive a Storage (0 errors) → còpia `Falla Portal DB_supabase_tall_20261109.xlsx` (fora
+    del repo) → v4.2.0 (`BASE` i `manifest` a l'arrel `/`, fitxer `CNAME` amb `app.fallaportal.es`, fora el bàner de proves) → `main` avançat per
+    fast-forward (`96b6fa0`) → Supabase Site URL `https://app.fallaportal.es` i GitHub Pages amb el domini i «Enforce HTTPS».
+  - C. La clau de servei és una clau «secret» (`sb_secret_…`) a `tools/.env` (`SUPABASE_SERVICE_KEY`), fora del repo.
+**Consequences**:
+  - `main` és ara la versió amb Supabase; el full de Google queda només com a arxiu (només lectura) i l'etiqueta `pre-supabase` és la marxa enrere.
+  - El projecte de Supabase té la càrrega marcada com a definitiva: `supabase_buida.mjs` i `supabase_carrega.mjs` es neguen a esborrar sense `--ignora-definitiu`.
+  - Pendents del tall: proves d'entrada de Juanba Mafé i Juanjo Felis, passiu de falles.app (informe del 9/11), justificant de prova des de l'app,
+    avís als usuaris, i retirar l'accés «qualsevol amb l'enllaç» dels fitxers de Drive migrats.

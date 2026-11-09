@@ -1,6 +1,12 @@
 # Work Stream Status — Falla Portal
-## Snapshot Date: 2026-11-03
-## Versió en producció: v4.0.89 (a `main`) · branca `supabase`: v4.1.8
+## Snapshot Date: 2026-11-09
+## Versió en producció: v4.2.0 (a `main`, amb Supabase, a `app.fallaportal.es`) · etiqueta `pre-supabase` = versió amb Google Sheets
+
+> **TALL FET el 2026-11-09 (D-056)**: producció usa Supabase. Emilio ha entrat amb correu i codi. **Pendents immediats**: proves d'entrada de
+> Juanba Mafé (tresoreria) i Juanjo Felis (àrea Festejos i Gastronomia); passiu de falles.app (informe de saldos del 9/11, a la pantalla
+> Falles.app); justificant de prova des de l'app; avisar els usuaris que ja pot entrar-se; retirar l'accés públic dels fitxers de Drive;
+> `/code-review`. Còpia de la base de dades: `Falla Portal DB_supabase_tall_20261109.xlsx` (Descàrregues, fora del repo). Les referències
+> més avall a «`main` v4.0.89», «branca `supabase`» o «fins al tall» són de l'estat anterior.
 
 > **Context de calendari**: període vacacional, ús baix de l'eina. Bon moment per a
 > canvis estructurals i per a la decisió pendent del Service Worker.
