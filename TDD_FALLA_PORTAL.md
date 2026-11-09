@@ -1,4 +1,9 @@
 # Technical Design Document — Falla Portal
+> **Nota (2026-11-09)**: aquest document descriu l'arquitectura de la v4.0.44 (Google Sheets). Des del tall del 9/11/2026 les dades són a **Supabase**
+> (Postgres amb RLS, Storage, Auth per correu i codi). La font vigent és `MODEL_DADES.md` (taules, permisos), `PLA_MIGRACIO_SUPABASE.md` i `DECISION_LOG.md`
+> (D-021, D-046–D-057): desat per diferències amb `public.guarda_canvis`, matriu rol × mòdul (mòdul `recarregues`), `config.recarregues_desti`,
+> `fallesapp_recarregues` (control) i `fallesapp_alies`. La reescriptura d'aquest TDD és un pendent.
+
 ## Generated: 2026-07-29 · v4.0.44
 
 ---

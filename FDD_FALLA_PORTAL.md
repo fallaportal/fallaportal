@@ -1,5 +1,5 @@
 # Functional Design Document — Falla Portal
-## Generated: 2026-07-29 · Actualitzat: 2026-10-27 · v4.0.87
+## Generated: 2026-07-29 · Actualitzat: 2026-11-09 · v4.4.3
 
 ---
 
@@ -136,9 +136,10 @@ Tresoreria la poden posar o treure a mà. Les exportacions CSV els etiqueten
 ---
 
 #### F-08: Integració Falles.app
-**Description**: Quatre zones: transaccions (recàrregues d'efectiu agrupades per dia i devolucions; les recàrregues
-TPV **no** s'importen des de la v4.0.67 perquè arriben per l'extracte com a "Ingrés APP"), saldos (passiu dels moneders),
-tickets (consums per event, `via:'app'`, només estadístics) i entrades. Bonificacions com a despesa `Virtual`.
+**Description**: falles.app **no té efecte comptable** (D-057): és estadística i control. Quatre zones: transaccions (les recàrregues en efectiu i TPV
+es guarden a `fallesapp_recarregues` amb «Autorizado por» com a control i **no creen ingrés**; les devolucions en efectiu creen despesa només des del
+09/11/2026), saldos (passiu dels moneders), tickets (consums per event, `via:'app'`, només estadístics) i entrades. Bonificacions com a despesa `Virtual`.
+Dates a pujar: transaccions des del 09/11/2026, tickets des de l'01/04/2026. Targeta de quadrament (F-12).
 **Status**: Implementat
 
 ---
@@ -150,6 +151,30 @@ carpetes Drive.
 Un exercici tancat no accepta canvis de moviments, fons, caixes ni importacions; President i Tresoreria poden fer-ho
 com a excepció confirmant-ho.
 **Status**: Implementat
+
+---
+
+#### F-10: Inici del mòbil i navegació (v4.2.1–4.4.3)
+**Description**: al mòbil l'inici és un resum personal (fons delegats amb «Tens X € de la falla al teu poder» / «La falla et deu X €», moviments i despeses
+declarades amb avís de les sense justificant) i botons grans dels mòduls de la persona (+ «Més»), sense scroll. El Dashboard complet és una pantalla pròpia.
+Memòria de navegació: barra «‹ pantalla anterior» i botó Enrere del telèfon. Pantalles només d'ordinador: Importar extracte, Falles.app, Pressupostos i
+Configuració (`MOBIL_NO`). La versió és al menú «Més».
+**Status**: Implementat
+
+---
+
+#### F-11: Declarar recàrregues (D-057, v4.3.x)
+**Description**: qui cobra recàrregues de falles.app en efectiu les declara (import, **data de falles.app**, nota): crea l'ingrés en efectiu a Administració ·
+Tresoreria i un fons delegat lligat a nom seu. Pot corregir l'import o esborrar mentre Tresoreria no n'haja registrat la devolució; la devolució (entrada
+física a caixa) només la fan Tresoreria o President. Regla: tot lliurament de recàrregues ha de tindre l'ingrés a 01/0102 lligat.
+**Status**: Implementat
+
+---
+
+#### F-12: Quadrament de recàrregues amb falles.app (D-057, v4.4.0)
+**Description**: targeta a Falles.app (President i Tresoreria): per delegat i dia, el que diu falles.app contra el declarat, des del 09/11/2026, amb àlies del
+nom de falles.app (`fallesapp_alies`) per als noms que no coincideixen amb una persona.
+**Status**: Implementat (sense dades reals encara des del 09/11)
 
 ---
 
