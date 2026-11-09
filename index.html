@@ -417,7 +417,7 @@ tr:hover td{background:var(--bg2)}
     <div class="login-logo">Falla <span>Portal</span></div>
     <div class="login-sub">Sistema de gestió financera</div>
     <div class="login-fiscal">Any fiscal 26/27 · Abr 2026 – Mar 2027</div>
-    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v4.3.1</div>
+    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v4.4.0</div>
     <div id="login-step-boot" class="login-boot">Comprovant la sessió…</div>
     <div id="login-step-email" class="hidden">
       <label class="login-lbl" for="login-email">Correu electrònic</label>
@@ -470,7 +470,7 @@ tr:hover td{background:var(--bg2)}
     <div class="sb-bottom">
       <div class="sync-ind" style="display:flex;align-items:center;justify-content:space-between"><div style="display:flex;align-items:center;gap:6px"><div class="sync-dot" id="sync-dot"></div><span id="sync-text">Sincronitzat</span></div><button onclick="manualRefresh()" title="Actualitzar dades" style="background:none;border:none;cursor:pointer;padding:2px 4px;color:var(--text2);font-size:14px;line-height:1"><i class="ti ti-refresh"></i></button></div>
       <button class="btn-logout" onclick="signOut()"><i class="ti ti-logout" style="font-size:14px"></i> Tancar sessió</button>
-      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v4.3.1</div>
+      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v4.4.0</div>
     </div>
   </div>
 
@@ -882,6 +882,13 @@ tr:hover td{background:var(--bg2)}
         </div>
       </div>
 
+      <!-- QUADRAMENT DE RECÀRREGUES (D-057, fase 2) -->
+      <div class="card" style="margin-bottom:16px" id="fq-card">
+        <div class="card-title">Quadrament de recàrregues en efectiu <span>des del 09/11/2026 · declarat pels delegats contra falles.app</span></div>
+        <div id="fq-cos"></div>
+        <div style="margin-top:10px"><button class="btn" onclick="renderQuadrament()"><i class="ti ti-refresh"></i> Actualitzar</button></div>
+      </div>
+
       <!-- TRES ZONES -->
       <div style="display:flex;flex-direction:column;gap:16px">
 
@@ -896,7 +903,7 @@ tr:hover td{background:var(--bg2)}
                 <div style="font-weight:500;margin-bottom:4px"><i class="ti ti-info-circle"></i> Com obtenir-lo a falles.app:</div>
                 <ol style="margin-left:16px;line-height:1.8">
                   <li>Ves a <strong>Informes → Informe de Movimientos</strong></li>
-                  <li>Selecciona les dates: <span id="fapp-instruccio-dates-1" style="font-family:monospace;background:var(--bg);padding:1px 6px;border-radius:4px"></span></li>
+                  <li>Selecciona les dates: <strong>des del 09/11/2026 fins hui</strong> (primer dia amb declaracions dels delegats; les anteriors no cal)</li>
                   <li>Exporta com a <strong>Excel (.xlsx)</strong></li>
                 </ol>
               </div>
@@ -2632,7 +2639,7 @@ function showPage(id){
   }
   // Refresc en segon pla al canviar de pàgina
   bgRefresh();
-  ({'pressupostos':renderPressupostosEdit,'dashboard':renderDashboard,'dashboard-full':renderDashboard,'historial':renderHistorial,'directiva':renderDirectiva,'fallesapp':function(){initFappDates();initBonifSelectors();},'importacio':function(){initCSVDates();},
+  ({'pressupostos':renderPressupostosEdit,'dashboard':renderDashboard,'dashboard-full':renderDashboard,'historial':renderHistorial,'directiva':renderDirectiva,'fallesapp':function(){initFappDates();initBonifSelectors();renderQuadrament();},'importacio':function(){initCSVDates();},
     'pressupostos':renderPressupostosEdit,'pressupostos-edit':renderPressupostosEdit,
     'directiva':renderDirectiva,
     'lliurament':renderFons,'recarregues':renderRecarregues,'tancament':renderTancamentList,'resultats':renderResultats,
@@ -5214,6 +5221,98 @@ async function declararRecarrega(){
   if(btn)btn.disabled=false;
   renderRecarregues();
   renderMobHome();
+}
+
+// QUADRAMENT DE RECÀRREGUES (D-057, fase 2): per delegat i per dia, el que declara cada delegat contra el que diu falles.app («Autorizado por»).
+// falles.app no té efecte comptable: el fitxer és el control (`fallesapp_recarregues`) i l'ingrés és la declaració. El nom de falles.app es lliga
+// amb una persona comparant-lo amb el nom de l'app (sense accents, majúscules ni ordre) o, si no coincideix, amb un àlies (`fallesapp_alies`).
+const FAPP_CONTROL_DES_DE='2026-11-09';   // primer dia amb declaracions dels delegats
+function _fappClau(s){
+  return String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().replace(/[^a-z0-9 ]+/g,' ').split(/\s+/).filter(Boolean).sort().join(' ');
+}
+function _fqDia(d){
+  const x=new Date(d);
+  return x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')+'-'+String(x.getDate()).padStart(2,'0');
+}
+function _fqSigne(v){return(v>0?'+':v<0?'−':'')+fmtD(v);}
+async function renderQuadrament(){
+  const el=document.getElementById('fq-cos');
+  if(!el)return;
+  el.innerHTML='<div style="color:var(--text3);font-size:13px">Carregant…</div>';
+  try{
+    const des=new Date(FAPP_CONTROL_DES_DE+'T00:00:00').toISOString();
+    const fitxer=[];
+    for(let i=0;;i+=1000){
+      const r=await sb.from('fallesapp_recarregues').select('data_hora,import,autoritzat_per').eq('tipus','efectiu').gte('data_hora',des).order('data_hora').range(i,i+999);
+      if(r.error)throw r.error;
+      fitxer.push.apply(fitxer,r.data||[]);
+      if((r.data||[]).length<1000)break;
+    }
+    const ra=await sb.from('fallesapp_alies').select('id,nom_fallesapp,usuari_id');
+    if(ra.error)throw ra.error;
+    const persones=(DB.config.usuaris||[]).filter(function(u){return u.rol!=='noauth'&&u.id;});
+    const nomDe={};persones.forEach(function(u){nomDe[u.id]=u.nom;});
+    const perClau={};
+    persones.forEach(function(u){perClau[_fappClau(u.nom)]=u.id;});
+    (ra.data||[]).forEach(function(a){perClau[_fappClau(a.nom_fallesapp)]=a.usuari_id;});   // l'àlies mana sobre la coincidència de noms
+    const fi={},decl={},sense={};   // fi[usuari][dia], decl[usuari][dia], sense[nom de falles.app]
+    fitxer.forEach(function(f){
+      const nom=String(f.autoritzat_per||'').trim()||'(sense autoritzador)';
+      const u=perClau[_fappClau(nom)],dia=_fqDia(f.data_hora),imp=parseFloat(f.import)||0;
+      if(u){((fi[u]=fi[u]||{})[dia]=(fi[u][dia]||0)+imp);}
+      else sense[nom]=(sense[nom]||0)+imp;
+    });
+    (DB.fons||[]).forEach(function(f){
+      const dia=dd2iso(f.data);
+      if(f.tipus!=='lliurament'||f.origen!=='tercer'||!f.movimentId||dia<FAPP_CONTROL_DES_DE)return;
+      ((decl[f.delegId]=decl[f.delegId]||{})[dia]=(decl[f.delegId][dia]||0)+(parseFloat(f.import)||0));
+    });
+    const ids=Array.from(new Set(Object.keys(fi).concat(Object.keys(decl))));
+    const r2=function(v){return Math.round(v*100)/100;};
+    const files=ids.map(function(u){
+      const dies=Array.from(new Set(Object.keys(fi[u]||{}).concat(Object.keys(decl[u]||{})))).sort();
+      const tf=r2(dies.reduce(function(s,d){return s+((fi[u]||{})[d]||0);},0)),td=r2(dies.reduce(function(s,d){return s+((decl[u]||{})[d]||0);},0));
+      return{u:u,nom:nomDe[u]||u,dies:dies,tf:tf,td:td,dif:r2(tf-td)};
+    }).sort(function(a,b){return Math.abs(b.dif)-Math.abs(a.dif)||a.nom.localeCompare(b.nom,'ca');});
+    const col=function(d){return d===0?'var(--green)':'var(--amber)';};
+    let h='';
+    if(!files.length)h+='<div style="color:var(--text3);font-size:13px;margin-bottom:8px">Encara no hi ha recàrregues del fitxer ni declaracions des del 09/11/2026.</div>';
+    files.forEach(function(x){
+      const text=x.dif===0?'quadra':(x.dif>0?'falta declarar '+fmtD(x.dif):'declarat de més '+fmtD(-x.dif));
+      h+='<details style="border-top:0.5px solid var(--border);padding:8px 0"><summary style="cursor:pointer;display:flex;gap:8px;align-items:center;flex-wrap:wrap">'
+        +'<span style="flex:1;min-width:120px;font-weight:500">'+_mhEsc(x.nom)+'</span>'
+        +'<span style="font-size:12px;color:var(--text2)">falles.app '+fmtD(x.tf)+' · declarat '+fmtD(x.td)+'</span>'
+        +'<span style="font-size:12px;font-weight:500;color:'+col(x.dif)+'">'+text+'</span></summary>'
+        +'<table style="width:100%;margin-top:6px;font-size:12px"><tr style="color:var(--text3)"><th style="text-align:left">Dia</th><th style="text-align:right">falles.app</th><th style="text-align:right">Declarat</th><th style="text-align:right">Diferència</th></tr>'
+        +x.dies.map(function(d){
+          const a=r2((fi[x.u]||{})[d]||0),b=r2((decl[x.u]||{})[d]||0),df=r2(a-b);
+          return'<tr><td>'+fmtDt(d)+'</td><td style="text-align:right">'+fmtD(a)+'</td><td style="text-align:right">'+fmtD(b)+'</td><td style="text-align:right;color:'+col(df)+'">'+(df===0?'✓':_fqSigne(df))+'</td></tr>';
+        }).join('')+'</table></details>';
+    });
+    const totF=r2(files.reduce(function(s,x){return s+x.tf;},0)),totD=r2(files.reduce(function(s,x){return s+x.td;},0));
+    if(files.length)h+='<div style="border-top:0.5px solid var(--border);padding-top:8px;margin-top:2px;font-size:13px;display:flex;justify-content:space-between"><b>Total</b><span>falles.app '+fmtD(totF)+' · declarat '+fmtD(totD)+' · <b style="color:'+col(r2(totF-totD))+'">'+(r2(totF-totD)===0?'quadra':_fqSigne(r2(totF-totD)))+'</b></span></div>';
+    const noms=Object.keys(sense);
+    if(noms.length){
+      const opcions='<option value="">Tria la persona…</option>'+persones.slice().sort(function(a,b){return a.nom.localeCompare(b.nom,'ca');}).map(function(u){return'<option value="'+_mhEsc(u.id)+'">'+_mhEsc(u.nom)+'</option>';}).join('');
+      h+='<div style="margin-top:14px;padding:10px;border-radius:var(--r);background:var(--amber-bg)"><div style="font-weight:500;color:var(--amber-text);margin-bottom:6px"><i class="ti ti-user-question"></i> Noms de falles.app sense persona assignada</div>'
+        +noms.map(function(n,i){
+          return'<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin:4px 0"><span style="flex:1;min-width:120px;font-size:13px">'+_mhEsc(n)+' <span style="color:var(--text2)">('+fmtD(sense[n])+')</span></span>'
+            +'<select id="fq-sel-'+i+'" style="max-width:190px">'+opcions+'</select>'
+            +'<button class="btn" data-nom="'+_mhEsc(n)+'" onclick="assignaAliesFapp(this.dataset.nom,\'fq-sel-'+i+'\')">Assignar</button></div>';
+        }).join('')+'</div>';
+    }
+    el.innerHTML=h;
+  }catch(e){
+    el.innerHTML='<div style="color:var(--red);font-size:13px">No s\'ha pogut carregar el quadrament: '+_mhEsc(e&&e.message?e.message:e)+'</div>';
+  }
+}
+async function assignaAliesFapp(nom,selId){
+  const sel=document.getElementById(selId);
+  if(!sel||!sel.value){showToast('Tria la persona de l\'app',true);return;}
+  const r=await sb.from('fallesapp_alies').insert({nom_fallesapp:nom,usuari_id:sel.value});
+  if(r.error){showToast('No s\'ha pogut assignar: '+r.error.message,true);return;}
+  showToast('Assignat: '+nom);
+  renderQuadrament();
 }
 
 // TANCAMENT CAIXA

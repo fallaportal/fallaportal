@@ -57,6 +57,7 @@ const rcFons = (o = {}) => fons({ id: 't_rcf', tipus: 'lliurament', origen: 'ter
 const rcPrep = "insert into public.moviments (id, data, tipus, import, compte_id, area_id, delegacio_id, font, concepte, creat_per) values ('t_rc', '2091-05-10', 'ingres', 20, 't_efectiu', '92', '9201', 'ingres_tercer', 'Recàrregues falles.app', 't_delegat')";
 const rcFonsPrep = "insert into public.fons (id, data, tipus, delegat_id, import, origen, moviment_id, creat_per) values ('t_rcf', '2091-05-10', 'lliurament', 't_delegat', 20, 'tercer', 't_rc', 't_delegat')";
 const DEVTARD = "insert into public.fons (id, data, tipus, delegat_id, import, creat_per, creat_at) values ('t_rcd', '2091-05-11', 'devolucio', 't_delegat', 20, 't_treasury', now() + interval '1 hour')";
+const al = (nom = 'Nom Cognom') => "insert into public.fallesapp_alies (nom_fallesapp, usuari_id) values ('" + nom + "', 't_delegat') returning 1";
 const fr = (extra = '') => "insert into public.fallesapp_recarregues (exercici_id, data_hora, tipus, import, autoritzat_per, empremta) values ('91/92', '2091-05-10T10:00:00Z', 'efectiu', 10, 'Nom Cognom', 'h1')" + extra + " returning 1";
 
 export const casos = [
@@ -356,4 +357,16 @@ export const casos = [
   { nom: 'falles.app: Tresoreria guarda una recàrrega del fitxer amb l\'autoritzador i l\'empremta', com: T, sql: fr(), espera: { files: 1 } },
   { nom: 'falles.app: tornar a importar el mateix fitxer no duplica (empremta única)', com: T, prep: fr().replace(' returning 1', ''), sql: fr(), espera: { error: 'empremta' } },
   { nom: 'falles.app: el delegat no guarda files del fitxer', com: D, sql: fr(), espera: 'error' },
+  // ---------------------------------------------------------------- Àlies del nom de falles.app (quadrament, fase 2)
+  { nom: 'àlies: Tresoreria lliga un nom de falles.app amb una persona', com: T, sql: al(), espera: { files: 1 } },
+  { nom: 'àlies: President també', com: P, sql: al(), espera: { files: 1 } },
+  { nom: 'àlies: el delegat no en crea', com: D, sql: al(), espera: 'error' },
+  { nom: 'àlies: Junta no en crea', com: B, sql: al(), espera: 'error' },
+  { nom: 'àlies: el mateix nom no es repeteix (sense mirar majúscules ni espais)', com: T, prep: al('Nom Cognom').replace(' returning 1', ''), sql: al('  nom COGNOM '), espera: { error: 'fallesapp_alies_nom' } },
+  { nom: 'àlies: ha de ser d\'una persona que existeix', com: T, sql: "insert into public.fallesapp_alies (nom_fallesapp, usuari_id) values ('X', 't_no_existeix') returning 1", espera: 'error' },
+  { nom: 'àlies: un membre els llig', com: D, prep: al().replace(' returning 1', ''), sql: "select 1 from public.fallesapp_alies", espera: { files: 1 } },
+  { nom: 'àlies: qui no és membre no els veu', com: S, prep: al().replace(' returning 1', ''), sql: "select 1 from public.fallesapp_alies", espera: { files: 0 } },
+  { nom: 'àlies: el delegat no els esborra', com: D, prep: al().replace(' returning 1', ''), sql: "delete from public.fallesapp_alies returning 1", espera: { files: 0 } },
+  { nom: 'àlies: Tresoreria els esborra', com: T, prep: al().replace(' returning 1', ''), sql: "delete from public.fallesapp_alies returning 1", espera: { files: 1 } },
+  { nom: 'àlies: queda l\'autoria (qui l\'ha creat)', com: T, sql: al(), verifica: "select creat_per from public.fallesapp_alies limit 1", espera: { valor: 't_treasury' } },
 ];
