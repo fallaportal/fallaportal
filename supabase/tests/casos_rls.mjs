@@ -56,6 +56,7 @@ const rc = (o = {}) => mov({ id: 't_rc', tipus: 'ingres', font: 'ingres_tercer',
 const rcFons = (o = {}) => fons({ id: 't_rcf', tipus: 'lliurament', origen: 'tercer', delegat_id: 't_delegat', moviment_id: 't_rc', import: 20, ...o });
 const rcPrep = "insert into public.moviments (id, data, tipus, import, compte_id, area_id, delegacio_id, font, concepte, creat_per) values ('t_rc', '2091-05-10', 'ingres', 20, 't_efectiu', '92', '9201', 'ingres_tercer', 'Recàrregues falles.app', 't_delegat')";
 const rcFonsPrep = "insert into public.fons (id, data, tipus, delegat_id, import, origen, moviment_id, creat_per) values ('t_rcf', '2091-05-10', 'lliurament', 't_delegat', 20, 'tercer', 't_rc', 't_delegat')";
+const DEVTARD = "insert into public.fons (id, data, tipus, delegat_id, import, creat_per, creat_at) values ('t_rcd', '2091-05-11', 'devolucio', 't_delegat', 20, 't_treasury', now() + interval '1 hour')";
 const fr = (extra = '') => "insert into public.fallesapp_recarregues (exercici_id, data_hora, tipus, import, autoritzat_per, empremta) values ('91/92', '2091-05-10T10:00:00Z', 'efectiu', 10, 'Nom Cognom', 'h1')" + extra + " returning 1";
 
 export const casos = [
@@ -334,9 +335,17 @@ export const casos = [
   { nom: 'recàrregues: un lliurament d\'origen caixa no val encara que siga a nom seu', com: D, sql: [rc(), rcFons({ origen: 'caixa' })], espera: 'error' },
   { nom: 'recàrregues: Junta (sense el mòdul) no pot declarar', com: B, sql: rc(), espera: 'error' },
   { nom: 'recàrregues: un rol només de lectura no pot declarar', com: L, sql: rc(), espera: 'error' },
-  { nom: 'recàrregues: el delegat no esborra la recàrrega que ha declarat', com: D, prep: [rcPrep, rcFonsPrep], sql: "delete from public.moviments where id = 't_rc' returning 1", espera: { files: 0 } },
-  { nom: 'recàrregues: el delegat no en canvia l\'import', com: D, prep: [rcPrep, rcFonsPrep], sql: "update public.moviments set import = 5 where id = 't_rc' returning 1", espera: { error: 'recàrrega declarada' } },
+  { nom: 'recàrregues: el delegat esborra la recàrrega que ha declarat si encara no n\'ha lliurat els diners (i el fons lligat se\'n va)', com: D, prep: [rcPrep, rcFonsPrep], sql: "delete from public.moviments where id = 't_rc' returning 1", verifica: "select count(*) from public.fons where id = 't_rcf'", espera: { valor: '0' } },
+  { nom: 'recàrregues: el delegat en corregeix l\'import i el fons lligat el segueix', com: D, prep: [rcPrep, rcFonsPrep], sql: "update public.moviments set import = 5 where id = 't_rc' returning 1", verifica: "select import::text from public.fons where id = 't_rcf'", espera: { valor: '5.00' } },
   { nom: 'recàrregues: el delegat no en canvia el fons', com: D, prep: [rcPrep, rcFonsPrep], sql: "update public.fons set import = 5 where id = 't_rcf' returning 1", espera: { files: 0 } },
+  { nom: 'recàrregues: el delegat no en posa l\'import a zero ni en negatiu', com: D, prep: [rcPrep, rcFonsPrep], sql: "update public.moviments set import = 0 where id = 't_rc' returning 1", espera: 'error' },
+  { nom: 'recàrregues: el delegat no en canvia la data ni l\'àrea (només concepte i import)', com: D, prep: [rcPrep, rcFonsPrep], sql: "update public.moviments set delegacio_id = '9101', area_id = '91' where id = 't_rc' returning 1", espera: { error: 'Només pots canviar' } },
+  { nom: 'recàrregues: un altre delegat no en corregeix la d\'un company', com: D2, prep: [rcPrep, rcFonsPrep], sql: "update public.moviments set import = 5 where id = 't_rc' returning 1", espera: { files: 0 } },
+  { nom: 'recàrregues: un altre delegat no n\'esborra la d\'un company', com: D2, prep: [rcPrep, rcFonsPrep], sql: "delete from public.moviments where id = 't_rc' returning 1", espera: { files: 0 } },
+  { nom: 'recàrregues: amb una devolució registrada després, el delegat ja no la corregeix', com: D, prep: [rcPrep, rcFonsPrep, DEVTARD], sql: "update public.moviments set import = 5 where id = 't_rc' returning 1", espera: { error: 'devolució registrada' } },
+  { nom: 'recàrregues: amb una devolució registrada després, el delegat ja no l\'esborra', com: D, prep: [rcPrep, rcFonsPrep, DEVTARD], sql: "delete from public.moviments where id = 't_rc' returning 1", espera: { files: 0 } },
+  { nom: 'recàrregues: amb una devolució registrada després, Tresoreria sí que la corregeix', com: T, prep: [rcPrep, rcFonsPrep, DEVTARD], sql: "update public.moviments set import = 5 where id = 't_rc' returning 1", espera: { files: 1 } },
+  { nom: 'recàrregues: una devolució ANTERIOR a la declaració no la bloqueja', com: D, prep: ["insert into public.fons (id, data, tipus, delegat_id, import, creat_per, creat_at) values ('t_rcd0', '2091-05-01', 'devolucio', 't_delegat', 3, 't_treasury', now() - interval '1 day')", rcPrep, rcFonsPrep], sql: "update public.moviments set import = 5 where id = 't_rc' returning 1", espera: { files: 1 } },
   { nom: 'recàrregues: el delegat no registra la devolució dels diners', com: D, prep: [rcPrep, rcFonsPrep], sql: fons({ tipus: 'devolucio', delegat_id: 't_delegat', import: 20 }), espera: 'error' },
   { nom: 'recàrregues: Tresoreria registra la devolució física dels diners', com: T, prep: [rcPrep, rcFonsPrep], sql: fons({ tipus: 'devolucio', delegat_id: 't_delegat', import: 20 }), espera: { files: 1 } },
   { nom: 'recàrregues: President registra la devolució física dels diners', com: P, prep: [rcPrep, rcFonsPrep], sql: fons({ tipus: 'devolucio', delegat_id: 't_delegat', import: 20 }), espera: { files: 1 } },

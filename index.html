@@ -416,7 +416,7 @@ tr:hover td{background:var(--bg2)}
     <div class="login-logo">Falla <span>Portal</span></div>
     <div class="login-sub">Sistema de gestió financera</div>
     <div class="login-fiscal">Any fiscal 26/27 · Abr 2026 – Mar 2027</div>
-    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v4.3.0</div>
+    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v4.3.1</div>
     <div id="login-step-boot" class="login-boot">Comprovant la sessió…</div>
     <div id="login-step-email" class="hidden">
       <label class="login-lbl" for="login-email">Correu electrònic</label>
@@ -469,7 +469,7 @@ tr:hover td{background:var(--bg2)}
     <div class="sb-bottom">
       <div class="sync-ind" style="display:flex;align-items:center;justify-content:space-between"><div style="display:flex;align-items:center;gap:6px"><div class="sync-dot" id="sync-dot"></div><span id="sync-text">Sincronitzat</span></div><button onclick="manualRefresh()" title="Actualitzar dades" style="background:none;border:none;cursor:pointer;padding:2px 4px;color:var(--text2);font-size:14px;line-height:1"><i class="ti ti-refresh"></i></button></div>
       <button class="btn-logout" onclick="signOut()"><i class="ti ti-logout" style="font-size:14px"></i> Tancar sessió</button>
-      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v4.3.0</div>
+      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v4.3.1</div>
     </div>
   </div>
 
@@ -514,7 +514,7 @@ tr:hover td{background:var(--bg2)}
         <div class="field"><label>Nota <span style="color:var(--text3);font-weight:400">(opcional)</span></label><input type="text" id="rc-nota" placeholder="p.e. Festa del 28/10"></div>
         <button class="btn btn-primary" id="rc-btn" style="width:100%;justify-content:center" onclick="declararRecarrega()"><i class="ti ti-check"></i> Declarar recàrrega</button>
       </div>
-      <div class="info-box" style="margin-bottom:12px"><i class="ti ti-info-circle"></i> Els diners són de la falla: els tens tu fins que els lliures a Tresoreria, que en registrarà la devolució.</div>
+      <div class="info-box" style="margin-bottom:12px"><i class="ti ti-info-circle"></i> Els diners són de la falla: els tens tu fins que els lliures a Tresoreria, que en registrarà la devolució. Si t'equivoques, pots corregir o esborrar la recàrrega fins que Tresoreria la registre.</div>
       <div class="card"><div class="card-title">Les teues últimes declaracions</div><div id="rc-llista"></div></div>
     </div>
 
@@ -5104,9 +5104,70 @@ function renderRecarregues(){
   const ll=document.getElementById('rc-llista');
   if(ll){
     ll.innerHTML=mine.length?mine.slice(0,4).map(function(f){
-      return'<div class="recent-row"><div class="rec-dot" style="background:var(--green)"></div><div class="rec-desc">'+_mhEsc(f.data)+(f.nota?' · '+_mhEsc(f.nota):'')+'</div><div class="rec-amt" style="color:var(--green)">'+fmtD(f.import)+'</div></div>';
+      // Es pot corregir o esborrar mentre Tresoreria no n'haja registrat la devolució (el servidor ho decideix de veres; açò només amaga els botons)
+      const bloq=rcBloquejada(f);
+      const accions=bloq?'<i class="ti ti-lock" style="color:var(--text3);font-size:16px" title="Ja lliurada: només Tresoreria la pot corregir"></i>'
+        :'<button class="btn" style="padding:3px 7px" aria-label="Corregir l\'import" onclick="editaRecarrega(\''+_mhEsc(f.movimentId)+'\')"><i class="ti ti-edit"></i></button>'
+        +'<button class="btn" style="padding:3px 7px" aria-label="Esborrar" onclick="esborraRecarrega(\''+_mhEsc(f.movimentId)+'\')"><i class="ti ti-trash"></i></button>';
+      return'<div class="recent-row" style="gap:6px"><div class="rec-dot" style="background:var(--green)"></div><div class="rec-desc">'+_mhEsc(f.data)+(f.nota?' · '+_mhEsc(f.nota):'')+'</div><div class="rec-amt" style="color:var(--green)">'+fmtD(f.import)+'</div>'+accions+'</div>';
     }).join(''):'<div style="color:var(--text3);font-size:12px">Encara no has declarat cap recàrrega</div>';
   }
+}
+// Una recàrrega queda bloquejada per al delegat quan se li registra una devolució posterior (el servidor usa l'hora de creació; ací, la data).
+function rcBloquejada(f){
+  const u=getUsuari();
+  if(!u)return true;
+  const d0=dd2iso(f.data);
+  return(DB.fons||[]).some(function(d){
+    return d.tipus==='devolucio'&&(d.delegId===u.id||(d.delegEmail||'').toLowerCase()===(u.email||'').toLowerCase())&&dd2iso(d.data)>=d0;
+  });
+}
+// Corregir l'import: l'ingrés canvia i el fons lligat el segueix al servidor (trigger); el delegat no toca el fons. La còpia local del fons
+// i la foto de base es posen al dia perquè el desat següent no intente enviar un canvi de fons que no li correspon.
+async function editaRecarrega(movId){
+  if(exerciciTancatBloqueja())return;
+  const mov=(DB.moviments||[]).find(function(m){return m.id===movId;});
+  if(!mov)return;
+  const nou=prompt('Import correcte de la recàrrega (€):',String(mov.import).replace('.',','));
+  if(nou===null)return;
+  const imp=Math.round((parseFloat(String(nou).replace(',','.'))||0)*100)/100;
+  if(!(imp>0)){showToast('Escriu un import major que zero',true);return;}
+  if(imp===Number(mov.import))return;
+  const ant=mov.import;
+  mov.import=imp;
+  try{
+    await save('moviments');
+    const f=(DB.fons||[]).find(function(x){return x.movimentId===movId;});
+    if(f){
+      f.import=imp;
+      const e=_sbBase&&_sbBase.fons?_sbBase.fons.find(function(x){return x.k&&x.k.id===f.id;}):null;
+      if(e&&e.f)e.f.import=imp;
+    }
+    showToast('Recàrrega corregida: '+fmtD(imp));
+  }catch(e){
+    mov.import=ant;
+    showToast('No s\'ha pogut corregir: '+(e&&e.message?e.message:e),true);
+  }
+  renderRecarregues();
+  renderMobHome();
+}
+async function esborraRecarrega(movId){
+  if(exerciciTancatBloqueja())return;
+  const mov=(DB.moviments||[]).find(function(m){return m.id===movId;});
+  if(!mov)return;
+  if(!confirm('Esborrar aquesta recàrrega de '+fmtD(mov.import)+'?\nSe\'n va també del teu saldo de fons.'))return;
+  const movsAnt=DB.moviments,fonsAnt=DB.fons;
+  DB.moviments=DB.moviments.filter(function(m){return m.id!==movId;});
+  DB.fons=(DB.fons||[]).filter(function(f){return f.movimentId!==movId;});   // el servidor l'esborra per cascada: no s'envia
+  try{
+    await save('moviments');
+    showToast('Recàrrega esborrada');
+  }catch(e){
+    DB.moviments=movsAnt;DB.fons=fonsAnt;
+    showToast('No s\'ha pogut esborrar: '+(e&&e.message?e.message:e),true);
+  }
+  renderRecarregues();
+  renderMobHome();
 }
 async function declararRecarrega(){
   if(exerciciTancatBloqueja())return;

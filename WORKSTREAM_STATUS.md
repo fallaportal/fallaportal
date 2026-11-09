@@ -2,6 +2,8 @@
 ## Snapshot Date: 2026-11-09
 ## Versió en producció: v4.2.2 (a `main`, amb Supabase, a `app.fallaportal.es`; publicada el 9/11) · etiqueta `pre-supabase` = versió amb Google Sheets
 
+> **Correcció de recàrregues (v4.3.1, feta en local; migració `20261109130000_recarregues_correccio.sql` PENDENT d'aplicar i de publicar)**: el delegat corregeix l'import o esborra una recàrrega seua mentre no hi haja una devolució posterior; 314 proves en local; verificat al navegador el camí d'error (el canvi local es desfà). Falta la prova positiva amb la migració aplicada.
+
 > **WS-RECARREGUES (D-057, 9/11): fase 1 FETA i publicada (v4.3.0, migració aplicada a Supabase).** Els delegats declaren les
 > recàrregues de falles.app en efectiu (pantalla «Declarar recàrregues», botó a l'inici del mòbil): ingrés en efectiu a 01·0102 + fons a nom seu,
 > lligats; la devolució física només Tresoreria o President. El fitxer de falles.app ja no crea l'ingrés de les recàrregues: les guarda com a
