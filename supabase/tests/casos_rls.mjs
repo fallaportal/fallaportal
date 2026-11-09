@@ -60,6 +60,12 @@ const DEVTARD = "insert into public.fons (id, data, tipus, delegat_id, import, c
 const al = (nom = 'Nom Cognom') => "insert into public.fallesapp_alies (nom_fallesapp, usuari_id) values ('" + nom + "', 't_delegat') returning 1";
 const fr = (extra = '') => "insert into public.fallesapp_recarregues (exercici_id, data_hora, tipus, import, autoritzat_per, empremta) values ('91/92', '2091-05-10T10:00:00Z', 'efectiu', 10, 'Nom Cognom', 'h1')" + extra + " returning 1";
 
+const cp = (o = {}) => { const c = { id: 't_cp', exercici_id: '91/92', delegacio_id: '9101', proveidor: 'Proveïdor', concepte: 'Monument', import: 1000, ...o }; const k = Object.keys(c); return `insert into public.compromisos (${k.join(', ')}) values (${k.map((x) => q(c[x])).join(', ')}) returning 1`; };
+const ct = (o = {}) => { const c = { id: 't_ct', compromis_id: 't_cp', data_prevista: '2091-06-01', import: 500, ...o }; const k = Object.keys(c); return `insert into public.compromis_terminis (${k.join(', ')}) values (${k.map((x) => q(c[x])).join(', ')}) returning 1`; };
+const sansRet = (x) => x.replace(' returning 1', '');
+const es = (o = {}) => { const c = { compte_id: 't_banc', data: '2091-05-31', saldo: 1234.56, ...o }; const k = Object.keys(c); return `insert into public.extractes_saldos (${k.join(', ')}) values (${k.map((x) => q(c[x])).join(', ')}) returning 1`; };
+const PREV = (o) => `update public.config set valor = '${JSON.stringify({ reserva_minima: 0, dies_avis_extracte: 30, factor_prudencia_events: 0.9, fallers_actius: 762, seguretat_ingressos: 0.95, ...o })}'::jsonb where clau = 'previsio' returning 1`;
+
 export const casos = [
   // ---------------------------------------------------------------- Seguretat de l'esquema (substitueixen les opcions
   // "Enable automatic RLS" i "Automatically expose new tables" del projecte: fallen si una taula nova se'n queda fora)
@@ -369,4 +375,56 @@ export const casos = [
   { nom: 'àlies: el delegat no els esborra', com: D, prep: al().replace(' returning 1', ''), sql: "delete from public.fallesapp_alies returning 1", espera: { files: 0 } },
   { nom: 'àlies: Tresoreria els esborra', com: T, prep: al().replace(' returning 1', ''), sql: "delete from public.fallesapp_alies returning 1", espera: { files: 1 } },
   { nom: 'àlies: queda l\'autoria (qui l\'ha creat)', com: T, sql: al(), verifica: "select creat_per from public.fallesapp_alies limit 1", espera: { valor: 't_treasury' } },
+  // ---------------------------------------------------------------- Previsió, fase 1 (D-058): compromisos, terminis, saldos d'extracte
+  { nom: 'previsió: la matriu dona Compromisos només a President i Tresoreria', com: 'servei', sql: "select string_agg(rol_id, ',' order by rol_id) from public.rol_moduls where modul_id = 'compromisos' and rol_id in ('president', 'treasury', 'area', 'delegat', 'board')", espera: { valor: 'president,treasury' } },
+  { nom: 'compromisos: Tresoreria en crea un', com: T, sql: cp(), espera: { files: 1 } },
+  { nom: 'compromisos: President també', com: P, sql: cp(), espera: { files: 1 } },
+  { nom: 'compromisos: el delegat no en crea', com: D, sql: cp(), espera: 'error' },
+  { nom: "compromisos: Resp. d'Àrea no en crea", com: A, sql: cp(), espera: 'error' },
+  { nom: 'compromisos: Junta no en crea', com: B, sql: cp(), espera: 'error' },
+  { nom: "compromisos: l'import ha de ser positiu", com: T, sql: cp({ import: 0 }), espera: { error: 'check' } },
+  { nom: 'compromisos: el proveïdor no pot estar buit', com: T, sql: cp({ proveidor: '  ' }), espera: { error: 'check' } },
+  { nom: "compromisos: l'estat ha de ser viu, tancat o cancellat", com: T, sql: cp({ estat: 'pagat' }), espera: { error: 'check' } },
+  { nom: 'compromisos: Tresoreria els llig', com: T, prep: sansRet(cp()), sql: 'select 1 from public.compromisos', espera: { files: 1 } },
+  { nom: 'compromisos: el delegat no els veu (són imports de contractes)', com: D, prep: sansRet(cp()), sql: 'select 1 from public.compromisos', espera: { files: 0 } },
+  { nom: 'compromisos: qui no és membre no els veu', com: S, prep: sansRet(cp()), sql: 'select 1 from public.compromisos', espera: { files: 0 } },
+  { nom: 'compromisos: Tresoreria el canvia', com: T, prep: sansRet(cp()), sql: "update public.compromisos set estat = 'tancat' returning 1", espera: { files: 1 } },
+  { nom: 'compromisos: el delegat no el canvia', com: D, prep: sansRet(cp()), sql: "update public.compromisos set estat = 'tancat' returning 1", espera: { files: 0 } },
+  { nom: "compromisos: el delegat no l'esborra", com: D, prep: sansRet(cp()), sql: 'delete from public.compromisos returning 1', espera: { files: 0 } },
+  { nom: "compromisos: Tresoreria l'esborra", com: T, prep: sansRet(cp()), sql: 'delete from public.compromisos returning 1', espera: { files: 1 } },
+  { nom: "compromisos: queda l'autoria", com: T, sql: cp(), verifica: 'select creat_per from public.compromisos limit 1', espera: { valor: 't_treasury' } },
+  { nom: "termini: Tresoreria en crea un", com: T, prep: sansRet(cp()), sql: ct(), espera: { files: 1 } },
+  { nom: 'termini: el delegat no en crea', com: D, prep: sansRet(cp()), sql: ct(), espera: 'error' },
+  { nom: "termini: l'import ha de ser positiu", com: T, prep: sansRet(cp()), sql: ct({ import: -5 }), espera: { error: 'check' } },
+  { nom: "termini: ha de ser d'un compromís que existeix", com: T, sql: ct({ compromis_id: 't_no_existeix' }), espera: 'error' },
+  { nom: 'termini: el delegat no els veu', com: D, prep: [sansRet(cp()), sansRet(ct())], sql: 'select 1 from public.compromis_terminis', espera: { files: 0 } },
+  { nom: 'termini: es paga amb una despesa', com: T, prep: [sansRet(cp()), sansRet(ct())], sql: "update public.compromis_terminis set moviment_id = 't_m_tres' returning 1", espera: { files: 1 } },
+  { nom: 'termini: un ingrés no el paga', com: T, prep: [sansRet(cp()), sansRet(ct())], sql: "update public.compromis_terminis set moviment_id = 't_m_ext' returning 1", espera: { error: 'despesa' } },
+  { nom: 'termini: un pagament no paga dos terminis', com: T, prep: [sansRet(cp()), sansRet(ct({ moviment_id: 't_m_tres' }))], sql: ct({ id: 't_ct2', moviment_id: 't_m_tres' }), espera: { error: 'compromis_terminis_moviment' } },
+  { nom: "termini: esborrar el pagament deixa el termini sense pagar (no s'esborra)", com: 'servei', prep: [sansRet(cp()), sansRet(ct({ moviment_id: 't_m_tres' }))], sql: "delete from public.moviments where id = 't_m_tres'", verifica: 'select count(*) from public.compromis_terminis where moviment_id is null', espera: { valor: '1' } },
+  { nom: 'termini: esborrar el compromís esborra els terminis', com: T, prep: [sansRet(cp()), sansRet(ct())], sql: 'delete from public.compromisos returning 1', verifica: 'select count(*) from public.compromis_terminis', espera: { valor: '0' } },
+  { nom: "saldos d'extracte: Tresoreria el desa", com: T, sql: es(), espera: { files: 1 } },
+  { nom: "saldos d'extracte: President també", com: P, sql: es(), espera: { files: 1 } },
+  { nom: "saldos d'extracte: el delegat no el desa", com: D, sql: es(), espera: 'error' },
+  { nom: "saldos d'extracte: un mateix compte i dia no es repeteix", com: T, prep: sansRet(es()), sql: es({ saldo: 1 }), espera: { error: 'extractes_saldos_compte_data' } },
+  { nom: "saldos d'extracte: tornar a importar el mateix dia el substitueix (upsert)", com: T, prep: sansRet(es()), sql: "insert into public.extractes_saldos (compte_id, data, saldo) values ('t_banc', '2091-05-31', 99) on conflict (compte_id, data) do update set saldo = excluded.saldo returning 1", verifica: 'select saldo from public.extractes_saldos', espera: { valor: '99.00' } },
+  { nom: "saldos d'extracte: Tresoreria els llig", com: T, prep: sansRet(es()), sql: 'select 1 from public.extractes_saldos', espera: { files: 1 } },
+  { nom: "saldos d'extracte: el delegat no els veu", com: D, prep: sansRet(es()), sql: 'select 1 from public.extractes_saldos', espera: { files: 0 } },
+  { nom: "saldos d'extracte: ha de ser d'un compte que existeix", com: T, sql: es({ compte_id: 't_no_existeix' }), espera: 'error' },
+  { nom: 'config previsió: Tresoreria canvia la reserva mínima', com: T, sql: PREV({ reserva_minima: 15000 }), espera: { files: 1 } },
+  { nom: 'config previsió: el delegat no la canvia', com: D, sql: PREV({ reserva_minima: 15000 }), espera: { files: 0 } },
+  { nom: 'config previsió: la reserva no pot ser negativa', com: T, sql: PREV({ reserva_minima: -1 }), espera: { error: 'fora de rang' } },
+  { nom: 'config previsió: el factor de prudència és entre 0 i 1', com: T, sql: PREV({ factor_prudencia_events: 1.5 }), espera: { error: 'fora de rang' } },
+  { nom: 'config previsió: un valor que no és un número es rebutja', com: T, sql: PREV({ fallers_actius: 'molts' }), espera: { error: 'números' } },
+  { nom: 'compromisos: per defecte és una despesa', com: T, sql: cp(), verifica: 'select sentit from public.compromisos', espera: { valor: 'despesa' } },
+  { nom: 'compromisos: Tresoreria en crea un d\'ingrés (quotes)', com: T, sql: cp({ sentit: 'ingres', proveidor: 'Fallers', concepte: 'Quotes' }), espera: { files: 1 } },
+  { nom: 'compromisos: el tipus ha de ser despesa o ingrés', com: T, sql: cp({ sentit: 'altre' }), espera: { error: 'check' } },
+  { nom: 'termini d\'ingrés: es complix amb un ingrés', com: T, prep: [sansRet(cp({ sentit: 'ingres' })), sansRet(ct())], sql: "update public.compromis_terminis set moviment_id = 't_m_ext' returning 1", espera: { files: 1 } },
+  { nom: 'termini d\'ingrés: una despesa no el complix', com: T, prep: [sansRet(cp({ sentit: 'ingres' })), sansRet(ct())], sql: "update public.compromis_terminis set moviment_id = 't_m_tres' returning 1", espera: { error: 'un ingrés' } },
+  { nom: 'termini de despesa: un ingrés no el complix (missatge nou)', com: T, prep: [sansRet(cp()), sansRet(ct())], sql: "update public.compromis_terminis set moviment_id = 't_m_ext' returning 1", espera: { error: 'una despesa' } },
+  { nom: 'compromisos: no canvia de tipus si té terminis vinculats', com: T, prep: [sansRet(cp()), sansRet(ct({ moviment_id: 't_m_tres' }))], sql: "update public.compromisos set sentit = 'ingres' returning 1", espera: { error: 'vinculats' } },
+  { nom: 'compromisos: sí que canvia de tipus si no en té', com: T, prep: [sansRet(cp()), sansRet(ct())], sql: "update public.compromisos set sentit = 'ingres' returning 1", espera: { files: 1 } },
+  { nom: 'config previsió: la seguretat dels ingressos és entre 0 i 1', com: T, sql: PREV({ seguretat_ingressos: 1.2 }), espera: { error: 'fora de rang' } },
+  { nom: 'config previsió: la seguretat dels ingressos és obligatòria', com: T, sql: "update public.config set valor = '{\"reserva_minima\": 0, \"dies_avis_extracte\": 30, \"factor_prudencia_events\": 0.9, \"fallers_actius\": 762}'::jsonb where clau = 'previsio' returning 1", espera: { error: 'números' } },
+  { nom: 'config previsió: porta els valors per defecte', com: 'servei', sql: "select valor ->> 'dies_avis_extracte' from public.config where clau = 'previsio'", espera: { valor: '30' } },
 ];

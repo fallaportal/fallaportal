@@ -501,3 +501,14 @@ Revisió de les polítiques i els triggers amb ulls d'atacant: un membre que fa 
 - Tests: una sentència d'inserció no retorna mai una columna (`returning 1`): amb `returning id` Postgres exigeix
   poder llegir la fila nova i un no-membre semblaria bloquejat quan no ho està (va amagar R3).
 
+## 10. Previsió de tresoreria (WS-PREVISIO fase 1, D-058, 2026-11-10)
+
+Tres taules noves, que l'app llig i escriu directament (no passen per `guarda_canvis` ni són pestanyes del full) i que l'export de còpia (`tools/supabase_exporta_xlsx.mjs`) escriu com a pestanyes pròpies:
+
+| Taula | Contingut |
+|---|---|
+| `compromisos` | `id`, `exercici_id`, `delegacio_id`, `event_id`, `sentit` (`despesa`/`ingres`), `proveidor`, `concepte`, `import > 0`, `data_signatura`, `estat` (`viu`/`tancat`/`cancellat`), `notes`, autoria. El que ja se sap que eixirà (contractes signats, recurrents) o entrarà (quotes, subvencions concedides). |
+| `compromis_terminis` | `id`, `compromis_id` (cascada), `data_prevista`, `import > 0`, `moviment_id` (únic, `on delete set null`). Un termini està complit quan té moviment; el moviment ha de ser del mateix sentit que el compromís (trigger). |
+| `extractes_saldos` | `compte_id`, `data`, `saldo`; únic per compte i dia. El saldo de l'última línia de cada extracte importat. |
+
+`config` guarda la clau `previsio` (`reserva_minima`, `dies_avis_extracte`, `factor_prudencia_events`, `fallers_actius`, `seguretat_ingressos`). Mòdul `compromisos` (President i Tresoreria en edició): les files només les llig qui té el mòdul.

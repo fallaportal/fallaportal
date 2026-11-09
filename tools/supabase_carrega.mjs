@@ -352,7 +352,7 @@ try {
     throw new Error(`Aquest projecte ja té la càrrega definitiva (${JSON.stringify(jaDefinitiva.valor)}): tornar a carregar esborraria les dades reals d'ús. Si de veres cal, --ignora-definitiu.`);
   }
   // Buidatge (de fills a pares). audit_log no s'esborra mai (és inalterable).
-  for (const t of ['fallesapp_alies', 'fallesapp_recarregues', 'fallesapp_consums', 'fallesapp_passiu', 'pressupost_historial', 'pressupost_estat', 'pressupost_linies',
+  for (const t of ['compromis_terminis', 'compromisos', 'extractes_saldos', 'fallesapp_alies', 'fallesapp_recarregues', 'fallesapp_consums', 'fallesapp_passiu', 'pressupost_historial', 'pressupost_estat', 'pressupost_linies',
     'justificants', 'fons', 'caixa_canvis', 'moviments', 'caixes', 'events', 'directiva', 'saldos_inicials', 'regles_importacio',
     'delegacions', 'arees', 'comptes', 'operacions', 'config', 'exercicis', 'usuari_rols', 'usuaris']) {
     await db.query(`delete from public.${t}`);

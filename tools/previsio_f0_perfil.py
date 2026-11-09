@@ -44,7 +44,7 @@ RE_TRASPAS = re.compile(r'TRASP|ENTRE BANCS')
 # c = concepte en majúscules; m = moviment.
 PARTIDES = [
     ('Bonificació moneders falles.app (no és efectiu)', 'gast', 'variable', lambda c, m: m['via'] == 'Virtual'),
-    ('Quotes (remeses)', 'ing', 'fixa', lambda c, m: 'QUOTES DE FALLERS' in c),
+    ('Quotes (remeses)', 'ing', 'fixa', lambda c, m: 'QUOTES DE FALLERS' in c or 'REMESA QUOT' in c),
     ('Quotes (pagaments individuals)', 'ing', 'fixa', lambda c, m: re.search(r'\bQUOTES?\b', c)),
     ('Devolucions de quotes', 'gast', 'fixa', lambda c, m: re.search(r'QUOTES', c)),
     ('Loteria', None, 'fixa', lambda c, m: 'LOTERI' in c),

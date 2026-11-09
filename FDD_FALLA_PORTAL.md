@@ -178,6 +178,16 @@ nom de falles.app (`fallesapp_alies`) per als noms que no coincideixen amb una p
 
 ---
 
+#### F-13: Compromisos i diners lliures (D-058, WS-PREVISIO fase 1)
+**Description**: pantalla **Compromisos** (President i Tresoreria, només escriptori) per introduir el que ja se sap que eixirà (contractes signats i recurrents: monument,
+orquestres, lloguers, llum, aigua) o entrarà (quotes, subvencions concedides), amb terminis (un generador crea els recurrents cada mes, trimestre o any) i vincular a cada
+termini el moviment que el complix; paràmetres (reserva mínima, dies d'avís, fallers en actiu, prudència dels events, seguretat dels ingressos); targeta **Diners lliures**
+(també al Dashboard) amb el desglossament i els controls de fiabilitat; i **pla mensual** amb ingressos, despeses, saldo previst, marge i punt mínim fins al 31/03. La
+importació d'extractes desa el saldo del banc de l'última línia.
+**Status**: Implementat i publicat (v4.5.0, 10/11/2026)
+
+---
+
 ### User Flows
 
 #### Registrar una despesa amb justificant (delegat)

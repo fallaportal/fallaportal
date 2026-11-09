@@ -1125,3 +1125,55 @@ l'últim pas (`config_clau_check` només admetia `exercici_actiu` i `justificant
 
 **Fase 2 de D-057 (2026-11-09): quadrament de recàrregues i principi «falles.app no té efecte comptable»**. Emilio: falles.app només serveix de forma estadística; l'efectiu entra per l'app (declaracions i caixes), la targeta pel banc i els consums només assignen vendes als events. Decidit: (a) el fitxer de **transaccions** només es puja **des del 09/11/2026** (primer dia amb declaracions): crea el control de recàrregues i, com fins ara, la despesa de les devolucions en efectiu (es deixa així fins que hi haja una manera de declarar-les; si es passaren a control, una eixida real d'efectiu quedaria sense registrar); (b) els **tickets de consums** es pugen **des de l'01/04/2026** (l'última data al llibre és el 31/03/2026), només per a les estadístiques per event; (c) les bonificacions (despesa Virtual) i les recàrregues ja importades al 25/26 no es toquen. **Pantalla**: targeta «Quadrament de recàrregues en efectiu» a Falles.app (President i Tresoreria): per delegat i per dia, falles.app («Autorizado por») contra el declarat, amb la diferència («falta declarar» / «declarat de més»). El nom de falles.app es lliga amb la persona comparant-lo amb el nom de l'app (sense accents, majúscules ni ordre) o amb un **àlies** (`fallesapp_alies`, migració `20261109140000_fallesapp_alies.sql`); els noms sense persona surten amb una llista per assignar-los. 11 proves noves (325 en local).
 
+---
+
+### D-058: Fase 1 de la previsió (compromisos d'ingrés i despesa, saldos d'extracte, diners lliures, pla mensual): accés directe i només per a qui té el mòdul
+**Date**: 2026-11-10
+**Status**: Accepted · **aplicada i publicada el 2026-11-10 (v4.5.0)**: migració `20261110100000_previsio_fase1.sql` aplicada a Supabase amb còpia prèvia (`Falla Portal DB_supabase_pre_previsio_20261110.xlsx`, a Descàrregues, fora del repo) i 372 proves correctes amb `--remot`
+**Context**: Fase 1 de D-054. Calia guardar els compromisos (contractes signats amb terminis), el saldo de cada extracte importat i els paràmetres de la
+previsió, i mostrar els diners lliures (saldo de tots els comptes − passiu de falles.app − compromisos pendents − reserva mínima). Emilio (10/11): el
+punt de partida és el real del 25/26 i el 26/27 per als recurrents i habituals; el que no se sap va a mà (compromisos) o amb prudència.
+**Decision**:
+  1. **Taules noves**: `compromisos`, `compromis_terminis` (un termini està pagat quan té `moviment_id`, únic; el moviment ha de ser una despesa;
+     esborrar el moviment deixa el termini sense pagar) i `extractes_saldos` (una fila per compte i dia: tornar a importar el mateix dia la substitueix).
+     Paràmetres a `config` clau `previsio` (`reserva_minima` 0 de partida: la fixa la junta; `dies_avis_extracte` 30; `factor_prudencia_events` 0,9;
+     `fallers_actius` 762), amb trigger que valida tipus i rangs.
+  2. **Mòdul `compromisos`** (President i Tresoreria en edició). A diferència de la resta de dades (D-035), **les files només les llig qui té el mòdul**:
+     són imports de contractes. Els saldos d'extracte els escriu qui té `importacio` en edició.
+  3. **Accés directe, no `guarda_canvis`** (com `fallesapp_alies`): no són pestanyes del full, el roundtrip no les cobreix. Per no perdre-les a la còpia
+     de seguretat, `tools/supabase_exporta_xlsx.mjs` les escriu com a pestanyes pròpies i la càrrega les buida en ordre de fills a pares.
+     Conseqüència: guardar un compromís amb terminis són diverses crides (compromís, esborrar terminis, crear o canviar-los), **no una sola transacció**.
+  4. **Diners lliures al client**, funció pura (`pvDinersLliures`, bloc «PREVISIO» d'`index.html`) amb 49 proves en Node (`tools/previsio_tests.mjs`). El saldo
+     de cada compte és el de Flux d'Efectiu (saldo inicial de l'exercici + ingressos − despeses ± traspassos; la via `app` no compta). Els compromisos
+     pendents són els terminis sense pagament dels compromisos vius, de qualsevol exercici.
+  5. **Controls de fiabilitat**: per banc, saldo de l'últim extracte contra el de l'app a eixa data i antiguitat; passiu antic; traspassos que no quadren;
+     moviments d'una via que no és cap compte; compromisos vius amb terminis que no sumen l'import.
+  6. **Compromisos d'ingrés i de despesa i recurrents (Emilio, 10/11)**: un compromís té `sentit` `despesa` (contractes signats: monument, orquestres, carpa; i
+     recurrents: lloguers, llum, aigua) o `ingres` (quotes de fallers, subvencions concedides: ingressos segurs encara que entren en remeses). Els recurrents
+     es generen amb un generador de terminis (cada mes, trimestre o any, amb l'import de cada un; el de la llum es pot canviar a mà). El moviment que complix un
+     termini ha de ser del mateix sentit (trigger); un compromís amb terminis vinculats no canvia de sentit. Els ingressos es compten al **percentatge de seguretat**
+     (`seguretat_ingressos`, 95 % de partida: el 25/26 va tindre 3.101 € de devolucions sobre 116.698 € de remeses). **No es sumen als diners lliures d'avui** (no són
+     efectiu), sí al pla mensual.
+  7. **Pla mensual (primera versió de la Fase 3)**: des d'avui fins al 31/03 de l'exercici (mínim 6 mesos si no es pot deduir), per mes: ingressos i despeses dels
+     terminis pendents dels compromisos vius, saldo previst i marge (saldo − passiu falles.app − reserva), punt mínim i mes on cau. Els terminis amb data passada sense
+     complir compten al primer mes amb un avís; els de després de l'horitzó, a part. **Encara no porta el patró de l'any passat** (ingressos i despeses habituals):
+     això és el que falta per a la Fase 3 completa. **Disseny (Emilio, 10/11: «la pantalla és lletja»)**: no és una taula, sinó tessel·les (diners lliures en gran i la fórmula),
+     totals del període, un mini-gràfic del marge acumulat i una **fitxa per mes** (ingressos, despeses, resultat i acumulat; «ara» i «mínim» ressaltats); els compromisos són
+     plegables amb barra de progrés i els paràmetres, recollits. Al Dashboard és una tessel·la més. El menú es diu «Previsió».
+     **Pla rodant (Emilio, 10/11: «uns mesos les dades són reals i els futurs, previsió; quan s'executen, el futur va canviant»)**: la pantalla mostra l'exercici sencer des de
+     l'abril: els mesos passats són **reals** (ingressos i despeses dels moviments, saldo dels comptes a final de mes; sense marge perquè el passiu d'aleshores es desconeix), el mes
+     en curs porta el real fins avui i el previst que queda, i els següents són previsió. Quan es registra un moviment i es vincula al seu termini, passa de previst a real i el futur es
+     refà. **Suggeriments de vinculació (Emilio, 10/11)**: en importar un extracte, i amb el botó «Suggeriments» de la pantalla, l'app proposa a quin termini pendent correspon
+     cada moviment encara no vinculat (`pvSuggereixVincles`, funció pura): mateix sentit (despesa↔despesa, ingrés↔ingrés), import igual o dins del 2 % amb proveïdor, dates a
+     menys de 45 dies, un moviment per termini i a l'inrevés. Els segurs (import igual i proveïdor o ≤ 7 dies) venen marcats; res no es vincula sense confirmar. El gràfic dibuixa el saldo (continu = real, discontinu = previsió) i la línia de passiu + reserva. Opció `historic` de `pvPlaMensual`; el Dashboard i les proves
+     d'abans no la fan servir.
+     **Detector de recurrents**: `tools/previsio_recurrents.py` (només llig l'export) classifica les partides del banc dels dos exercicis en mensual, periòdica o puntual i
+     proposa els mesos que queden; és la base per omplir els compromisos amb la tresoreria.
+  8. **Saldo d'extracte**: la importació llig la columna de saldo (Caixabank, Caixa Popular o per capçalera) i, en confirmar-la, desa el de l'última línia
+     cronològica (si el fitxer va del més nou al més vell, de les línies d'un dia val la primera; al revés, l'última).
+**Consequences**:
+  - La targeta «Diners lliures» és al Dashboard i a la pantalla **Compromisos** (només escriptori, `MOBIL_NO`). Flux d'Efectiu mostra tots els comptes donats d'alta.
+  - La reserva mínima és 0 fins que la junta la fixe: mentre tant el lliure és optimista en eixa part.
+  - **Aplicat (10/11)**: còpia, migració, 372 proves `--remot` i càrrega dels 4 compromisos d'artistes (`tools/previsio_carrega_artistes.mjs`, 33 terminis, 16 enllaçats amb pagaments reals, 32.875 € pendents). Les fases 2–4 no han començat.
+  - Verificat al navegador amb dades simulades i, després d'aplicar la migració, **amb l'app real contra la base real** (pont `tools/f6_pont.mjs` com a President, transacció que es desfà): carrega els 4 compromisos i el pla rodant des d'abril. El pont llig (`select`, `maybeSingle`); les escriptures del client (`in`, `upsert`) no hi estan simulades. 376 proves SQL en local i 100 en Node.
+  - Un `CASE` dins d'un `IF` d'una funció plpgsql fa que prenga el `THEN` del `CASE` com el de l'`IF` (error de sintaxi): calcula el valor abans, en una variable.

@@ -12,6 +12,7 @@
   F6.crida = crida;
   sb.from = function (taula) {
     const q = { op: 'select', taula: taula, cols: '*', filtres: [], ordre: [], rang: null, limit: null, dades: null };
+    let unica = false;
     const o = {
       select(c) { q.cols = c; return o; },
       insert(d) { q.op = 'insert'; q.dades = d; return o; },
@@ -21,7 +22,8 @@
       order(c, opts) { q.ordre.push([c, !(opts && opts.ascending === false)]); return o; },
       range(a, b) { q.rang = [a, b]; return o; },
       limit(n) { q.limit = n; return o; },
-      then(res, rej) { F6.crides.push(q.op + ' ' + taula); return crida(q).then(res, rej); },
+      maybeSingle() { unica = true; q.limit = 1; return o; },
+      then(res, rej) { F6.crides.push(q.op + ' ' + taula); return crida(q).then(function (r) { return unica && r && !r.error ? { data: (r.data || [])[0] || null, error: null } : r; }).then(res, rej); },
     };
     return o;
   };

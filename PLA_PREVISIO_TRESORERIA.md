@@ -260,7 +260,7 @@ Troballes:
 | Fase | Estat | Data | Notes |
 |---|---|---|---|
 | 0 Dades i decisions | En curs | 2026-11-03 | Pas 1 fet (perfil del 25/26, §10.1); ajustos aplicats (§10.2, D-055) |
-| 1 Compromisos i diners lliures | Pendent | | |
+| 1 Compromisos i diners lliures | Feta i publicada (v4.5.0, 10/11) | 2026-11-10 | D-058. Migració `20261110100000_previsio_fase1.sql` (366 proves en local), pantalla Compromisos, targeta Diners lliures, saldo d'extracte i Flux amb tots els comptes. Compromisos d'ingrés i despesa amb generador de recurrents i **primera versió del pla mensual** (només amb els compromisos; avança part de la Fase 3). Migració aplicada i 4 compromisos d'artistes carregats (32.875 € pendents). Falta: el criteri «coincideix amb el full manual» no es pot complir fins a acabar la Fase 0 (compromisos, ingressos coneguts i reserva mínima); el patró de l'any passat al pla. Accés directe a les taules, no `guarda_canvis` (D-058) |
 | 2 Pressupost complet | Pendent | | |
 | 3 Previsió | Pendent | | |
 | 4 Simulador i resultat ordinari | Pendent | | |

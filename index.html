@@ -93,6 +93,36 @@ body:has(#login-screen:not(.hidden)) #mobile-nav,body:has(#noauth-screen:not(.hi
 .card{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--rl);padding:16px;margin-bottom:14px}
 .card-title{font-size:15px;font-weight:500;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:8px}
 .card-title span{font-size:11px;font-weight:400;color:var(--text2)}
+/* Previsió (WS-PREVISIO): tessel·les, fitxes per mes i compromisos plegables */
+.pv-tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:12px}
+.pv-tile{background:var(--bg2);border-radius:var(--r);padding:12px 14px;min-width:0}
+.pv-tile .l{font-size:12px;color:var(--text2);margin-bottom:4px}
+.pv-tile .v{font-size:20px;font-weight:600;white-space:nowrap}
+.pv-tile .s{font-size:11px;color:var(--text3);margin-top:2px}
+.pv-tile.heroi{background:var(--green-bg)}.pv-tile.heroi .l{color:var(--green-text)}.pv-tile.heroi .v{color:var(--green-text);font-size:26px}
+.pv-tile.heroi.neg{background:var(--red-bg)}.pv-tile.heroi.neg .l,.pv-tile.heroi.neg .v{color:var(--red-text)}
+.pv-ok{color:var(--green)}.pv-no{color:var(--red)}
+.pv-mesos{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px}   /* 12 mesos de l'exercici: sis a dalt i sis a baix */
+@media(max-width:1100px){.pv-mesos{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:600px){.pv-mesos{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.pv-mes{background:var(--bg2);border:1.5px solid transparent;border-radius:var(--rl);padding:10px 11px;display:flex;flex-direction:column;gap:5px;min-width:0}
+.pv-mes.ara{border-color:var(--blue)}.pv-mes.min{border-color:var(--amber);background:var(--amber-bg)}
+.pv-mes.min,.pv-mes.min .f span:first-child,.pv-mes.min .acum,.pv-mes.min .nom{color:var(--amber-text)}.pv-mes.min .nom small{background:var(--amber);color:#fff}
+.pv-mes.real{background:var(--bg3)}
+.pv-mes .nom{font-size:13px;font-weight:600;display:flex;justify-content:space-between;align-items:center;gap:6px;text-transform:capitalize}
+.pv-mes .nom small{font-size:10px;font-weight:500;text-transform:none;padding:1px 7px;border-radius:10px;background:var(--bg3);color:var(--text2)}
+.pv-mes .f{display:flex;justify-content:space-between;font-size:12px;gap:4px}.pv-mes .f span:first-child{color:var(--text2)}
+.pv-mes .res{border-top:0.5px solid var(--border2);padding-top:5px;font-weight:600}
+.pv-mes .acum{display:flex;flex-direction:column;font-size:11px;color:var(--text2);gap:1px}.pv-mes .acum b{font-size:15px}
+.pv-cmp{border:0.5px solid var(--border2);border-radius:var(--r);margin-bottom:8px;background:var(--bg)}
+.pv-cmp>summary{list-style:none;cursor:pointer;padding:10px 12px;display:flex;justify-content:space-between;gap:12px;align-items:center}
+.pv-cmp>summary::-webkit-details-marker{display:none}
+.pv-cmp .cos{padding:2px 12px 12px}
+.pv-cmp .dreta{text-align:right;min-width:120px;flex-shrink:0}
+.pv-bar{height:4px;border-radius:2px;background:var(--bg3);margin:4px 0 2px;overflow:hidden}.pv-bar i{display:block;height:100%;background:var(--green)}
+.pv-tg{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:6px;margin-bottom:8px}
+.pv-t{display:flex;justify-content:space-between;align-items:center;gap:6px;background:var(--bg2);border-radius:var(--r);padding:6px 10px;font-size:13px}
+.pv-det>summary{cursor:pointer;font-size:12px;color:var(--text2);margin-top:8px}
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
 @media(max-width:768px){
   .row2{grid-template-columns:1fr}
@@ -421,7 +451,7 @@ tr:hover td{background:var(--bg2)}
     <div class="login-logo">Falla <span>Portal</span></div>
     <div class="login-sub">Sistema de gestió financera</div>
     <div class="login-fiscal">Any fiscal 26/27 · Abr 2026 – Mar 2027</div>
-    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v4.4.5</div>
+    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v4.5.0</div>
     <div id="login-step-boot" class="login-boot">Comprovant la sessió…</div>
     <div id="login-step-email" class="hidden">
       <label class="login-lbl" for="login-email">Correu electrònic</label>
@@ -474,7 +504,7 @@ tr:hover td{background:var(--bg2)}
     <div class="sb-bottom">
       <div class="sync-ind" style="display:flex;align-items:center;justify-content:space-between"><div style="display:flex;align-items:center;gap:6px"><div class="sync-dot" id="sync-dot"></div><span id="sync-text">Sincronitzat</span></div><button onclick="manualRefresh()" title="Actualitzar dades" style="background:none;border:none;cursor:pointer;padding:2px 4px;color:var(--text2);font-size:14px;line-height:1"><i class="ti ti-refresh"></i></button></div>
       <button class="btn-logout" onclick="signOut()"><i class="ti ti-logout" style="font-size:14px"></i> Tancar sessió</button>
-      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v4.4.5</div>
+      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v4.5.0</div>
     </div>
   </div>
 
@@ -494,6 +524,7 @@ tr:hover td{background:var(--bg2)}
         <div class="metric"><div class="metric-label">Resultat net</div><div class="metric-value" id="m-net">0 €</div></div>
         <div class="metric"><div class="metric-label">Moviments</div><div class="metric-value" id="m-count">0</div></div>
         <div class="metric" id="dash-passiu-card" style="display:none"><div class="metric-label">Passiu falles.app</div><div class="metric-value" id="dash-passiu-total" style="color:var(--amber)">0 €</div><div id="dash-passiu-data" style="font-size:10px;color:var(--text3);margin-top:2px"></div></div>
+        <div class="metric" id="dash-lliures-card" style="display:none;cursor:pointer" onclick="showPage('compromisos')"><div class="metric-label">Diners lliures</div><div class="metric-value" id="dash-lliures-v">0 €</div><div id="dash-lliures-s" style="font-size:10px;color:var(--text3);margin-top:2px"></div></div>
       </div>
       <div class="row2">
         <div class="card"><div class="card-title">Despesa per àrea</div><div id="dash-areas"><div style="color:var(--text3);font-size:12px">Sense dades</div></div></div>
@@ -1141,6 +1172,43 @@ tr:hover td{background:var(--bg2)}
       <button class="btn" onclick="exportCSV('flux')"><i class="ti ti-download"></i> Exportar CSV</button>
     </div>
 
+    <div id="page-compromisos" class="page">
+      <div class="page-title">Previsió de tresoreria</div>
+      <div class="page-sub">Què entra, què ix i quant pot gastar la falla</div>
+      <div id="pv-lliures"></div>
+      <div class="card" id="pv-pla"></div>
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+          <div class="card-title" style="margin:0">Compromisos</div>
+          <div style="display:flex;gap:10px;align-items:center">
+            <label style="font-size:12px;color:var(--text2);display:flex;gap:4px;align-items:center;cursor:pointer"><input type="checkbox" id="pv-tots" style="width:auto" onchange="pvRenderPagina()"> Tancats i cancel·lats</label>
+            <button class="btn" id="pv-sug" onclick="pvObriSuggeriments()" title="Troba els moviments que compleixen terminis pendents"><i class="ti ti-link"></i> Suggeriments</button>
+            <button class="btn btn-primary" id="pv-nou" onclick="pvObriCompromis(null)"><i class="ti ti-plus"></i> Nou compromís</button>
+          </div>
+        </div>
+        <div id="pv-llista"></div>
+      </div>
+      <details class="card">
+        <summary style="cursor:pointer;font-weight:500">Paràmetres de la previsió</summary>
+        <div style="margin-top:12px">
+          <div class="field-row">
+            <div class="field"><label>Reserva mínima (€)</label><input type="number" id="pv-cfg-reserva" min="0" step="0.01" inputmode="decimal"></div>
+            <div class="field"><label>Dies d'avís d'extracte antic</label><input type="number" id="pv-cfg-dies" min="1" step="1" inputmode="numeric"></div>
+          </div>
+          <div class="field-row">
+            <div class="field"><label>Fallers en actiu</label><input type="number" id="pv-cfg-fallers" min="1" step="1" inputmode="numeric"></div>
+            <div class="field"><label>Prudència dels ingressos d'events (%)</label><input type="number" id="pv-cfg-factor" min="0" max="100" step="1" inputmode="numeric"></div>
+          </div>
+          <div class="field-row">
+            <div class="field"><label>Seguretat de quotes i ingressos compromesos (%)</label><input type="number" id="pv-cfg-seguretat" min="0" max="100" step="1" inputmode="numeric"></div>
+            <div class="field"></div>
+          </div>
+          <div style="font-size:12px;color:var(--text2);margin-bottom:8px">La reserva mínima la fixa la junta. Les quotes es compten al percentatge de seguretat (hi ha devolucions); els fallers en actiu i la prudència dels events s'usaran al simulador.</div>
+          <button class="btn btn-primary" id="pv-cfg-desa" onclick="pvDesaCfg()"><i class="ti ti-check"></i> Desar paràmetres</button>
+        </div>
+      </details>
+    </div>
+
     <div id="page-reports" class="page">
       <div class="page-title">Reports</div>
       <div class="page-sub" id="rep-sub">Informes operacionals</div>
@@ -1182,7 +1250,7 @@ tr:hover td{background:var(--bg2)}
   </div>
   <div id="mob-menu-items"></div>
   <div onclick="signOut();closeMobMenu()" style="padding:12px 20px;font-size:14px;display:flex;align-items:center;gap:12px;cursor:pointer;color:var(--red)"><i class="ti ti-logout" style="font-size:18px"></i> Tancar sessió</div>
-  <div style="padding:6px 20px 8px;font-size:11px;color:var(--text3);text-align:center">Falla Portal · v4.4.5</div>
+  <div style="padding:6px 20px 8px;font-size:11px;color:var(--text3);text-align:center">Falla Portal · v4.5.0</div>
 </div>
 
 <div class="modal-overlay" id="modal-fons-confirm">
@@ -1489,6 +1557,73 @@ tr:hover td{background:var(--bg2)}
   </div>
 </div>
 
+<div class="modal-overlay" id="modal-compromis">
+  <div class="modal">
+    <div class="modal-inner">
+      <div class="modal-title" id="cmp-title">Nou compromís</div>
+      <div class="field"><label>Proveïdor</label><input type="text" id="cmp-proveidor" placeholder="p.e. Monaco S.L."></div>
+      <div class="field"><label>Concepte</label><input type="text" id="cmp-concepte" placeholder="p.e. Orquestra de la nit de la cremà"></div>
+      <div class="field-row">
+        <div class="field"><label>Import total (€)</label><input type="number" id="cmp-import" min="0" step="0.01" inputmode="decimal" oninput="pvResumTermini()"></div>
+        <div class="field"><label>Data de signatura</label><input type="date" id="cmp-data"></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Tipus</label><select id="cmp-sentit"><option value="despesa">Despesa (eixida)</option><option value="ingres">Ingrés (entrada)</option></select></div>
+        <div class="field"><label>Estat</label><select id="cmp-estat"><option value="viu">Viu</option><option value="tancat">Tancat</option><option value="cancellat">Cancel·lat</option></select></div>
+      </div>
+      <div class="field"><label>Delegació</label><select id="cmp-deleg"></select></div>
+      <div class="field"><label>Terminis</label>
+        <div style="background:var(--bg2);border-radius:var(--r);padding:8px;margin-bottom:8px">
+          <div style="font-size:12px;color:var(--text2);margin-bottom:6px">Recurrent (lloguer, llum, aigua, quotes…): genera els terminis. Substitueix els que encara no estan complits.</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+            <input type="date" id="cmp-g-data" style="flex:1;min-width:120px">
+            <input type="number" id="cmp-g-n" min="1" max="36" step="1" value="6" title="Nombre de terminis" style="width:70px">
+            <select id="cmp-g-per" style="width:auto"><option value="mensual">cada mes</option><option value="trimestral">cada trimestre</option><option value="anual">cada any</option></select>
+            <input type="number" id="cmp-g-imp" min="0" step="0.01" inputmode="decimal" placeholder="Import" style="width:100px">
+            <button class="btn" type="button" onclick="pvGeneraUi()">Generar</button>
+          </div>
+        </div>
+        <div id="cmp-terminis"></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><button class="btn" type="button" onclick="pvAfegeixTermini()"><i class="ti ti-plus"></i> Afegir termini</button><span id="cmp-resum" style="font-size:12px;color:var(--text2)"></span></div>
+      </div>
+      <div class="field"><label>Notes <span style="color:var(--text3);font-weight:400">(opcional)</span></label><input type="text" id="cmp-notes"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('modal-compromis')">Cancel·lar</button>
+      <button class="btn btn-primary" id="cmp-desa" onclick="pvDesaCompromis()">Desar compromís</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-cp-sug">
+  <div class="modal">
+    <div class="modal-inner">
+      <div class="modal-title">Suggeriments de vinculació</div>
+      <div style="font-size:12px;color:var(--text2);margin-bottom:8px">Moviments registrats que semblen complir un termini pendent. Revisa'ls: els segurs (import igual i proveïdor o dates pròximes) venen marcats. En vincular-los, passen de previst a real i el pla es refà.</div>
+      <div id="sug-llista" style="max-height:50vh;overflow-y:auto"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('modal-cp-sug')">Ara no</button>
+      <button class="btn btn-primary" onclick="pvAplicaSuggeriments()">Vincular els marcats</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-cp-pagament">
+  <div class="modal">
+    <div class="modal-inner">
+      <div class="modal-title">Vincular pagament</div>
+      <div id="pg-info" style="font-size:12px;color:var(--text2);margin-bottom:8px"></div>
+      <div class="field"><input type="text" id="pg-filtre" placeholder="Filtra per concepte, establiment o import" oninput="pvPintaCandidats()"></div>
+      <div id="pg-llista" style="max-height:40vh;overflow-y:auto"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('modal-cp-pagament')">Cancel·lar</button>
+      <button class="btn btn-primary" onclick="pvDesaVincula()">Vincular</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="modal-event">
   <div class="modal">
     <div class="modal-inner">
@@ -1708,6 +1843,7 @@ const MODULS_DEF=[
   {id:'recarregues',      label:'Declarar recàrregues',labelCurt:'Recàrr.',   icon:'ti-coin',            page:'recarregues',       seccio:'Principal'},
   {id:'tancament',        label:"Caixa d'Event",      labelCurt:'Caixa',      icon:'ti-lock',            page:'tancament',         seccio:'Principal'},
   {id:'pressupostos-edit',label:'Pressupostos',       labelCurt:'Pressup.',   icon:'ti-chart-bar',       page:'pressupostos-edit', seccio:'Gestió'},
+  {id:'compromisos',      label:'Previsió',           labelCurt:'Previsió',   icon:'ti-chart-line',      page:'compromisos',       seccio:'Gestió'},
   {id:'historial',        label:'Historial',          labelCurt:'Historial',  icon:'ti-list',            page:'historial',         seccio:'Gestió'},
   {id:'fallesapp',        label:'Falles.app',         labelCurt:'Falles',     icon:'ti-device-mobile',   page:'fallesapp',         seccio:'Gestió'},
   {id:'importacio',       label:'Importar CSV',       labelCurt:'CSV',        icon:'ti-upload',          page:'importacio',        seccio:'Gestió'},
@@ -2417,14 +2553,14 @@ function getMyDelegacions(){
 
 // NAV DINÀMIC segons permisos
 // Menú de l'app → mòduls de la matriu (D-036). Un element del menú pot dependre de diversos mòduls (Reports = r1…r4).
-const MODUL_MATRIU={dashboard:['dashboard'],moviments:['moviments'],lliurament:['fons'],recarregues:['recarregues'],tancament:['caixa'],'pressupostos-edit':['pressupostos'],
+const MODUL_MATRIU={dashboard:['dashboard'],moviments:['moviments'],lliurament:['fons'],recarregues:['recarregues'],tancament:['caixa'],'pressupostos-edit':['pressupostos'],compromisos:['compromisos'],
   historial:['historial'],fallesapp:['fallesapp'],importacio:['importacio'],resultats:['resultats'],flux:['flux'],reports:['r1','r2','r3','r4'],
   configuracio:['configuracio'],manual:['manual']};
 function navVeu(mid){return(MODUL_MATRIU[mid]||[]).some(modulVeu);}
 // Barra inferior del mòbil: els mòduls visibles que algun rol de la persona hi posa, com a molt 4. La resta, al menú «Més».
 // Pantalles que no tenen sentit al mòbil (fitxers d'Excel, taules d'edició, administració): no apareixen a la barra, als botons de
 // l'inici ni a «Més». A l'escriptori, sí. Decisió del 9/11/2026.
-const MOBIL_NO=['importacio','fallesapp','pressupostos-edit','configuracio'];
+const MOBIL_NO=['importacio','fallesapp','pressupostos-edit','configuracio','compromisos'];
 function navMobilSi(mid){return MOBIL_NO.indexOf(mid)<0;}
 function navAmagatsAlMobil(){return MODULS_DEF.map(function(m){return m.id;}).filter(function(mid){return navVeu(mid)&&!navMobilSi(mid);});}
 function navBarraIds(){
@@ -2443,7 +2579,7 @@ function buildNav(){
   function canSeeDesktop(mid){return navVeu(mid);}
   const seccions=[
     {label:'Principal',   mods:['dashboard','moviments','lliurament','recarregues','tancament']},
-    {label:'Gestió',      mods:['pressupostos-edit','historial','fallesapp','importacio']},
+    {label:'Gestió',      mods:['pressupostos-edit','compromisos','historial','fallesapp','importacio']},
     {label:'Reportes',    mods:['resultats','flux','reports']},
     {label:'Sistema',     mods:['configuracio']},
     {label:'Ajuda',       mods:['manual']}
@@ -2648,7 +2784,7 @@ function showPage(id){
     'pressupostos':renderPressupostosEdit,'pressupostos-edit':renderPressupostosEdit,
     'directiva':renderDirectiva,
     'lliurament':renderFons,'recarregues':renderRecarregues,'tancament':renderTancamentList,'resultats':renderResultats,
-    'flux':renderFlux,'reports':renderReports,'configuracio':renderConfig,'manual':renderManual,
+    'flux':renderFlux,'compromisos':pvRenderPagina,'reports':renderReports,'configuracio':renderConfig,'manual':renderManual,
     'moviments':resetMovForm}[id]||function(){})();
 }
 
@@ -3914,6 +4050,7 @@ function initFappDates(){
 
 function renderDashboard(){
   const af=getAnyFiscal();
+  pvPintaDashboard();
   const movs=(DB.moviments||[]).filter(function(m){return (!m.anyFiscal||m.anyFiscal===''||m.anyFiscal===af)&&m.via!=='app';});
   const movsRes=movs.filter(function(m){return!esTraspas(m);});// els traspassos no són ni ingrés ni despesa
   const ing=movsRes.filter(function(m){return m.tipus==='ing';}).reduce(function(s,m){return s+m.import;},0);
@@ -6485,6 +6622,601 @@ function _htmlControlTraspassos(n,net){
     (desquadra?'<i class="ti ti-alert-triangle"></i> ':'')+n+(n===1?' apunt':' apunts')+' de traspàs entre comptes, que no compten com a ingrés ni despesa'+
     (desquadra?'. Net '+(net>=0?'+':'-')+fmtD(net)+': falta l\'altre costat d\'algun traspàs (o un extracte per importar).':' (net 0,00 €).')+'</div>';
 }
+// ===== PREVISIO · INICI (càlcul pur: ni xarxa ni DOM; tools/previsio_tests.mjs el comprova amb dades fixes) =====
+// WS-PREVISIO, fase 1 (D-054, D-058). Diners lliures = saldo de tots els comptes − passiu de falles.app − compromisos pendents − reserva mínima.
+// Entrada (ctx): {af, avui:'AAAA-MM-DD', bancs, saldos, moviments, passiu:{total,data}|null, compromisos:[{id,estat,import,terminis:[{import,moviment_id,data_prevista}]}],
+//                 reservaMinima, diesAvis, extractes:[{compte_id,data,saldo}]}. Les dates dels moviments són DD/MM/AAAA, les de la resta AAAA-MM-DD.
+function pvIso(d){
+  if(!d)return'';
+  const s=String(d).slice(0,10);
+  if(/^\d{2}\/\d{2}\/\d{4}$/.test(s)){const p=s.split('/');return p[2]+'-'+p[1]+'-'+p[0];}
+  return s;
+}
+function pvArr(x){return Math.round((Number(x)||0)*100)/100;}
+function pvDies(des,fins){
+  const a=pvIso(des),b=pvIso(fins);
+  if(!a||!b)return null;
+  return Math.round((Date.UTC(+b.slice(0,4),+b.slice(5,7)-1,+b.slice(8,10))-Date.UTC(+a.slice(0,4),+a.slice(5,7)-1,+a.slice(8,10)))/86400000);
+}
+// Saldo de cada compte (el de Flux d'Efectiu: saldo inicial de l'exercici + ingressos − despeses ± traspassos), fins a `fins` (AAAA-MM-DD) o tot.
+// Els moviments de via `app` (bonificació Virtual) no són diners i no compten; els d'una via que no és cap compte es retornen apart.
+function pvSaldosComptes(ctx,fins){
+  const per={};
+  const comptes=(ctx.bancs||[]).map(function(b){
+    const s=(ctx.saldos||{})[b.id+'_'+ctx.af];
+    const ini=s!=null?parseFloat(s.saldoInicial)||0:parseFloat(b.saldoInicial)||0;
+    const c={id:b.id,codi:b.codi,nom:b.nom,tipus:b.tipus,saldoInicial:ini,net:0};
+    per[b.codi]=c;
+    return c;
+  });
+  let sense=0;
+  (ctx.moviments||[]).forEach(function(m){
+    if(m.via==='app')return;
+    if(m.anyFiscal&&m.anyFiscal!==ctx.af)return;
+    if(fins&&pvIso(m.data)>fins)return;
+    const v=parseFloat(m.import)||0,t=m.tipus==='ing'?v:-v;
+    if(per[m.via])per[m.via].net+=t;else sense+=t;
+  });
+  comptes.forEach(function(c){c.saldo=pvArr(c.saldoInicial+c.net);});
+  return{comptes:comptes,senseCompte:pvArr(sense)};
+}
+// Terminis pendents d'un compromís de despesa viu: els que no tenen cap pagament vinculat. Els d'ingrés (quotes…) no es resten: vegeu pvPendentIngres.
+function pvPendentCompromis(c){
+  if(!c||c.estat!=='viu'||c.sentit==='ingres')return 0;
+  return pvArr((c.terminis||[]).filter(function(t){return!t.moviment_id;}).reduce(function(s,t){return s+(parseFloat(t.import)||0);},0));
+}
+function pvDinersLliures(ctx){
+  const sc=pvSaldosComptes(ctx,null);
+  const saldoComptes=pvArr(sc.comptes.reduce(function(s,c){return s+c.saldo;},0)+sc.senseCompte);
+  const passiu=ctx.passiu&&ctx.passiu.total>0?pvArr(ctx.passiu.total):0;
+  const compromisos=pvArr((ctx.compromisos||[]).reduce(function(s,c){return s+pvPendentCompromis(c);},0));
+  const reserva=pvArr(ctx.reservaMinima||0);
+  const diesAvis=ctx.diesAvis||30;
+  // Controls de fiabilitat
+  const comptesCtl=sc.comptes.filter(function(c){return c.tipus==='bank';}).map(function(c){
+    const ex=(ctx.extractes||[]).filter(function(e){return e.compte_id===c.id;}).sort(function(a,b){return pvIso(b.data).localeCompare(pvIso(a.data));})[0];
+    if(!ex)return{id:c.id,codi:c.codi,nom:c.nom,ultim:null,avis:'sense'};
+    const app=pvSaldosComptes(ctx,pvIso(ex.data)).comptes.find(function(x){return x.id===c.id;}).saldo;
+    const dif=pvArr(app-ex.saldo),dies=pvDies(ex.data,ctx.avui);
+    return{id:c.id,codi:c.codi,nom:c.nom,ultim:pvIso(ex.data),saldoExtracte:pvArr(ex.saldo),saldoApp:app,dif:dif,dies:dies,
+      avis:Math.abs(dif)>=0.01?'diferencia':(dies!=null&&dies>diesAvis?'antic':'')};
+  });
+  const passiuDies=ctx.passiu&&ctx.passiu.data?pvDies(ctx.passiu.data,ctx.avui):null;
+  const desquadrats=(ctx.compromisos||[]).filter(function(c){
+    if(c.estat!=='viu')return false;
+    const tots=pvArr((c.terminis||[]).reduce(function(s,t){return s+(parseFloat(t.import)||0);},0));
+    return Math.abs(tots-pvArr(c.import))>=0.01;
+  }).map(function(c){return c.id;});
+  const movsAll=(ctx.moviments||[]).filter(function(m){return(!m.anyFiscal||m.anyFiscal===ctx.af);});
+  const traspNet=pvArr(movsAll.filter(function(m){return m.traspas===true||m.traspas==='true';}).reduce(function(s,m){return s+(m.tipus==='ing'?1:-1)*(parseFloat(m.import)||0);},0));
+  return{
+    saldoComptes:saldoComptes,comptes:sc.comptes,passiu:passiu,compromisos:compromisos,reserva:reserva,
+    lliures:pvArr(saldoComptes-passiu-compromisos-reserva),
+    ingressosPendents:pvArr((ctx.compromisos||[]).reduce(function(s,c){return s+pvPendentIngres(c,ctx.seguretatIngressos);},0)),seguretat:ctx.seguretatIngressos==null?1:ctx.seguretatIngressos,
+    controls:{comptes:comptesCtl,senseCompte:sc.senseCompte,traspassosNet:traspNet,passiuDies:passiuDies,
+      passiuAvis:passiuDies!=null&&passiuDies>diesAvis,compromisosDesquadrats:desquadrats,diesAvis:diesAvis}
+  };
+}
+// Saldo de l'extracte: el de l'última línia cronològica. Si el fitxer va del més nou al més vell (el normal als bancs), de les línies d'un
+// mateix dia val la primera del fitxer; si va del més vell al més nou, l'última. Amb un sol dia es dóna per «més nou primer».
+function _pvNumBanc(v){
+  if(typeof v==='number')return isFinite(v)?v:null;
+  let t=String(v==null?'':v).replace(/\s/g,'').replace(/€/g,'');
+  if(!t)return null;
+  if(/\d+\.\d{3},\d{2}/.test(t))t=t.replace(/\./g,'').replace(',','.');
+  else if(t.indexOf(',')>=0&&t.indexOf('.')<0)t=t.replace(',','.');
+  const n=parseFloat(t);
+  return isNaN(n)?null:n;
+}
+function pvSaldoFinalExtracte(moviments){
+  const amb=(moviments||[]).filter(function(m){return m._saldo!=null;});
+  if(!amb.length)return null;
+  const iso=function(m){const p=String(m.data).split('/');return p[2]+'-'+p[1].padStart(2,'0')+'-'+p[0].padStart(2,'0');};
+  const descend=iso(amb[0])>=iso(amb[amb.length-1]);
+  let millor=amb[0];
+  amb.forEach(function(m){
+    const a=iso(m),b=iso(millor);
+    if(a>b||(a===b&&(descend?m._idx<millor._idx:m._idx>millor._idx)))millor=m;
+  });
+  return{data:iso(millor),saldo:Math.round(millor._saldo*100)/100};
+}
+// Ingressos compromesos pendents (quotes, subvencions concedides), al percentatge de seguretat (les quotes tenen devolucions). No compten als diners
+// lliures d'avui (no són efectiu), però sí al pla mensual.
+function pvPendentIngres(c,seguretat){
+  if(!c||c.estat!=='viu'||c.sentit!=='ingres')return 0;
+  const seg=seguretat==null?1:seguretat;
+  return pvArr((c.terminis||[]).filter(function(t){return!t.moviment_id;}).reduce(function(s,t){return s+(parseFloat(t.import)||0);},0)*seg);
+}
+function pvMesSeg(m){const y=+m.slice(0,4),n=+m.slice(5,7);return n===12?(y+1)+'-01':y+'-'+String(n+1).padStart(2,'0');}
+// Suma `n` mesos a una data ISO; si el dia no existeix al mes d'arribada (31 → febrer), val l'últim dia.
+function pvAddMesos(iso,n){
+  const y=+iso.slice(0,4),m=+iso.slice(5,7)-1,d=+iso.slice(8,10);
+  const t=new Date(Date.UTC(y,m+n,1)),ultim=new Date(Date.UTC(t.getUTCFullYear(),t.getUTCMonth()+1,0)).getUTCDate();
+  return t.getUTCFullYear()+'-'+String(t.getUTCMonth()+1).padStart(2,'0')+'-'+String(Math.min(d,ultim)).padStart(2,'0');
+}
+// Terminis d'un compromís recurrent (lloguer, llum, aigua, quotes…): `n` terminis a partir de `primera`, cada mes, trimestre o any.
+function pvGeneraTerminis(primera,n,periode,import_){
+  const pas=periode==='anual'?12:periode==='trimestral'?3:1,v=pvArr(import_),r=[];
+  for(let i=0;i<n;i++)r.push({data:pvAddMesos(pvIso(primera),i*pas),import:v});
+  return r;
+}
+function pvFiExercici(af){const m=/^(\d{2})\/(\d{2})$/.exec(af||'');return m?'20'+m[2]+'-03-31':null;}
+// Pla mensual: des d'avui fins a `ctx.fins` (per defecte el 31/03 de l'exercici; mínim, el mes en curs) amb el saldo d'avui, els terminis pendents dels
+// compromisos vius (ingressos × seguretat) i el marge sobre passiu i reserva. Els terminis endarrerits (data passada i sense pagar) compten al primer mes
+// i es mostren a part. Els de després de l'horitzó, a `despres`. Només té els compromisos: el patró de l'any passat s'hi afegirà a la Fase 3.
+function pvPlaMensual(ctx){
+  const avui=ctx.avui,seg=ctx.seguretatIngressos==null?1:ctx.seguretatIngressos,base=pvDinersLliures(ctx);
+  let fi=ctx.fins||pvFiExercici(ctx.af);
+  if(!fi||fi<avui)fi=pvAddMesos(avui,5);
+  const mesos=[];
+  for(let m=avui.slice(0,7);m<=fi.slice(0,7)&&mesos.length<36;m=pvMesSeg(m))mesos.push({mes:m,ingressos:0,despeses:0,endarrerit:{ing:0,des:0}});
+  const idx={};mesos.forEach(function(x,i){idx[x.mes]=i;});
+  const despres={ing:0,des:0};
+  (ctx.compromisos||[]).forEach(function(c){
+    if(c.estat!=='viu')return;
+    const ing=c.sentit==='ingres',k=ing?'ing':'des';
+    (c.terminis||[]).forEach(function(t){
+      if(t.moviment_id)return;
+      const imp=parseFloat(t.import)||0,v=ing?imp*seg:imp,d=pvIso(t.data_prevista);
+      let i;
+      if(d<avui){i=0;mesos[0].endarrerit[k]+=v;}
+      else if(idx[d.slice(0,7)]!==undefined)i=idx[d.slice(0,7)];
+      else{despres[k]+=v;return;}
+      mesos[i][ing?'ingressos':'despeses']+=v;
+    });
+  });
+  const inici={saldo:base.saldoComptes,passiu:base.passiu,reserva:base.reserva,marge:pvArr(base.saldoComptes-base.passiu-base.reserva)};
+  let saldo=base.saldoComptes,minim={marge:inici.marge,mes:null};
+  mesos.forEach(function(x){
+    x.ingressos=pvArr(x.ingressos);x.despeses=pvArr(x.despeses);x.endarrerit={ing:pvArr(x.endarrerit.ing),des:pvArr(x.endarrerit.des)};
+    x.net=pvArr(x.ingressos-x.despeses);saldo=pvArr(saldo+x.net);x.saldo=saldo;x.marge=pvArr(saldo-base.passiu-base.reserva);
+    if(x.marge<minim.marge)minim={marge:x.marge,mes:x.mes};
+  });
+  const res={fi:fi,inici:inici,mesos:mesos,minim:minim,despres:{ing:pvArr(despres.ing),des:pvArr(despres.des)}};
+  mesos.forEach(function(x,i){x.tipus=i===0?'curs':'previsio';});
+  if(ctx.historic)pvAfegeixReal(ctx,res);
+  return res;
+}
+function pvIniciExercici(af){const m=/^(\d{2})\/(\d{2})$/.exec(af||'');return m?'20'+m[1]+'-04-01':null;}
+// Pla «rodant»: els mesos de l'exercici ja passats són REALS (ingressos, despeses i saldo dels comptes del llibre); el mes en curs porta el real fins avui
+// i el que queda previst; els següents, la previsió. Quan es registra un moviment i es vincula al seu termini, el futur es refà soles.
+function pvAfegeixReal(ctx,res){
+  const avui=ctx.avui,iniciEx=pvIniciExercici(ctx.af);
+  const movs=(ctx.moviments||[]).filter(function(m){return m.via!=='app'&&(!m.anyFiscal||m.anyFiscal===ctx.af)&&!(m.traspas===true||m.traspas==='true');});
+  const suma=function(mes,finsDia){
+    let ing=0,des=0;
+    movs.forEach(function(m){const d=pvIso(m.data);if(d.slice(0,7)!==mes||(finsDia&&d>finsDia))return;const v=parseFloat(m.import)||0;if(m.tipus==='ing')ing+=v;else des+=v;});
+    return{ing:pvArr(ing),des:pvArr(des)};
+  };
+  const saldoFins=function(dia){const sc=pvSaldosComptes(ctx,dia);return pvArr(sc.comptes.reduce(function(t,c){return t+c.saldo;},0)+sc.senseCompte);};
+  const reals=[];
+  if(iniciEx&&iniciEx.slice(0,7)<avui.slice(0,7)){
+    for(let m=iniciEx.slice(0,7);m<avui.slice(0,7);m=pvMesSeg(m)){
+      const r=suma(m,null);
+      reals.push({mes:m,tipus:'real',ingressos:r.ing,despeses:r.des,net:pvArr(r.ing-r.des),saldo:saldoFins(m+'-31'),marge:null,endarrerit:{ing:0,des:0}});
+    }
+  }
+  const ara=res.mesos[0];
+  if(ara){const r=suma(ara.mes,avui);ara.real=r;ara.previst={ing:ara.ingressos,des:ara.despeses};ara.ingressos=pvArr(ara.ingressos+r.ing);ara.despeses=pvArr(ara.despeses+r.des);ara.net=pvArr(ara.ingressos-ara.despeses);}
+  res.mesos=reals.concat(res.mesos);
+}
+// Suggeriments de vinculació: a quin termini pendent correspon cada moviment encara no vinculat (mateix sentit: despesa↔despesa, ingrés↔ingrés).
+// Puntuació: import igual (±0,01) 50, import dins ±2 % 25 (només amb proveïdor), paraula del proveïdor al concepte o a l'establiment 30, data dins ±7 dies 15,
+// ±20 dies 8, ±45 dies 3. Es proposa import igual, o dins ±2 % amb proveïdor, i data dins ±45 dies. Un moviment només per a un termini i a l'inrevés
+// (assignació per puntuació i després per proximitat de dates). `fort` = import igual i (proveïdor o ≤ 7 dies): és el que ve marcat per defecte.
+function pvSuggereixVincles(ctx){
+  const usats={};
+  (ctx.compromisos||[]).forEach(function(c){(c.terminis||[]).forEach(function(t){if(t.moviment_id)usats[t.moviment_id]=true;});});
+  const movs=(ctx.moviments||[]).filter(function(m){return m.via!=='app'&&!usats[m.id]&&!(m.traspas===true||m.traspas==='true')&&(!m.anyFiscal||m.anyFiscal===ctx.af);});
+  const GEN=['taller','tallers','s.l.','s.a.','sociedad','societat','compania','companyia'];
+  const parells=[];
+  (ctx.compromisos||[]).forEach(function(c){
+    if(c.estat!=='viu')return;
+    const ing=c.sentit==='ingres',tipus=ing?'ing':'gast';
+    const paraules=(c.proveidor||'').toLowerCase().split(/[\s,.]+/).filter(function(w){return w.length>3&&GEN.indexOf(w)<0;});
+    (c.terminis||[]).forEach(function(t){
+      if(t.moviment_id)return;
+      const imp=parseFloat(t.import)||0;
+      movs.forEach(function(m){
+        if(m.tipus!==tipus)return;
+        const v=parseFloat(m.import)||0,dif=Math.abs(v-imp),dies=Math.abs(pvDies(t.data_prevista,m.data));
+        if(isNaN(dies)||dies>45)return;
+        const text=((m.establiment||'')+' '+(m.concepte||'')).toLowerCase(),prov=paraules.some(function(w){return text.indexOf(w)>=0;});
+        const igual=dif<0.005,prop=imp>0&&dif/imp<=0.02;
+        if(!igual&&!(prop&&prov))return;
+        const punts=(igual?50:25)+(prov?30:0)+(dies<=7?15:dies<=20?8:3);
+        parells.push({termini_id:t.id,compromis_id:c.id,moviment_id:m.id,punts:punts,dies:dies,igual:igual,prov:prov,fort:igual&&(prov||dies<=7)});
+      });
+    });
+  });
+  parells.sort(function(a,b){return(b.punts-a.punts)||(a.dies-b.dies);});
+  const tU={},mU={},res=[];
+  parells.forEach(function(x){if(tU[x.termini_id]||mU[x.moviment_id])return;tU[x.termini_id]=mU[x.moviment_id]=true;res.push(x);});
+  return res;
+}
+// ===== PREVISIO · FI =====
+// ----- Compromisos i diners lliures (WS-PREVISIO, fase 1; D-054, D-058) -----
+// Les taules `compromisos`, `compromis_terminis` i `extractes_saldos` es llegeixen i s'escriuen directament (com `fallesapp_alies`), no per
+// `guarda_canvis`: no formen part de les pestanyes del full. Només les veu qui té el mòdul `compromisos` (President i Tresoreria); RLS ho garanteix.
+let _pvDades=null,_pvTs=0,_pvCarregant=null,_pvEdit=null,_pvPag=null;
+const PV_CFG_DEF={reserva_minima:0,dies_avis_extracte:30,factor_prudencia_events:0.9,fallers_actius:762,seguretat_ingressos:0.95};
+async function pvCarrega(forca){
+  if(!modulVeu('compromisos'))return null;
+  if(!forca&&_pvDades&&Date.now()-_pvTs<60000)return _pvDades;
+  if(_pvCarregant){
+    if(!forca)return _pvCarregant;
+    try{await _pvCarregant;}catch(e){}   // una lectura en curs pot ser anterior al canvi que acabem de fer: se n'espera la fi i es torna a llegir
+  }
+  _pvCarregant=(async function(){
+    try{
+      const rs=await Promise.all([
+        sb.from('compromisos').select('*').order('creat_at'),
+        sb.from('compromis_terminis').select('*').order('data_prevista'),
+        sb.from('extractes_saldos').select('compte_id,data,saldo'),
+        sb.from('config').select('valor').eq('clau','previsio').maybeSingle()]);
+      rs.forEach(function(r){if(r.error)throw new Error(r.error.message);});
+      const termsPer={};
+      (rs[1].data||[]).forEach(function(t){(termsPer[t.compromis_id]=termsPer[t.compromis_id]||[]).push(t);});
+      _pvDades={
+        compromisos:(rs[0].data||[]).map(function(c){return Object.assign({},c,{import:parseFloat(c.import)||0,terminis:(termsPer[c.id]||[]).map(function(t){return Object.assign({},t,{import:parseFloat(t.import)||0});})});}),
+        extractes:(rs[2].data||[]).map(function(e){return{compte_id:e.compte_id,data:e.data,saldo:parseFloat(e.saldo)||0};}),
+        cfg:Object.assign({},PV_CFG_DEF,rs[3].data&&rs[3].data.valor?rs[3].data.valor:{})
+      };
+      _pvTs=Date.now();
+      return _pvDades;
+    }finally{_pvCarregant=null;}
+  })();
+  return _pvCarregant;
+}
+function pvCtx(d){
+  return{af:getAnyFiscal(),avui:todayISO(),bancs:DB.config.bancs||[],saldos:DB.saldos||{},moviments:DB.moviments||[],
+    passiu:DB.config.fappPassiu||null,compromisos:d.compromisos,reservaMinima:d.cfg.reserva_minima,seguretatIngressos:d.cfg.seguretat_ingressos,diesAvis:d.cfg.dies_avis_extracte,extractes:d.extractes};
+}
+function pvSgn(v,c){return(v<0?'−':'')+(c?fmt(v):fmtD(v));}   // c: sense decimals (fitxes dels mesos)
+function pvSgnMes(v,c){return v?(v>0?'+':'−')+(c?fmt(v):fmtD(v)):'—';}
+// Diners lliures: la xifra gran, la fórmula en tessel·les i els controls de fiabilitat plegats.
+function pvHtmlLliures(r){
+  const tile=function(l,v,sub,cls){return'<div class="pv-tile'+(cls?' '+cls:'')+'"><div class="l">'+l+'</div><div class="v">'+v+'</div>'+(sub?'<div class="s">'+sub+'</div>':'')+'</div>';};
+  const fp=DB.config.fappPassiu;
+  let h='<div class="pv-tiles">'
+    +tile('Diners lliures',pvSgn(r.lliures),'saldo − passiu − compromisos − reserva','heroi'+(r.lliures<0?' neg':''))
+    +tile('Saldo de comptes',pvSgn(r.saldoComptes),r.comptes.length+' comptes')
+    +tile('Passiu falles.app','− '+fmtD(r.passiu),r.passiu&&fp?fmtDt(fp.data):'sense registrar')
+    +tile('Compromisos pendents','− '+fmtD(r.compromisos),'despeses signades i recurrents')
+    +tile('Reserva mínima','− '+fmtD(r.reserva),'la fixa la junta')
+    +'</div>';
+  const av=[];
+  r.controls.comptes.forEach(function(c){
+    if(c.avis==='sense')av.push('<b>'+_mhEsc(c.codi)+'</b>: cap extracte importat amb saldo; no es pot comprovar el saldo.');
+    else if(c.avis==='diferencia')av.push('<b>'+_mhEsc(c.codi)+'</b>: a '+fmtDt(c.ultim)+' el banc diu '+fmtD(c.saldoExtracte)+' i l\'app '+fmtD(c.saldoApp)+' (diferència '+(c.dif<0?'−':'+')+fmtD(c.dif)+').');
+    else if(c.avis==='antic')av.push('<b>'+_mhEsc(c.codi)+'</b>: l\'últim extracte és de fa '+c.dies+' dies ('+fmtDt(c.ultim)+'): importa\'n un de nou.');
+  });
+  if(r.controls.passiuAvis)av.push('El passiu de falles.app és de fa '+r.controls.passiuDies+' dies: actualitza\'l.');
+  if(!fp||!(fp.total>0))av.push('No hi ha passiu de falles.app registrat: el lliure no el descompta.');
+  if(r.controls.traspassosNet!==0)av.push('Els traspassos no quadren (net '+(r.controls.traspassosNet<0?'−':'+')+fmtD(r.controls.traspassosNet)+'): falta un costat.');
+  if(r.controls.senseCompte!==0)av.push('Hi ha moviments d\'una via que no és cap compte ('+(r.controls.senseCompte<0?'−':'+')+fmtD(r.controls.senseCompte)+').');
+  if(r.controls.compromisosDesquadrats.length)av.push(r.controls.compromisosDesquadrats.length+(r.controls.compromisosDesquadrats.length===1?' compromís viu té':' compromisos vius tenen')+' terminis que no sumen el seu import: el que falta no compta.');
+  h+='<details class="pv-det" style="margin:-4px 0 14px"><summary style="color:'+(av.length?'var(--amber)':'var(--green)')+'">'
+    +(av.length?'⚠ '+av.length+(av.length===1?' avís':' avisos')+' de fiabilitat':'✓ Els controls de fiabilitat quadren')+' · detall per comptes</summary>'
+    +(av.length?'<div style="margin-top:6px;padding:8px 10px;border-radius:var(--r);background:var(--amber-bg);color:var(--amber-text);font-size:12px;line-height:1.5">'+av.map(function(x){return'<div>'+x+'</div>';}).join('')+'</div>':'')
+    +'<div style="font-size:12px;color:var(--text2);margin-top:6px">'+r.comptes.map(function(c){return _mhEsc(c.codi)+' <b>'+pvSgn(c.saldo)+'</b>';}).join(' · ')+'</div>'
+    +(r.ingressosPendents>0?'<div style="font-size:12px;color:var(--text2);margin-top:4px">Ingressos compromesos pendents (al '+Math.round(r.seguretat*100)+' %): <b>'+fmtD(r.ingressosPendents)+'</b>. No compten als diners lliures: encara no són efectiu (mira el pla).</div>':'')
+    +'</details>';
+  return h;
+}
+const PV_MESOS=['gener','febrer','març','abril','maig','juny','juliol','agost','setembre','octubre','novembre','desembre'];
+function pvEtiquetaMes(m){return PV_MESOS[+m.slice(5,7)-1]+' '+m.slice(0,4);}
+// Mini-gràfic del saldo dels comptes: tram real (continu) i previsió (discontinu), amb la línia del que cal tindre sempre (passiu + reserva).
+function pvGrafic(pl){
+  const v=pl.mesos.map(function(m){return m.saldo;}),llindar=pl.inici.passiu+pl.inici.reserva;
+  const lo=Math.min.apply(null,v.concat([llindar,0])),hi=Math.max.apply(null,v.concat([llindar])),W=600,H=70,pad=8,rang=(hi-lo)||1;
+  const x=function(i){return v.length>1?i*(W/(v.length-1)):W/2;},y=function(t){return pad+(H-2*pad)*(1-(t-lo)/rang);};
+  const iCurs=pl.mesos.findIndex(function(m){return m.tipus==='curs';});
+  const pts=function(a,b){return v.slice(a,b+1).map(function(t,k){return x(a+k).toFixed(1)+','+y(t).toFixed(1);}).join(' ');};
+  let h='<svg viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none" style="width:100%;height:70px;display:block;margin-bottom:10px">'
+    +'<line x1="0" x2="'+W+'" y1="'+y(llindar).toFixed(1)+'" y2="'+y(llindar).toFixed(1)+'" style="stroke:var(--amber)" stroke-width="1" stroke-dasharray="5 4" vector-effect="non-scaling-stroke"/>';
+  if(iCurs>0)h+='<polyline points="'+pts(0,iCurs)+'" fill="none" style="stroke:var(--blue)" stroke-width="2.2" vector-effect="non-scaling-stroke"/>';
+  h+='<polyline points="'+pts(Math.max(iCurs,0),v.length-1)+'" fill="none" style="stroke:var(--blue)" stroke-width="2" stroke-dasharray="6 4" vector-effect="non-scaling-stroke"/>';
+  h+=v.map(function(t,i){return'<circle cx="'+x(i).toFixed(1)+'" cy="'+y(t).toFixed(1)+'" r="3" style="fill:'+(t<llindar?'var(--red)':'var(--blue)')+'" vector-effect="non-scaling-stroke"/>';}).join('')+'</svg>';
+  return h;
+}
+// Pla mensual rodant: totals de l'exercici (real + previst), mini-gràfic i una fitxa per mes. Els mesos passats són reals, el mes en curs barreja
+// el real fins avui i el que queda previst, i els següents són previsió.
+function pvHtmlPla(pl){
+  const ing=pl.mesos.reduce(function(s,m){return s+m.ingressos;},0),des=pl.mesos.reduce(function(s,m){return s+m.despeses;},0);
+  const fin=pl.mesos.length?pl.mesos[pl.mesos.length-1].saldo:pl.inici.saldo,llindar=pl.inici.passiu+pl.inici.reserva;
+  const tile=function(l,v,cls,sub){return'<div class="pv-tile"><div class="l">'+l+'</div><div class="v '+(cls||'')+'">'+v+'</div>'+(sub?'<div class="s">'+sub+'</div>':'')+'</div>';};
+  let h='<div class="card-title">Pla mensual <span>real fins avui · previsió fins al '+fmtDt(pl.fi)+'</span></div>'
+    +'<div class="pv-tiles">'+tile('Ingressos de l\'exercici','+'+fmtD(ing),'pv-ok','real + previst')+tile('Despeses de l\'exercici','−'+fmtD(des),'pv-no','real + previst')
+    +tile('Resultat',pvSgnMes(Math.round((ing-des)*100)/100),ing-des<0?'pv-no':'pv-ok')+tile('Saldo al final',pvSgn(fin),fin<llindar?'pv-no':'pv-ok','cal ≥ '+fmtD(llindar)+' (passiu + reserva)')+'</div>';
+  h+=pvGrafic(pl);
+  h+='<div class="pv-mesos">';
+  pl.mesos.forEach(function(m){
+    const mi=pl.minim.mes===m.mes&&m.marge!=null&&m.marge<pl.inici.marge,res=m.net,etq=m.tipus==='real'?'real':m.tipus==='curs'?'en curs':'previsió';
+    h+='<div class="pv-mes'+(m.tipus==='curs'?' ara':'')+(mi?' min':'')+(m.tipus==='real'?' real':'')+'" title="Saldo al final del mes: '+pvSgn(m.saldo)+'">'
+      +'<div class="nom"><span>'+pvEtiquetaMes(m.mes)+'</span><small>'+(mi?'mínim':etq)+'</small>'+(m.endarrerit&&(m.endarrerit.ing||m.endarrerit.des)?'<span title="Inclou terminis amb data passada sense complir" style="color:var(--amber)">⚠</span>':'')+'</div>'
+      +'<div class="f"><span>Ingressos</span><span class="'+(m.ingressos?'pv-ok':'')+'">'+(m.ingressos?'+'+fmt(m.ingressos):'—')+'</span></div>'
+      +'<div class="f"><span>Despeses</span><span class="'+(m.despeses?'pv-no':'')+'">'+(m.despeses?'−'+fmt(m.despeses):'—')+'</span></div>'
+      +'<div class="f res"><span>Resultat</span><span class="'+(res<0?'pv-no':res>0?'pv-ok':'')+'">'+pvSgnMes(res,true)+'</span></div>'
+      +(m.tipus==='curs'&&m.real?'<div style="font-size:10px;color:var(--text3)">real '+pvSgnMes(Math.round((m.real.ing-m.real.des)*100)/100,true)+' · previst '+pvSgnMes(Math.round((m.previst.ing-m.previst.des)*100)/100,true)+'</div>':'')
+      +'<div class="acum"><span>Saldo final</span><b class="'+(m.saldo<llindar&&m.tipus!=='real'?'pv-no':'')+'">'+pvSgn(m.saldo,true)+'</b></div></div>';
+  });
+  h+='</div>';
+  h+='<div style="font-size:13px;margin-top:12px;color:'+(pl.minim.marge<0?'var(--red)':'var(--text2)')+'">'+(pl.minim.mes?'Punt mínim de la previsió: marge <b>'+pvSgn(pl.minim.marge)+'</b> a '+pvEtiquetaMes(pl.minim.mes)+'.':'El marge no baixa del d\'ara ('+pvSgn(pl.inici.marge)+') en cap mes.')+'</div>';
+  if(pl.despres.ing||pl.despres.des)h+='<div style="font-size:12px;color:var(--text2)">Més enllà del '+fmtDt(pl.fi)+': ingressos '+fmtD(pl.despres.ing)+' · despeses '+fmtD(pl.despres.des)+'.</div>';
+  h+='<div style="font-size:11px;color:var(--text3);margin-top:6px">Els mesos reals vénen dels moviments registrats. La previsió només porta els compromisos introduïts (quotes al percentatge de seguretat): quan registres un moviment i el vincules al seu termini, passa de previst a real i el futur es refà. El patró de l\'any passat s\'hi afegirà. ⚠ = hi ha terminis amb data passada sense complir.</div>';
+  return h;
+}
+async function pvPintaDashboard(){
+  const el=document.getElementById('dash-lliures-card');
+  if(!el)return;
+  if(!modulVeu('compromisos')){el.style.display='none';return;}
+  try{
+    const d=await pvCarrega();
+    if(!d)return;
+    const ctx=pvCtx(d),r=pvDinersLliures(ctx),pl=pvPlaMensual(ctx);
+    el.style.display='';
+    const v=document.getElementById('dash-lliures-v');
+    v.textContent=pvSgn(r.lliures);v.style.color=r.lliures<0?'var(--red)':'var(--green)';
+    document.getElementById('dash-lliures-s').textContent=pl.minim.mes?'mínim '+pvSgn(pl.minim.marge)+' a '+pvEtiquetaMes(pl.minim.mes):'sense mínims fins al '+fmtDt(pl.fi);
+  }catch(e){el.style.display='';document.getElementById('dash-lliures-v').textContent='—';document.getElementById('dash-lliures-s').textContent='no s\'ha pogut calcular';}
+}
+async function pvRenderPagina(){
+  const llista=document.getElementById('pv-llista');
+  if(!llista)return;
+  try{
+    const d=await pvCarrega(true);
+    if(!d)return;
+    const r=pvDinersLliures(pvCtx(d));
+    document.getElementById('pv-lliures').innerHTML=pvHtmlLliures(r);
+    document.getElementById('pv-cfg-reserva').value=d.cfg.reserva_minima;
+    document.getElementById('pv-cfg-dies').value=d.cfg.dies_avis_extracte;
+    document.getElementById('pv-cfg-fallers').value=d.cfg.fallers_actius;
+    document.getElementById('pv-cfg-factor').value=Math.round(d.cfg.factor_prudencia_events*100);
+    document.getElementById('pv-cfg-seguretat').value=Math.round(d.cfg.seguretat_ingressos*100);
+    document.getElementById('pv-pla').innerHTML=pvHtmlPla(pvPlaMensual(Object.assign(pvCtx(d),{historic:true})));
+    const pot=modulEdita('compromisos');
+    const veuTots=document.getElementById('pv-tots')&&document.getElementById('pv-tots').checked;
+    const af=getAnyFiscal();
+    const llistats=d.compromisos.filter(function(c){return veuTots||c.estat==='viu';});
+    if(!llistats.length){llista.innerHTML='<div style="color:var(--text3);font-size:13px;padding:6px 0">'+(veuTots?'Cap compromís.':'Cap compromís viu. Afig-ne un amb «Nou compromís» (només els contractes signats: monument, música, pirotècnia, lloguers, carpa…).')+'</div>';return;}
+    const delegNom=function(id){const x=(DB.config.delegacions||[]).find(function(y){return y.id===id;});return x?x.name||x.nom||id:'';};
+    llista.innerHTML=llistats.map(function(c){
+      const ing=c.sentit==='ingres',verb=ing?'cobrat':'pagat';
+      const fets=c.terminis.filter(function(t){return t.moviment_id;}),pend=c.terminis.filter(function(t){return!t.moviment_id;});
+      const pagat=fets.reduce(function(x,t){return x+t.import;},0),falta=pend.reduce(function(x,t){return x+t.import;},0);
+      const pct=c.import>0?Math.min(100,Math.round(pagat/c.import*100)):0;
+      const prox=pend.slice().sort(function(a,b){return String(a.data_prevista).localeCompare(String(b.data_prevista));})[0];
+      const pill=c.estat==='viu'?'':' <span class="pill '+(c.estat==='tancat'?'p-ok':'p-gray')+'">'+c.estat+'</span>';
+      let h='<details class="pv-cmp"><summary><div style="min-width:0"><span class="pill '+(ing?'p-ok':'p-danger')+'">'+(ing?'ingrés':'despesa')+'</span> <b>'+_mhEsc(c.proveidor)+'</b> · '+_mhEsc(c.concepte)+pill
+        +'<div style="font-size:12px;color:var(--text2);margin-top:2px">'+(c.terminis.length?c.terminis.length+(c.terminis.length===1?' termini':' terminis')+(prox?' · proper '+fmtDt(prox.data_prevista)+' ('+fmtD(prox.import)+')':' · tot '+verb):'sense terminis')+'</div></div>'
+        +'<div class="dreta"><b>'+fmtD(c.import)+'</b><div class="pv-bar"><i style="width:'+pct+'%"></i></div><div style="font-size:11px;color:var(--text2)">'+verb+' '+fmtD(pagat)+' · falta '+fmtD(falta)+'</div></div></summary><div class="cos">';
+      if(c.notes)h+='<div style="font-size:12px;color:var(--text2);margin-bottom:6px">'+_mhEsc(c.notes)+'</div>';
+      h+='<div style="font-size:12px;color:var(--text2);margin-bottom:6px">'+(c.delegacio_id?_mhEsc(delegNom(c.delegacio_id))+' · ':'')+'Exercici '+_mhEsc(c.exercici_id)+(c.data_signatura?' · signat '+fmtDt(c.data_signatura):'')+'</div>';
+      h+='<div class="pv-tg">'+(c.terminis.map(function(t){
+        const mov=t.moviment_id?(DB.moviments||[]).find(function(m){return m.id===t.moviment_id;}):null;
+        return'<div class="pv-t"><span>'+fmtDt(t.data_prevista)+' · <b>'+fmtD(t.import)+'</b></span>'
+          +(t.moviment_id?'<span style="display:flex;gap:4px;align-items:center"><span class="pill p-ok" title="'+_mhEsc(mov?mov.concepte:'')+'">'+verb+'</span>'+(pot?'<button class="btn" style="padding:1px 7px;font-size:11px" title="Desvincular" onclick="pvDesvincula(\''+t.id+'\')">✕</button>':'')+'</span>'
+            :(pot&&c.estat==='viu'?'<button class="btn" style="padding:2px 8px;font-size:11px" onclick="pvObriVincula(\''+t.id+'\')">'+(ing?'Vincula cobrament':'Vincula pagament')+'</button>':'<span class="pill p-warn">pendent</span>'))+'</div>';
+      }).join('')||'<div style="font-size:12px;color:var(--text3)">Sense terminis: no compta fins que n\'hi afigues.</div>')+'</div>';
+      if(pot)h+='<div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn" onclick="pvObriCompromis(\''+c.id+'\')"><i class="ti ti-pencil"></i> Editar</button>'
+        +(c.estat==='viu'?'<button class="btn" onclick="pvCanviaEstat(\''+c.id+'\',\'tancat\')">Tancar</button><button class="btn" onclick="pvCanviaEstat(\''+c.id+'\',\'cancellat\')">Cancel·lar</button>':'<button class="btn" onclick="pvCanviaEstat(\''+c.id+'\',\'viu\')">Reobrir</button>')
+        +'<button class="btn" style="color:var(--red)" onclick="pvEsborra(\''+c.id+'\')"><i class="ti ti-trash"></i></button></div>';
+      return h+'</div></details>';
+    }).join('');
+    const nou=document.getElementById('pv-nou');if(nou)nou.style.display=pot?'':'none';
+    const sg=document.getElementById('pv-sug');if(sg)sg.style.display=pot?'':'none';
+    const ds=document.getElementById('pv-cfg-desa');if(ds)ds.style.display=pot?'':'none';
+  }catch(e){llista.innerHTML='<div style="color:var(--red);font-size:13px">No s\'han pogut carregar els compromisos: '+_mhEsc(e&&e.message?e.message:e)+'</div>';}
+}
+async function pvDesaCfg(){
+  const num=function(id){return parseFloat(String(document.getElementById(id).value).replace(',','.'));};
+  const v={reserva_minima:num('pv-cfg-reserva'),dies_avis_extracte:Math.round(num('pv-cfg-dies')),fallers_actius:Math.round(num('pv-cfg-fallers')),factor_prudencia_events:num('pv-cfg-factor')/100,seguretat_ingressos:num('pv-cfg-seguretat')/100};
+  if(Object.values(v).some(function(x){return isNaN(x);})){showToast('Revisa els números dels paràmetres',true);return;}
+  const r=await sb.from('config').upsert({clau:'previsio',valor:v},{onConflict:'clau'});
+  if(r.error){showToast('No s\'han pogut desar: '+r.error.message,true);return;}
+  showToast('Paràmetres desats');
+  _pvDades=null;pvRenderPagina();
+}
+async function pvDesaSaldoExtracte(banc,saldoFinal){
+  if(!banc||!saldoFinal)return;
+  const r=await sb.from('extractes_saldos').upsert({compte_id:banc.id,data:saldoFinal.data,saldo:saldoFinal.saldo},{onConflict:'compte_id,data'});
+  if(r.error){showToast('Moviments importats, però no s\'ha pogut desar el saldo del banc: '+r.error.message,true);return;}
+  _pvDades=null;
+  showToast('Saldo del banc desat: '+(saldoFinal.saldo<0?'−':'')+fmtD(saldoFinal.saldo)+' a '+fmtDt(saldoFinal.data));
+}
+// --- Alta i edició d'un compromís (amb els seus terminis)
+function pvFilaTermini(t){
+  const pagat=t&&t.moviment_id;
+  return'<div class="pv-term" data-id="'+(t&&t.id?t.id:'')+'" data-mov="'+(pagat?t.moviment_id:'')+'" style="display:flex;gap:6px;align-items:center;margin-bottom:6px">'
+    +'<input type="date" class="pv-t-data" value="'+(t?_mhEsc(String(t.data_prevista).slice(0,10)):'')+'" style="flex:1;min-width:0"'+(pagat?' disabled':'')+'>'
+    +'<input type="number" class="pv-t-imp" step="0.01" min="0" inputmode="decimal" placeholder="Import" value="'+(t?t.import:'')+'" style="flex:1;min-width:0" oninput="pvResumTermini()"'+(pagat?' disabled':'')+'>'
+    +(pagat?'<span class="pill p-ok">pagat</span>':'<button class="btn" type="button" onclick="this.parentNode.remove();pvResumTermini()">✕</button>')+'</div>';
+}
+function pvAfegeixTermini(){
+  document.getElementById('cmp-terminis').insertAdjacentHTML('beforeend',pvFilaTermini(null));
+  pvResumTermini();
+}
+function pvResumTermini(){
+  const imp=parseFloat(document.getElementById('cmp-import').value)||0;
+  const tots=Array.from(document.querySelectorAll('#cmp-terminis .pv-t-imp')).reduce(function(s,i){return s+(parseFloat(i.value)||0);},0);
+  const el=document.getElementById('cmp-resum');
+  const dif=Math.round((imp-tots)*100)/100;
+  el.innerHTML='Terminis: <b>'+fmtD(tots)+'</b> de '+fmtD(imp)+(dif===0?' <span style="color:var(--green)">✓ quadra</span>':' <span style="color:var(--amber)">(falten '+(dif<0?'−':'')+fmtD(dif)+')</span>');
+}
+// --- Suggeriments de vinculació (a l'importar un extracte i quan es vol)
+let _pvSug=null;
+function pvMostraSuggeriments(llista,d){
+  _pvSug={llista:llista,d:d};
+  const nom=function(x){return''+x;};
+  document.getElementById('sug-llista').innerHTML=llista.length?llista.map(function(x,i){
+    const c=d.compromisos.find(function(y){return y.id===x.compromis_id;}),t=c.terminis.find(function(y){return y.id===x.termini_id;});
+    const m=(DB.moviments||[]).find(function(y){return y.id===x.moviment_id;})||{},ing=c.sentit==='ingres';
+    const motius=[x.igual?'import igual':'import aproximat',x.prov?'coincideix el proveïdor':null,x.dies<=7?'dates pròximes':x.dies+' dies de diferència'].filter(Boolean).join(' · ');
+    return'<label class="pv-t" style="align-items:flex-start;margin-bottom:6px;cursor:pointer;flex-wrap:wrap"><input type="checkbox" class="sug-ck" data-i="'+i+'" style="width:auto;margin-top:3px"'+(x.fort?' checked':'')+'>'
+      +'<span style="flex:1;min-width:220px"><b>'+_mhEsc(m.data||'')+'</b> · '+_mhEsc(m.concepte||'')+(m.establiment?' <span style="color:var(--text2)">('+_mhEsc(m.establiment)+')</span>':'')+' <b>'+fmtD(parseFloat(m.import)||0)+'</b>'
+      +'<div style="font-size:12px;color:var(--text2)">→ '+(ing?'quota/ingrés':'pagament')+' de <b>'+_mhEsc(c.proveidor)+'</b> · '+_mhEsc(c.concepte)+', termini del '+fmtDt(t.data_prevista)+' ('+fmtD(t.import)+')</div>'
+      +'<div style="font-size:11px;color:var(--text3)">'+motius+'</div></span></label>';
+  }).join(''):'<div style="color:var(--text3);font-size:13px;padding:8px 0">No hi ha cap moviment lliure que encaixe amb un termini pendent.</div>';
+  openModal('modal-cp-sug');
+}
+function pvObriSuggeriments(){
+  if(!_pvDades){showToast('Carrega primer la pantalla',true);return;}
+  pvMostraSuggeriments(pvSuggereixVincles(pvCtx(_pvDades)),_pvDades);
+}
+async function pvSuggereixDespresImportar(ids){
+  if(!ids||!ids.length||!modulEdita('compromisos'))return;
+  try{
+    _pvDades=null;
+    const d=await pvCarrega(true);
+    if(!d)return;
+    const sug=pvSuggereixVincles(pvCtx(d)).filter(function(x){return ids.indexOf(x.moviment_id)>=0;});
+    if(sug.length)pvMostraSuggeriments(sug,d);
+  }catch(e){/* els suggeriments són una ajuda: si fallen, no han d'enterbolir la importació */}
+}
+async function pvAplicaSuggeriments(){
+  if(!_pvSug)return;
+  const triats=Array.from(document.querySelectorAll('.sug-ck:checked')).map(function(c){return _pvSug.llista[+c.dataset.i];});
+  if(!triats.length){closeModal('modal-cp-sug');return;}
+  let ok=0,err=null;
+  for(const x of triats){
+    const r=await sb.from('compromis_terminis').update({moviment_id:x.moviment_id}).eq('id',x.termini_id);
+    if(r.error)err=r.error.message;else ok++;
+  }
+  closeModal('modal-cp-sug');
+  showToast(ok+(ok===1?' termini vinculat':' terminis vinculats')+(err?' · error: '+err:''),!!err);
+  _pvDades=null;_pvSug=null;
+  if(document.getElementById('page-compromisos').classList.contains('active'))pvRenderPagina();else pvPintaDashboard();
+}
+// Genera els terminis d'un recurrent: substitueix els pendents i deixa l'import total com la suma de tots.
+function pvGeneraUi(){
+  const prim=document.getElementById('cmp-g-data').value,n=parseInt(document.getElementById('cmp-g-n').value,10),imp=parseFloat(document.getElementById('cmp-g-imp').value);
+  if(!prim||!(n>=1&&n<=36)||!(imp>0)){showToast('Posa la primera data, el nombre de terminis (1–36) i l\'import de cada un',true);return;}
+  const cont=document.getElementById('cmp-terminis');
+  Array.from(cont.querySelectorAll('.pv-term')).forEach(function(f){if(!f.dataset.mov)f.remove();});
+  pvGeneraTerminis(prim,n,document.getElementById('cmp-g-per').value,imp).forEach(function(t){
+    cont.insertAdjacentHTML('beforeend',pvFilaTermini({id:'',data_prevista:t.data,import:t.import,moviment_id:null}));
+  });
+  const tots=Array.from(cont.querySelectorAll('.pv-t-imp')).reduce(function(x,i){return x+(parseFloat(i.value)||0);},0);
+  document.getElementById('cmp-import').value=Math.round(tots*100)/100;
+  pvResumTermini();
+}
+function pvObriCompromis(id){
+  const c=id?(_pvDades.compromisos.find(function(x){return x.id===id;})):null;
+  _pvEdit=c?c.id:null;
+  document.getElementById('cmp-title').textContent=c?'Editar compromís':'Nou compromís';
+  document.getElementById('cmp-proveidor').value=c?c.proveidor:'';
+  document.getElementById('cmp-concepte').value=c?c.concepte:'';
+  document.getElementById('cmp-import').value=c?c.import:'';
+  document.getElementById('cmp-data').value=c&&c.data_signatura?String(c.data_signatura).slice(0,10):'';
+  document.getElementById('cmp-estat').value=c?c.estat:'viu';
+  document.getElementById('cmp-sentit').value=c&&c.sentit==='ingres'?'ingres':'despesa';
+  document.getElementById('cmp-g-data').value=todayISO();document.getElementById('cmp-g-n').value=6;document.getElementById('cmp-g-per').value='mensual';document.getElementById('cmp-g-imp').value='';
+  document.getElementById('cmp-notes').value=c&&c.notes?c.notes:'';
+  const sel=document.getElementById('cmp-deleg');
+  sel.innerHTML='<option value="">— Sense delegació —</option>'+(DB.config.delegacions||[]).map(function(d){return'<option value="'+_mhEsc(d.id)+'">'+_mhEsc(d.id)+' - '+_mhEsc(d.name||d.nom||'')+'</option>';}).join('');
+  sel.value=c&&c.delegacio_id?c.delegacio_id:'';
+  document.getElementById('cmp-terminis').innerHTML=(c?c.terminis:[]).map(pvFilaTermini).join('');
+  pvResumTermini();
+  openModal('modal-compromis');
+}
+async function pvDesaCompromis(){
+  const proveidor=document.getElementById('cmp-proveidor').value.trim(),concepte=document.getElementById('cmp-concepte').value.trim();
+  const imp=Math.round((parseFloat(document.getElementById('cmp-import').value)||0)*100)/100;
+  if(!proveidor||!concepte){showToast('Falten el proveïdor i el concepte',true);return;}
+  if(!(imp>0)){showToast('L\'import ha de ser positiu',true);return;}
+  const files=Array.from(document.querySelectorAll('#cmp-terminis .pv-term')).map(function(f){
+    return{id:f.dataset.id||'',mov:f.dataset.mov||'',data:f.querySelector('.pv-t-data').value,import:Math.round((parseFloat(f.querySelector('.pv-t-imp').value)||0)*100)/100};
+  });
+  if(files.some(function(t){return!t.data||!(t.import>0);})){showToast('Cada termini necessita data i un import positiu',true);return;}
+  const tots=Math.round(files.reduce(function(s,t){return s+t.import;},0)*100)/100;
+  if(files.length&&tots>imp+0.005){showToast('Els terminis ('+fmtD(tots)+') superen l\'import del compromís',true);return;}
+  const old=_pvEdit?_pvDades.compromisos.find(function(x){return x.id===_pvEdit;}):null;
+  const id=old?old.id:(window.crypto&&crypto.randomUUID?crypto.randomUUID():genId('cp'));
+  const fila={sentit:document.getElementById('cmp-sentit').value,proveidor:proveidor,concepte:concepte,import:imp,delegacio_id:document.getElementById('cmp-deleg').value||null,
+    data_signatura:document.getElementById('cmp-data').value||null,estat:document.getElementById('cmp-estat').value,notes:document.getElementById('cmp-notes').value.trim()||null};
+  const btn=document.getElementById('cmp-desa');btn.disabled=true;
+  try{
+    let r;
+    if(old)r=await sb.from('compromisos').update(fila).eq('id',id);
+    else r=await sb.from('compromisos').insert(Object.assign({id:id,exercici_id:getAnyFiscal()},fila));
+    if(r.error)throw new Error(r.error.message);
+    // Terminis: els que ja no hi són s'esborren (mai un de pagat: no té botó), la resta es crea o es canvia.
+    const queden=files.filter(function(t){return t.id;}).map(function(t){return t.id;});
+    const esborrar=old?old.terminis.filter(function(t){return!t.moviment_id&&queden.indexOf(t.id)<0;}).map(function(t){return t.id;}):[];
+    if(esborrar.length){r=await sb.from('compromis_terminis').delete().in('id',esborrar);if(r.error)throw new Error(r.error.message);}
+    for(const t of files){
+      if(t.mov)continue;
+      if(t.id)r=await sb.from('compromis_terminis').update({data_prevista:t.data,import:t.import}).eq('id',t.id);
+      else r=await sb.from('compromis_terminis').insert({compromis_id:id,data_prevista:t.data,import:t.import});
+      if(r.error)throw new Error(r.error.message);
+    }
+    closeModal('modal-compromis');
+    showToast('Compromís desat');
+  }catch(e){showToast('No s\'ha pogut desar: '+(e&&e.message?e.message:e),true);}
+  finally{btn.disabled=false;_pvDades=null;pvRenderPagina();}
+}
+async function pvCanviaEstat(id,estat){
+  const r=await sb.from('compromisos').update({estat:estat}).eq('id',id);
+  if(r.error){showToast('No s\'ha pogut canviar: '+r.error.message,true);return;}
+  _pvDades=null;pvRenderPagina();
+}
+async function pvEsborra(id){
+  const c=_pvDades.compromisos.find(function(x){return x.id===id;});
+  if(!c||!confirm('Esborrar el compromís «'+c.proveidor+' · '+c.concepte+'» i els seus terminis? No es pot desfer (queda a l\'auditoria).'))return;
+  const r=await sb.from('compromisos').delete().eq('id',id);
+  if(r.error){showToast('No s\'ha pogut esborrar: '+r.error.message,true);return;}
+  _pvDades=null;pvRenderPagina();
+}
+// --- Vincular un pagament (una despesa ja registrada) a un termini
+function pvObriVincula(terminiId){
+  _pvPag={termini:terminiId,sel:null};
+  document.getElementById('pg-filtre').value='';
+  pvPintaCandidats();
+  openModal('modal-cp-pagament');
+}
+function pvPintaCandidats(){
+  let t=null,c=null;
+  _pvDades.compromisos.forEach(function(x){x.terminis.forEach(function(y){if(y.id===_pvPag.termini){t=y;c=x;}});});
+  if(!t)return;
+  const usats={};
+  _pvDades.compromisos.forEach(function(x){x.terminis.forEach(function(y){if(y.moviment_id)usats[y.moviment_id]=true;});});
+  const f=(document.getElementById('pg-filtre').value||'').toLowerCase().trim();
+  const af=getAnyFiscal();
+  const tipusMov=c.sentit==='ingres'?'ing':'gast';
+  const cand=(DB.moviments||[]).filter(function(m){return m.tipus===tipusMov&&m.via!=='app'&&!esTraspas(m)&&!usats[m.id]&&(!m.anyFiscal||m.anyFiscal===af);})
+    .filter(function(m){return!f||((m.concepte||'')+' '+(m.establiment||'')+' '+(m.import||'')).toLowerCase().indexOf(f)>=0;})
+    .map(function(m){
+      // Paraules del proveïdor que distingeixen (sense «taller», «sl»…): n'hi ha prou que una aparega a l'establiment o al concepte.
+      const paraules=(c.proveidor||'').toLowerCase().split(/[\s,.]+/).filter(function(w){return w.length>3&&['taller','tallers','s.l.','s.a.','sociedad','societat'].indexOf(w)<0;});
+      const text=((m.establiment||'')+' '+(m.concepte||'')).toLowerCase();
+      const coin=paraules.some(function(w){return text.indexOf(w)>=0;});
+      return{m:m,dif:Math.abs((parseFloat(m.import)||0)-t.import),coin:coin,dies:Math.abs(pvDies(t.data_prevista,m.data)||0)};
+    })
+    .sort(function(a,b){return(b.coin-a.coin)||(a.dif-b.dif)||(a.dies-b.dies);}).slice(0,40);
+  document.getElementById('pg-info').innerHTML='Termini de <b>'+fmtD(t.import)+'</b> del '+fmtDt(t.data_prevista)+' · '+_mhEsc(c.proveidor)+'. Primer els que coincideixen amb el proveïdor i l\'import.';
+  document.getElementById('pg-llista').innerHTML=cand.length?cand.map(function(x){
+    const m=x.m;
+    return'<label class="flow-row" style="gap:8px;cursor:pointer;align-items:flex-start"><input type="radio" name="pg-mov" value="'+_mhEsc(m.id)+'" style="width:auto;margin-top:3px" onchange="_pvPag.sel=this.value">'
+      +'<span style="flex:1;min-width:0">'+_mhEsc(m.data)+' · '+_mhEsc(m.concepte||'')+(m.establiment?' <span style="color:var(--text2)">('+_mhEsc(m.establiment)+')</span>':'')+'<div style="font-size:11px;color:var(--text3)">'+_mhEsc(m.via)+(x.coin?' · coincideix amb el proveïdor':'')+'</div></span>'
+      +'<b'+(x.dif<0.005?' style="color:var(--green)"':'')+'>'+fmtD(parseFloat(m.import)||0)+'</b></label>';
+  }).join(''):'<div style="color:var(--text3);font-size:13px;padding:8px 0">Cap moviment lliure amb este filtre.</div>';
+}
+async function pvDesaVincula(){
+  if(!_pvPag||!_pvPag.sel){showToast('Tria el moviment que complix el termini',true);return;}
+  const r=await sb.from('compromis_terminis').update({moviment_id:_pvPag.sel}).eq('id',_pvPag.termini);
+  if(r.error){showToast('No s\'ha pogut vincular: '+(/compromis_terminis_moviment/.test(r.error.message)?'eixe moviment ja complix un altre termini':r.error.message),true);return;}
+  closeModal('modal-cp-pagament');
+  showToast('Pagament vinculat');
+  _pvDades=null;pvRenderPagina();
+}
+async function pvDesvincula(terminiId){
+  if(!confirm('Desvincular el pagament? El termini torna a comptar com a pendent.'))return;
+  const r=await sb.from('compromis_terminis').update({moviment_id:null}).eq('id',terminiId);
+  if(r.error){showToast('No s\'ha pogut desvincular: '+r.error.message,true);return;}
+  _pvDades=null;pvRenderPagina();
+}
+
 function renderFlux(){
   const afF=getAnyFiscal();
   const fluxSub=document.getElementById('flux-sub');if(fluxSub)fluxSub.innerHTML='<span class="af-badge"><i class="ti ti-calendar" style="font-size:14px"></i> Any fiscal '+afF+'</span>';
@@ -6507,7 +7239,9 @@ function renderFlux(){
   document.getElementById('flux-gast').textContent=fmt(gast);
   document.getElementById('flux-fin').textContent=fmtS(saldoIni+ing-gast+tNet);
   document.getElementById('flux-fin').className='metric-value '+((saldoIni+ing-gast+tNet)>=0?'ok':'danger');
-  document.getElementById('flux-container').innerHTML=['Efectiu','01 Banc','02 Banc','TPV'].map(v=>{
+  // Tots els comptes donats d'alta (el 03 Banc també), no una llista fixa (WS-PREVISIO, fase 1)
+  const viesFlux=['Efectiu','01 Banc','02 Banc','TPV'];(DB.config.bancs||[]).forEach(function(b){if(viesFlux.indexOf(b.codi)<0)viesFlux.push(b.codi);});
+  document.getElementById('flux-container').innerHTML=viesFlux.map(v=>{
     const vi=movs.filter(m=>m.tipus==='ing'&&m.via===v).reduce((s,m)=>s+m.import,0);
     const vg=movs.filter(m=>m.tipus==='gast'&&m.via===v).reduce((s,m)=>s+m.import,0);
     const vt=netTraspassos(movsTots.filter(m=>m.via===v));
@@ -9453,6 +10187,10 @@ function processXLSBanc(arrayBuffer,zona){
     if(iMesDades>=0)colConcepte2=iMesDades;
     const iImport=headerNorm.findIndex(function(c){return c==='import'||c==='importe';});
     if(iImport>=0)colImport=iImport;
+    // Saldo del banc després de cada apunt (Caixabank: columna 6; Caixa Popular: columna 5). Es desa el de l'última línia (WS-PREVISIO, D-058).
+    let colSaldo=isCaixabank?5:(isCaixaPopular?4:-1);
+    const iSaldo=headerNorm.findIndex(function(c){return c==='saldo'||c.indexOf('saldo')===0;});
+    if(iSaldo>=0)colSaldo=iSaldo;
 
     const dataStart=headerRow>=0?headerRow+1:1;
     const moviments=[];
@@ -9529,15 +10267,17 @@ function processXLSBanc(arrayBuffer,zona){
         imp=parseFloat(importRaw);
       }
       if(isNaN(imp)||imp===0)continue;
+      const saldoLinia=colSaldo>=0?_pvNumBanc(row[colSaldo]):null;
 
       // _concepteOriginal alimenta el hash anti-duplicats: en els formats que no
       // combinaven "Més dades" es manté el concepte sense ella perquè els moviments
       // ja importats continuen coincidint.
       moviments.push({data:dataVal,concepte,_concepteOriginal:isCaixabank?concepte:conceptePropi,
-        _conceptePropi:conceptePropi,masDades,import:imp});
+        _conceptePropi:conceptePropi,masDades,import:imp,_saldo:saldoLinia,_idx:i});
     }
 
     if(!moviments.length){showToast('No s\'han trobat moviments al fitxer.',true);return;}
+    const saldoFinal=pvSaldoFinalExtracte(moviments);
 
     // Classificar cada moviment contra DB.moviments existents (detecció duplicats)
     moviments.forEach(function(m){
@@ -9555,6 +10295,7 @@ function processXLSBanc(arrayBuffer,zona){
     window['_xlsAssignats'+zona]=assignats;
     window['_xlsCompte'+zona]=compteDetectat;
     window['_xlsFormat'+zona]=formatBanc;
+    window['_xlsSaldoFinal'+zona]=saldoFinal;
 
     mostrarPreviewImportacio(zona,moviments,assignats,bancTrobat,compteDetectat,formatBanc);
 
@@ -9881,6 +10622,8 @@ async function importarXLSZona(zona){
   const banc=window['_xlsBanc'+zona];
   if(!moviments||!banc){showToast('Error: no hi ha dades per importar',true);return;}
   const af=getAnyFiscal();
+  const saldoFinal=window['_xlsSaldoFinal'+zona]||null;
+  const idsNous=[];
   let importats=0;
   let excepcions=0;
   let omesos=0;
@@ -9890,8 +10633,10 @@ async function importarXLSZona(zona){
     if(m._importar===false){omesos++;return;}
     // Hash determinista (recalcula per si l'usuari ha canviat el concepte a l'excepció)
     const hashFinal=m._bankHash||_calcBankHash(banc.id,m.data,Math.abs(m.import),m._concepteOriginal||m.concepte);
+    const idNou=genId('m')+Math.random();
+    idsNous.push(idNou);
     DB.moviments.push({
-      id:genId('m')+Math.random(),anyFiscal:af,
+      id:idNou,anyFiscal:af,
       tipus:m.import>0?'ing':'gast',
       via:banc.codi,
       areaId:m.areaId||'',areaNom:m.areaNom||'',
@@ -9916,12 +10661,13 @@ async function importarXLSZona(zona){
   if(omesos>0)msg+=' · '+omesos+' duplicats omesos';
   if(excepcions>0)msg+=' ('+excepcions+' sense àrea — assigna\'ls des de l\'historial)';
   showToast(msg);
-  save('moviments').catch(function(e){showToast('Error: '+e.message,true);});
+  save('moviments').then(function(){return pvDesaSaldoExtracte(banc,saldoFinal);}).then(function(){return pvSuggereixDespresImportar(idsNous);}).catch(function(e){showToast('Error: '+e.message,true);});
   document.getElementById('csv-preview-'+zona).innerHTML=
     '<div class="info-box" style="margin-top:10px"><i class="ti ti-check" style="color:var(--green)"></i> '+msg+'</div>';
   window['_xlsRows'+zona]=null;
   window['_xlsBanc'+zona]=null;
   window['_xlsAssignats'+zona]=null;
+  window['_xlsSaldoFinal'+zona]=null;
   const dz=document.getElementById('csv-drop-'+zona);
   if(dz){dz.classList.remove('loaded');const inp=dz.querySelector('input[type=file]');if(inp)inp.value='';}
 }
@@ -9934,6 +10680,7 @@ function cancelCSVImport(zona){
   window['_xlsRows'+zona]=null;
   window['_xlsBanc'+zona]=null;
   window['_xlsAssignats'+zona]=null;
+  window['_xlsSaldoFinal'+zona]=null;
 }
 
 // ─── REPORTS ────────────────────────────────────────────────────────────────

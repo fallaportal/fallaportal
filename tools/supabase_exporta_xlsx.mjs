@@ -34,6 +34,8 @@ if ([a, b, r0, t0].some((x) => x < 0)) throw new Error('No trobe l\'adaptador, D
 const { sbPestanyes, SB_ORDRES } = new Function(`const sb=null;\n${html.slice(r0, r1)}\n${html.slice(a, b)}\nreturn {sbPestanyes,SB_ORDRES};`)();
 const TABS = new Function(`${html.slice(t0, t1)}\nreturn TABS;`)();
 
+const EXTRES = { compromisos: 'creat_at, id', compromis_terminis: 'data_prevista, id', extractes_saldos: 'compte_id, data' };
+const EXTRA = {};
 const db = await connectaRemot();
 let T;
 try {
@@ -43,6 +45,12 @@ try {
   // El justificant: l'enllaç de Drive si n'hi ha (l'app de `main` el llig); si no, `sb:<ruta>`.
   R.justificants = R.justificants.map((j) => (j.url_drive_original ? { ...j, storage_path: null } : j));
   T = sbPestanyes(R);
+  // WS-PREVISIO, fase 1: taules que l'app llig i escriu directament i que no són pestanyes del full. S'exporten perquè l'export és la còpia
+  // de seguretat; si la migració encara no hi és (projecte antic), surten buides.
+  for (const [taula, ordre] of Object.entries(EXTRES)) {
+    try { EXTRA[taula] = (await db.query(`select to_jsonb(t) as j from public.${taula} t order by ${ordre}`)).map((x) => x.j); }
+    catch (e) { console.log(`  (sense ${taula}: ${e.message})`); EXTRA[taula] = []; }
+  }
 } finally { await db.tanca(); }
 
 // Només les pestanyes que coneix l'app de Sheets, en l'ordre i amb les capçaleres de TABS (les que ja no existeixen surten buides).
@@ -52,6 +60,11 @@ for (const def of Object.values(TABS)) {
   if (vistes.has(def.name)) continue;
   vistes.add(def.name);
   tabs.push({ name: def.name, headers: def.headers, rows: T[def.name] || [] });
+}
+// Pestanyes pròpies (no són de l'app de Sheets): les columnes de la taula, tal qual.
+for (const [taula, files] of Object.entries(EXTRA)) {
+  const headers = files.length ? Object.keys(files[0]) : ['id'];
+  tabs.push({ name: taula, headers, rows: files });
 }
 const carpeta = mkdtempSync(join(tmpdir(), 'f5-'));
 const json = join(carpeta, 'export.json');
