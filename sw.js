@@ -1,5 +1,5 @@
 // Falla Portal — Service Worker v4.0.1
-const BUILD_VERSION = '4430';
+const BUILD_VERSION = '4440';
 const CACHE_NAME = 'falla-portal-v' + BUILD_VERSION;
 const BASE = '';
 
@@ -47,10 +47,11 @@ self.addEventListener('fetch', function(event) {
     return;
   }
 
-  // HTML principal: Network First amb fallback a caché
+  // HTML principal: Network First amb fallback a caché. «no-store» salta la caché HTTP del navegador: GitHub Pages envia
+  // max-age=600 i, sense açò, el mòbil seguia servint la versió anterior fins 10 minuts (i més a l'iPhone) després de publicar.
   if (event.request.mode === 'navigate') {
     event.respondWith(
-      fetch(event.request)
+      fetch(event.request, { cache: 'no-store' })
         .then(function(response) {
           const clone = response.clone();
           caches.open(CACHE_NAME).then(function(cache) {

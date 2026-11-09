@@ -417,7 +417,7 @@ tr:hover td{background:var(--bg2)}
     <div class="login-logo">Falla <span>Portal</span></div>
     <div class="login-sub">Sistema de gestió financera</div>
     <div class="login-fiscal">Any fiscal 26/27 · Abr 2026 – Mar 2027</div>
-    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v4.4.3</div>
+    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v4.4.4</div>
     <div id="login-step-boot" class="login-boot">Comprovant la sessió…</div>
     <div id="login-step-email" class="hidden">
       <label class="login-lbl" for="login-email">Correu electrònic</label>
@@ -470,7 +470,7 @@ tr:hover td{background:var(--bg2)}
     <div class="sb-bottom">
       <div class="sync-ind" style="display:flex;align-items:center;justify-content:space-between"><div style="display:flex;align-items:center;gap:6px"><div class="sync-dot" id="sync-dot"></div><span id="sync-text">Sincronitzat</span></div><button onclick="manualRefresh()" title="Actualitzar dades" style="background:none;border:none;cursor:pointer;padding:2px 4px;color:var(--text2);font-size:14px;line-height:1"><i class="ti ti-refresh"></i></button></div>
       <button class="btn-logout" onclick="signOut()"><i class="ti ti-logout" style="font-size:14px"></i> Tancar sessió</button>
-      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v4.4.3</div>
+      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v4.4.4</div>
     </div>
   </div>
 
@@ -1178,7 +1178,7 @@ tr:hover td{background:var(--bg2)}
   </div>
   <div id="mob-menu-items"></div>
   <div onclick="signOut();closeMobMenu()" style="padding:12px 20px;font-size:14px;display:flex;align-items:center;gap:12px;cursor:pointer;color:var(--red)"><i class="ti ti-logout" style="font-size:18px"></i> Tancar sessió</div>
-  <div style="padding:6px 20px 8px;font-size:11px;color:var(--text3);text-align:center">Falla Portal · v4.4.3</div>
+  <div style="padding:6px 20px 8px;font-size:11px;color:var(--text3);text-align:center">Falla Portal · v4.4.4</div>
 </div>
 
 <div class="modal-overlay" id="modal-fons-confirm">
@@ -10616,7 +10616,7 @@ function updateMovDataLabel(){
     // dependre del nom del repositori. La versio antiga la tenia clavada.
     if('serviceWorker' in navigator){
       window.addEventListener('load', function(){
-        navigator.serviceWorker.register('sw.js')
+        navigator.serviceWorker.register('sw.js',{updateViaCache:'none'})
           .then(function(reg){ console.log('SW registrat:', reg.scope); })
           .catch(function(err){ console.log('SW error:', err); });
       });
