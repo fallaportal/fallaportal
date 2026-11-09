@@ -1098,5 +1098,5 @@ l'últim pas (`config_clau_check` només admetia `exercici_actiu` i `justificant
 **Consequences**:
   - `main` és ara la versió amb Supabase; el full de Google queda només com a arxiu (només lectura) i l'etiqueta `pre-supabase` és la marxa enrere.
   - El projecte de Supabase té la càrrega marcada com a definitiva: `supabase_buida.mjs` i `supabase_carrega.mjs` es neguen a esborrar sense `--ignora-definitiu`.
-  - Pendents del tall: proves d'entrada de Juanba Mafé i Juanjo Felis, passiu de falles.app (informe del 9/11), justificant de prova des de l'app,
+  - Pendents del tall (actualitzat el mateix dia): només l'avís als usuaris, `/code-review` i la Fase 8. Fets i comprovats: entrada de Emilio, Juanba Mafé i Juanjo Felis, passiu de falles.app (25.412,20 €, 676 monederos), justificant real pujat (29 a Storage), 3 migrats oberts i accés públic de Drive retirat.
     avís als usuaris, i retirar l'accés «qualsevol amb l'enllaç» dels fitxers de Drive migrats.
