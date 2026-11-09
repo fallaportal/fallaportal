@@ -306,7 +306,7 @@ export const casos = [
   { nom: 'storage pujar: la ruta ha de ser «XX-YY/<moviment>.<extensió>» (cap subcarpeta)', com: D, sql: obj('91-92/sub/t_m_del.jpg') + ' returning 1', espera: 'error' },
   { nom: 'storage pujar: ni sense extensió', com: D, sql: obj('91-92/t_m_del') + ' returning 1', espera: 'error' },
   { nom: 'storage pujar: ni a un moviment que no existeix', com: T, sql: obj('91-92/t_inexistent.jpg') + ' returning 1', espera: 'error' },
-  { nom: 'storage veure: un membre llig els fitxers', com: L, prep: obj('91-92/t_m_del.jpg'), sql: "select 1 from storage.objects where bucket_id = 'justificants'", espera: { files: 1 } },
+  { nom: 'storage veure: un membre llig els fitxers', com: L, prep: obj('91-92/t_m_del.jpg'), sql: "select 1 from storage.objects where bucket_id = 'justificants' and name = '91-92/t_m_del.jpg'", espera: { files: 1 } },
   { nom: 'storage veure: qui no és membre no en veu cap', com: S, prep: obj('91-92/t_m_del.jpg'), sql: "select 1 from storage.objects where bucket_id = 'justificants'", espera: { files: 0 } },
   { nom: 'storage substituir: el creador del moviment sí', com: D, prep: obj('91-92/t_m_del.jpg'), sql: "update storage.objects set metadata = '{}'::jsonb where bucket_id = 'justificants' and name = '91-92/t_m_del.jpg' returning 1", espera: { files: 1 } },
   { nom: 'storage substituir: no un fitxer d\'un moviment d\'extracte', com: D, prep: obj('91-92/t_m_ext.jpg'), sql: "update storage.objects set metadata = '{}'::jsonb where bucket_id = 'justificants' and name = '91-92/t_m_ext.jpg' returning 1", espera: { files: 0 } },
