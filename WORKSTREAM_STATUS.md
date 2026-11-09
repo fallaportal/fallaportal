@@ -1,8 +1,13 @@
 # Work Stream Status — Falla Portal
 ## Snapshot Date: 2026-11-09
-## Versió en producció: v4.2.0 (a `main`, amb Supabase, a `app.fallaportal.es`) · etiqueta `pre-supabase` = versió amb Google Sheets
+## Versió en producció: v4.2.1 (a `main`, amb Supabase, a `app.fallaportal.es`; publicada el 9/11) · etiqueta `pre-supabase` = versió amb Google Sheets
 
-> **v4.2.1 (2026-11-09, fet i verificat, pendent de publicar): inici del mòbil.** Al mòbil, la pantalla d'inici passa a ser un resum personal
+> **Pantalles que no tenen sentit al mòbil (decisió del 9/11, pendent de publicar com a v4.2.2)**: `MOBIL_NO` = Importar extracte, Falles.app,
+> Pressupostos i Configuració (fitxers d'Excel, taules d'edició, administració). No apareixen a la barra inferior, als botons de l'inici ni a
+> «Més» (que acaba amb «Des de l'ordinador: …» per als rols que les tenen); a l'escriptori, igual que sempre. Es pot canviar la llista a
+> `index.html` (`MOBIL_NO`). Verificat per a president, tresoreria, àrea i delegat.
+
+> **v4.2.1 (2026-11-09, publicada): inici del mòbil.** Al mòbil, la pantalla d'inici passa a ser un resum personal
 > (fons delegats de la persona amb saldo i barra, «Moviments teus», «Despeses declarades» amb avís de les sense justificant) i botons grans
 > dels mòduls que els seus rols posen a la barra inferior (sense Inici) més «Més» (obri el menú de sempre). El saldo de fons es diu en clar:
 > «Tens X de la falla al teu poder» (positiu), «La falla et deu X» (negatiu) o «Estàs a zero». El Dashboard de sempre s'obri en una pantalla

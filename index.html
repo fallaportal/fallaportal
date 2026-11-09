@@ -408,7 +408,7 @@ tr:hover td{background:var(--bg2)}
     <div class="login-logo">Falla <span>Portal</span></div>
     <div class="login-sub">Sistema de gestió financera</div>
     <div class="login-fiscal">Any fiscal 26/27 · Abr 2026 – Mar 2027</div>
-    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v4.2.1</div>
+    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v4.2.2</div>
     <div id="login-step-boot" class="login-boot">Comprovant la sessió…</div>
     <div id="login-step-email" class="hidden">
       <label class="login-lbl" for="login-email">Correu electrònic</label>
@@ -461,7 +461,7 @@ tr:hover td{background:var(--bg2)}
     <div class="sb-bottom">
       <div class="sync-ind" style="display:flex;align-items:center;justify-content:space-between"><div style="display:flex;align-items:center;gap:6px"><div class="sync-dot" id="sync-dot"></div><span id="sync-text">Sincronitzat</span></div><button onclick="manualRefresh()" title="Actualitzar dades" style="background:none;border:none;cursor:pointer;padding:2px 4px;color:var(--text2);font-size:14px;line-height:1"><i class="ti ti-refresh"></i></button></div>
       <button class="btn-logout" onclick="signOut()"><i class="ti ti-logout" style="font-size:14px"></i> Tancar sessió</button>
-      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v4.2.1</div>
+      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v4.2.2</div>
     </div>
   </div>
 
@@ -2383,15 +2383,20 @@ const MODUL_MATRIU={dashboard:['dashboard'],moviments:['moviments'],lliurament:[
   configuracio:['configuracio'],manual:['manual']};
 function navVeu(mid){return(MODUL_MATRIU[mid]||[]).some(modulVeu);}
 // Barra inferior del mòbil: els mòduls visibles que algun rol de la persona hi posa, com a molt 4. La resta, al menú «Més».
+// Pantalles que no tenen sentit al mòbil (fitxers d'Excel, taules d'edició, administració): no apareixen a la barra, als botons de
+// l'inici ni a «Més». A l'escriptori, sí. Decisió del 9/11/2026.
+const MOBIL_NO=['importacio','fallesapp','pressupostos-edit','configuracio'];
+function navMobilSi(mid){return MOBIL_NO.indexOf(mid)<0;}
+function navAmagatsAlMobil(){return MODULS_DEF.map(function(m){return m.id;}).filter(function(mid){return navVeu(mid)&&!navMobilSi(mid);});}
 function navBarraIds(){
   const p=getPerfil();
   return MODULS_DEF.map(function(m){return m.id;}).filter(function(mid){
-    return navVeu(mid)&&(MODUL_MATRIU[mid]||[]).some(function(x){return p[x]&&p[x].barra;});
+    return navVeu(mid)&&navMobilSi(mid)&&(MODUL_MATRIU[mid]||[]).some(function(x){return p[x]&&p[x].barra;});
   }).slice(0,4);
 }
 function navMesIds(){
   const barra=navBarraIds();
-  return MODULS_DEF.map(function(m){return m.id;}).filter(function(mid){return navVeu(mid)&&barra.indexOf(mid)<0;});
+  return MODULS_DEF.map(function(m){return m.id;}).filter(function(mid){return navVeu(mid)&&navMobilSi(mid)&&barra.indexOf(mid)<0;});
 }
 
 function buildNav(){
@@ -2445,6 +2450,8 @@ function buildMobMenu(){
   MODULS_DEF.filter(function(m){return mes.indexOf(m.id)>=0;}).forEach(function(m){
     html+=`<div onclick="showPageMob('${m.page}','');closeMobMenu()" style="${s}"><i class="ti ${m.icon}" style="${ic}"></i> ${m.label}</div>`;
   });
+  const amagats=MODULS_DEF.filter(function(m){return navAmagatsAlMobil().indexOf(m.id)>=0;}).map(function(m){return m.label;});
+  if(amagats.length)html+='<div style="padding:8px 20px 4px;font-size:12px;color:var(--text3);display:flex;gap:8px;align-items:flex-start"><i class="ti ti-device-desktop" style="font-size:16px"></i><span>Des de l\'ordinador: '+amagats.join(', ')+'</span></div>';
   const el=document.getElementById('mob-menu-items');
   if(el)el.innerHTML=html;
 }
