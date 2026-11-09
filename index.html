@@ -514,7 +514,7 @@ tr:hover td{background:var(--bg2)}
         <div class="field"><label>Nota <span style="color:var(--text3);font-weight:400">(opcional)</span></label><input type="text" id="rc-nota" placeholder="p.e. Festa del 28/10"></div>
         <button class="btn btn-primary" id="rc-btn" style="width:100%;justify-content:center" onclick="declararRecarrega()"><i class="ti ti-check"></i> Declarar recàrrega</button>
       </div>
-      <div class="info-box" style="margin-bottom:12px"><i class="ti ti-info-circle"></i> Els diners són de la falla: els tens tu fins que els lliures a Tresoreria, que en registrarà la devolució. Si t'equivoques, pots corregir o esborrar la recàrrega fins que Tresoreria la registre.</div>
+      <div class="info-box" style="margin-bottom:12px"><i class="ti ti-info-circle"></i> La recàrrega queda com a fons delegat teu: els diners són de la falla i els tens tu fins que els lliures. Tresoreria en valida l'entrada a caixa (botó «Devolució»). Si t'equivoques, pots corregir o esborrar la recàrrega fins que Tresoreria la valide.</div>
       <div class="card"><div class="card-title">Les teues últimes declaracions</div><div id="rc-llista"></div></div>
     </div>
 
@@ -6464,7 +6464,7 @@ const MANUAL={
     <div style="font-size:13px;line-height:1.8">
       <div style="font-weight:500;margin-bottom:6px">Cicle complet:</div>
       <div>1. <strong>Tresoreria lliura fons</strong> → botó "Nou lliurament". Si els diners ixen del banc (xec o transferència), tria origen "Banc"</div>
-      <div>1b. <strong>Recàrregues de falles.app en efectiu</strong> → les declara qui les cobra, a «Declarar recàrregues»: crea l'ingrés en efectiu i un fons a nom seu fins que lliura els diners; Tresoreria o President en registren la devolució (botó "Devolució")</div>
+      <div>1b. <strong>Recàrregues de falles.app en efectiu</strong> → les declara qui les cobra, a «Declarar recàrregues»: crea l'ingrés en efectiu i un fons delegat a nom seu fins que lliura els diners; Tresoreria o President en validen l'entrada a caixa (botó "Devolució" de Fons delegats)</div>
       <div>2. <strong>El delegat gasta</strong> → Nou moviment → Efectiu → "Fons lliurats"</div>
       <div>3. <strong>Saldo</strong> = fons rebuts − despeses amb fons − devolucions</div>
       <div>4. <strong>Devolució del sobrant</strong> → botó "Registrar devolució"</div>
