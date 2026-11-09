@@ -107,6 +107,30 @@ body:has(#login-screen:not(.hidden)) #mobile-nav,body:has(#noauth-screen:not(.hi
 @media(min-width:769px){
   .mobile-nav{display:none!important}
 }
+/* Inici del mòbil: resum personal i botons grans dels mòduls de la persona. A l'escriptori no es veu. */
+.mob-home{display:none}
+@media(max-width:768px){
+  .mob-home{display:block}
+  #dash-full{display:none}
+  #dash-full.open{display:block}
+}
+.mh-hi{font-size:12px;color:var(--text2)}
+.mh-nom{font-size:20px;font-weight:500;margin-bottom:12px}
+.mh-card{background:var(--bg2);border-radius:12px;padding:12px 14px;margin-bottom:10px}
+.mh-lb{font-size:12px;color:var(--text2)}
+.mh-big{font-size:24px;font-weight:500;line-height:1.2;margin-top:2px}
+.mh-bar{height:6px;border-radius:3px;background:var(--border);margin:10px 0 6px;overflow:hidden}
+.mh-bar i{display:block;height:100%;background:var(--blue)}
+.mh-g2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.mh-n{font-size:20px;font-weight:500;margin-top:2px}
+.mh-wr{display:inline-block;margin-top:4px;font-size:12px;padding:2px 8px;border-radius:var(--r);background:var(--amber-bg);color:var(--amber-text)}
+.mh-tg{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.mh-t{background:var(--bg);border:0.5px solid var(--border2);border-radius:14px;padding:12px;min-height:92px;display:flex;flex-direction:column;justify-content:space-between;cursor:pointer;text-align:left}
+.mh-t.p{border:1.5px solid var(--blue)}
+.mh-ic{width:36px;height:36px;border-radius:50%;background:var(--blue-bg);color:var(--blue-text);display:flex;align-items:center;justify-content:center;font-size:20px}
+.mh-t b{font-weight:500;font-size:15px;display:block;margin-top:8px}
+.mh-t .mh-s{font-size:12px;color:var(--text2)}
+.mh-dash{display:flex;align-items:center;justify-content:center;gap:6px;margin:14px 0 4px;font-size:13px;color:var(--text2);cursor:pointer;padding:8px}
 .mobile-nav{
   position:fixed;bottom:0;left:0;right:0;z-index:200;
   background:var(--bg);border-top:0.5px solid var(--border);
@@ -344,7 +368,7 @@ tr:hover td{background:var(--bg2)}
     <div class="login-logo">Falla <span>Portal</span></div>
     <div class="login-sub">Sistema de gestió financera</div>
     <div class="login-fiscal">Any fiscal 26/27 · Abr 2026 – Mar 2027</div>
-    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v4.2.0</div>
+    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v4.2.1</div>
     <div id="login-step-boot" class="login-boot">Comprovant la sessió…</div>
     <div id="login-step-email" class="hidden">
       <label class="login-lbl" for="login-email">Correu electrònic</label>
@@ -397,7 +421,7 @@ tr:hover td{background:var(--bg2)}
     <div class="sb-bottom">
       <div class="sync-ind" style="display:flex;align-items:center;justify-content:space-between"><div style="display:flex;align-items:center;gap:6px"><div class="sync-dot" id="sync-dot"></div><span id="sync-text">Sincronitzat</span></div><button onclick="manualRefresh()" title="Actualitzar dades" style="background:none;border:none;cursor:pointer;padding:2px 4px;color:var(--text2);font-size:14px;line-height:1"><i class="ti ti-refresh"></i></button></div>
       <button class="btn-logout" onclick="signOut()"><i class="ti ti-logout" style="font-size:14px"></i> Tancar sessió</button>
-      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v4.2.0</div>
+      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v4.2.1</div>
     </div>
   </div>
 
@@ -407,6 +431,8 @@ tr:hover td{background:var(--bg2)}
         <div style="width:44px;height:44px;border:4px solid rgba(255,0,0,0.2);border-top-color:#ff0000;border-radius:50%;animation:spin 0.8s linear infinite"></div>
         <div style="font-size:18px;color:#ff0000;font-weight:600">Carregant dades...</div>
       </div>
+      <div id="mob-home" class="mob-home"></div>
+      <div id="dash-full">
       <div class="page-title">Dashboard</div>
       <div class="page-sub" id="dash-sub">Any fiscal 26/27</div>
       <div class="metrics">
@@ -424,6 +450,7 @@ tr:hover td{background:var(--bg2)}
         <div class="card"><div class="card-title">Alertes</div><div id="dash-alerts"></div></div>
 
         <div class="card"><div class="card-title">Fons delegats</div><div id="dash-fons"><div style="color:var(--text3);font-size:12px">Configura usuaris per veure fons</div></div></div>
+      </div>
       </div>
     </div>
 
@@ -3858,6 +3885,7 @@ function renderDashboard(){
       }).join('');
     }
   }
+  renderMobHome();
 }
 // Actualització silenciosa del dashboard (sols mètriques, sense reconstruir llistes)
 function updateDashboardSilent(){
@@ -3871,6 +3899,84 @@ function updateDashboardSilent(){
   const elGast=document.getElementById('m-gast');if(elGast)elGast.textContent=fmt(gast);
   const elNet=document.getElementById('m-net');if(elNet){elNet.textContent=fmtS(net);elNet.style.color=net>=0?'var(--green)':'var(--red)';}
   const elCount=document.getElementById('m-count');if(elCount)elCount.textContent=movs.length;
+  renderMobHome();
+}
+
+// INICI DEL MÒBIL: resum personal (fons delegats, moviments i despeses declarades de la persona) i botons grans dels
+// mòduls que els seus rols posen a la barra inferior; la resta, a «Més». A l'escriptori no es veu (CSS .mob-home).
+function _mhEsc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+function _mhSaldo(v){return(v<0?'−':'')+fmtD(v);}   // fmtD treu el signe: un saldo excedit s'ha de veure negatiu
+function toggleDashFull(){
+  const d=document.getElementById('dash-full'),b=document.getElementById('mh-dash-ch');
+  if(!d)return;
+  d.classList.toggle('open');
+  if(b)b.className='ti '+(d.classList.contains('open')?'ti-chevron-up':'ti-chevron-down');
+}
+function renderMobHome(){
+  const el=document.getElementById('mob-home');
+  if(!el)return;
+  const u=getUsuari();
+  if(!u||u.rol==='noauth'||!currentUser){el.innerHTML='';return;}
+  const af=getAnyFiscal(),email=(u.email||'').toLowerCase();
+  const nom=_mhEsc((u.nom||currentUser.name||'').split(' ')[0]);
+  const num=function(x){return parseFloat(x)||0;};
+  // Moviments que la persona ha registrat ella mateixa (origen Manual: els d'un extracte importat no els declara ningú) i del
+  // mateix exercici que el Dashboard
+  const meus=(DB.moviments||[]).filter(function(m){
+    return(!m.anyFiscal||m.anyFiscal===af)&&m.via!=='app'&&m.origen==='Manual'&&(m.responsableEmail||'').toLowerCase()===email;
+  });
+  const ara=new Date(),mesAra=String(ara.getMonth()+1).padStart(2,'0')+'/'+ara.getFullYear();
+  const esteMes=meus.filter(function(m){return(m.data||'').slice(3)===mesAra;}).length;
+  const desp=meus.filter(function(m){return m.tipus==='gast'&&!esTraspas(m);});
+  const despImp=desp.reduce(function(s,m){return s+num(m.import);},0);
+  // Mateix criteri que l'informe de despeses sense justificant (r4)
+  const senseJ=desp.filter(function(m){return m.origen==='Manual'&&!m.ticketUrl;}).length;
+  // Targeta gran: els fons de la persona o, si no en té i ho veu tot, els fons en mans dels delegats
+  const fu=(DB.fons||[]).filter(function(f){return f.delegId===u.id||(f.delegEmail||'').toLowerCase()===email;});
+  let saldoPropi=null,card='';
+  if(fu.length){
+    saldoPropi=calcSaldoDelegat(fu);
+    // rebut − gastat i retornat = saldo (mateixa fórmula que calcSaldoDelegat: despeses, devolucions i avançaments)
+    const rebut=fu.filter(function(f){return f.tipus==='lliurament'||f.tipus==='reintegrament';}).reduce(function(s,f){return s+num(f.import);},0);
+    const gastat=rebut-saldoPropi;
+    const pct=rebut>0?Math.max(0,Math.min(100,Math.round(gastat/rebut*100))):0;
+    card='<div class="mh-card"><div class="mh-lb">Els teus fons delegats</div>'
+      +'<div class="mh-big" style="color:'+(saldoPropi<0?'var(--red)':'var(--text)')+'">'+_mhSaldo(saldoPropi)+' <span style="font-size:13px;font-weight:400;color:var(--text2)">'+(saldoPropi<0?'excedit':'disponibles')+'</span></div>'
+      +'<div class="mh-bar"><i style="width:'+pct+'%"></i></div>'
+      +'<div class="mh-lb">Rebut '+fmtD(rebut)+' · gastat o retornat '+_mhSaldo(gastat)+'</div></div>';
+  }else if(perm('viewAll')){
+    const total=calcSaldoDelegat((DB.fons||[]).filter(function(f){return f.delegEmail!=='_event';}));
+    card='<div class="mh-card"><div class="mh-lb">Fons en mans dels delegats</div><div class="mh-big">'+_mhSaldo(total)+'</div></div>';
+  }
+  // Botons grans: els mòduls de la barra inferior de la persona (sense Inici) i «Més» amb la resta
+  const caixesObertes=Object.values(DB.tancaments||{}).filter(function(t){return t&&t.estat==='obert'&&(!t.anyFiscal||t.anyFiscal===af);}).length;
+  const subs={
+    moviments:'Registrar despesa o ingrés',
+    lliurament:saldoPropi!==null?'Saldo '+_mhSaldo(saldoPropi):'Lliuraments i devolucions',
+    tancament:caixesObertes?caixesObertes+(caixesObertes===1?' caixa oberta':' caixes obertes'):'Cap caixa oberta',
+    historial:'Consultar moviments'
+  };
+  let tiles='';
+  navBarraIds().filter(function(id){return id!=='dashboard';}).forEach(function(id,i){
+    const m=MODULS_DEF.find(function(x){return x.id===id;});
+    if(!m)return;
+    tiles+='<div class="mh-t'+(id==='moviments'?' p':'')+'" onclick="showPageMob(\''+m.page+'\',\'mob-bar-items\')">'
+      +'<div class="mh-ic"><i class="ti '+m.icon+'"></i></div><div><b>'+_mhEsc(m.label)+'</b><span class="mh-s">'+_mhEsc(subs[id]||'')+'</span></div></div>';
+  });
+  const mes=navMesIds();
+  if(mes.length){
+    tiles+='<div class="mh-t" onclick="showMobMenu()"><div class="mh-ic"><i class="ti ti-dots"></i></div><div><b>Més</b><span class="mh-s">'+mes.length+(mes.length===1?' opció':' opcions')+'</span></div></div>';
+  }
+  const veuDash=navVeu('dashboard');
+  el.innerHTML='<div class="mh-hi">Exercici '+_mhEsc(af)+'</div><div class="mh-nom">Hola, '+nom+'</div>'
+    +card
+    +'<div class="mh-g2">'
+    +'<div class="mh-card" style="margin:0"><div class="mh-lb">Moviments teus</div><div class="mh-n">'+meus.length+'</div><div class="mh-lb">'+esteMes+' aquest mes</div></div>'
+    +'<div class="mh-card" style="margin:0"><div class="mh-lb">Despeses declarades</div><div class="mh-n">'+fmt(despImp)+'</div><div class="mh-lb">'+desp.length+(desp.length===1?' despesa':' despeses')+'</div>'
+    +(senseJ?'<span class="mh-wr">'+senseJ+' sense justificant</span>':'')+'</div>'
+    +'</div>'
+    +'<div class="mh-tg">'+tiles+'</div>'
+    +(veuDash?'<div class="mh-dash" onclick="toggleDashFull()"><span>Dashboard de la falla</span><i id="mh-dash-ch" class="ti '+(document.getElementById('dash-full')&&document.getElementById('dash-full').classList.contains('open')?'ti-chevron-up':'ti-chevron-down')+'"></i></div>':'');
 }
 
 // MOVIMENT

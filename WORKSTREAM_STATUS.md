@@ -2,6 +2,15 @@
 ## Snapshot Date: 2026-11-09
 ## Versió en producció: v4.2.0 (a `main`, amb Supabase, a `app.fallaportal.es`) · etiqueta `pre-supabase` = versió amb Google Sheets
 
+> **v4.2.1 (2026-11-09, fet i verificat, pendent de publicar): inici del mòbil.** Al mòbil, la pantalla d'inici passa a ser un resum personal
+> (fons delegats de la persona amb saldo i barra, «Moviments teus», «Despeses declarades» amb avís de les sense justificant) i botons grans
+> dels mòduls que els seus rols posen a la barra inferior (sense Inici) més «Més» (obri el menú de sempre). El Dashboard de sempre queda
+> sota «Dashboard de la falla» (plegat) per als rols que el veuen; a l'escriptori no canvia res. Codi: `renderMobHome()` (`index.html`).
+> Criteris: moviments i despeses = els d'origen Manual registrats per la persona a l'exercici actiu (els d'extractes importats no compten);
+> sense justificant = mateix criteri que l'informe r4; saldo = `calcSaldoDelegat`; si la persona no té fons i ho veu tot, la targeta és el
+> total en mans dels delegats (coincideix amb el Dashboard). Verificat al navegador a 360 px amb l'app real i la base de dades real
+> (pont `tools/f6_pont.mjs`, transacció que es desfà) per a delegat, àrea, president i tresoreria; sense errors ni canvis fantasma.
+
 > **TALL FET i PROVAT el 2026-11-09 (D-056)**: producció usa Supabase. Proves d'entrada real fetes: Emilio (president), Juanba Mafé
 > (tresoreria) i Juanjo Felis (àrea) han entrat (comprovat a `auth.users`); passiu de falles.app registrat (26/27, 9/11, 25.412,20 €, 676
 > monederos); un justificant real pujat des de l'app (29 a Storage) i 3 dels 28 migrats oberts correctament; accés públic dels 28 fitxers de
