@@ -8743,8 +8743,13 @@ async function importarFappTrans(){
     if(tipusCtrl&&valida){
       const aut=String(r['Autorizado por']||'').trim();
       // L'empremta és un SHA-256 de la fila (inclou el faller): el nom del faller no es desa enlloc.
-      const raw=['fapp_rec',tipusCtrl,rawDate.toISOString(),imp.toFixed(2),String(r['Usuario']||'').trim().toLowerCase(),aut.toLowerCase(),String(r['Pedido Redsys']||'').trim()].join('|');
-      ctrl.push({exercici_id:rcExercici(data),data_hora:rawDate.toISOString(),tipus:tipusCtrl,import:Math.round(imp*100)/100,
+      // Les hores del fitxer són UTC (els informes de falles.app es demanen en UTC: «des de 31/03 22:00» és la mitjanit d'Espanya) i el
+      // lector d'Excel les dona com a hora local del navegador: es reinterpreten com a UTC perquè el dia siga el d'Espanya (Europe/Madrid)
+      // i coincidisca amb el de la declaració del delegat.
+      const utc=new Date(Date.UTC(rawDate.getFullYear(),rawDate.getMonth(),rawDate.getDate(),rawDate.getHours(),rawDate.getMinutes(),rawDate.getSeconds(),rawDate.getMilliseconds()));
+      const diaEs=new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Madrid',year:'numeric',month:'2-digit',day:'2-digit'}).format(utc).split('-').reverse().join('/');
+      const raw=['fapp_rec',tipusCtrl,utc.toISOString(),imp.toFixed(2),String(r['Usuario']||'').trim().toLowerCase(),aut.toLowerCase(),String(r['Pedido Redsys']||'').trim()].join('|');
+      ctrl.push({exercici_id:rcExercici(diaEs),data_hora:utc.toISOString(),tipus:tipusCtrl,import:Math.round(imp*100)/100,
         comanda_redsys:String(r['Pedido Redsys']||'').trim()||null,autoritzat_per:aut||null,empremta:raw});
       if(tipusCtrl==='efectiu')nEf++;else if(tipusCtrl==='tpv')nTpv++;
     }
@@ -8787,6 +8792,7 @@ async function importarFappTrans(){
   if(nTancats>0)msg+=' · '+nTancats+' d\'exercicis tancats omeses del control';
   if(nDevAnt>0)msg+=' · '+nDevAnt+' devolucions anteriors al 09/11/2026 no creen despesa';
   showToast(msg,!!errCtrl);
+  if(errCtrl){console.error('Control de recàrregues:',errCtrl);alert('No s\'ha pogut guardar el control de recàrregues:\n'+errCtrl);}
   save('moviments').catch(function(e){showToast('Error: '+e.message,true);});
   setTimeout(function(){cancelFappImport(1);},errCtrl?6000:2000);
 }
