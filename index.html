@@ -382,6 +382,7 @@ tr:hover td{background:var(--bg2)}
 .main{padding-top:var(--sat);}
 
 @media(max-width:767px){
+  #page-recarregues>.page-title,#page-recarregues>.page-sub{display:none}   /* sense scroll: el títol ja el diu el botó d'Enrere i la barra */
   #page-moviments{padding-bottom:calc(64px + var(--sab))!important}
   #page-moviments>div:first-child{display:none}   /* el títol «Registre de moviments» (66 px) feia scroll al formulari més usat */
   body,#app,.main{min-height:100vh;min-height:100dvh}   /* 100vh de iOS és més alt que la zona visible: provocava scroll amb la pantalla buida */
@@ -509,12 +510,13 @@ tr:hover td{background:var(--bg2)}
         <div id="rc-estat" style="margin-bottom:10px"></div>
         <div class="field-row">
           <div class="field"><label>Import cobrat (€)</label><input type="number" id="rc-import" min="0" step="0.01" inputmode="decimal" placeholder="0,00"></div>
-          <div class="field"><label>Data</label><input type="date" id="rc-data"></div>
+          <div class="field"><label>Data de les recàrregues</label><input type="date" id="rc-data"></div>
         </div>
+        <div style="font-size:12px;color:var(--text2);margin:-4px 0 10px"><i class="ti ti-calendar-event" style="font-size:14px;vertical-align:-2px"></i> Posa el dia en què es van fer a falles.app: així es quadra amb el fitxer. Si has cobrat en dies diferents, fes una declaració per dia.</div>
         <div class="field"><label>Nota <span style="color:var(--text3);font-weight:400">(opcional)</span></label><input type="text" id="rc-nota" placeholder="p.e. Festa del 28/10"></div>
         <button class="btn btn-primary" id="rc-btn" style="width:100%;justify-content:center" onclick="declararRecarrega()"><i class="ti ti-check"></i> Declarar recàrrega</button>
       </div>
-      <div class="info-box" style="margin-bottom:12px"><i class="ti ti-info-circle"></i> La recàrrega queda com a fons delegat teu: els diners són de la falla i els tens tu fins que els lliures. Tresoreria en valida l'entrada a caixa (botó «Devolució»). Si t'equivoques, pots corregir o esborrar la recàrrega fins que Tresoreria la valide.</div>
+      <div class="info-box" style="margin-bottom:12px"><i class="ti ti-info-circle"></i> Les declares com a fons delegat teu. Fins que lliures els diners a un Tresorer, a l'inici veuràs «Tens X € de la falla al teu poder». Quan Tresoreria en valide l'entrada a caixa (via devolució de fons), tornes a zero. Si t'equivoques, pots corregir o esborrar la recàrrega fins que Tresoreria la valide.</div>
       <div class="card"><div class="card-title">Les teues últimes declaracions</div><div id="rc-llista"></div></div>
     </div>
 
@@ -5179,6 +5181,13 @@ async function declararRecarrega(){
   const data=fmtDateInput(document.getElementById('rc-data').value)||today();
   const af=rcExercici(data);
   if(af!==getAnyFiscal()){showToast('La data ha de ser de l\'exercici actiu ('+getAnyFiscal()+')',true);return;}
+  if(dd2iso(data)>todayISO()){showToast('La data no pot ser futura: posa el dia en què es van fer les recàrregues',true);return;}
+  // Una declaració per dia: si ja n'hi ha una d'aquest dia, es demana confirmació (evita declarar dues vegades el mateix)
+  const mateixDia=rcMeues().filter(function(f){return f.data===data;});
+  if(mateixDia.length){
+    const t=mateixDia.reduce(function(s,f){return s+(parseFloat(f.import)||0);},0);
+    if(!confirm('Ja has declarat '+fmtD(t)+' el '+data+'.\nVols declarar-ne més d\'aquest mateix dia?'))return;
+  }
   const nota=(document.getElementById('rc-nota').value||'').trim();
   const ar=DB.config.areas.find(function(a){return a.id===dest.area_id;});
   const dl=DB.config.delegacions.find(function(d){return d.id===dest.delegacio_id;});
@@ -6464,7 +6473,7 @@ const MANUAL={
     <div style="font-size:13px;line-height:1.8">
       <div style="font-weight:500;margin-bottom:6px">Cicle complet:</div>
       <div>1. <strong>Tresoreria lliura fons</strong> → botó "Nou lliurament". Si els diners ixen del banc (xec o transferència), tria origen "Banc"</div>
-      <div>1b. <strong>Recàrregues de falles.app en efectiu</strong> → les declara qui les cobra, a «Declarar recàrregues»: crea l'ingrés en efectiu i un fons delegat a nom seu fins que lliura els diners; Tresoreria o President en validen l'entrada a caixa (botó "Devolució" de Fons delegats)</div>
+      <div>1b. <strong>Recàrregues de falles.app en efectiu</strong> → les declara qui les cobra, a «Declarar recàrregues»: crea l'ingrés en efectiu i un fons delegat a nom seu fins que lliura els diners; Tresoreria o President en validen l'entrada a caixa (botó "Devolució" de Fons delegats). <strong>Posa la data en què es van fer les recàrregues a falles.app</strong> (una declaració per dia): és la clau per quadrar-les amb el fitxer</div>
       <div>2. <strong>El delegat gasta</strong> → Nou moviment → Efectiu → "Fons lliurats"</div>
       <div>3. <strong>Saldo</strong> = fons rebuts − despeses amb fons − devolucions</div>
       <div>4. <strong>Devolució del sobrant</strong> → botó "Registrar devolució"</div>
