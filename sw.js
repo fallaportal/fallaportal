@@ -1,7 +1,7 @@
 // Falla Portal — Service Worker v4.0.1
-const BUILD_VERSION = '4109';
+const BUILD_VERSION = '4200';
 const CACHE_NAME = 'falla-portal-v' + BUILD_VERSION;
-const BASE = '/fallaportal';
+const BASE = '';
 
 // Instal·lació — pre-caché dels recursos estàtics
 self.addEventListener('install', function(event) {

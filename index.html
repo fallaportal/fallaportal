@@ -175,8 +175,6 @@ input[type=checkbox]{accent-color:var(--green)}
 .modal-title{font-size:17px;font-weight:500;margin-bottom:18px}
 .toast{position:fixed;bottom:24px;right:24px;padding:10px 16px;background:var(--green);color:#fff;border-radius:var(--r);font-size:13px;z-index:300;display:none;align-items:center;gap:8px;max-width:340px}
 .toast.show{display:flex}.toast.error{background:var(--red)}.toast.pending{background:#555}.toast.warn{background:var(--amber,#B45309)}
-.fase-banner{position:fixed;top:0;left:0;right:0;z-index:400;display:none;align-items:center;justify-content:center;padding:2px 16px;background:var(--amber,#B45309);color:#fff;font-size:11px;line-height:14px;text-align:center;pointer-events:none}
-.fase-banner.show{display:flex}
 .toast-retry{background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:4px;padding:3px 10px;font-size:12px;cursor:pointer;margin-left:4px;white-space:nowrap}
 .pill{font-size:11px;padding:3px 9px;border-radius:10px}
 .p-ok{background:var(--green-bg);color:var(--green-text)}
@@ -346,7 +344,7 @@ tr:hover td{background:var(--bg2)}
     <div class="login-logo">Falla <span>Portal</span></div>
     <div class="login-sub">Sistema de gestió financera</div>
     <div class="login-fiscal">Any fiscal 26/27 · Abr 2026 – Mar 2027</div>
-    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v4.1.9</div>
+    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v4.2.0</div>
     <div id="login-step-boot" class="login-boot">Comprovant la sessió…</div>
     <div id="login-step-email" class="hidden">
       <label class="login-lbl" for="login-email">Correu electrònic</label>
@@ -399,7 +397,7 @@ tr:hover td{background:var(--bg2)}
     <div class="sb-bottom">
       <div class="sync-ind" style="display:flex;align-items:center;justify-content:space-between"><div style="display:flex;align-items:center;gap:6px"><div class="sync-dot" id="sync-dot"></div><span id="sync-text">Sincronitzat</span></div><button onclick="manualRefresh()" title="Actualitzar dades" style="background:none;border:none;cursor:pointer;padding:2px 4px;color:var(--text2);font-size:14px;line-height:1"><i class="ti ti-refresh"></i></button></div>
       <button class="btn-logout" onclick="signOut()"><i class="ti ti-logout" style="font-size:14px"></i> Tancar sessió</button>
-      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v4.1.9</div>
+      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v4.2.0</div>
     </div>
   </div>
 
@@ -1539,7 +1537,6 @@ tr:hover td{background:var(--bg2)}
 </div>
 
 <div class="toast" id="toast"><span id="toast-msg"></span><button class="toast-retry" id="toast-retry" style="display:none" onclick="toastRetry()">Reintentar</button></div>
-<div class="fase-banner" id="fase-banner">Versió de proves amb Supabase: les dades i els canvis són a Supabase (projecte de proves); el full de Google continua sent el de producció fins al tall.</div>
 
 <script>
 const TABS={
@@ -1842,7 +1839,6 @@ function mostraLogin(missatge){
   loginEl('app').classList.add('hidden');
   loginEl('noauth-screen').classList.add('hidden');
   loginEl('login-screen').classList.remove('hidden');
-  loginEl('fase-banner').classList.remove('show');
   loginError(missatge||'');
   loginPas('email');
 }
@@ -1944,7 +1940,6 @@ async function entraAmbSessio(session){
     }
     currentUser={email:email,name:membre?membre.nom:email,initials:inicialsDe(membre?membre.nom:email)};
     DB.config.usuaris=membre?[membre]:[];
-    if(membre)loginEl('fase-banner').classList.add('show');
     // Les dades arribaran de Supabase a la Fase 3: l'app s'obri amb el DB buit.
     initApp();
     if(membre)carregaInicial();
