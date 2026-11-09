@@ -5,8 +5,8 @@
 > **TALL FET i PROVAT el 2026-11-09 (D-056)**: producció usa Supabase. Proves d'entrada real fetes: Emilio (president), Juanba Mafé
 > (tresoreria) i Juanjo Felis (àrea) han entrat (comprovat a `auth.users`); passiu de falles.app registrat (26/27, 9/11, 25.412,20 €, 676
 > monederos); un justificant real pujat des de l'app (29 a Storage) i 3 dels 28 migrats oberts correctament; accés públic dels 28 fitxers de
-> Drive retirat (comprovat: sense sessió acaben a l'inici de sessió de Google). **Pendents**: avisar els usuaris que ja pot entrar-se (correu
-> amb codi, pot anar a brossa; reinstal·lar l'app al mòbil una vegada); `/code-review`; obrir algun dels 5 PDF migrats; Fase 8 (estabilització).
+> Drive retirat (comprovat: sense sessió acaben a l'inici de sessió de Google). Avís als usuaris enviat per WhatsApp el 9/11 (esborrar la icona antiga, entrar a app.fallaportal.es amb correu i codi, reinstal·lar a iPhone i Android). **Pendents**: seguir les incidències d'entrada (correu a brossa, correus no registrats)
+> ; `/code-review`; obrir algun dels 5 PDF migrats; Fase 8 (estabilització).
 > Còpia de la base de dades: `Falla Portal DB_supabase_tall_20261109.xlsx` (Descàrregues, fora del repo). Les referències
 > més avall a «`main` v4.0.89», «branca `supabase`» o «fins al tall» són de l'estat anterior.
 
