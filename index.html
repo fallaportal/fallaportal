@@ -417,7 +417,7 @@ tr:hover td{background:var(--bg2)}
     <div class="login-logo">Falla <span>Portal</span></div>
     <div class="login-sub">Sistema de gestió financera</div>
     <div class="login-fiscal">Any fiscal 26/27 · Abr 2026 – Mar 2027</div>
-    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v4.4.0</div>
+    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v4.4.1</div>
     <div id="login-step-boot" class="login-boot">Comprovant la sessió…</div>
     <div id="login-step-email" class="hidden">
       <label class="login-lbl" for="login-email">Correu electrònic</label>
@@ -470,7 +470,7 @@ tr:hover td{background:var(--bg2)}
     <div class="sb-bottom">
       <div class="sync-ind" style="display:flex;align-items:center;justify-content:space-between"><div style="display:flex;align-items:center;gap:6px"><div class="sync-dot" id="sync-dot"></div><span id="sync-text">Sincronitzat</span></div><button onclick="manualRefresh()" title="Actualitzar dades" style="background:none;border:none;cursor:pointer;padding:2px 4px;color:var(--text2);font-size:14px;line-height:1"><i class="ti ti-refresh"></i></button></div>
       <button class="btn-logout" onclick="signOut()"><i class="ti ti-logout" style="font-size:14px"></i> Tancar sessió</button>
-      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v4.4.0</div>
+      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v4.4.1</div>
     </div>
   </div>
 
@@ -8728,7 +8728,7 @@ async function importarFappTrans(){
   // D-057: les recàrregues en efectiu ja NO creen ingrés des del fitxer. L'ingrés és la declaració del delegat (Declarar recàrregues);
   // el fitxer és només el control: es guarda cada recàrrega amb «Autorizado por» a `fallesapp_recarregues` per quadrar-la amb el declarat.
   // Les d'abans d'aquesta decisió continuen al llibre tal com estaven (Emilio, 9/11/2026).
-  const gDev={};const ctrl=[];let nEf=0,nTpv=0;
+  const gDev={};const ctrl=[];let nEf=0,nTpv=0,nDevAnt=0;
   rows.forEach(function(r){
     if(r['Estado']!=='Autorizado'||!r['Cantidad'])return;
     const t=r['Tipo']||'';
@@ -8750,14 +8750,21 @@ async function importarFappTrans(){
     }
     // Les recàrregues TPV tampoc creen ingrés: la plataforma les liquida al banc i entren per l'extracte com a
     // "Ingrés APP". Importar-les ací les comptava dues vegades (A-27, v4.0.67).
-    if(t.includes('Devoluci')){gDev[data]=(gDev[data]||0)+imp;}
+    // Les devolucions en efectiu només creen despesa des del primer dia del control (09/11/2026): abans, falles.app no té efecte comptable.
+    if(t.includes('Devoluci')){
+      if(dd2iso(data)>=FAPP_CONTROL_DES_DE)gDev[data]=(gDev[data]||0)+imp;else nDevAnt++;
+    }
   });
   let nNous=0,nOmesos=0;
   // Control: files noves a `fallesapp_recarregues`; una empremta repetida (el mateix fitxer, o un de solapat) s'omet sola.
   let nCtrl=0,errCtrl='';
   const exLlista=new Set(DB.config.exercicis||[]);
   for(const c of ctrl)c.empremta=await _sha256(c.empremta);
-  const ctrlOk=ctrl.filter(function(c){return c.exercici_id&&exLlista.has(c.exercici_id);});
+  // Un exercici tancat no accepta files noves (t40): una sola fila d'un exercici tancat feia fallar tota la tanda i no es guardava res.
+  const estatsEx=DB.config.estats_exercicis||{};
+  const tancat=function(ex){return!!(estatsEx[ex]&&estatsEx[ex].tancat);};
+  const nTancats=ctrl.filter(function(c){return c.exercici_id&&tancat(c.exercici_id);}).length;
+  const ctrlOk=ctrl.filter(function(c){return c.exercici_id&&exLlista.has(c.exercici_id)&&!tancat(c.exercici_id);});
   for(let i=0;i<ctrlOk.length;i+=500){
     const tros=ctrlOk.slice(i,i+500);
     const r=await sb.from('fallesapp_recarregues').upsert(tros,{onConflict:'empremta',ignoreDuplicates:true}).select('id');
@@ -8777,6 +8784,8 @@ async function importarFappTrans(){
   if(nOmesos>0)msg+=' ('+nOmesos+' duplicats omesos)';
   if(errCtrl)msg+=' · NO s\'ha pogut guardar el control de recàrregues: '+errCtrl;
   else msg+=' · control: '+nCtrl+' recàrregues noves de '+(nEf+nTpv)+' ('+nEf+' en efectiu, '+nTpv+' TPV; ja no creen ingrés: els declaren els delegats)';
+  if(nTancats>0)msg+=' · '+nTancats+' d\'exercicis tancats omeses del control';
+  if(nDevAnt>0)msg+=' · '+nDevAnt+' devolucions anteriors al 09/11/2026 no creen despesa';
   showToast(msg,!!errCtrl);
   save('moviments').catch(function(e){showToast('Error: '+e.message,true);});
   setTimeout(function(){cancelFappImport(1);},errCtrl?6000:2000);
