@@ -141,6 +141,7 @@ Cremà (19/03) i el 31/03 serveixen per liquidar els pendents de Falles dins del
 - **L'any fiscal actiu és global**: l'escriu qualsevol admin a `00 Config` i tots els usuaris el prenen al refresc.
 - **`bankHash`** = id del banc | data DD/MM/AAAA | import abs amb 2 decimals | concepte normalitzat. No inclou el
   sentit ni cap ordinal: dues línies idèntiques del mateix dia tenen el mateix hash (no pot ser UNIQUE).
+- **Recàrregues en efectiu de falles.app (D-057, 9/11/2026)**: les declara qui les cobra (pantalla «Declarar recàrregues»): ingrés en efectiu a Administració · Tresoreria + fons a nom del delegat fins que lliura els diners (devolució: Tresoreria o President). El fitxer de transaccions només és el control (`fallesapp_recarregues`, amb «Autorizado por» = nom d'usuari de falles.app, que es lliga amb una persona amb una taula d'àlies); ja no crea l'ingrés. Les recàrregues importades abans es queden al llibre.
 - **Falles.app** (sense decisió escrita; reconstruït el 2026-10-13): les **recàrregues** (efectiu i TPV) i les
   devolucions són apunts reals; els **consums per event** es pugen amb `via:'app'` només per atribuir ingressos als
   events (r3) i no entren a Dashboard, Resultats ni Flux (ja van entrar com a recàrrega); la **bonificació** dels

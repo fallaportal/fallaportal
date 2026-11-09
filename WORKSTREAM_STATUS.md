@@ -1,8 +1,19 @@
 # Work Stream Status — Falla Portal
 ## Snapshot Date: 2026-11-09
-## Versió en producció: v4.2.1 (a `main`, amb Supabase, a `app.fallaportal.es`; publicada el 9/11) · etiqueta `pre-supabase` = versió amb Google Sheets
+## Versió en producció: v4.2.2 (a `main`, amb Supabase, a `app.fallaportal.es`; publicada el 9/11) · etiqueta `pre-supabase` = versió amb Google Sheets
 
-> **Pantalles que no tenen sentit al mòbil (decisió del 9/11, pendent de publicar com a v4.2.2)**: `MOBIL_NO` = Importar extracte, Falles.app,
+> **WS-RECARREGUES (D-057, 9/11): fase 1 feta en local, PENDENT d'aplicar la migració i de publicar (v4.3.0).** Els delegats declaren les
+> recàrregues de falles.app en efectiu (pantalla «Declarar recàrregues», botó a l'inici del mòbil): ingrés en efectiu a 01·0102 + fons a nom seu,
+> lligats; la devolució física només Tresoreria o President. El fitxer de falles.app ja no crea l'ingrés de les recàrregues: les guarda com a
+> control a `fallesapp_recarregues` (amb «Autorizado por» i una empremta SHA-256). Les ja importades es queden. Migració
+> `supabase/migrations/20261109120000_recarregues_delegats.sql` (mòdul `recarregues`, polítiques, trigger, config `recarregues_desti`, columnes
+> `autoritzat_per` i `empremta`): **306 proves en verd en local; NO aplicada a Supabase** (el sistema de permisos va bloquejar l'aplicació a
+> producció: cal l'ok d'Emilio) i la v4.3.0 no es publica fins llavors. Verificat al navegador amb l'app i la base real (matriu simulada, desat
+> simulat): l'alta porta operació + ingrés + fons lligat, el saldo diu «Tens X de la falla al teu poder» i l'inici amb 5 botons no fa scroll.
+> **Fase 2 (pendent)**: pantalla de quadrament declarat contra falles.app per delegat i període, amb la taula d'àlies `fallesapp_alies`
+> (nom d'usuari de falles.app → persona; cal afegir-la a `guarda_canvis`). **Manual**: afegit el pas 1b a Fons delegats del Manual d'usuari.
+
+> **Pantalles que no tenen sentit al mòbil (decisió del 9/11, publicada com a v4.2.2)**: `MOBIL_NO` = Importar extracte, Falles.app,
 > Pressupostos i Configuració (fitxers d'Excel, taules d'edició, administració). No apareixen a la barra inferior, als botons de l'inici ni a
 > «Més» (que acaba amb «Des de l'ordinador: …» per als rols que les tenen); a l'escriptori, igual que sempre. Es pot canviar la llista a
 > `index.html` (`MOBIL_NO`). Verificat per a president, tresoreria, àrea i delegat.

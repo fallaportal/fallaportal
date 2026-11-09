@@ -51,6 +51,13 @@ const comptaMov = "select count(*) from public.moviments where id like 't\\_%'";
 const hook = (email) => "select app.hook_alta_usuari('" + JSON.stringify({ user: { email } }).replace(/'/g, "''") + "'::jsonb)::text";
 const hookErr = (email) => "select app.hook_alta_usuari('" + JSON.stringify({ user: { email } }).replace(/'/g, "''") + "'::jsonb) -> 'error' ->> 'http_code'";
 
+// D-057: recàrregues de falles.app declarades pels delegats (ingrés en efectiu al destí fix + fons lligat a nom del mateix delegat)
+const rc = (o = {}) => mov({ id: 't_rc', tipus: 'ingres', font: 'ingres_tercer', area_id: '92', delegacio_id: '9201', import: 20, concepte: 'Recàrregues falles.app', ...o });
+const rcFons = (o = {}) => fons({ id: 't_rcf', tipus: 'lliurament', origen: 'tercer', delegat_id: 't_delegat', moviment_id: 't_rc', import: 20, ...o });
+const rcPrep = "insert into public.moviments (id, data, tipus, import, compte_id, area_id, delegacio_id, font, concepte, creat_per) values ('t_rc', '2091-05-10', 'ingres', 20, 't_efectiu', '92', '9201', 'ingres_tercer', 'Recàrregues falles.app', 't_delegat')";
+const rcFonsPrep = "insert into public.fons (id, data, tipus, delegat_id, import, origen, moviment_id, creat_per) values ('t_rcf', '2091-05-10', 'lliurament', 't_delegat', 20, 'tercer', 't_rc', 't_delegat')";
+const fr = (extra = '') => "insert into public.fallesapp_recarregues (exercici_id, data_hora, tipus, import, autoritzat_per, empremta) values ('91/92', '2091-05-10T10:00:00Z', 'efectiu', 10, 'Nom Cognom', 'h1')" + extra + " returning 1";
+
 export const casos = [
   // ---------------------------------------------------------------- Seguretat de l'esquema (substitueixen les opcions
   // "Enable automatic RLS" i "Automatically expose new tables" del projecte: fallen si una taula nova se'n queda fora)
@@ -311,4 +318,33 @@ export const casos = [
   { nom: 'justificant: una ruta sense la forma «XX-YY/<moviment>.<ext>» no', com: D, sql: "insert into public.justificants (moviment_id, storage_path) values ('t_m_del', 'altra/t_m_del.jpg') returning 1", espera: { error: 'ruta del fitxer' } },
   { nom: 'matriu (D-053): Junta no veu tot: Dashboard, Historial, Resultats i r1–r3 només de la directiva, i sense Flux', com: 'servei', sql: "select count(*) from public.rol_moduls where rol_id = 'board' and (modul_id = 'flux' or (modul_id in ('dashboard', 'historial', 'resultats', 'r1', 'r2', 'r3') and abast <> 'directiva'))", espera: { valor: '0' } },
   { nom: 'justificant: la migració (servei) hi posa l\'enllaç antic de Drive i una ruta lliure', com: 'servei', sql: "insert into public.justificants (moviment_id, storage_path, url_drive_original) values ('t_m_del', 'migrat/qualsevol.jpg', 'https://drive.google.com/file/d/x/view') returning 1", espera: { files: 1 } },
+  // ---------------------------------------------------------------- D-057: el delegat declara les recàrregues de falles.app
+  { nom: 'recàrregues: el delegat declara una recàrrega (ingrés en efectiu al destí + fons lligat a nom seu)', com: D, sql: [rc(), rcFons()], espera: { files: 1 } },
+  { nom: 'recàrregues: el responsable d\'àrea també pot declarar-les', com: A, sql: [rc(), rcFons({ delegat_id: 't_area' })], espera: { files: 1 } },
+  { nom: 'recàrregues: l\'ingrés només pot anar al destí fix (no a una altra delegació)', com: D, sql: rc({ area_id: '91', delegacio_id: '9101' }), espera: 'error' },
+  { nom: 'recàrregues: l\'ingrés ha de ser en efectiu', com: D, sql: rc({ compte_id: 't_banc' }), espera: 'error' },
+  { nom: 'recàrregues: ha de ser un ingrés (no una despesa)', com: D, sql: rc({ tipus: 'despesa' }), espera: 'error' },
+  { nom: 'recàrregues: no val en un exercici tancat', com: D, sql: rc({ data: '2091-02-01' }), espera: 'error' },
+  { nom: 'recàrregues: no val dins d\'un event', com: D, sql: rc({ event_id: 't_ev1' }), espera: 'error' },
+  { nom: 'recàrregues: el fons ha d\'anar lligat a un ingrés', com: D, sql: rcFons({ moviment_id: null }), espera: 'error' },
+  { nom: 'recàrregues: el fons val el mateix que l\'ingrés', com: D, sql: [rc(), rcFons({ import: 30 })], espera: 'error' },
+  { nom: 'recàrregues: el fons és sempre a nom de qui declara', com: D, sql: [rc(), rcFons({ delegat_id: 't_delegat2' })], espera: 'error' },
+  { nom: 'recàrregues: el fons no es lliga a l\'ingrés d\'un altre', com: D2, prep: rcPrep, sql: rcFons({ delegat_id: 't_delegat2' }), espera: 'error' },
+  { nom: 'recàrregues: el fons no es lliga a un moviment qualsevol', com: D, sql: rcFons({ moviment_id: 't_m_tres' }), espera: 'error' },
+  { nom: 'recàrregues: un lliurament d\'origen caixa no val encara que siga a nom seu', com: D, sql: [rc(), rcFons({ origen: 'caixa' })], espera: 'error' },
+  { nom: 'recàrregues: Junta (sense el mòdul) no pot declarar', com: B, sql: rc(), espera: 'error' },
+  { nom: 'recàrregues: un rol només de lectura no pot declarar', com: L, sql: rc(), espera: 'error' },
+  { nom: 'recàrregues: el delegat no esborra la recàrrega que ha declarat', com: D, prep: [rcPrep, rcFonsPrep], sql: "delete from public.moviments where id = 't_rc' returning 1", espera: { files: 0 } },
+  { nom: 'recàrregues: el delegat no en canvia l\'import', com: D, prep: [rcPrep, rcFonsPrep], sql: "update public.moviments set import = 5 where id = 't_rc' returning 1", espera: { error: 'recàrrega declarada' } },
+  { nom: 'recàrregues: el delegat no en canvia el fons', com: D, prep: [rcPrep, rcFonsPrep], sql: "update public.fons set import = 5 where id = 't_rcf' returning 1", espera: { files: 0 } },
+  { nom: 'recàrregues: el delegat no registra la devolució dels diners', com: D, prep: [rcPrep, rcFonsPrep], sql: fons({ tipus: 'devolucio', delegat_id: 't_delegat', import: 20 }), espera: 'error' },
+  { nom: 'recàrregues: Tresoreria registra la devolució física dels diners', com: T, prep: [rcPrep, rcFonsPrep], sql: fons({ tipus: 'devolucio', delegat_id: 't_delegat', import: 20 }), espera: { files: 1 } },
+  { nom: 'recàrregues: President registra la devolució física dels diners', com: P, prep: [rcPrep, rcFonsPrep], sql: fons({ tipus: 'devolucio', delegat_id: 't_delegat', import: 20 }), espera: { files: 1 } },
+  { nom: 'recàrregues: Tresoreria pot esborrar la recàrrega i s\'endú el fons lligat', com: T, prep: [rcPrep, rcFonsPrep], sql: "delete from public.moviments where id = 't_rc' returning 1", verifica: "select count(*) from public.fons where id = 't_rcf'", espera: { valor: '0' } },
+  { nom: 'recàrregues: el destí està configurat', com: 'servei', sql: "select count(*) from public.config where clau = 'recarregues_desti'", espera: { valor: '1' } },
+  { nom: 'recàrregues: el delegat no pot canviar el destí (la config només la canvia qui té Configuració)', com: D, sql: "update public.config set valor = '{\"area_id\":\"91\",\"delegacio_id\":\"9101\"}'::jsonb where clau = 'recarregues_desti' returning 1", espera: { files: 0 } },
+  // ---------------------------------------------------------------- Control de falles.app: qui autoritza cada recàrrega
+  { nom: 'falles.app: Tresoreria guarda una recàrrega del fitxer amb l\'autoritzador i l\'empremta', com: T, sql: fr(), espera: { files: 1 } },
+  { nom: 'falles.app: tornar a importar el mateix fitxer no duplica (empremta única)', com: T, prep: fr().replace(' returning 1', ''), sql: fr(), espera: { error: 'empremta' } },
+  { nom: 'falles.app: el delegat no guarda files del fitxer', com: D, sql: fr(), espera: 'error' },
 ];

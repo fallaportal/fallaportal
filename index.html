@@ -163,6 +163,14 @@ body:has(#login-screen:not(.hidden)) #mobile-nav,body:has(#noauth-screen:not(.hi
   .mh-nom{font-size:17px;margin-bottom:4px}
 }
 .mh-t.p{border:1.5px solid var(--blue)}
+/* Amb 5 o més botons, en fila (icona a l'esquerra) perquè la pantalla continue sense scroll; si en queda un de sol, ocupa tota la fila */
+.mh-tg-5 .mh-t{flex-direction:row;align-items:center;justify-content:flex-start;gap:10px;padding:8px 10px}
+.mh-tg-5 .mh-t b{margin-top:0}
+.mh-tg-5 .mh-t:last-child:nth-child(odd){grid-column:1/-1}
+.mh-tg-5 .mh-ic{flex-shrink:0}
+.mh-tg-5 .mh-t>div:last-child{min-width:0;flex:1}
+.mh-tg-5 .mh-t b{font-size:13px}
+.mh-tg-5 .mh-t b,.mh-tg-5 .mh-t .mh-s{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .mh-ic{width:36px;height:36px;border-radius:50%;background:var(--blue-bg);color:var(--blue-text);display:flex;align-items:center;justify-content:center;font-size:20px}
 .mh-t b{font-weight:500;font-size:15px;display:block;margin-top:8px}
 .mh-t .mh-s{font-size:12px;color:var(--text2)}
@@ -408,7 +416,7 @@ tr:hover td{background:var(--bg2)}
     <div class="login-logo">Falla <span>Portal</span></div>
     <div class="login-sub">Sistema de gestió financera</div>
     <div class="login-fiscal">Any fiscal 26/27 · Abr 2026 – Mar 2027</div>
-    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v4.2.2</div>
+    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v4.3.0</div>
     <div id="login-step-boot" class="login-boot">Comprovant la sessió…</div>
     <div id="login-step-email" class="hidden">
       <label class="login-lbl" for="login-email">Correu electrònic</label>
@@ -461,7 +469,7 @@ tr:hover td{background:var(--bg2)}
     <div class="sb-bottom">
       <div class="sync-ind" style="display:flex;align-items:center;justify-content:space-between"><div style="display:flex;align-items:center;gap:6px"><div class="sync-dot" id="sync-dot"></div><span id="sync-text">Sincronitzat</span></div><button onclick="manualRefresh()" title="Actualitzar dades" style="background:none;border:none;cursor:pointer;padding:2px 4px;color:var(--text2);font-size:14px;line-height:1"><i class="ti ti-refresh"></i></button></div>
       <button class="btn-logout" onclick="signOut()"><i class="ti ti-logout" style="font-size:14px"></i> Tancar sessió</button>
-      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v4.2.2</div>
+      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v4.3.0</div>
     </div>
   </div>
 
@@ -492,6 +500,22 @@ tr:hover td{background:var(--bg2)}
         <div class="card"><div class="card-title">Fons delegats</div><div id="dash-fons"><div style="color:var(--text3);font-size:12px">Configura usuaris per veure fons</div></div></div>
       </div>
       </div>
+    </div>
+
+    <div id="page-recarregues" class="page">
+      <div class="page-title">Declarar recàrregues</div>
+      <div class="page-sub">Recàrregues de falles.app en efectiu que has cobrat</div>
+      <div class="card" style="margin-bottom:12px">
+        <div id="rc-estat" style="margin-bottom:10px"></div>
+        <div class="field-row">
+          <div class="field"><label>Import cobrat (€)</label><input type="number" id="rc-import" min="0" step="0.01" inputmode="decimal" placeholder="0,00"></div>
+          <div class="field"><label>Data</label><input type="date" id="rc-data"></div>
+        </div>
+        <div class="field"><label>Nota <span style="color:var(--text3);font-weight:400">(opcional)</span></label><input type="text" id="rc-nota" placeholder="p.e. Festa del 28/10"></div>
+        <button class="btn btn-primary" id="rc-btn" style="width:100%;justify-content:center" onclick="declararRecarrega()"><i class="ti ti-check"></i> Declarar recàrrega</button>
+      </div>
+      <div class="info-box" style="margin-bottom:12px"><i class="ti ti-info-circle"></i> Els diners són de la falla: els tens tu fins que els lliures a Tresoreria, que en registrarà la devolució.</div>
+      <div class="card"><div class="card-title">Les teues últimes declaracions</div><div id="rc-llista"></div></div>
     </div>
 
     <div id="page-moviments" class="page" style="padding:0">
@@ -865,7 +889,7 @@ tr:hover td{background:var(--bg2)}
             <div style="width:36px;height:36px;border-radius:50%;background:var(--green-bg);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:18px;font-weight:700;color:var(--green)">1</div>
             <div style="flex:1">
               <div style="font-weight:600;font-size:15px;margin-bottom:4px">Informe de Movimientos</div>
-              <div style="font-size:13px;color:var(--text2);margin-bottom:10px">Registra les recarregues en efectiu (ingressos a caixa), recarregues TPV (ingressos al banc) i devolucions.</div>
+              <div style="font-size:13px;color:var(--text2);margin-bottom:10px">Guarda les recàrregues (efectiu i TPV) com a control per quadrar-les amb el que declaren els delegats, i registra les devolucions en efectiu. Les recàrregues ja no creen ingrés des d'ací: l'ingrés és la declaració del delegat (Declarar recàrregues).</div>
               <div style="background:var(--bg2);border-radius:var(--r);padding:10px 12px;font-size:12px;color:var(--text2);margin-bottom:12px">
                 <div style="font-weight:500;margin-bottom:4px"><i class="ti ti-info-circle"></i> Com obtenir-lo a falles.app:</div>
                 <ol style="margin-left:16px;line-height:1.8">
@@ -1667,6 +1691,7 @@ const MODULS_DEF=[
   {id:'dashboard',        label:'Dashboard',         labelCurt:'Inici',      icon:'ti-home',            page:'dashboard',         seccio:'Principal'},
   {id:'moviments',        label:'Nou moviment',       labelCurt:'Moviment',   icon:'ti-plus',            page:'moviments',         seccio:'Principal'},
   {id:'lliurament',       label:'Fons delegats',      labelCurt:'Fons',       icon:'ti-arrow-down-left', page:'lliurament',        seccio:'Principal'},
+  {id:'recarregues',      label:'Declarar recàrregues',labelCurt:'Recàrr.',   icon:'ti-coin',            page:'recarregues',       seccio:'Principal'},
   {id:'tancament',        label:"Caixa d'Event",      labelCurt:'Caixa',      icon:'ti-lock',            page:'tancament',         seccio:'Principal'},
   {id:'pressupostos-edit',label:'Pressupostos',       labelCurt:'Pressup.',   icon:'ti-chart-bar',       page:'pressupostos-edit', seccio:'Gestió'},
   {id:'historial',        label:'Historial',          labelCurt:'Historial',  icon:'ti-list',            page:'historial',         seccio:'Gestió'},
@@ -2378,7 +2403,7 @@ function getMyDelegacions(){
 
 // NAV DINÀMIC segons permisos
 // Menú de l'app → mòduls de la matriu (D-036). Un element del menú pot dependre de diversos mòduls (Reports = r1…r4).
-const MODUL_MATRIU={dashboard:['dashboard'],moviments:['moviments'],lliurament:['fons'],tancament:['caixa'],'pressupostos-edit':['pressupostos'],
+const MODUL_MATRIU={dashboard:['dashboard'],moviments:['moviments'],lliurament:['fons'],recarregues:['recarregues'],tancament:['caixa'],'pressupostos-edit':['pressupostos'],
   historial:['historial'],fallesapp:['fallesapp'],importacio:['importacio'],resultats:['resultats'],flux:['flux'],reports:['r1','r2','r3','r4'],
   configuracio:['configuracio'],manual:['manual']};
 function navVeu(mid){return(MODUL_MATRIU[mid]||[]).some(modulVeu);}
@@ -2403,7 +2428,7 @@ function buildNav(){
   const nav=document.getElementById('sb-nav');
   function canSeeDesktop(mid){return navVeu(mid);}
   const seccions=[
-    {label:'Principal',   mods:['dashboard','moviments','lliurament','tancament']},
+    {label:'Principal',   mods:['dashboard','moviments','lliurament','recarregues','tancament']},
     {label:'Gestió',      mods:['pressupostos-edit','historial','fallesapp','importacio']},
     {label:'Reportes',    mods:['resultats','flux','reports']},
     {label:'Sistema',     mods:['configuracio']},
@@ -2594,7 +2619,7 @@ function showPage(id){
     if(n.getAttribute('onclick')&&n.getAttribute('onclick').includes("'"+pid+"'"))n.classList.add('active');
   });
   // Zoom selectiu: bloquejar només als mòduls d'entrada de dades
-  const noZoomPages=['moviments','lliurament','tancament'];
+  const noZoomPages=['moviments','lliurament','tancament','recarregues'];
   const vp=document.querySelector('meta[name=viewport]');
   if(vp){
     if(noZoomPages.includes(id)){
@@ -2608,7 +2633,7 @@ function showPage(id){
   ({'pressupostos':renderPressupostosEdit,'dashboard':renderDashboard,'dashboard-full':renderDashboard,'historial':renderHistorial,'directiva':renderDirectiva,'fallesapp':function(){initFappDates();initBonifSelectors();},'importacio':function(){initCSVDates();},
     'pressupostos':renderPressupostosEdit,'pressupostos-edit':renderPressupostosEdit,
     'directiva':renderDirectiva,
-    'lliurament':renderFons,'tancament':renderTancamentList,'resultats':renderResultats,
+    'lliurament':renderFons,'recarregues':renderRecarregues,'tancament':renderTancamentList,'resultats':renderResultats,
     'flux':renderFlux,'reports':renderReports,'configuracio':renderConfig,'manual':renderManual,
     'moviments':resetMovForm}[id]||function(){})();
 }
@@ -2740,6 +2765,8 @@ function sbPestanyes(R){
     {clau:'estats_exercicis',valor:JSON.stringify(estats)}
   ];
   if(cfgDb.justificant)cfgRows.push({clau:'justificant',valor:JSON.stringify(cfgDb.justificant.valor)});
+  // Només de lectura (no es torna a escriure des de l'app): on van els ingressos de les recàrregues dels delegats (D-057).
+  if(cfgDb.recarregues_desti)cfgRows.push({clau:'recarreguesDesti',valor:JSON.stringify(cfgDb.recarregues_desti.valor)});
   T['00 Config']=cfgRows;
 
   // --- Organització
@@ -3160,7 +3187,8 @@ function sbTaules(T,ctx){
     }
     const tipus=tipusFons[f.tipus];
     if(!tipus)return;
-    const lligat=tipus==='despesa_fons'||tipus==='avancament';
+    // Una recàrrega declarada (D-057): el lliurament d'origen «tercer» va lligat al seu ingrés.
+    const lligat=tipus==='despesa_fons'||tipus==='avancament'||(tipus==='lliurament'&&_sbTxt(f.origen)==='tercer'&&!!_sbTxt(f.movimentId));
     afegeix('fons',{id:f.id},Object.assign({
       data:iso,tipus:tipus,delegat_id:(uId[f.delegId]?f.delegId:resolU(f.delegEmail)),import:_sbNum2(f.import),
       origen:(tipus==='lliurament'||tipus==='reintegrament')?(_sbTxt(f.origen)||null):null,
@@ -3810,6 +3838,7 @@ async function loadFromSupabase(){
     if(cfgMap.estats_exercicis){try{DB.config.estats_exercicis=JSON.parse(cfgMap.estats_exercicis);}catch(e){}}
     if(cfgMap.fappPassiu){try{const fp=JSON.parse(cfgMap.fappPassiu);if(fp&&fp.total)DB.config.fappPassiu=fp;}catch(e){}}
     if(cfgMap.justificant){try{DB.config.justificant=JSON.parse(cfgMap.justificant);}catch(e){}}
+    if(cfgMap.recarreguesDesti){try{DB.config.recarreguesDesti=JSON.parse(cfgMap.recarreguesDesti);}catch(e){}}
   }
   // Migració automàtica: assignar conciliacio als moviments que no en tenen.
   // Ha d'anar DESPRÉS de carregar DB.config.bancs des del full: si es fa abans,
@@ -4066,6 +4095,11 @@ function renderMobHome(){
     tiles+='<div class="mh-t'+(id==='moviments'?' p':'')+'" onclick="showPageMob(\''+m.page+'\',\'mob-bar-items\')">'
       +'<div class="mh-ic"><i class="ti '+m.icon+'"></i></div><div><b>'+_mhEsc(m.label)+'</b><span class="mh-s">'+_mhEsc(subs[id]||'')+'</span></div></div>';
   });
+  // Recàrregues de falles.app (D-057): botó propi per a qui les pot declarar
+  if(navVeu('recarregues')&&navMobilSi('recarregues')){
+    const nr=rcMeues().length;
+    tiles+='<div class="mh-t" onclick="showPageMob(\'recarregues\',\'mob-bar-items\')"><div class="mh-ic"><i class="ti ti-coin"></i></div><div><b>Recàrregues</b><span class="mh-s">'+(nr?nr+(nr===1?' declarada':' declarades'):'Declarar efectiu cobrat')+'</span></div></div>';
+  }
   const mes=navMesIds();
   if(mes.length){
     tiles+='<div class="mh-t" onclick="showMobMenu()"><div class="mh-ic"><i class="ti ti-dots"></i></div><div><b>Més</b><span class="mh-s">'+mes.length+(mes.length===1?' opció':' opcions')+'</span></div></div>';
@@ -4078,7 +4112,7 @@ function renderMobHome(){
     +'<div class="mh-card" style="margin:0"><div class="mh-lb">Despeses declarades</div><div class="mh-n">'+fmt(despImp)+'</div><div class="mh-lb">'+desp.length+(desp.length===1?' despesa':' despeses')+'</div>'
     +(senseJ?'<span class="mh-wr">'+senseJ+' sense justificant</span>':'')+'</div>'
     +'</div>'
-    +'<div class="mh-tg">'+tiles+'</div>'
+    +'<div class="mh-tg'+((tiles.match(/class="mh-t[ "]/g)||[]).length>4?' mh-tg-5':'')+'">'+tiles+'</div>'
     +(veuDash?'<div class="mh-dash" onclick="showPageMob(\'dashboard-full\',\'mob-bar-items\')"><span>Dashboard de la falla</span><i class="ti ti-chevron-right"></i></div>':'');
 }
 
@@ -5029,6 +5063,87 @@ async function saveDevolucio(){
   document.getElementById('dev-data').value=todayISO();
   showToast('Devolució registrada');renderFons();
   saveFons(dItem).catch(e=>showToast('Error guardant: '+e.message,true));
+}
+
+// RECÀRREGUES DE FALLES.APP DECLARADES PEL DELEGAT (D-057)
+// Una declaració és UNA alta amb dues files que es desen juntes: l'ingrés en efectiu a l'àrea i la delegació de destí (config
+// `recarregues_desti`) i el fons «lliurament» (origen tercer) a nom de qui declara, lligat a l'ingrés. Els diners són de la falla: els
+// té el delegat fins que els lliura, i la devolució la registren Tresoreria o President (Fons delegats → Devolució).
+function rcDesti(){
+  const d=DB.config.recarreguesDesti;
+  return d&&d.area_id&&d.delegacio_id?d:null;
+}
+function rcMeues(){
+  const u=getUsuari();
+  if(!u)return[];
+  return(DB.fons||[]).filter(function(f){return f.tipus==='lliurament'&&f.origen==='tercer'&&f.movimentId&&f.delegId===u.id;});
+}
+// Exercici (XX/YY) d'una data DD/MM/AAAA
+function rcExercici(dd){
+  const p=String(dd||'').split('/');
+  if(p.length!==3)return'';
+  const y=parseInt(p[2],10),m=parseInt(p[1],10);
+  if(!y||!m)return'';
+  const a=m>=4?y:y-1;
+  return String(a%100).padStart(2,'0')+'/'+String((a+1)%100).padStart(2,'0');
+}
+function renderRecarregues(){
+  const u=getUsuari(),dest=rcDesti();
+  const dt=document.getElementById('rc-data');
+  if(dt&&!dt.value)dt.value=todayISO();
+  const btn=document.getElementById('rc-btn');
+  const mine=rcMeues().slice().sort(function(a,b){return sortByData(a,b);});
+  const saldo=u?calcSaldoDelegat((DB.fons||[]).filter(function(f){return f.delegId===u.id||(f.delegEmail||'').toLowerCase()===(u.email||'').toLowerCase();})):0;
+  const fr=_mhFrase(saldo);
+  const est=document.getElementById('rc-estat');
+  if(est){
+    est.innerHTML=dest?'<div class="mh-frase" style="background:'+fr.bg+';color:'+fr.col+'"><i class="ti '+fr.ic+'"></i><span>'+fr.llarga+'</span></div>'
+      :'<div class="info-box"><i class="ti ti-alert-triangle"></i> El destí de les recàrregues no està configurat: parla amb Tresoreria.</div>';
+  }
+  if(btn)btn.disabled=!dest;
+  const ll=document.getElementById('rc-llista');
+  if(ll){
+    ll.innerHTML=mine.length?mine.slice(0,4).map(function(f){
+      return'<div class="recent-row"><div class="rec-dot" style="background:var(--green)"></div><div class="rec-desc">'+_mhEsc(f.data)+(f.nota?' · '+_mhEsc(f.nota):'')+'</div><div class="rec-amt" style="color:var(--green)">'+fmtD(f.import)+'</div></div>';
+    }).join(''):'<div style="color:var(--text3);font-size:12px">Encara no has declarat cap recàrrega</div>';
+  }
+}
+async function declararRecarrega(){
+  if(exerciciTancatBloqueja())return;
+  const dest=rcDesti(),u=getUsuari();
+  if(!dest){showToast('El destí de les recàrregues no està configurat',true);return;}
+  if(!u||u.id==='guest'||u.rol==='noauth'){showToast('No tens permís per a declarar recàrregues',true);return;}
+  const imp=Math.round((parseFloat(document.getElementById('rc-import').value)||0)*100)/100;
+  if(!(imp>0)){showToast('Escriu l\'import cobrat',true);return;}
+  const data=fmtDateInput(document.getElementById('rc-data').value)||today();
+  const af=rcExercici(data);
+  if(af!==getAnyFiscal()){showToast('La data ha de ser de l\'exercici actiu ('+getAnyFiscal()+')',true);return;}
+  const nota=(document.getElementById('rc-nota').value||'').trim();
+  const ar=DB.config.areas.find(function(a){return a.id===dest.area_id;});
+  const dl=DB.config.delegacions.find(function(d){return d.id===dest.delegacio_id;});
+  const mov={id:genId('m'),anyFiscal:af,tipus:'ing',via:'Efectiu',areaId:dest.area_id,areaNom:ar?ar.name:'',delegacioId:dest.delegacio_id,delegacioNom:dl?dl.name:'',
+    eventId:'',eventNom:'',concepte:'Recàrregues falles.app (via '+u.nom+')',establiment:'falles.app',data:data,responsable:u.nom,responsableEmail:u.email,
+    import:imp,notes:nota,origenFons:'tercer',fontImport:'',origen:'Manual',ticketUrl:'',ticketMotiu:'',traspas:''};
+  const f={id:genId('f'),anyFiscal:af,tipus:'lliurament',delegId:u.id,delegEmail:u.email,import:imp,data:data,nota:nota,
+    registratPer:currentUser?currentUser.email:'',origen:'tercer',movimentId:mov.id};
+  if(!DB.fons)DB.fons=[];
+  DB.moviments.push(mov);DB.fons.push(f);
+  const btn=document.getElementById('rc-btn');
+  if(btn)btn.disabled=true;
+  try{
+    await save('moviments');
+    document.getElementById('rc-import').value='';
+    document.getElementById('rc-nota').value='';
+    showToast('Recàrrega declarada: '+fmtD(imp));
+  }catch(e){
+    // Una declaració que el servidor rebutja no es queda a DB (si no, cada desat següent tornaria a intentar-la).
+    DB.moviments=DB.moviments.filter(function(x){return x!==mov;});
+    DB.fons=DB.fons.filter(function(x){return x!==f;});
+    showToast('No s\'ha pogut declarar: '+(e&&e.message?e.message:e),true);
+  }
+  if(btn)btn.disabled=false;
+  renderRecarregues();
+  renderMobHome();
 }
 
 // TANCAMENT CAIXA
@@ -6288,6 +6403,7 @@ const MANUAL={
     <div style="font-size:13px;line-height:1.8">
       <div style="font-weight:500;margin-bottom:6px">Cicle complet:</div>
       <div>1. <strong>Tresoreria lliura fons</strong> → botó "Nou lliurament". Si els diners ixen del banc (xec o transferència), tria origen "Banc"</div>
+      <div>1b. <strong>Recàrregues de falles.app en efectiu</strong> → les declara qui les cobra, a «Declarar recàrregues»: crea l'ingrés en efectiu i un fons a nom seu fins que lliura els diners; Tresoreria o President en registren la devolució (botó "Devolució")</div>
       <div>2. <strong>El delegat gasta</strong> → Nou moviment → Efectiu → "Fons lliurats"</div>
       <div>3. <strong>Saldo</strong> = fons rebuts − despeses amb fons − devolucions</div>
       <div>4. <strong>Devolució del sobrant</strong> → botó "Registrar devolució"</div>
@@ -6338,8 +6454,8 @@ const MANUAL={
     <p style="color:var(--text2);line-height:1.6;margin-bottom:12px">Importa dades de la plataforma falles.app en tres passos.</p>
     <div style="font-size:13px;line-height:1.8">
       <div style="font-weight:500;margin-bottom:6px">Fitxer 1 — Informe de Movimientos:</div>
-      <div>• Recàrregues d'efectiu (agrupades per dia) i devolucions</div>
-      <div>• Les recàrregues TPV no s'importen: el banc ja les rep com a "Ingrés APP" i entren per l'extracte</div>
+      <div>• Recàrregues d'efectiu i TPV: es guarden com a <strong>control</strong> (amb «Autorizado por») i <strong>no creen ingrés</strong>: l'ingrés és la declaració del delegat. Devolucions en efectiu (agrupades per dia): despesa</div>
+      <div>• Les recàrregues TPV tampoc creen ingrés: el banc ja les rep com a "Ingrés APP" i entren per l'extracte</div>
       <div>• Selecciona via d'efectiu, àrea i delegació destí</div>
       <div style="font-weight:500;margin:10px 0 6px">Fitxer 2 — Saldos Individuales:</div>
       <div>• Passiu total — diners carregats pels fallers pendents de gastar</div>
@@ -8440,31 +8556,45 @@ async function importarFappTrans(){
     delegacioNom:deleg?.name||'',eventId:'',eventNom:'',establiment:'falles.app',
     responsable:currentUser?.name||'',responsableEmail:currentUser?.email||'',
     origenFons:'',fontImport:'fallesapp',origen:'App',ticketUrl:'',ticketMotiu:''};
-  const gEf={};const gDev={};let nTpvOmeses=0;
+  // D-057: les recàrregues en efectiu ja NO creen ingrés des del fitxer. L'ingrés és la declaració del delegat (Declarar recàrregues);
+  // el fitxer és només el control: es guarda cada recàrrega amb «Autorizado por» a `fallesapp_recarregues` per quadrar-la amb el declarat.
+  // Les d'abans d'aquesta decisió continuen al llibre tal com estaven (Emilio, 9/11/2026).
+  const gDev={};const ctrl=[];let nEf=0,nTpv=0;
   rows.forEach(function(r){
     if(r['Estado']!=='Autorizado'||!r['Cantidad'])return;
     const t=r['Tipo']||'';
     const imp=parseFloat(r['Cantidad'])||0;
     if(!imp)return;
     const rawDate=r['Fecha']?new Date(r['Fecha']):null;
-    const data=rawDate&&!isNaN(rawDate)?
+    const valida=rawDate&&!isNaN(rawDate);
+    const data=valida?
       String(rawDate.getDate()).padStart(2,'0')+'/'+(String(rawDate.getMonth()+1).padStart(2,'0'))+'/'+rawDate.getFullYear():
       today();
-    if(t==='Recarga de efectivo'){gEf[data]=(gEf[data]||0)+imp;}
-    // Les recàrregues TPV no s'importen: la plataforma les liquida al banc i entren per l'extracte com a
+    const tipusCtrl=t==='Recarga de efectivo'?'efectiu':t==='Recarga de TPV'?'tpv':t.includes('Devoluci')?'devolucio':null;
+    if(tipusCtrl&&valida){
+      const aut=String(r['Autorizado por']||'').trim();
+      // L'empremta és un SHA-256 de la fila (inclou el faller): el nom del faller no es desa enlloc.
+      const raw=['fapp_rec',tipusCtrl,rawDate.toISOString(),imp.toFixed(2),String(r['Usuario']||'').trim().toLowerCase(),aut.toLowerCase(),String(r['Pedido Redsys']||'').trim()].join('|');
+      ctrl.push({exercici_id:rcExercici(data),data_hora:rawDate.toISOString(),tipus:tipusCtrl,import:Math.round(imp*100)/100,
+        comanda_redsys:String(r['Pedido Redsys']||'').trim()||null,autoritzat_per:aut||null,empremta:raw});
+      if(tipusCtrl==='efectiu')nEf++;else if(tipusCtrl==='tpv')nTpv++;
+    }
+    // Les recàrregues TPV tampoc creen ingrés: la plataforma les liquida al banc i entren per l'extracte com a
     // "Ingrés APP". Importar-les ací les comptava dues vegades (A-27, v4.0.67).
-    else if(t==='Recarga de TPV'){nTpvOmeses++;}
-    else if(t.includes('Devoluci')){gDev[data]=(gDev[data]||0)+imp;}
+    if(t.includes('Devoluci')){gDev[data]=(gDev[data]||0)+imp;}
   });
   let nNous=0,nOmesos=0;
-  Object.entries(gEf).forEach(function(e){
-    const conc='Recarregues efectiu falles.app';
-    if(_checkFappDuplicate('fallesapp',conc,e[0],e[1])){nOmesos++;return;}
-    DB.moviments.push({...base,id:genId('m')+Math.random(),tipus:'ing',via:viaEf,
-      data:e[0],import:e[1],concepte:conc,notes:'Agrupat '+e[0],
-      bankHash:_calcFappHash('fallesapp',conc,e[0],e[1])});
-    nNous++;
-  });
+  // Control: files noves a `fallesapp_recarregues`; una empremta repetida (el mateix fitxer, o un de solapat) s'omet sola.
+  let nCtrl=0,errCtrl='';
+  const exLlista=new Set(DB.config.exercicis||[]);
+  for(const c of ctrl)c.empremta=await _sha256(c.empremta);
+  const ctrlOk=ctrl.filter(function(c){return c.exercici_id&&exLlista.has(c.exercici_id);});
+  for(let i=0;i<ctrlOk.length;i+=500){
+    const tros=ctrlOk.slice(i,i+500);
+    const r=await sb.from('fallesapp_recarregues').upsert(tros,{onConflict:'empremta',ignoreDuplicates:true}).select('id');
+    if(r.error){errCtrl=r.error.message;break;}
+    nCtrl+=(r.data||[]).length;
+  }
   Object.entries(gDev).forEach(function(e){
     const conc='Devolucions efectiu falles.app';
     if(_checkFappDuplicate('fallesapp',conc,e[0],e[1])){nOmesos++;return;}
@@ -8476,10 +8606,11 @@ async function importarFappTrans(){
   saveCache();
   let msg=nNous+' moviments importats';
   if(nOmesos>0)msg+=' ('+nOmesos+' duplicats omesos)';
-  if(nTpvOmeses>0)msg+=' · '+nTpvOmeses+' recàrregues TPV no importades (arriben per l\'extracte del banc)';
-  showToast(msg);
+  if(errCtrl)msg+=' · NO s\'ha pogut guardar el control de recàrregues: '+errCtrl;
+  else msg+=' · control: '+nCtrl+' recàrregues noves de '+(nEf+nTpv)+' ('+nEf+' en efectiu, '+nTpv+' TPV; ja no creen ingrés: els declaren els delegats)';
+  showToast(msg,!!errCtrl);
   save('moviments').catch(function(e){showToast('Error: '+e.message,true);});
-  setTimeout(function(){cancelFappImport(1);},2000);
+  setTimeout(function(){cancelFappImport(1);},errCtrl?6000:2000);
 }
 
 async function importarFappTickets(){
@@ -8998,6 +9129,10 @@ function _calcFappHash(fontImport,concepte,data,imp){
 // ============================================================================
 // Calcula una empremta determinista per a un moviment bancari.
 // Components: bancId + data (DD/MM/AAAA) + import amb 2 decimals + concepte normalitzat.
+async function _sha256(txt){
+  const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(String(txt)));
+  return Array.from(new Uint8Array(b)).map(function(x){return x.toString(16).padStart(2,'0');}).join('');
+}
 function _calcBankHash(bancId,data,imp,concepte){
   const conceptNorm=(concepte||'').trim().toLowerCase().replace(/\s+/g,' ');
   const impStr=(Math.round((parseFloat(imp)||0)*100)/100).toFixed(2);

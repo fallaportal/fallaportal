@@ -21,6 +21,10 @@ insert into public.exercicis (id, data_inici, data_fi, tancat) values
 insert into public.config (clau, valor) values ('exercici_actiu', '"91/92"')
   on conflict (clau) do update set valor = excluded.valor;
 
+-- D-057: destí de l'ingrés de les recàrregues que declaren els delegats (a la base de dades real és Administració · Tresoreria).
+insert into public.config (clau, valor) values ('recarregues_desti', '{"area_id": "92", "delegacio_id": "9201"}')
+  on conflict (clau) do update set valor = excluded.valor;
+
 insert into public.arees (id, nom) values ('91', 'Prova Festejos'), ('92', 'Prova Administració');
 insert into public.delegacions (id, area_id, nom) values
   ('9101', '91', 'Prova Dinars'), ('9102', '91', 'Prova Música'), ('9201', '92', 'Prova Tresoreria');
