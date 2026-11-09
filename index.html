@@ -417,7 +417,7 @@ tr:hover td{background:var(--bg2)}
     <div class="login-logo">Falla <span>Portal</span></div>
     <div class="login-sub">Sistema de gestió financera</div>
     <div class="login-fiscal">Any fiscal 26/27 · Abr 2026 – Mar 2027</div>
-    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v4.4.1</div>
+    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v4.4.2</div>
     <div id="login-step-boot" class="login-boot">Comprovant la sessió…</div>
     <div id="login-step-email" class="hidden">
       <label class="login-lbl" for="login-email">Correu electrònic</label>
@@ -470,7 +470,7 @@ tr:hover td{background:var(--bg2)}
     <div class="sb-bottom">
       <div class="sync-ind" style="display:flex;align-items:center;justify-content:space-between"><div style="display:flex;align-items:center;gap:6px"><div class="sync-dot" id="sync-dot"></div><span id="sync-text">Sincronitzat</span></div><button onclick="manualRefresh()" title="Actualitzar dades" style="background:none;border:none;cursor:pointer;padding:2px 4px;color:var(--text2);font-size:14px;line-height:1"><i class="ti ti-refresh"></i></button></div>
       <button class="btn-logout" onclick="signOut()"><i class="ti ti-logout" style="font-size:14px"></i> Tancar sessió</button>
-      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v4.4.1</div>
+      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v4.4.2</div>
     </div>
   </div>
 
@@ -8748,8 +8748,9 @@ async function importarFappTrans(){
       // i coincidisca amb el de la declaració del delegat.
       const utc=new Date(Date.UTC(rawDate.getFullYear(),rawDate.getMonth(),rawDate.getDate(),rawDate.getHours(),rawDate.getMinutes(),rawDate.getSeconds(),rawDate.getMilliseconds()));
       const diaEs=new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Madrid',year:'numeric',month:'2-digit',day:'2-digit'}).format(utc).split('-').reverse().join('/');
-      const raw=['fapp_rec',tipusCtrl,utc.toISOString(),imp.toFixed(2),String(r['Usuario']||'').trim().toLowerCase(),aut.toLowerCase(),String(r['Pedido Redsys']||'').trim()].join('|');
-      ctrl.push({exercici_id:rcExercici(diaEs),data_hora:utc.toISOString(),tipus:tipusCtrl,import:Math.round(imp*100)/100,
+      const raw=['fapp_rec',tipusCtrl,utc.toISOString(),Math.abs(imp).toFixed(2),String(r['Usuario']||'').trim().toLowerCase(),aut.toLowerCase(),String(r['Pedido Redsys']||'').trim()].join('|');
+      ctrl.push({exercici_id:rcExercici(diaEs),data_hora:utc.toISOString(),tipus:tipusCtrl,import:Math.round(Math.abs(imp)*100)/100,   // la taula exigeix import > 0: les devolucions del fitxer porten l'import en negatiu
+        
         comanda_redsys:String(r['Pedido Redsys']||'').trim()||null,autoritzat_per:aut||null,empremta:raw});
       if(tipusCtrl==='efectiu')nEf++;else if(tipusCtrl==='tpv')nTpv++;
     }
