@@ -12,6 +12,14 @@
 > Enrere del telèfon també hi torna (una entrada a l'historial mentre hi haja on tornar). Tocar la pantalla d'on véns compta com a tornar-hi.
 > Només al mòbil (≤768 px); `navReinicia()` buida la pila en entrar. Verificat: Inici → Fons → Historial → Inici → Dashboard i enrere pas a
 > pas amb el botó i amb `history.back()`. No cobreix les pestanyes internes de Configuració ni tanca el menú «Més» amb el botó Enrere.
+> **Regla de disseny (Emilio, 9/11): sense scroll al mòbil sempre que siga possible.** L'inici ocupa exactament l'alt de la pantalla
+> (`100dvh` menys padding, barra inferior i àrees segures; amb la barra Enrere, 56 px menys) i els botons s'estiren o es comprimeixen
+> (a ≤700 px d'alt compacte; a ≤600 px sense barra ni subtítols). Provat a 320×568, 360×640, 360×740 i 412×915 per a president, àrea,
+> delegat i tresoreria: 0 px de scroll. Corregit de passada per a totes les pantalles: `.main` sumava 80 px de padding inferior a l'`80px` de
+> cada `.page` (80 px de scroll de més) i `100vh` d'iOS és més alt que la zona visible (ara `100dvh`). Nou moviment: sense el títol de la
+> pantalla i amb menys padding, 0 px de scroll fins i tot amb la barra Enrere. **Pantalles que encara fan scroll a 360×740 (dades reals)**:
+> Dashboard complet 545 px, Fons delegats 585, Estat de resultats 359, Flux 545, Importar 739, Manual 638, Falles.app 2.028, Pressupostos
+> 2.994, Historial 7.647 (llistes llargues: no es poden quedar a 0 sense paginar o plegar).
 > Criteris: moviments i despeses = els d'origen Manual registrats per la persona a l'exercici actiu (els d'extractes importats no compten);
 > sense justificant = mateix criteri que l'informe r4; saldo = `calcSaldoDelegat`; si la persona no té fons i ho veu tot, la targeta és el
 > total en mans dels delegats (coincideix amb el Dashboard). Verificat al navegador a 360 px amb l'app real i la base de dades real
