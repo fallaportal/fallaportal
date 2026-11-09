@@ -4,8 +4,14 @@
 
 > **v4.2.1 (2026-11-09, fet i verificat, pendent de publicar): inici del mòbil.** Al mòbil, la pantalla d'inici passa a ser un resum personal
 > (fons delegats de la persona amb saldo i barra, «Moviments teus», «Despeses declarades» amb avís de les sense justificant) i botons grans
-> dels mòduls que els seus rols posen a la barra inferior (sense Inici) més «Més» (obri el menú de sempre). El Dashboard de sempre queda
-> sota «Dashboard de la falla» (plegat) per als rols que el veuen; a l'escriptori no canvia res. Codi: `renderMobHome()` (`index.html`).
+> dels mòduls que els seus rols posen a la barra inferior (sense Inici) més «Més» (obri el menú de sempre). El saldo de fons es diu en clar:
+> «Tens X de la falla al teu poder» (positiu), «La falla et deu X» (negatiu) o «Estàs a zero». El Dashboard de sempre s'obri en una pantalla
+> pròpia des de «Dashboard de la falla» (`showPage('dashboard-full')`, per als rols que el veuen); a l'escriptori no canvia res. Codi:
+> `renderMobHome()` (`index.html`).
+> **Memòria de navegació (mòbil)**: `showPage` guarda una pila (`_navPila`, màxim 30) i mostra una barra «‹ <pantalla anterior>» a dalt; el botó
+> Enrere del telèfon també hi torna (una entrada a l'historial mentre hi haja on tornar). Tocar la pantalla d'on véns compta com a tornar-hi.
+> Només al mòbil (≤768 px); `navReinicia()` buida la pila en entrar. Verificat: Inici → Fons → Historial → Inici → Dashboard i enrere pas a
+> pas amb el botó i amb `history.back()`. No cobreix les pestanyes internes de Configuració ni tanca el menú «Més» amb el botó Enrere.
 > Criteris: moviments i despeses = els d'origen Manual registrats per la persona a l'exercici actiu (els d'extractes importats no compten);
 > sense justificant = mateix criteri que l'informe r4; saldo = `calcSaldoDelegat`; si la persona no té fons i ho veu tot, la targeta és el
 > total en mans dels delegats (coincideix amb el Dashboard). Verificat al navegador a 360 px amb l'app real i la base de dades real

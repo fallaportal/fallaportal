@@ -112,13 +112,21 @@ body:has(#login-screen:not(.hidden)) #mobile-nav,body:has(#noauth-screen:not(.hi
 @media(max-width:768px){
   .mob-home{display:block}
   #dash-full{display:none}
-  #dash-full.open{display:block}
+  #page-dashboard.dash-complet #dash-full{display:block}
+  #page-dashboard.dash-complet #mob-home{display:none}
+  /* Botó «‹ Enrere» de la memòria de navegació */
+  .nav-enrere{position:fixed;top:0;left:0;right:0;z-index:190;height:44px;align-items:center;gap:4px;padding:0 12px;background:var(--bg);border-bottom:0.5px solid var(--border);color:var(--blue);font-size:15px;cursor:pointer}
+  .nav-enrere i{font-size:22px}
+  body.te-enrere .main{padding-top:56px}
 }
+@media(min-width:769px){.nav-enrere{display:none!important}}
 .mh-hi{font-size:12px;color:var(--text2)}
 .mh-nom{font-size:20px;font-weight:500;margin-bottom:12px}
 .mh-card{background:var(--bg2);border-radius:12px;padding:12px 14px;margin-bottom:10px}
 .mh-lb{font-size:12px;color:var(--text2)}
 .mh-big{font-size:24px;font-weight:500;line-height:1.2;margin-top:2px}
+.mh-frase{display:flex;align-items:center;gap:8px;margin-top:8px;padding:8px 10px;border-radius:var(--r);font-size:14px;font-weight:500;line-height:1.3}
+.mh-frase i{font-size:18px;flex-shrink:0}
 .mh-bar{height:6px;border-radius:3px;background:var(--border);margin:10px 0 6px;overflow:hidden}
 .mh-bar i{display:block;height:100%;background:var(--blue)}
 .mh-g2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
@@ -1091,6 +1099,7 @@ tr:hover td{background:var(--bg2)}
   </div>
 </div>
 
+<div class="nav-enrere" id="nav-enrere" onclick="navEnrere()" style="display:none"><i class="ti ti-chevron-left"></i><span id="nav-enrere-txt"></span></div>
 <nav class="mobile-nav" id="mobile-nav">
   <div id="mob-bar-items" style="display:contents"></div>
   <div class="mob-item" id="mob-mes" onclick="showMobMenu()" style="display:none"><i class="ti ti-dots"></i>Més</div>
@@ -2409,6 +2418,7 @@ function buildMobMenu(){
 }
 
 function initApp(){
+  navReinicia();
   const rol=getRol();
   if(rol==='noauth'){
     document.getElementById('login-screen').classList.add('hidden');
@@ -2482,15 +2492,67 @@ function initApp(){
   setInterval(bgRefresh, REFRESH_AUTO_MS);
 }
 
+// MEMÒRIA DE NAVEGACIÓ (mòbil): cada pantalla recorda d'on véns. El botó «‹ Enrere» de dalt i el botó Enrere del telèfon
+// tornen a la pantalla anterior, i així successivament fins a l'Inici. Tocar la pantalla on eres abans també és tornar-hi.
+// 'dashboard-full' és el Dashboard complet com a pantalla pròpia al mòbil (a l'escriptori 'dashboard' ja és el complet).
+let _navPila=[],_navActual='dashboard',_navTornant=false,_navGuard=false,_navIgnora=0;
+function _navMob(){return window.matchMedia('(max-width:768px)').matches;}
+function _navEtiqueta(id){
+  if(id==='dashboard')return'Inici';
+  if(id==='dashboard-full')return'Dashboard';
+  const m=MODULS_DEF.find(function(x){return x.page===id;});
+  return m?m.label:id;
+}
+function _navPinta(){
+  const b=document.getElementById('nav-enrere');
+  if(!b)return;
+  const dalt=_navPila[_navPila.length-1],veu=!!(dalt&&_navMob());
+  b.style.display=veu?'flex':'none';
+  document.body.classList.toggle('te-enrere',veu);
+  if(veu)document.getElementById('nav-enrere-txt').textContent=_navEtiqueta(dalt);
+}
+function _navTorna(){
+  const id=_navPila.pop();
+  if(!id)return;
+  _navTornant=true;
+  try{showPage(id);}finally{_navTornant=false;}
+}
+function navEnrere(){
+  if(!_navPila.length)return;
+  if(_navGuard)history.back();   // el popstate fa la feina: així el botó i el del telèfon van junts
+  else _navTorna();
+}
+function navReinicia(){
+  _navPila=[];_navActual='dashboard';_navPinta();
+}
+window.addEventListener('popstate',function(){
+  if(_navIgnora>0){_navIgnora--;return;}
+  _navGuard=false;
+  if(_navPila.length)_navTorna();
+});
 function showPage(id){
   if(id==='pressupostos'||id==='pressupostos-edit')id='pressupostos';
+  const pid=id==='dashboard-full'?'dashboard':id;   // és la mateixa pàgina, en vista completa
+  const pageEl=document.getElementById('page-'+pid);
+  if(!pageEl){console.warn('Pàgina no trobada: page-'+pid);return;}
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
-  const pageEl=document.getElementById('page-'+id);
-  if(!pageEl){console.warn('Pàgina no trobada: page-'+id);return;}
   pageEl.classList.add('active');
+  if(pid==='dashboard')pageEl.classList.toggle('dash-complet',id==='dashboard-full');
+  // Memòria de navegació
+  if(id!==_navActual&&!_navTornant){
+    if(_navPila.length&&_navPila[_navPila.length-1]===id)_navPila.pop();
+    else{_navPila.push(_navActual);if(_navPila.length>30)_navPila.shift();}
+  }
+  _navActual=id;
+  if(_navMob()){
+    // Una entrada a l'historial del navegador mentre hi haja on tornar, perquè el botó Enrere del telèfon no isca de l'app
+    if(_navPila.length&&!_navGuard){history.pushState({fpNav:1},'');_navGuard=true;}
+    else if(!_navPila.length&&_navGuard){_navGuard=false;_navIgnora++;history.back();}
+  }
+  _navPinta();
   document.querySelectorAll('.nav-item').forEach(n=>{
-    if(n.getAttribute('onclick')&&n.getAttribute('onclick').includes("'"+id+"'"))n.classList.add('active');
+    if(n.getAttribute('onclick')&&n.getAttribute('onclick').includes("'"+pid+"'"))n.classList.add('active');
   });
   // Zoom selectiu: bloquejar només als mòduls d'entrada de dades
   const noZoomPages=['moviments','lliurament','tancament'];
@@ -2504,7 +2566,7 @@ function showPage(id){
   }
   // Refresc en segon pla al canviar de pàgina
   bgRefresh();
-  ({'pressupostos':renderPressupostosEdit,'dashboard':renderDashboard,'historial':renderHistorial,'directiva':renderDirectiva,'fallesapp':function(){initFappDates();initBonifSelectors();},'importacio':function(){initCSVDates();},
+  ({'pressupostos':renderPressupostosEdit,'dashboard':renderDashboard,'dashboard-full':renderDashboard,'historial':renderHistorial,'directiva':renderDirectiva,'fallesapp':function(){initFappDates();initBonifSelectors();},'importacio':function(){initCSVDates();},
     'pressupostos':renderPressupostosEdit,'pressupostos-edit':renderPressupostosEdit,
     'directiva':renderDirectiva,
     'lliurament':renderFons,'tancament':renderTancamentList,'resultats':renderResultats,
@@ -3906,11 +3968,11 @@ function updateDashboardSilent(){
 // mòduls que els seus rols posen a la barra inferior; la resta, a «Més». A l'escriptori no es veu (CSS .mob-home).
 function _mhEsc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
 function _mhSaldo(v){return(v<0?'−':'')+fmtD(v);}   // fmtD treu el signe: un saldo excedit s'ha de veure negatiu
-function toggleDashFull(){
-  const d=document.getElementById('dash-full'),b=document.getElementById('mh-dash-ch');
-  if(!d)return;
-  d.classList.toggle('open');
-  if(b)b.className='ti '+(d.classList.contains('open')?'ti-chevron-up':'ti-chevron-down');
+// Què vol dir el saldo d'un delegat: positiu = té diners de la falla; negatiu = ha gastat més del que va rebre i la falla li'ls deu.
+function _mhFrase(v){
+  if(v>0.005)return{curt:'Tens '+fmtD(v)+' de la falla',llarga:'Tens '+fmtD(v)+' de la falla al teu poder',bg:'var(--amber-bg)',col:'var(--amber-text)',ic:'ti-wallet'};
+  if(v<-0.005)return{curt:'La falla et deu '+fmtD(v),llarga:'La falla et deu '+fmtD(v),bg:'var(--green-bg)',col:'var(--green-text)',ic:'ti-cash'};
+  return{curt:'A zero amb la falla',llarga:'Estàs a zero: no deus res ni et deuen res',bg:'var(--bg3)',col:'var(--text2)',ic:'ti-check'};
 }
 function renderMobHome(){
   const el=document.getElementById('mob-home');
@@ -3940,8 +4002,10 @@ function renderMobHome(){
     const rebut=fu.filter(function(f){return f.tipus==='lliurament'||f.tipus==='reintegrament';}).reduce(function(s,f){return s+num(f.import);},0);
     const gastat=rebut-saldoPropi;
     const pct=rebut>0?Math.max(0,Math.min(100,Math.round(gastat/rebut*100))):0;
+    const fr=_mhFrase(saldoPropi);
     card='<div class="mh-card"><div class="mh-lb">Els teus fons delegats</div>'
-      +'<div class="mh-big" style="color:'+(saldoPropi<0?'var(--red)':'var(--text)')+'">'+_mhSaldo(saldoPropi)+' <span style="font-size:13px;font-weight:400;color:var(--text2)">'+(saldoPropi<0?'excedit':'disponibles')+'</span></div>'
+      +'<div class="mh-big">'+fmtD(saldoPropi)+'</div>'
+      +'<div class="mh-frase" style="background:'+fr.bg+';color:'+fr.col+'"><i class="ti '+fr.ic+'"></i><span>'+fr.llarga+'</span></div>'
       +'<div class="mh-bar"><i style="width:'+pct+'%"></i></div>'
       +'<div class="mh-lb">Rebut '+fmtD(rebut)+' · gastat o retornat '+_mhSaldo(gastat)+'</div></div>';
   }else if(perm('viewAll')){
@@ -3952,7 +4016,7 @@ function renderMobHome(){
   const caixesObertes=Object.values(DB.tancaments||{}).filter(function(t){return t&&t.estat==='obert'&&(!t.anyFiscal||t.anyFiscal===af);}).length;
   const subs={
     moviments:'Registrar despesa o ingrés',
-    lliurament:saldoPropi!==null?'Saldo '+_mhSaldo(saldoPropi):'Lliuraments i devolucions',
+    lliurament:saldoPropi!==null?_mhFrase(saldoPropi).curt:'Lliuraments i devolucions',
     tancament:caixesObertes?caixesObertes+(caixesObertes===1?' caixa oberta':' caixes obertes'):'Cap caixa oberta',
     historial:'Consultar moviments'
   };
@@ -3976,7 +4040,7 @@ function renderMobHome(){
     +(senseJ?'<span class="mh-wr">'+senseJ+' sense justificant</span>':'')+'</div>'
     +'</div>'
     +'<div class="mh-tg">'+tiles+'</div>'
-    +(veuDash?'<div class="mh-dash" onclick="toggleDashFull()"><span>Dashboard de la falla</span><i id="mh-dash-ch" class="ti '+(document.getElementById('dash-full')&&document.getElementById('dash-full').classList.contains('open')?'ti-chevron-up':'ti-chevron-down')+'"></i></div>':'');
+    +(veuDash?'<div class="mh-dash" onclick="showPageMob(\'dashboard-full\',\'mob-bar-items\')"><span>Dashboard de la falla</span><i class="ti ti-chevron-right"></i></div>':'');
 }
 
 // MOVIMENT
