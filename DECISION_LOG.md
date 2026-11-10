@@ -1179,3 +1179,31 @@ punt de partida és el real del 25/26 i el 26/27 per als recurrents i habituals;
   - **Aplicat (10/11)**: còpia, migració, 372 proves `--remot` i càrrega dels 4 compromisos d'artistes (`tools/previsio_carrega_artistes.mjs`, 33 terminis, 16 enllaçats amb pagaments reals, 32.875 € pendents). Les fases 2–4 no han començat.
   - Verificat al navegador amb dades simulades i, després d'aplicar la migració, **amb l'app real contra la base real** (pont `tools/f6_pont.mjs` com a President, transacció que es desfà): carrega els 4 compromisos i el pla rodant des d'abril. El pont llig (`select`, `maybeSingle`); les escriptures del client (`in`, `upsert`) no hi estan simulades. 376 proves SQL en local i 111 en Node.
   - Un `CASE` dins d'un `IF` d'una funció plpgsql fa que prenga el `THEN` del `CASE` com el de l'`IF` (error de sintaxi): calcula el valor abans, en una variable.
+
+---
+
+### D-059: El pla de previsió arriba al 30/04 i, des del 27/28, l'any faller serà d'1/05 a 30/04
+**Date**: 2026-11-10
+**Status**: Accepted (pla fins al 30/04: fet a la branca `previsio`, sense publicar) · **canvi d'any faller: decidit, pendent d'implementar** (no cal fins a la fi de l'abril del 2027)
+**Context**: Emilio (10/11): les factures de la setmana de Falles (beguda, menjar, orquestres) es paguen a l'abril, quan l'exercici (D-026: 01/04–31/03) ja s'ha tancat. L'abril del 2026 en va ser de 27.848 € de beguda (0401). El pla acabava al 31/03 i el «Es pot gastar» no veia eixos pagaments: era optimista i, a més, l'abril és confús perquè cau en un exercici i els pagaments de la setmana fallera en un altre.
+**Decision**:
+  1. **Pla (ja fet)**: `pvFiPla` fa que el pla mensual arribe al 30/04 de l'any en què acaba l'exercici (la funció `pvFiExercici` desapareix). El pla és un any rodant de **maig a abril** (Emilio, 10/11: «treu abril 2026 de la previsió»; `pvIniciPla`): l'abril del 2026 ja no hi surt (les xifres de l'exercici passen a dir-se «del període», des de l'1/05; els saldos dels mesos reals l'arrosseguen) i l'abril del 2027 és un mes de previsió; els terminis posteriors (Burgos, 31/05/2028) continuen a «més enllà». L'exercici en si no es toca. 112 proves en Node (l'horitzó passa de 5 a 6 mesos des del novembre; prova nova per a l'abril).
+  2. **Any faller del 27/28 (decidit)**: del **01/05/2027 al 30/04/2028**, perquè el tancament incloga els pagaments de la setmana de Falles. **Conseqüència per a la transició**: el 26/27 hauria d'acabar el 30/04/2027 (13 mesos, des de l'01/04/2026) perquè l'abril del 2027 no quede sense exercici. Falta decidir-ho amb la junta i la comptabilitat (assemblea, comptes) abans d'implementar-ho.
+  3. **Què s'haurà de tocar** (D-026): els límits 01/04–31/03 són a molts llocs d'`index.html` (cerca de l'exercici d'una data, alta d'exercicis, selector de dates dels moviments, informes), a la taula `exercicis` (`data_inici`/`data_fi`, sense solapament) i als scripts d'`tools`. Cal fer-los dependre de `exercicis` i no del 01/04–31/03 fix, amb proves, i guardar els exercicis antics tal com són (els números no es comparen mes a mes entre un exercici de 12 i un de 13 mesos).
+**Consequences**:
+  - Amb les dades del 10/11 (app real, base real, pla fins al 30/04/2027, amb les despeses operatives del casal, l'abril de la beguda, Burgos fora de l'any i la loteria): el marge mínim és **−4.937 € al gener** i el saldo del 30/04 és **71.189 €**. (Abans d'afegir la loteria: −13.066 € i 63.059 €.)
+  - Pendents de WS-PREVISIO que continuen: ingressos habituals (Venda TPV, loteria, quotes individuals), les recàrregues de març (3.715 € a la configuració contra 35.682 € el 25/26) i el moment de l'escriptura de Burgos.
+
+---
+
+### D-060: La pantalla Previsió té un simulador de despesa i el detall de tots els ingressos i despeses
+**Date**: 2026-11-10
+**Status**: Accepted · fet a la branca `previsio` (sense publicar)
+**Context**: Emilio (10/11): «vull veure tots els ingressos i tots els gastos» i «el pla m'ha de dir, si vull fer una despesa, com afecta el pla anual: si podré pagar tots els compromisos de cada mes i acabar amb més de 15K € al banc, respectant el passiu dels fallers».
+**Decision**:
+  1. **Simulador** (`pvSimula`, `pvMaximPerMes`, funcions pures): una despesa d'import X al mes M baixa el saldo i el marge d'eixe mes i dels següents. **Es pot fer si el marge (saldo − passiu dels fallers que queda − reserva) no baixa de 0 en cap mes**; la pantalla diu sí o no, en quin mes falla, el màxim que es pot gastar eixe mes i, per a cada mes, el màxim si la despesa es fa en eixe mes. Si el pla ja baixa del mínim sense la despesa, ho diu.
+  2. **Detall** (`pvHtmlDetall`): taula amb tots els ingressos i totes les despeses del pla, mes a mes (reals fins avui, previstos després). Cada mes del pla porta les seues `partides` (clau + import); les despeses s'agrupen per delegació i els ingressos per tipus. Els apunts reals no porten tipus d'ingrés: es classifiquen pel concepte amb paraules clau (`pvClauIngres`: p. ex. «FATIR…» i «PREC.FATUR» són els rebuts de les remeses, no TPV), amb «Altres ingressos» com a resta. Les partides sumen els totals de cada mes (prova).
+  3. **Loteria (Emilio, 10/11)**: els 21.573 € de «Venda TPV» del novembre del 25/26 són també loteria, i la falla compra els dècims a Farda: un dècim de 20 € es ven a 22 €, **el marge és de 2 € per dècim (≈ 9 % de les vendes)**. Al pla: ingrés «Loteria: venda de dècims» de 30.130 € al novembre (8.557 € de «Loteria» + 21.573 € de TPV, amb les dates del 25/26, al 95 %) i despesa «Loteria: compra de dècims a Farda» de 27.390,91 € (vendes / 1,1) amb data provisional (12/11): **al 25/26 no hi ha cap pagament a Farda als apunts** (cerca per «farda», «billet», «administració» i per imports), així que no se sap quan ni com es va pagar; cal confirmar-ho amb el pagament d'enguany. Resta de «Venda TPV»: no s'estima (enguany, 4.252 € reals).
+**Consequences**:
+  - Amb les dades del 10/11, tot inclòs (loteria completa i compra a Farda): el pla baixa del mínim al **desembre (−4.466 €)**, al **gener (−11.833 €)** i al **febrer (−306 €)**; no hi ha marge per a cap despesa fins al març, quan es poden gastar fins a **23.880 €** (març o abril). Saldo del 30/04: 64.292 €.
+  - 122 proves en Node. Verificat a l'app real amb la base real (pont de només lectura).

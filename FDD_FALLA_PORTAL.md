@@ -182,9 +182,10 @@ nom de falles.app (`fallesapp_alies`) per als noms que no coincideixen amb una p
 **Description**: pantalla **Compromisos** (President i Tresoreria, només escriptori) per introduir el que ja se sap que eixirà (contractes signats i recurrents: monument,
 orquestres, lloguers, llum, aigua) o entrarà (quotes, subvencions concedides), amb terminis (un generador crea els recurrents cada mes, trimestre o any) i vincular a cada
 termini el moviment que el complix; paràmetres (reserva mínima, dies d'avís, fallers en actiu, prudència dels events, seguretat dels ingressos); targeta **Diners lliures**
-(també al Dashboard) amb el desglossament i els controls de fiabilitat; i **pla mensual** amb ingressos, despeses, saldo previst, marge i punt mínim fins al 31/03. La
+(també al Dashboard) amb el desglossament i els controls de fiabilitat; i **pla mensual** amb ingressos, despeses, saldo previst, marge i punt mínim, **de maig a abril** (l'abril final és la liquidació de la setmana de Falles; D-059). La
 importació d'extractes desa el saldo del banc de l'última línia.
-**Status**: Implementat i publicat (v4.5.0, 10/11/2026)
+**Titular «Es pot gastar»** = el marge mínim del pla (saldo − passiu dels fallers que queda − reserva), amb el mes pitjor. **Simulador de despesa** (D-060): amb un import i un mes diu si es pot fer (cap mes baixa de passiu + reserva), en quin mes falla i el màxim que es pot gastar en cada mes. **Detall** de tots els ingressos (per tipus) i despeses (per delegació), mes a mes, reals i previstos.
+**Status**: Implementat i publicat (v4.5.0 el 10/11/2026; el titular, el pla de maig a abril, el simulador i el detall a la v4.5.1)
 
 ---
 

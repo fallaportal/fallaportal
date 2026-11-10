@@ -8,8 +8,8 @@ const html = readFileSync(join(dirname(fileURLToPath(import.meta.url)), '..', 'i
 const a = html.indexOf('// ===== PREVISIO · INICI');
 const b = html.indexOf('// ===== PREVISIO · FI =====');
 if (a < 0 || b < 0) throw new Error('No trobe el bloc PREVISIO a index.html');
-const { pvDinersLliures, pvSaldosComptes, pvPendentCompromis, pvIso, pvDies, pvSaldoFinalExtracte, _pvNumBanc, pvPendentIngres, pvGeneraTerminis, pvAddMesos, pvPlaMensual, pvSuggereixVincles } = new Function(
-  `${html.slice(a, b)}\nreturn {pvDinersLliures,pvSaldosComptes,pvPendentCompromis,pvIso,pvDies,pvSaldoFinalExtracte,_pvNumBanc,pvPendentIngres,pvGeneraTerminis,pvAddMesos,pvPlaMensual,pvSuggereixVincles};`)();
+const { pvDinersLliures, pvSaldosComptes, pvPendentCompromis, pvIso, pvDies, pvSaldoFinalExtracte, _pvNumBanc, pvPendentIngres, pvGeneraTerminis, pvAddMesos, pvPlaMensual, pvSuggereixVincles, pvSimula, pvMaximPerMes, pvClauIngres } = new Function(
+  `${html.slice(a, b)}\nreturn {pvDinersLliures,pvSaldosComptes,pvPendentCompromis,pvIso,pvDies,pvSaldoFinalExtracte,_pvNumBanc,pvPendentIngres,pvGeneraTerminis,pvAddMesos,pvPlaMensual,pvSuggereixVincles,pvSimula,pvMaximPerMes,pvClauIngres};`)();
 
 let ok = 0, ko = 0;
 const eq = (nom, real, esperat) => {
@@ -127,7 +127,7 @@ eq('dia 31 cap a un mes de 30', pvAddMesos('2026-10-31', 1), '2026-11-30');
 const plaBase = { ...base, avui: '2026-11-10', saldos: { 'b1_26/27': { saldoInicial: 10000 } }, moviments: [], passiu: { total: 2000, data: '09/11/2026' }, reservaMinima: 1000, seguretatIngressos: 0.95, bancs: [{ id: 'b1', codi: '01 Banc', nom: 'Caixabank', tipus: 'bank' }] };
 const cd = (id, terminis, estat = 'viu') => ({ id, estat, sentit: 'despesa', import: terminis.reduce((x, t) => x + t.import, 0), terminis });
 const pla = pvPlaMensual({ ...plaBase, compromisos: [quotes, cd('llum', [{ import: 100, data_prevista: '2026-11-20', moviment_id: null }, { import: 100, data_prevista: '2026-12-20', moviment_id: null }]), cd('monument', [{ import: 6000, data_prevista: '2027-03-10', moviment_id: null }])] });
-eq('el pla va del mes en curs al març de l\'exercici', pla.mesos.map((m) => m.mes), ['2026-11', '2026-12', '2027-01', '2027-02', '2027-03']);
+eq('el pla va del mes en curs a l\'abril següent (liquidació de la setmana de Falles, D-059)', pla.mesos.map((m) => m.mes), ['2026-11', '2026-12', '2027-01', '2027-02', '2027-03', '2027-04']);
 eq('situació actual: marge = saldo − passiu − reserva', pla.inici, { saldo: 10000, passiu: 2000, reserva: 1000, marge: 7000 });
 eq('novembre: quota 26.600 (95 %) i llum 100', [pla.mesos[0].ingressos, pla.mesos[0].despeses, pla.mesos[0].saldo], [26600, 100, 36500]);
 eq('desembre: només la llum', [pla.mesos[1].ingressos, pla.mesos[1].despeses, pla.mesos[1].saldo], [0, 100, 36400]);
@@ -141,6 +141,8 @@ eq('un termini endarrerit compta al mes en curs i es marca', [plaEnd.mesos[0].de
 eq('un termini pagat no compta al pla', pvPlaMensual({ ...plaBase, compromisos: [cd('p', [{ import: 400, data_prevista: '2026-12-01', moviment_id: 'm1' }])] }).mesos[1].despeses, 0);
 eq('els terminis posteriors a l\'horitzó van a «després»', pvPlaMensual({ ...plaBase, compromisos: [cd('lluny', [{ import: 300, data_prevista: '2027-06-01', moviment_id: null }])] }).despres, { ing: 0, des: 300 });
 eq('un compromís tancat o cancel·lat no entra al pla', pvPlaMensual({ ...plaBase, compromisos: [cd('c', [{ import: 300, data_prevista: '2026-12-01', moviment_id: null }], 'cancellat')] }).mesos[1].despeses, 0);
+const plaAbril = pvPlaMensual({ ...plaBase, compromisos: [cd('beguda', [{ import: 27848, data_prevista: '2027-04-20', moviment_id: null }]), cd('escriptura', [{ import: 68560, data_prevista: '2028-05-31', moviment_id: null }])] });
+eq('l\'abril (factures de la setmana de Falles) és dins del pla, no a «després»', [plaAbril.mesos[5].mes, plaAbril.mesos[5].despeses, plaAbril.despres], ['2027-04', 27848, { ing: 0, des: 68560 }]);
 eq('sense exercici vàlid, l\'horitzó són 6 mesos', pvPlaMensual({ ...plaBase, af: 'x', compromisos: [] }).mesos.length, 6);
 eq('el pla encadena l\'any (desembre → gener)', pvPlaMensual({ ...plaBase, compromisos: [] }).mesos.map((m) => m.mes).slice(1, 3), ['2026-12', '2027-01']);
 
@@ -148,17 +150,17 @@ eq('el pla encadena l\'any (desembre → gener)', pvPlaMensual({ ...plaBase, com
 const movsR = [mv('05/04/2026', 'ing', 1000, '01 Banc'), mv('10/05/2026', 'gast', 200, '01 Banc'), mv('05/11/2026', 'ing', 50, '01 Banc'), mv('06/11/2026', 'gast', 20, '01 Banc'),
   mv('07/11/2026', 'gast', 999, 'app'), mv('08/11/2026', 'gast', 300, '01 Banc', { traspas: true })];
 const rod = pvPlaMensual({ ...plaBase, moviments: movsR, historic: true, compromisos: [cd('llum', [{ import: 100, data_prevista: '2026-11-20', moviment_id: null }, { import: 100, data_prevista: '2026-12-20', moviment_id: null }])] });
-eq('el pla rodant comença a l\'inici de l\'exercici', rod.mesos.map((m) => m.mes).slice(0, 3), ['2026-04', '2026-05', '2026-06']);
-eq('7 mesos reals, el mes en curs i 4 de previsió (fins al març)', rod.mesos.map((m) => m.tipus), ['real', 'real', 'real', 'real', 'real', 'real', 'real', 'curs', 'previsio', 'previsio', 'previsio', 'previsio']);
-eq('abril real: ingressos 1.000 i saldo 11.000', [rod.mesos[0].ingressos, rod.mesos[0].despeses, rod.mesos[0].saldo], [1000, 0, 11000]);
-eq('maig real: despesa 200 i saldo 10.800', [rod.mesos[1].despeses, rod.mesos[1].saldo], [200, 10800]);
+eq('el pla rodant comença l\'1/05 (l\'abril d\'inici no hi surt)', rod.mesos.map((m) => m.mes).slice(0, 3), ['2026-05', '2026-06', '2026-07']);
+eq('6 mesos reals, el mes en curs i 5 de previsió (fins a l\'abril)', rod.mesos.map((m) => m.tipus), ['real', 'real', 'real', 'real', 'real', 'real', 'curs', 'previsio', 'previsio', 'previsio', 'previsio', 'previsio']);
+eq('l\'abril no surt al pla, però el saldo de maig l\'arrossega (10.000 + 1.000 − 200)', [rod.mesos.some((m) => m.mes === '2026-04'), rod.mesos[0].saldo], [false, 10800]);
+eq('maig real: despesa 200 i saldo 10.800', [rod.mesos[0].despeses, rod.mesos[0].saldo], [200, 10800]);
 eq('un mes real no té marge (el passiu d\'aleshores es desconeix)', rod.mesos[0].marge, null);
-const curs = rod.mesos[7];
+const curs = rod.mesos[6];
 eq('el mes en curs porta el real fins avui', curs.real, { ing: 50, des: 20 });
 eq('...i el previst que queda (llum del 20/11)', curs.previst, { ing: 0, des: 100 });
 eq('...totals = real + previst, sense la via app ni els traspassos', [curs.ingressos, curs.despeses], [50, 120]);
 eq('el saldo del mes en curs és el d\'avui (amb el costat solt del traspàs: −300) menys el previst', curs.saldo, 10530 - 100);
-eq('el pla sense historic no canvia (7 mesos menys)', pvPlaMensual({ ...plaBase, moviments: movsR, compromisos: [] }).mesos.length, 5);
+eq('el pla sense historic no canvia (7 mesos menys)', pvPlaMensual({ ...plaBase, moviments: movsR, compromisos: [] }).mesos.length, 6);
 eq('el punt mínim només mira la previsió', pvPlaMensual({ ...plaBase, moviments: movsR, historic: true, compromisos: [] }).minim.mes, null);
 eq('un exercici que comença al mes en curs no té mesos reals', pvPlaMensual({ ...plaBase, avui: '2026-04-10', historic: true, compromisos: [] }).mesos[0].tipus, 'curs');
 
@@ -188,17 +190,41 @@ eq('un altre exercici no compta', sg([mon], [{ ...mm('a', '05/10/2026', 'gast', 
 // Recàrregues de l'app, bonificació i consum del passiu
 const appCfg = { recarregues: { '2026-12': 1000 }, bonificacio: { '2026-12': 500 }, consum: { '2026-12': 0.5, '2027-03': 0.5 } };
 const plaApp = pvPlaMensual({ ...plaBase, compromisos: [], app: appCfg, factorApp: 1 });
-eq('sense app el passiu es manté (llindar constant)', pvPlaMensual({ ...plaBase, compromisos: [] }).mesos.map((m) => m.llindar), [3000, 3000, 3000, 3000, 3000]);
-eq('les recàrregues són ingrés de caixa del seu mes', plaApp.mesos.map((m) => m.ingressos), [0, 1000, 0, 0, 0]);
-eq('la bonificació no és efectiu: no entra als ingressos ni al saldo', plaApp.mesos.map((m) => m.saldo), [10000, 11000, 11000, 11000, 11000]);
-eq('el passiu puja amb recàrregues i bonificació i baixa en consumir-se', plaApp.mesos.map((m) => m.passiu), [2000, 2750, 2750, 2750, 2000]);
-eq('el llindar és passiu que queda + reserva', plaApp.mesos.map((m) => m.llindar), [3000, 3750, 3750, 3750, 3000]);
-eq('el marge no puja per carregar, només pel que es consumeix', plaApp.mesos.map((m) => m.marge), [7000, 7250, 7250, 7250, 8000]);
+eq('sense app el passiu es manté (llindar constant)', pvPlaMensual({ ...plaBase, compromisos: [] }).mesos.map((m) => m.llindar), [3000, 3000, 3000, 3000, 3000, 3000]);
+eq('les recàrregues són ingrés de caixa del seu mes', plaApp.mesos.map((m) => m.ingressos), [0, 1000, 0, 0, 0, 0]);
+eq('la bonificació no és efectiu: no entra als ingressos ni al saldo', plaApp.mesos.map((m) => m.saldo), [10000, 11000, 11000, 11000, 11000, 11000]);
+eq('el passiu puja amb recàrregues i bonificació i baixa en consumir-se', plaApp.mesos.map((m) => m.passiu), [2000, 2750, 2750, 2750, 2000, 2000]);
+eq('el llindar és passiu que queda + reserva', plaApp.mesos.map((m) => m.llindar), [3000, 3750, 3750, 3750, 3000, 3000]);
+eq('el marge no puja per carregar, només pel que es consumeix', plaApp.mesos.map((m) => m.marge), [7000, 7250, 7250, 7250, 8000, 8000]);
 eq('el factor de prudència redueix recàrregues i bonificació', pvPlaMensual({ ...plaBase, compromisos: [], app: appCfg, factorApp: 0.9 }).mesos.map((m) => [m.ingressos, m.passiu]).slice(0, 2), [[0, 2000], [900, 2675]]);
 eq('al final del consum, el passiu torna a l\'estoc d\'ara', plaApp.mesos[4].passiu, 2000);
-eq('el passiu no pot ser negatiu', pvPlaMensual({ ...plaBase, compromisos: [], app: { recarregues: {}, bonificacio: {}, consum: { '2026-12': 1 } }, factorApp: 1 }).mesos.map((m) => m.passiu), [2000, 2000, 2000, 2000, 2000]);
+eq('el passiu no pot ser negatiu', pvPlaMensual({ ...plaBase, compromisos: [], app: { recarregues: {}, bonificacio: {}, consum: { '2026-12': 1 } }, factorApp: 1 }).mesos.map((m) => m.passiu), [2000, 2000, 2000, 2000, 2000, 2000]);
 eq('el detall de recàrregues i bonificació queda al mes', [plaApp.mesos[1].recarregues, plaApp.mesos[1].bonificacio], [1000, 500]);
 eq('els mesos reals porten el llindar d\'ara i cap marge', pvPlaMensual({ ...plaBase, compromisos: [], moviments: movsR, historic: true, app: appCfg, factorApp: 1 }).mesos[0].llindar, 3000);
+
+// Detall (partides) i simulador de despesa
+{
+  const movsD = [mv('15/05/2026', 'ing', 1000, '01 Banc', { concepte: 'Remesa Quotes Fallers', delegacioId: '0102' }), mv('20/05/2026', 'gast', 300, '01 Banc', { delegacioId: '0401' }), mv('05/11/2026', 'gast', 40, '01 Banc', { delegacioId: '0704' })];
+  const llum = cd('llum', [{ import: 100, data_prevista: '2026-11-20', moviment_id: null }, { import: 100, data_prevista: '2026-12-20', moviment_id: null }]);
+  llum.delegacio_id = '0704';
+  const pd = pvPlaMensual({ ...plaBase, moviments: movsD, historic: true, app: appCfg, factorApp: 1, compromisos: [quotes, llum] });
+  const sp = (m, s2) => Math.round(m.partides.filter((x) => x.s === s2).reduce((t, x) => t + x.v, 0) * 100) / 100;
+  eq('les partides sumen els ingressos de cada mes (reals i previstos)', pd.mesos.every((m) => Math.abs(sp(m, 'ing') - m.ingressos) < 0.01), true);
+  eq('les partides sumen les despeses de cada mes (reals i previstes)', pd.mesos.every((m) => Math.abs(sp(m, 'des') - m.despeses) < 0.01), true);
+  eq('un apunt real porta la clau del seu concepte (ingrés) i de la seua delegació (despesa)', [pd.mesos[0].partides[0].k, pd.mesos[0].partides[1].k], ['I:Quotes de fallers', 'D:0401']);
+  eq('classificació d\'ingressos pel concepte', ['Remesa Quotes Fallers', 'Recarregues app (via X)', 'loteria', 'WEB367893310 0406', 'Venda propietat (resta)', 'Conveni Falles', 'qualsevol cosa', 'FATIR190221507'].map(pvClauIngres),
+    ['I:Quotes de fallers', 'I:Recàrregues d\'app (efectiu)', 'I:Loteria', 'I:Venda amb targeta (TPV)', 'I:Venda de la propietat', 'I:Convenis i subvencions', 'I:Altres ingressos', 'I:Quotes de fallers']);
+  const minMarge = Math.min(...pd.mesos.filter((m) => m.tipus !== 'real').map((m) => m.marge));
+  const mesPrimer = pd.mesos.find((m) => m.tipus === 'curs').mes;
+  eq('simulador: una despesa menuda es pot fer (el pla té marge)', [minMarge > 100, pvSimula(pd, 100, mesPrimer).ok], [true, true]);
+  eq('simulador: el màxim del primer mes és el pitjor marge de tots els mesos', pvSimula(pd, 100, mesPrimer).maxim, Math.max(0, minMarge));
+  const simNo = pvSimula(pd, minMarge + 1, mesPrimer);
+  eq('simulador: una despesa d\'1 € per damunt del màxim no es pot fer', [simNo.ok, simNo.primer !== null], [false, true]);
+  eq('simulador: una despesa justa al màxim sí que es pot fer', pvSimula(pd, minMarge, mesPrimer).ok, true);
+  const ultim = pd.mesos[pd.mesos.length - 1].mes;
+  eq('simulador: gastar l\'últim mes només afecta l\'últim mes', pvSimula(pd, 1, ultim).files.filter((f) => f.afecta).length, 1);
+  eq('el màxim per mes no baixa de 0 i no baixa amb els mesos (cada mes mira menys futur)', pvMaximPerMes(pd).every((x, i, a) => x.maxim >= 0 && (i === 0 || x.maxim >= a[i - 1].maxim)), true);
+}
 
 // Dates
 eq('DD/MM/AAAA → ISO', pvIso('05/11/2026'), '2026-11-05');
