@@ -185,6 +185,21 @@ eq('un compromís tancat no rep suggeriments', sg([cm('c', 'Taller Fallero SL', 
 eq('la via app i els traspassos no compten', sg([mon], [{ ...mm('a', '05/10/2026', 'gast', 2000, 'M', 'Taller Fallero'), via: 'app' }, { ...mm('b', '05/10/2026', 'gast', 2000, 'M', 'Taller Fallero'), traspas: 'true' }]).length, 0);
 eq('un altre exercici no compta', sg([mon], [{ ...mm('a', '05/10/2026', 'gast', 2000, 'M', 'Taller Fallero'), anyFiscal: '25/26' }]).length, 0);
 
+// Recàrregues de l'app, bonificació i consum del passiu
+const appCfg = { recarregues: { '2026-12': 1000 }, bonificacio: { '2026-12': 500 }, consum: { '2026-12': 0.5, '2027-03': 0.5 } };
+const plaApp = pvPlaMensual({ ...plaBase, compromisos: [], app: appCfg, factorApp: 1 });
+eq('sense app el passiu es manté (llindar constant)', pvPlaMensual({ ...plaBase, compromisos: [] }).mesos.map((m) => m.llindar), [3000, 3000, 3000, 3000, 3000]);
+eq('les recàrregues són ingrés de caixa del seu mes', plaApp.mesos.map((m) => m.ingressos), [0, 1000, 0, 0, 0]);
+eq('la bonificació no és efectiu: no entra als ingressos ni al saldo', plaApp.mesos.map((m) => m.saldo), [10000, 11000, 11000, 11000, 11000]);
+eq('el passiu puja amb recàrregues i bonificació i baixa en consumir-se', plaApp.mesos.map((m) => m.passiu), [2000, 2750, 2750, 2750, 2000]);
+eq('el llindar és passiu que queda + reserva', plaApp.mesos.map((m) => m.llindar), [3000, 3750, 3750, 3750, 3000]);
+eq('el marge no puja per carregar, només pel que es consumeix', plaApp.mesos.map((m) => m.marge), [7000, 7250, 7250, 7250, 8000]);
+eq('el factor de prudència redueix recàrregues i bonificació', pvPlaMensual({ ...plaBase, compromisos: [], app: appCfg, factorApp: 0.9 }).mesos.map((m) => [m.ingressos, m.passiu]).slice(0, 2), [[0, 2000], [900, 2675]]);
+eq('al final del consum, el passiu torna a l\'estoc d\'ara', plaApp.mesos[4].passiu, 2000);
+eq('el passiu no pot ser negatiu', pvPlaMensual({ ...plaBase, compromisos: [], app: { recarregues: {}, bonificacio: {}, consum: { '2026-12': 1 } }, factorApp: 1 }).mesos.map((m) => m.passiu), [2000, 2000, 2000, 2000, 2000]);
+eq('el detall de recàrregues i bonificació queda al mes', [plaApp.mesos[1].recarregues, plaApp.mesos[1].bonificacio], [1000, 500]);
+eq('els mesos reals porten el llindar d\'ara i cap marge', pvPlaMensual({ ...plaBase, compromisos: [], moviments: movsR, historic: true, app: appCfg, factorApp: 1 }).mesos[0].llindar, 3000);
+
 // Dates
 eq('DD/MM/AAAA → ISO', pvIso('05/11/2026'), '2026-11-05');
 eq('ISO amb hora → ISO', pvIso('2026-11-05T10:00:00Z'), '2026-11-05');

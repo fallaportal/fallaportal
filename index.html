@@ -524,7 +524,7 @@ tr:hover td{background:var(--bg2)}
         <div class="metric"><div class="metric-label">Resultat net</div><div class="metric-value" id="m-net">0 €</div></div>
         <div class="metric"><div class="metric-label">Moviments</div><div class="metric-value" id="m-count">0</div></div>
         <div class="metric" id="dash-passiu-card" style="display:none"><div class="metric-label">Passiu falles.app</div><div class="metric-value" id="dash-passiu-total" style="color:var(--amber)">0 €</div><div id="dash-passiu-data" style="font-size:10px;color:var(--text3);margin-top:2px"></div></div>
-        <div class="metric" id="dash-lliures-card" style="display:none;cursor:pointer" onclick="showPage('compromisos')"><div class="metric-label">Diners lliures</div><div class="metric-value" id="dash-lliures-v">0 €</div><div id="dash-lliures-s" style="font-size:10px;color:var(--text3);margin-top:2px"></div></div>
+        <div class="metric" id="dash-lliures-card" style="display:none;cursor:pointer" onclick="showPage('compromisos')"><div class="metric-label">Es pot gastar</div><div class="metric-value" id="dash-lliures-v">0 €</div><div id="dash-lliures-s" style="font-size:10px;color:var(--text3);margin-top:2px"></div></div>
       </div>
       <div class="row2">
         <div class="card"><div class="card-title">Despesa per àrea</div><div id="dash-areas"><div style="color:var(--text3);font-size:12px">Sense dades</div></div></div>
@@ -6766,10 +6766,21 @@ function pvPlaMensual(ctx){
     });
   });
   const inici={saldo:base.saldoComptes,passiu:base.passiu,reserva:base.reserva,marge:pvArr(base.saldoComptes-base.passiu-base.reserva)};
-  let saldo=base.saldoComptes,minim={marge:inici.marge,mes:null};
+  // Recàrregues de falles.app (APP): `ctx.app = {recarregues:{'AAAA-MM':€ en efectiu}, bonificacio:{'AAAA-MM':€ sense efectiu}, consum:{'AAAA-MM':fracció}}`, tot al factor de prudència
+  // `ctx.factorApp`. Les recàrregues són ingrés de caixa i fan pujar el passiu igual; la bonificació puja el passiu sense efectiu; el consum (fraccions que sumen 1 del total
+  // entrat) el fa baixar. El passiu d'ara es manté com a estoc. Així el marge només puja pel que es consumeix, no pel que es carrega.
+  const app=ctx.app||null,fApp=ctx.factorApp==null?1:ctx.factorApp,sumaMapa=function(o){return Object.keys(o||{}).reduce(function(t,k){return t+(+o[k]||0);},0);};
+  const totalApp=app?(sumaMapa(app.recarregues)+sumaMapa(app.bonificacio))*fApp:0;
+  let saldo=base.saldoComptes,minim={marge:inici.marge,mes:null},entrades=0,fraccio=0;
   mesos.forEach(function(x){
-    x.ingressos=pvArr(x.ingressos);x.despeses=pvArr(x.despeses);x.endarrerit={ing:pvArr(x.endarrerit.ing),des:pvArr(x.endarrerit.des)};
-    x.net=pvArr(x.ingressos-x.despeses);saldo=pvArr(saldo+x.net);x.saldo=saldo;x.marge=pvArr(saldo-base.passiu-base.reserva);
+    const rec=app?((app.recarregues||{})[x.mes]||0)*fApp:0,bon=app?((app.bonificacio||{})[x.mes]||0)*fApp:0;
+    x.ingressos=pvArr(x.ingressos+rec);x.despeses=pvArr(x.despeses);x.endarrerit={ing:pvArr(x.endarrerit.ing),des:pvArr(x.endarrerit.des)};
+    x.recarregues=pvArr(rec);x.bonificacio=pvArr(bon);
+    x.net=pvArr(x.ingressos-x.despeses);saldo=pvArr(saldo+x.net);x.saldo=saldo;
+    entrades+=rec+bon;
+    if(app&&app.consum&&app.consum[x.mes])fraccio=Math.min(1,fraccio+(+app.consum[x.mes]||0));
+    x.passiu=pvArr(Math.max(0,base.passiu+entrades-totalApp*fraccio));x.llindar=pvArr(x.passiu+base.reserva);   // el que cal tindre al final del mes: passiu que queda + reserva
+    x.marge=pvArr(saldo-x.llindar);
     if(x.marge<minim.marge)minim={marge:x.marge,mes:x.mes};
   });
   const res={fi:fi,inici:inici,mesos:mesos,minim:minim,despres:{ing:pvArr(despres.ing),des:pvArr(despres.des)}};
@@ -6793,7 +6804,7 @@ function pvAfegeixReal(ctx,res){
   if(iniciEx&&iniciEx.slice(0,7)<avui.slice(0,7)){
     for(let m=iniciEx.slice(0,7);m<avui.slice(0,7);m=pvMesSeg(m)){
       const r=suma(m,null);
-      reals.push({mes:m,tipus:'real',ingressos:r.ing,despeses:r.des,net:pvArr(r.ing-r.des),saldo:saldoFins(m+'-31'),marge:null,endarrerit:{ing:0,des:0}});
+      reals.push({mes:m,tipus:'real',ingressos:r.ing,despeses:r.des,net:pvArr(r.ing-r.des),saldo:saldoFins(m+'-31'),marge:null,passiu:null,llindar:pvArr(res.inici.passiu+res.inici.reserva),endarrerit:{ing:0,des:0}});
     }
   }
   const ara=res.mesos[0];
@@ -6870,20 +6881,21 @@ async function pvCarrega(forca){
 }
 function pvCtx(d){
   return{af:getAnyFiscal(),avui:todayISO(),bancs:DB.config.bancs||[],saldos:DB.saldos||{},moviments:DB.moviments||[],
-    passiu:DB.config.fappPassiu||null,compromisos:d.compromisos,reservaMinima:d.cfg.reserva_minima,seguretatIngressos:d.cfg.seguretat_ingressos,diesAvis:d.cfg.dies_avis_extracte,extractes:d.extractes};
+    passiu:DB.config.fappPassiu||null,compromisos:d.compromisos,reservaMinima:d.cfg.reserva_minima,seguretatIngressos:d.cfg.seguretat_ingressos,app:d.cfg.app||null,factorApp:d.cfg.factor_prudencia_events,diesAvis:d.cfg.dies_avis_extracte,extractes:d.extractes};
 }
 function pvSgn(v,c){return(v<0?'−':'')+(c?fmt(v):fmtD(v));}   // c: sense decimals (fitxes dels mesos)
 function pvSgnMes(v,c){return v?(v>0?'+':'−')+(c?fmt(v):fmtD(v)):'—';}
 // Diners lliures: la xifra gran, la fórmula en tessel·les i els controls de fiabilitat plegats.
-function pvHtmlLliures(r){
+function pvHtmlLliures(r,pl){
   const tile=function(l,v,sub,cls){return'<div class="pv-tile'+(cls?' '+cls:'')+'"><div class="l">'+l+'</div><div class="v">'+v+'</div>'+(sub?'<div class="s">'+sub+'</div>':'')+'</div>';};
   const fp=DB.config.fappPassiu;
   let h='<div class="pv-tiles">'
-    +tile('Diners lliures',pvSgn(r.lliures),'saldo − passiu − compromisos − reserva','heroi'+(r.lliures<0?' neg':''))
+    +tile('Es pot gastar',pvSgn(pl.minim.marge),(pl.minim.mes?'al pitjor moment: '+pvEtiquetaMes(pl.minim.mes):'ara mateix')+' · sense baixar del mínim','heroi'+(pl.minim.marge<0?' neg':''))
     +tile('Saldo de comptes',pvSgn(r.saldoComptes),r.comptes.length+' comptes')
     +tile('Passiu falles.app','− '+fmtD(r.passiu),r.passiu&&fp?fmtDt(fp.data):'sense registrar')
-    +tile('Compromisos pendents','− '+fmtD(r.compromisos),'despeses signades i recurrents')
     +tile('Reserva mínima','− '+fmtD(r.reserva),'la fixa la junta')
+    +tile('Despeses compromeses','− '+fmtD(r.compromisos),'pendents de pagar')
+    +tile('Ingressos compromesos','+ '+fmtD(r.ingressosPendents),'pendents de cobrar (quotes…, al '+Math.round(r.seguretat*100)+' %)')
     +'</div>';
   const av=[];
   r.controls.comptes.forEach(function(c){
@@ -6900,7 +6912,7 @@ function pvHtmlLliures(r){
     +(av.length?'⚠ '+av.length+(av.length===1?' avís':' avisos')+' de fiabilitat':'✓ Els controls de fiabilitat quadren')+' · detall per comptes</summary>'
     +(av.length?'<div style="margin-top:6px;padding:8px 10px;border-radius:var(--r);background:var(--amber-bg);color:var(--amber-text);font-size:12px;line-height:1.5">'+av.map(function(x){return'<div>'+x+'</div>';}).join('')+'</div>':'')
     +'<div style="font-size:12px;color:var(--text2);margin-top:6px">'+r.comptes.map(function(c){return _mhEsc(c.codi)+' <b>'+pvSgn(c.saldo)+'</b>';}).join(' · ')+'</div>'
-    +(r.ingressosPendents>0?'<div style="font-size:12px;color:var(--text2);margin-top:4px">Ingressos compromesos pendents (al '+Math.round(r.seguretat*100)+' %): <b>'+fmtD(r.ingressosPendents)+'</b>. No compten als diners lliures: encara no són efectiu (mira el pla).</div>':'')
+    +'<div style="font-size:12px;color:var(--text2);margin-top:6px"><b>Es pot gastar</b> = el marge més baix del pla (saldo − passiu − reserva, amb cada ingrés i despesa compromesos a la seua data). Si no entrara cap ingrés compromés i s\'haguera de pagar tot, el marge seria '+pvSgn(r.lliures)+'. Mirant només el que hi ha avui, sense compromisos: '+pvSgn(pl.inici.marge)+'.</div>'
     +'</details>';
   return h;
 }
@@ -6908,43 +6920,43 @@ const PV_MESOS=['gener','febrer','març','abril','maig','juny','juliol','agost',
 function pvEtiquetaMes(m){return PV_MESOS[+m.slice(5,7)-1]+' '+m.slice(0,4);}
 // Mini-gràfic del saldo dels comptes: tram real (continu) i previsió (discontinu), amb la línia del que cal tindre sempre (passiu + reserva).
 function pvGrafic(pl){
-  const v=pl.mesos.map(function(m){return m.saldo;}),llindar=pl.inici.passiu+pl.inici.reserva;
-  const lo=Math.min.apply(null,v.concat([llindar,0])),hi=Math.max.apply(null,v.concat([llindar])),W=600,H=70,pad=8,rang=(hi-lo)||1;
+  const v=pl.mesos.map(function(m){return m.saldo;}),ll=pl.mesos.map(function(m){return m.llindar;});
+  const lo=Math.min.apply(null,v.concat(ll,[0])),hi=Math.max.apply(null,v.concat(ll)),W=600,H=70,pad=8,rang=(hi-lo)||1;
   const x=function(i){return v.length>1?i*(W/(v.length-1)):W/2;},y=function(t){return pad+(H-2*pad)*(1-(t-lo)/rang);};
   const iCurs=pl.mesos.findIndex(function(m){return m.tipus==='curs';});
   const pts=function(a,b){return v.slice(a,b+1).map(function(t,k){return x(a+k).toFixed(1)+','+y(t).toFixed(1);}).join(' ');};
   let h='<svg viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none" style="width:100%;height:70px;display:block;margin-bottom:10px">'
-    +'<line x1="0" x2="'+W+'" y1="'+y(llindar).toFixed(1)+'" y2="'+y(llindar).toFixed(1)+'" style="stroke:var(--amber)" stroke-width="1" stroke-dasharray="5 4" vector-effect="non-scaling-stroke"/>';
+    +'<polyline points="'+ll.map(function(t,i){return x(i).toFixed(1)+','+y(t).toFixed(1);}).join(' ')+'" fill="none" style="stroke:var(--amber)" stroke-width="1" stroke-dasharray="5 4" vector-effect="non-scaling-stroke"/>';
   if(iCurs>0)h+='<polyline points="'+pts(0,iCurs)+'" fill="none" style="stroke:var(--blue)" stroke-width="2.2" vector-effect="non-scaling-stroke"/>';
   h+='<polyline points="'+pts(Math.max(iCurs,0),v.length-1)+'" fill="none" style="stroke:var(--blue)" stroke-width="2" stroke-dasharray="6 4" vector-effect="non-scaling-stroke"/>';
-  h+=v.map(function(t,i){return'<circle cx="'+x(i).toFixed(1)+'" cy="'+y(t).toFixed(1)+'" r="3" style="fill:'+(t<llindar?'var(--red)':'var(--blue)')+'" vector-effect="non-scaling-stroke"/>';}).join('')+'</svg>';
+  h+=v.map(function(t,i){return'<circle cx="'+x(i).toFixed(1)+'" cy="'+y(t).toFixed(1)+'" r="3" style="fill:'+(t<ll[i]?'var(--red)':'var(--blue)')+'" vector-effect="non-scaling-stroke"/>';}).join('')+'</svg>';
   return h;
 }
 // Pla mensual rodant: totals de l'exercici (real + previst), mini-gràfic i una fitxa per mes. Els mesos passats són reals, el mes en curs barreja
 // el real fins avui i el que queda previst, i els següents són previsió.
 function pvHtmlPla(pl){
   const ing=pl.mesos.reduce(function(s,m){return s+m.ingressos;},0),des=pl.mesos.reduce(function(s,m){return s+m.despeses;},0);
-  const fin=pl.mesos.length?pl.mesos[pl.mesos.length-1].saldo:pl.inici.saldo,llindar=pl.inici.passiu+pl.inici.reserva;
+  const fin=pl.mesos.length?pl.mesos[pl.mesos.length-1].saldo:pl.inici.saldo,llindar=pl.mesos.length?pl.mesos[pl.mesos.length-1].llindar:pl.inici.passiu+pl.inici.reserva;
   const tile=function(l,v,cls,sub){return'<div class="pv-tile"><div class="l">'+l+'</div><div class="v '+(cls||'')+'">'+v+'</div>'+(sub?'<div class="s">'+sub+'</div>':'')+'</div>';};
   let h='<div class="card-title">Pla mensual <span>real fins avui · previsió fins al '+fmtDt(pl.fi)+'</span></div>'
     +'<div class="pv-tiles">'+tile('Ingressos de l\'exercici','+'+fmtD(ing),'pv-ok','real + previst')+tile('Despeses de l\'exercici','−'+fmtD(des),'pv-no','real + previst')
-    +tile('Resultat',pvSgnMes(Math.round((ing-des)*100)/100),ing-des<0?'pv-no':'pv-ok')+tile('Saldo al final',pvSgn(fin),fin<llindar?'pv-no':'pv-ok','cal ≥ '+fmtD(llindar)+' (passiu + reserva)')+'</div>';
+    +tile('Resultat',pvSgnMes(Math.round((ing-des)*100)/100),ing-des<0?'pv-no':'pv-ok')+tile('Saldo al final',pvSgn(fin),fin<llindar?'pv-no':'pv-ok','cal ≥ '+fmtD(llindar)+' (passiu que queda + reserva)')+'</div>';
   h+=pvGrafic(pl);
   h+='<div class="pv-mesos">';
   pl.mesos.forEach(function(m){
     const mi=pl.minim.mes===m.mes&&m.marge!=null&&m.marge<pl.inici.marge,res=m.net,etq=m.tipus==='real'?'real':m.tipus==='curs'?'en curs':'previsió';
-    h+='<div class="pv-mes'+(m.tipus==='curs'?' ara':'')+(mi?' min':'')+(m.tipus==='real'?' real':'')+'" title="Saldo al final del mes: '+pvSgn(m.saldo)+'">'
+    h+='<div class="pv-mes'+(m.tipus==='curs'?' ara':'')+(mi?' min':'')+(m.tipus==='real'?' real':'')+'" title="Saldo al final del mes: '+pvSgn(m.saldo)+(m.passiu!=null?' · passiu que queda: '+pvSgn(m.passiu):'')+(m.recarregues?' · recàrregues de l\'app previstes: '+pvSgn(m.recarregues):'')+(m.bonificacio?' · bonificació (sense efectiu): '+pvSgn(m.bonificacio):'')+'">'
       +'<div class="nom"><span>'+pvEtiquetaMes(m.mes)+'</span><small>'+(mi?'mínim':etq)+'</small>'+(m.endarrerit&&(m.endarrerit.ing||m.endarrerit.des)?'<span title="Inclou terminis amb data passada sense complir" style="color:var(--amber)">⚠</span>':'')+'</div>'
       +'<div class="f"><span>Ingressos</span><span class="'+(m.ingressos?'pv-ok':'')+'">'+(m.ingressos?'+'+fmt(m.ingressos):'—')+'</span></div>'
       +'<div class="f"><span>Despeses</span><span class="'+(m.despeses?'pv-no':'')+'">'+(m.despeses?'−'+fmt(m.despeses):'—')+'</span></div>'
       +'<div class="f res"><span>Resultat</span><span class="'+(res<0?'pv-no':res>0?'pv-ok':'')+'">'+pvSgnMes(res,true)+'</span></div>'
       +(m.tipus==='curs'&&m.real?'<div style="font-size:10px;color:var(--text3)">real '+pvSgnMes(Math.round((m.real.ing-m.real.des)*100)/100,true)+' · previst '+pvSgnMes(Math.round((m.previst.ing-m.previst.des)*100)/100,true)+'</div>':'')
-      +'<div class="acum"><span>Saldo final</span><b class="'+(m.saldo<llindar&&m.tipus!=='real'?'pv-no':'')+'">'+pvSgn(m.saldo,true)+'</b></div></div>';
+      +'<div class="acum"><span>Saldo final</span><b class="'+(m.saldo<m.llindar&&m.tipus!=='real'?'pv-no':'')+'">'+pvSgn(m.saldo,true)+'</b></div></div>';
   });
   h+='</div>';
   h+='<div style="font-size:13px;margin-top:12px;color:'+(pl.minim.marge<0?'var(--red)':'var(--text2)')+'">'+(pl.minim.mes?'Punt mínim de la previsió: marge <b>'+pvSgn(pl.minim.marge)+'</b> a '+pvEtiquetaMes(pl.minim.mes)+'.':'El marge no baixa del d\'ara ('+pvSgn(pl.inici.marge)+') en cap mes.')+'</div>';
   if(pl.despres.ing||pl.despres.des)h+='<div style="font-size:12px;color:var(--text2)">Més enllà del '+fmtDt(pl.fi)+': ingressos '+fmtD(pl.despres.ing)+' · despeses '+fmtD(pl.despres.des)+'.</div>';
-  h+='<div style="font-size:11px;color:var(--text3);margin-top:6px">Els mesos reals vénen dels moviments registrats. La previsió només porta els compromisos introduïts (quotes al percentatge de seguretat): quan registres un moviment i el vincules al seu termini, passa de previst a real i el futur es refà. El patró de l\'any passat s\'hi afegirà. ⚠ = hi ha terminis amb data passada sense complir.</div>';
+  h+='<div style="font-size:11px;color:var(--text3);margin-top:6px">Els mesos reals vénen dels moviments registrats. '+(pl.mesos.some(function(m){return m.recarregues||m.bonificacio;})?'Les recàrregues de l\'app (i la bonificació) fan pujar el passiu i el consum als events el fa baixar (al març, gairebé tot). ':'')+'La previsió només porta els compromisos introduïts (quotes al percentatge de seguretat): quan registres un moviment i el vincules al seu termini, passa de previst a real i el futur es refà. El patró de l\'any passat s\'hi afegirà. ⚠ = hi ha terminis amb data passada sense complir.</div>';
   return h;
 }
 async function pvPintaDashboard(){
@@ -6957,8 +6969,8 @@ async function pvPintaDashboard(){
     const ctx=pvCtx(d),r=pvDinersLliures(ctx),pl=pvPlaMensual(ctx);
     el.style.display='';
     const v=document.getElementById('dash-lliures-v');
-    v.textContent=pvSgn(r.lliures);v.style.color=r.lliures<0?'var(--red)':'var(--green)';
-    document.getElementById('dash-lliures-s').textContent=pl.minim.mes?'mínim '+pvSgn(pl.minim.marge)+' a '+pvEtiquetaMes(pl.minim.mes):'sense mínims fins al '+fmtDt(pl.fi);
+    v.textContent=pvSgn(pl.minim.marge);v.style.color=pl.minim.marge<0?'var(--red)':'var(--green)';
+    document.getElementById('dash-lliures-s').textContent=pl.minim.mes?'al pitjor moment: '+pvEtiquetaMes(pl.minim.mes):'ara mateix';
   }catch(e){el.style.display='';document.getElementById('dash-lliures-v').textContent='—';document.getElementById('dash-lliures-s').textContent='no s\'ha pogut calcular';}
 }
 async function pvRenderPagina(){
@@ -6968,13 +6980,14 @@ async function pvRenderPagina(){
     const d=await pvCarrega(true);
     if(!d)return;
     const r=pvDinersLliures(pvCtx(d));
-    document.getElementById('pv-lliures').innerHTML=pvHtmlLliures(r);
+    const pl0=pvPlaMensual(Object.assign(pvCtx(d),{historic:true}));
+    document.getElementById('pv-lliures').innerHTML=pvHtmlLliures(r,pl0);
     document.getElementById('pv-cfg-reserva').value=d.cfg.reserva_minima;
     document.getElementById('pv-cfg-dies').value=d.cfg.dies_avis_extracte;
     document.getElementById('pv-cfg-fallers').value=d.cfg.fallers_actius;
     document.getElementById('pv-cfg-factor').value=Math.round(d.cfg.factor_prudencia_events*100);
     document.getElementById('pv-cfg-seguretat').value=Math.round(d.cfg.seguretat_ingressos*100);
-    document.getElementById('pv-pla').innerHTML=pvHtmlPla(pvPlaMensual(Object.assign(pvCtx(d),{historic:true})));
+    document.getElementById('pv-pla').innerHTML=pvHtmlPla(pl0);
     const pot=modulEdita('compromisos');
     const veuTots=document.getElementById('pv-tots')&&document.getElementById('pv-tots').checked;
     const af=getAnyFiscal();
@@ -7011,8 +7024,9 @@ async function pvRenderPagina(){
 }
 async function pvDesaCfg(){
   const num=function(id){return parseFloat(String(document.getElementById(id).value).replace(',','.'));};
-  const v={reserva_minima:num('pv-cfg-reserva'),dies_avis_extracte:Math.round(num('pv-cfg-dies')),fallers_actius:Math.round(num('pv-cfg-fallers')),factor_prudencia_events:num('pv-cfg-factor')/100,seguretat_ingressos:num('pv-cfg-seguretat')/100};
-  if(Object.values(v).some(function(x){return isNaN(x);})){showToast('Revisa els números dels paràmetres',true);return;}
+  const d0=await pvCarrega();   // el desat no ha de perdre el que no té camp a la pantalla (el perfil de consum del passiu)
+  const v=Object.assign({},d0&&d0.cfg?d0.cfg:{},{reserva_minima:num('pv-cfg-reserva'),dies_avis_extracte:Math.round(num('pv-cfg-dies')),fallers_actius:Math.round(num('pv-cfg-fallers')),factor_prudencia_events:num('pv-cfg-factor')/100,seguretat_ingressos:num('pv-cfg-seguretat')/100});
+  if(['reserva_minima','dies_avis_extracte','fallers_actius','factor_prudencia_events','seguretat_ingressos'].some(function(k){return isNaN(v[k]);})){showToast('Revisa els números dels paràmetres',true);return;}
   const r=await sb.from('config').upsert({clau:'previsio',valor:v},{onConflict:'clau'});
   if(r.error){showToast('No s\'han pogut desar: '+r.error.message,true);return;}
   showToast('Paràmetres desats');
