@@ -427,4 +427,8 @@ export const casos = [
   { nom: 'config previsió: la seguretat dels ingressos és entre 0 i 1', com: T, sql: PREV({ seguretat_ingressos: 1.2 }), espera: { error: 'fora de rang' } },
   { nom: 'config previsió: la seguretat dels ingressos és obligatòria', com: T, sql: "update public.config set valor = '{\"reserva_minima\": 0, \"dies_avis_extracte\": 30, \"factor_prudencia_events\": 0.9, \"fallers_actius\": 762}'::jsonb where clau = 'previsio' returning 1", espera: { error: 'números' } },
   { nom: 'config previsió: porta els valors per defecte', com: 'servei', sql: "select valor ->> 'dies_avis_extracte' from public.config where clau = 'previsio'", espera: { valor: '30' } },
+  // ---------------------------------------------------------------- Gestió de Cens (app del cens, esquema `cens`): 4 mòduls al catàleg de permisos
+  { nom: 'cens: el catàleg té els 4 mòduls de Gestió de Cens', com: 'servei', sql: "select count(*) from public.moduls where id like 'cens\\_%'", espera: { valor: '4' } },
+  { nom: 'cens: els permisos inicials són només de President (sense els rols de prova)', com: 'servei', sql: "select string_agg(distinct rol_id, ',') from public.rol_moduls where modul_id like 'cens\\_%' and rol_id not like 't\\_%'", espera: { valor: 'president' } },
+  { nom: 'cens: els reports i el manual no admeten edició', com: 'servei', sql: "insert into public.rol_moduls (rol_id, modul_id, nivell) values ('treasury', 'cens_reports', 'edicio') returning 1", espera: { error: 'només admet lectura' } },
 ];
