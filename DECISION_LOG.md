@@ -1236,3 +1236,18 @@ punt de partida és el real del 25/26 i el 26/27 per als recurrents i habituals;
 **Consequences**:
   - Només lectura; no escriu res ni toca la base de dades. Provat amb l'app i la base reals (pont): President i Tresoreria el veuen, l'àrea i el delegat no; totals iguals als de Configuració → Bancs.
   - El report mostra l'avís dels 26 traspassos (net −10.000 €): la sortida del 03 Banc del 25/10 no té l'entrada de l'altre costat; Emilio no sap encara a quin compte va.
+
+---
+
+### D-063: Detall de cada línia de l'Estat de Resultats, amb exportació a Excel i CSV
+**Date**: 2026-11-14
+**Status**: Accepted · v4.5.3
+**Context**: Emilio (14/11) va demanar poder tocar una línia de l'Estat de Resultats (per exemple Despeses per àrea → Administració i Secretaria) i veure tots els apunts que sumen eixa xifra, poder tornar enrere i exportar-los a Excel o CSV.
+**Decision**:
+  1. El detall és una vista dins `page-resultats` (`#res-detall`, que amaga `#res-main`), no una pantalla nova: l'estat és `_resDet={t,a}` (`a` buit = total de totes les àrees) i `renderResultats` el repinta en cada refresc. Entrar a la pantalla pel menú el reinicia al resum.
+  2. Les línies i el detall comparteixen `_resMovs(af)` (abast per permisos, exercici, sense via `app` ni traspassos), de manera que el total del detall és sempre l'import de la línia.
+  3. Excel (SheetJS, ja carregat) amb la data com a número de sèrie amb format `dd/mm/yyyy` i els imports com a nombres, més una fila de total; CSV amb BOM i cometes, com la resta d'exportacions. Els fitxers es diuen `resultats_<despeses|ingressos>_<àrea>_<exercici>`.
+**Consequences**:
+  - Només lectura; cap canvi de dades ni d'esquema, sense migració.
+  - El botó Enrere del telèfon no torna del detall al resum (la memòria de navegació és per pantalles); cal el botó de dins la pantalla.
+  - Verificat al navegador amb dades simulades (àrea i total, tornar, reinici en canviar de pantalla, exportacions, HTML escapat, sense errors a la consola); no s'ha provat amb la base real.

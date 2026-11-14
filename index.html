@@ -262,6 +262,9 @@ input[type=checkbox]{accent-color:var(--green)}
 .area-amt{font-size:12px;width:60px;text-align:right;flex-shrink:0;font-weight:500}
 .flow-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:0.5px solid var(--border);font-size:12px}
 .flow-row:last-child{border-bottom:none}
+.res-link{cursor:pointer;border-radius:var(--r)}
+.res-link:hover{background:var(--bg2)}
+.res-link .res-xev{color:var(--text3);font-size:13px;margin-left:6px}
 .alert-item{display:flex;align-items:flex-start;gap:10px;padding:8px 10px;border-radius:var(--r);margin-bottom:6px;font-size:12px}
 .recent-row{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:0.5px solid var(--border);font-size:12px}
 .recent-row:last-child{border-bottom:none}
@@ -458,7 +461,7 @@ tr:hover td{background:var(--bg2)}
     <div class="login-logo">Falla <span>Portal</span></div>
     <div class="login-sub">Sistema de gestió financera</div>
     <div class="login-fiscal">Any fiscal 26/27 · Abr 2026 – Mar 2027</div>
-    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v4.5.2</div>
+    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v4.5.3</div>
     <div id="login-step-boot" class="login-boot">Comprovant la sessió…</div>
     <div id="login-step-email" class="hidden">
       <label class="login-lbl" for="login-email">Correu electrònic</label>
@@ -511,7 +514,7 @@ tr:hover td{background:var(--bg2)}
     <div class="sb-bottom">
       <div class="sync-ind" style="display:flex;align-items:center;justify-content:space-between"><div style="display:flex;align-items:center;gap:6px"><div class="sync-dot" id="sync-dot"></div><span id="sync-text">Sincronitzat</span></div><button onclick="manualRefresh()" title="Actualitzar dades" style="background:none;border:none;cursor:pointer;padding:2px 4px;color:var(--text2);font-size:14px;line-height:1"><i class="ti ti-refresh"></i></button></div>
       <button class="btn-logout" onclick="signOut()"><i class="ti ti-logout" style="font-size:14px"></i> Tancar sessió</button>
-      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v4.5.2</div>
+      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v4.5.3</div>
     </div>
   </div>
 
@@ -1157,13 +1160,16 @@ tr:hover td{background:var(--bg2)}
     <div id="page-resultats" class="page">
       <div class="page-title">Estat de Resultats</div>
       <div class="page-sub" id="res-sub">Any fiscal 26/27</div>
-      <div class="metrics">
-        <div class="metric"><div class="metric-label">Total ingressos</div><div class="metric-value ok" id="res-ing">0 €</div></div>
-        <div class="metric"><div class="metric-label">Total despeses</div><div class="metric-value danger" id="res-gast">0 €</div></div>
-        <div class="metric"><div class="metric-label">Resultat exercici</div><div class="metric-value" id="res-net">0 €</div></div>
+      <div id="res-main">
+        <div class="metrics">
+          <div class="metric"><div class="metric-label">Total ingressos</div><div class="metric-value ok" id="res-ing">0 €</div></div>
+          <div class="metric"><div class="metric-label">Total despeses</div><div class="metric-value danger" id="res-gast">0 €</div></div>
+          <div class="metric"><div class="metric-label">Resultat exercici</div><div class="metric-value" id="res-net">0 €</div></div>
+        </div>
+        <div id="res-container"></div>
+        <button class="btn" onclick="exportCSV('resultats')"><i class="ti ti-download"></i> Exportar CSV</button>
       </div>
-      <div id="res-container"></div>
-      <button class="btn" onclick="exportCSV('resultats')"><i class="ti ti-download"></i> Exportar CSV</button>
+      <div id="res-detall" class="hidden"></div>
     </div>
 
     <div id="page-flux" class="page">
@@ -1259,7 +1265,7 @@ tr:hover td{background:var(--bg2)}
   </div>
   <div id="mob-menu-items"></div>
   <div onclick="signOut();closeMobMenu()" style="padding:12px 20px;font-size:14px;display:flex;align-items:center;gap:12px;cursor:pointer;color:var(--red)"><i class="ti ti-logout" style="font-size:18px"></i> Tancar sessió</div>
-  <div style="padding:6px 20px 8px;font-size:11px;color:var(--text3);text-align:center">Falla Portal · v4.5.2</div>
+  <div style="padding:6px 20px 8px;font-size:11px;color:var(--text3);text-align:center">Falla Portal · v4.5.3</div>
 </div>
 
 <div class="modal-overlay" id="modal-fons-confirm">
@@ -2794,7 +2800,7 @@ function showPage(id){
   ({'pressupostos':renderPressupostosEdit,'dashboard':renderDashboard,'dashboard-full':renderDashboard,'historial':renderHistorial,'directiva':renderDirectiva,'fallesapp':function(){initFappDates();initBonifSelectors();renderQuadrament();},'importacio':function(){initCSVDates();},
     'pressupostos':renderPressupostosEdit,'pressupostos-edit':renderPressupostosEdit,
     'directiva':renderDirectiva,
-    'lliurament':renderFons,'recarregues':renderRecarregues,'tancament':renderTancamentList,'resultats':renderResultats,
+    'lliurament':renderFons,'recarregues':renderRecarregues,'tancament':renderTancamentList,'resultats':function(){_resDet=null;renderResultats();},
     'flux':renderFlux,'compromisos':pvRenderPagina,'reports':renderReports,'configuracio':renderConfig,'manual':renderManual,
     'moviments':resetMovForm}[id]||function(){})();
 }
@@ -6590,12 +6596,17 @@ async function desbloquejarpres(){
 }
 
 // RESULTATS
+let _resDet=null;// detall obert: {t:'ing'|'gast', a:areaId ('' = totes les àrees)}; null = es veu l'Estat de Resultats
+// Apunts que compten a l'Estat de Resultats (els mateixos per a les línies i per al seu detall, perquè els imports quadren).
+function _resMovs(afR){
+  const myDelegsR=getMyDelegacions();
+  const movsTots=(perm('viewAll')?(DB.moviments||[]):(DB.moviments||[]).filter(m=>getMyArees().includes(m.areaId)&&(perm('viewAll')||myDelegsR.includes(m.delegacioId)||!m.delegacioId))).filter(m=>(m.anyFiscal===afR||!m.anyFiscal)&&m.via!=='app');
+  return{movsTots:movsTots,movs:movsTots.filter(m=>!esTraspas(m))};// els traspassos no són ni ingrés ni despesa
+}
 function renderResultats(){
   const afR=getAnyFiscal();
   const resSub=document.getElementById('res-sub');if(resSub)resSub.innerHTML='<span class="af-badge"><i class="ti ti-calendar" style="font-size:14px"></i> Any fiscal '+afR+'</span>';
-  const myDelegsR=getMyDelegacions();
-  const movsTots=(perm('viewAll')?(DB.moviments||[]):(DB.moviments||[]).filter(m=>getMyArees().includes(m.areaId)&&(perm('viewAll')||myDelegsR.includes(m.delegacioId)||!m.delegacioId))).filter(m=>(m.anyFiscal===afR||!m.anyFiscal)&&m.via!=='app');
-  const movs=movsTots.filter(m=>!esTraspas(m));// els traspassos no són ni ingrés ni despesa
+  const rm=_resMovs(afR),movsTots=rm.movsTots,movs=rm.movs;
   const nTrasp=movsTots.length-movs.length, netTrasp=netTraspassos(movsTots);
   const ing=movs.filter(m=>m.tipus==='ing').reduce((s,m)=>s+m.import,0);
   const gast=movs.filter(m=>m.tipus==='gast').reduce((s,m)=>s+m.import,0);
@@ -6609,22 +6620,121 @@ function renderResultats(){
   areas.forEach(a=>{
     const vi=movs.filter(m=>m.tipus==='ing'&&m.areaId===a.id).reduce((s,m)=>s+m.import,0);
     const vg=movs.filter(m=>m.tipus==='gast'&&m.areaId===a.id).reduce((s,m)=>s+m.import,0);
-    if(vi>0)rowsIng+='<div class="flow-row"><span>'+a.name+'</span><span style="color:var(--green);font-weight:500">+'+fmt(vi)+'</span></div>';
-    if(vg>0)rowsGast+='<div class="flow-row"><span>'+a.name+'</span><span style="color:var(--red);font-weight:500">-'+fmt(vg)+'</span></div>';
+    // Cada línia s'obri en un detall amb els apunts que la sumen (dataset i no onclick amb text: l'id de l'àrea pot dur caràcters estranys)
+    if(vi>0)rowsIng+='<div class="flow-row res-link" data-t="ing" data-a="'+esc(a.id)+'" onclick="resObre(this)" title="Veure el detall"><span>'+esc(a.name)+'</span><span><span style="color:var(--green);font-weight:500">+'+fmt(vi)+'</span><i class="ti ti-chevron-right res-xev"></i></span></div>';
+    if(vg>0)rowsGast+='<div class="flow-row res-link" data-t="gast" data-a="'+esc(a.id)+'" onclick="resObre(this)" title="Veure el detall"><span>'+esc(a.name)+'</span><span><span style="color:var(--red);font-weight:500">-'+fmt(vg)+'</span><i class="ti ti-chevron-right res-xev"></i></span></div>';
   });
   document.getElementById('res-container').innerHTML=
     '<div class="card"><div class="card-title">Ingressos per àrea</div>'+
     (rowsIng||'<div style="color:var(--text3);font-size:12px">Sense ingressos</div>')+
-    '<div class="flow-row" style="font-weight:500;border-top:1px solid var(--border2);margin-top:4px;padding-top:8px">'+
-    '<span>Total ingressos</span><span style="color:var(--green)">+'+fmt(ing)+'</span></div></div>'+
+    '<div class="flow-row res-link" data-t="ing" data-a="" onclick="resObre(this)" title="Veure el detall" style="font-weight:500;border-top:1px solid var(--border2);margin-top:4px;padding-top:8px">'+
+    '<span>Total ingressos</span><span><span style="color:var(--green)">+'+fmt(ing)+'</span><i class="ti ti-chevron-right res-xev"></i></span></div></div>'+
     '<div class="card"><div class="card-title">Despeses per àrea</div>'+
     (rowsGast||'<div style="color:var(--text3);font-size:12px">Sense despeses</div>')+
-    '<div class="flow-row" style="font-weight:500;border-top:1px solid var(--border2);margin-top:4px;padding-top:8px">'+
-    '<span>Total despeses</span><span style="color:var(--red)">-'+fmt(gast)+'</span></div></div>'+
+    '<div class="flow-row res-link" data-t="gast" data-a="" onclick="resObre(this)" title="Veure el detall" style="font-weight:500;border-top:1px solid var(--border2);margin-top:4px;padding-top:8px">'+
+    '<span>Total despeses</span><span><span style="color:var(--red)">-'+fmt(gast)+'</span><i class="ti ti-chevron-right res-xev"></i></span></div></div>'+
     '<div class="card"><div class="flow-row" style="font-size:15px;font-weight:500">'+
     '<span>Resultat exercici '+afR+'</span>'+
     '<span style="color:'+(net>=0?'var(--green)':'var(--red)')+'">'+fmtS(net)+'</span></div>'+
     (nTrasp?_htmlControlTraspassos(nTrasp,netTrasp):'')+'</div>';
+  _resMostra();
+}
+
+// ── Detall d'una línia de l'Estat de Resultats ──
+function _resMostra(){
+  const main=document.getElementById('res-main'),det=document.getElementById('res-detall');
+  if(!main||!det)return;
+  const D=_resDet?_resDetallDades():null;
+  if(_resDet&&!D)_resDet=null;// l'àrea ja no és visible (canvi d'exercici o de permisos): torna al resum
+  main.classList.toggle('hidden',!!_resDet);
+  det.classList.toggle('hidden',!_resDet);
+  if(_resDet)resPintaDetall(D);
+}
+function resObre(el){
+  _resDet={t:el.dataset.t,a:el.dataset.a||''};
+  renderResultats();
+  const p=document.getElementById('page-resultats');if(p&&p.scrollIntoView)p.scrollIntoView({block:'start'});
+}
+function resTorna(){
+  _resDet=null;
+  renderResultats();
+  const p=document.getElementById('page-resultats');if(p&&p.scrollIntoView)p.scrollIntoView({block:'start'});
+}
+// Dades del detall obert: apunts en ordre cronològic, total i títol. Mateix filtre que les línies, així el total és el de la línia.
+function _resDetallDades(){
+  const d=_resDet;if(!d)return null;
+  const af=getAnyFiscal();
+  const area=d.a?(DB.config.areas||[]).find(x=>x.id===d.a):null;
+  if(d.a&&!area)return null;
+  const files=_resMovs(af).movs.filter(m=>m.tipus===d.t&&(!d.a||m.areaId===d.a))
+    .sort((x,y)=>pvIso(x.data).localeCompare(pvIso(y.data)));
+  const total=pvArr(files.reduce((s,m)=>s+(parseFloat(m.import)||0),0));
+  const queEs=d.t==='ing'?'Ingressos':'Despeses';
+  return{af:af,files:files,total:total,queEs:queEs,areaNom:area?area.name:'Totes les àrees',
+    titol:queEs+' · '+(area?area.name:'Totes les àrees')};
+}
+function resPintaDetall(D){
+  D=D||_resDetallDades();
+  const el=document.getElementById('res-detall');if(!el||!D)return;
+  const ing=_resDet.t==='ing',col=ing?'var(--green)':'var(--red)',sig=ing?'+':'-';
+  const filesH=D.files.map(function(m){
+    return'<tr style="white-space:nowrap">'+
+      '<td>'+esc(m.data)+'</td>'+
+      '<td style="max-width:260px;overflow:hidden;text-overflow:ellipsis" title="'+esc((m.concepte||'')+(m.establiment?' · '+m.establiment:''))+'">'+esc(m.concepte||'—')+(m.establiment?' <span style="color:var(--text3)">&#183; '+esc(m.establiment)+'</span>':'')+'</td>'+
+      (_resDet.a?'':'<td style="color:var(--text2)">'+esc(m.areaNom||'')+'</td>')+
+      '<td style="color:var(--text2)">'+esc(m.delegacioNom||'—')+'</td>'+
+      '<td style="color:var(--text2);max-width:140px;overflow:hidden;text-overflow:ellipsis">'+esc(m.eventNom||'—')+'</td>'+
+      '<td>'+esc(m.via||'—')+'</td>'+
+      '<td style="color:var(--text2);max-width:140px;overflow:hidden;text-overflow:ellipsis">'+esc(m.responsable||'—')+'</td>'+
+      '<td style="text-align:right;font-weight:500;color:'+col+'">'+sig+fmtD(m.import)+'</td>'+
+      '<td>'+(m.ticketUrl?'<button class="btn" data-mid="'+esc(m.id)+'" onclick="obreJustificant(this.dataset.mid)" style="font-size:11px;padding:3px 8px;color:var(--accent)" title="Veure justificant"><i class="ti ti-paperclip"></i></button>':'')+'</td>'+
+    '</tr>';
+  }).join('');
+  const nCols=_resDet.a?8:9;
+  el.innerHTML=
+    '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">'+
+      '<button class="btn" onclick="resTorna()"><i class="ti ti-arrow-left"></i> Tornar a l\'Estat de Resultats</button>'+
+      '<button class="btn" onclick="resExporta(\'xlsx\')"><i class="ti ti-file-spreadsheet"></i> Exportar Excel</button>'+
+      '<button class="btn" onclick="resExporta(\'csv\')"><i class="ti ti-download"></i> Exportar CSV</button>'+
+    '</div>'+
+    '<div class="card"><div class="card-title">'+esc(D.titol)+'<span>Any fiscal '+esc(D.af)+' · '+D.files.length+(D.files.length===1?' apunt':' apunts')+' · sense traspassos</span></div>'+
+    (D.files.length?
+      '<div style="overflow-x:auto"><table><thead><tr style="white-space:nowrap"><th>Data</th><th>Concepte</th>'+(_resDet.a?'':'<th>Àrea</th>')+'<th>Delegació</th><th>Event</th><th>Via</th><th>Responsable</th><th style="text-align:right">Import</th><th></th></tr></thead><tbody>'+filesH+
+      '</tbody><tfoot><tr style="font-weight:500;white-space:nowrap"><td colspan="'+(nCols-2)+'">Total '+D.queEs.toLowerCase()+'</td><td style="text-align:right;color:'+col+'">'+sig+fmtD(D.total)+'</td><td></td></tr></tfoot></table></div>'
+    :'<div style="color:var(--text3);font-size:12px">Cap apunt</div>')+
+    '</div>';
+}
+function _resNomFitxer(D,ext){
+  const net=function(s){return String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^A-Za-z0-9]+/g,'_').replace(/^_+|_+$/g,'');};
+  return 'resultats_'+(D.queEs==='Ingressos'?'ingressos':'despeses')+'_'+net(D.areaNom)+'_'+net(D.af)+'.'+ext;
+}
+function resExporta(format){
+  const D=_resDetallDades();if(!D){showToast('No hi ha detall obert',true);return;}
+  const cap=['Data','Concepte','Establiment','Àrea','Delegació','Event','Via','Responsable','Import'];
+  if(format==='xlsx'){
+    if(typeof XLSX==='undefined'){showToast('Excel no disponible: la llibreria no s\'ha carregat. Prova el CSV.',true);return;}
+    const num=function(v){return{t:'n',v:parseFloat(v)||0,z:'#,##0.00'};};
+    const aoa=[[D.titol+' · any fiscal '+D.af],[],cap];
+    D.files.forEach(function(m){
+      const iso=pvIso(m.data),ok=/^\d{4}-\d{2}-\d{2}$/.test(iso);
+      // La data com a número de sèrie d'Excel (dies des de 1899-12-30), perquè ordene i filtre com una data
+      const dt=ok?{t:'n',v:Date.UTC(+iso.slice(0,4),+iso.slice(5,7)-1,+iso.slice(8,10))/86400000+25569,z:'dd/mm/yyyy'}:(m.data||'');
+      aoa.push([dt,m.concepte||'',m.establiment||'',m.areaNom||'',m.delegacioNom||'',m.eventNom||'',m.via||'',m.responsable||'',num(m.import)]);
+    });
+    aoa.push(['Total','','','','','','','',num(D.total)]);
+    const ws=XLSX.utils.aoa_to_sheet(aoa);
+    ws['!cols']=[{wch:11},{wch:42},{wch:24},{wch:24},{wch:22},{wch:22},{wch:14},{wch:20},{wch:13}];
+    const wb=XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb,ws,'Detall');
+    XLSX.writeFile(wb,_resNomFitxer(D,'xlsx'));
+    return;
+  }
+  const rows=D.files.map(function(m){return[m.data||'',m.concepte||'',m.establiment||'',m.areaNom||'',m.delegacioNom||'',m.eventNom||'',m.via||'',m.responsable||'',parseFloat(m.import)||0];});
+  rows.push(['Total','','','','','','','',D.total]);
+  const csv=[cap,...rows].map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\n');
+  const a=document.createElement('a');
+  a.href='data:text/csv;charset=utf-8,﻿'+encodeURIComponent(csv);
+  a.download=_resNomFitxer(D,'csv');a.click();
 }
 // Línia de control dels traspassos: no compten com a ingrés ni despesa, i el seu net ha de ser 0.
 function _htmlControlTraspassos(n,net){
@@ -7533,6 +7643,7 @@ const MANUAL={
       <div>• <strong>Ingressos per àrea</strong> — desglossat per cada àrea</div>
       <div>• <strong>Despeses per àrea</strong> — ídem per les despeses</div>
       <div>• <strong>Resultat exercici</strong> — ingressos menys despeses total</div>
+      <div>• <strong>Detall d'una línia</strong> — toca una àrea (o el total) i veuràs tots els apunts que sumen l'import; hi ha un botó per tornar, i per exportar-los a Excel o CSV</div>
       <div>• <strong>Exportar CSV</strong> — descarrega l'informe complet</div>
     </div>`,
   flux:`<h3 style="margin-bottom:12px">Estat de Flux d'Efectiu</h3>
