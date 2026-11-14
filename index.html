@@ -458,7 +458,7 @@ tr:hover td{background:var(--bg2)}
     <div class="login-logo">Falla <span>Portal</span></div>
     <div class="login-sub">Sistema de gestió financera</div>
     <div class="login-fiscal">Any fiscal 26/27 · Abr 2026 – Mar 2027</div>
-    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v4.5.1</div>
+    <div style="font-size:11px;color:var(--text3);margin-top:4px;opacity:.7">v4.5.2</div>
     <div id="login-step-boot" class="login-boot">Comprovant la sessió…</div>
     <div id="login-step-email" class="hidden">
       <label class="login-lbl" for="login-email">Correu electrònic</label>
@@ -511,7 +511,7 @@ tr:hover td{background:var(--bg2)}
     <div class="sb-bottom">
       <div class="sync-ind" style="display:flex;align-items:center;justify-content:space-between"><div style="display:flex;align-items:center;gap:6px"><div class="sync-dot" id="sync-dot"></div><span id="sync-text">Sincronitzat</span></div><button onclick="manualRefresh()" title="Actualitzar dades" style="background:none;border:none;cursor:pointer;padding:2px 4px;color:var(--text2);font-size:14px;line-height:1"><i class="ti ti-refresh"></i></button></div>
       <button class="btn-logout" onclick="signOut()"><i class="ti ti-logout" style="font-size:14px"></i> Tancar sessió</button>
-      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v4.5.1</div>
+      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;opacity:.6">Falla Portal · v4.5.2</div>
     </div>
   </div>
 
@@ -1259,7 +1259,7 @@ tr:hover td{background:var(--bg2)}
   </div>
   <div id="mob-menu-items"></div>
   <div onclick="signOut();closeMobMenu()" style="padding:12px 20px;font-size:14px;display:flex;align-items:center;gap:12px;cursor:pointer;color:var(--red)"><i class="ti ti-logout" style="font-size:18px"></i> Tancar sessió</div>
-  <div style="padding:6px 20px 8px;font-size:11px;color:var(--text3);text-align:center">Falla Portal · v4.5.1</div>
+  <div style="padding:6px 20px 8px;font-size:11px;color:var(--text3);text-align:center">Falla Portal · v4.5.2</div>
 </div>
 
 <div class="modal-overlay" id="modal-fons-confirm">
@@ -1842,7 +1842,9 @@ const REPORTS_DEF=[
   {id:'r1',icon:'ti-lock',          label:'Tancaments caixa'},
   {id:'r2',icon:'ti-arrow-down-left',label:'Fons lliurats'},
   {id:'r3',icon:'ti-calendar-event', label:'Resultat per event'},
-  {id:'r4',icon:'ti-receipt-off',    label:'Sense justificant'}
+  {id:'r4',icon:'ti-receipt-off',    label:'Sense justificant'},
+  // Bancs: saldos i moviments de cada compte. Veu el report qui veu Flux d'efectiu (mòdul `flux`): no és un mòdul propi de la matriu.
+  {id:'r5',icon:'ti-building-bank',  label:'Bancs', modul:'flux'}
 ];
 
 const MODULS_DEF=[
@@ -2563,7 +2565,7 @@ function getMyDelegacions(){
 // NAV DINÀMIC segons permisos
 // Menú de l'app → mòduls de la matriu (D-036). Un element del menú pot dependre de diversos mòduls (Reports = r1…r4).
 const MODUL_MATRIU={dashboard:['dashboard'],moviments:['moviments'],lliurament:['fons'],recarregues:['recarregues'],tancament:['caixa'],'pressupostos-edit':['pressupostos'],compromisos:['compromisos'],
-  historial:['historial'],fallesapp:['fallesapp'],importacio:['importacio'],resultats:['resultats'],flux:['flux'],reports:['r1','r2','r3','r4'],
+  historial:['historial'],fallesapp:['fallesapp'],importacio:['importacio'],resultats:['resultats'],flux:['flux'],reports:['r1','r2','r3','r4','flux'],
   configuracio:['configuracio'],manual:['manual']};
 function navVeu(mid){return(MODUL_MATRIU[mid]||[]).some(modulVeu);}
 // Barra inferior del mòbil: els mòduls visibles que algun rol de la persona hi posa, com a molt 4. La resta, al menú «Més».
@@ -10829,7 +10831,7 @@ var _repTab='r1'; // tab activa per defecte
 
 function renderReports(){
   // Informes visibles segons la matriu: cada report (r1…r4) és un mòdul
-  const tabs=REPORTS_DEF.filter(function(t){return modulVeu(t.id);});
+  const tabs=REPORTS_DEF.filter(function(t){return modulVeu(t.modul||t.id);});
   const bar=document.getElementById('rep-tabs-bar');
   if(bar){
     bar.innerHTML=tabs.map(t=>'<button onclick="repTab(\''+t.id+'\')" id="repbtn-'+t.id+'" style="padding:6px 14px;border-radius:20px;border:none;cursor:pointer;font-size:13px;font-weight:500;display:flex;align-items:center;gap:6px;background:'+(_repTab===t.id?'var(--red)':'var(--bg2)')+';color:'+(_repTab===t.id?'#fff':'var(--text2)')+'"><i class=\"ti '+t.icon+'\"></i>'+t.label+'</button>').join('');
@@ -10856,6 +10858,84 @@ function repTab(id,noRender){
   else if(id==='r2') renderReport2();
   else if(id==='r3') renderReport3();
   else if(id==='r4') renderReport4();
+  else if(id==='r5') renderReport5();
+}
+
+// Report «Bancs»: per a cada compte (bancs, efectiu, TPV) saldo inicial de l'exercici, cobraments, pagaments, traspassos i saldo actual,
+// i el total. Mateix càlcul que Configuració → Bancs i Flux d'efectiu: saldo inicial + ingressos − despeses (els traspassos hi compten, però
+// no són ingrés ni despesa). A l'efectiu hi afegeix la caixa física que hauria d'haver-hi: l'efectiu de l'app inclou els diners que
+// tenen els delegats (i els avançaments pendents hi resten, perquè mai van ser a la caixa).
+function repBancsCalc(bancs,saldos,af,movs,fons){
+  const movsAf=(movs||[]).filter(function(m){return(m.anyFiscal===af||!m.anyFiscal)&&m.via!=='app';});
+  const codis={};
+  const comptes=(bancs||[]).map(function(b){
+    codis[b.codi]=true;
+    const s=(saldos||{})[b.id+'_'+af];
+    const ini=s!=null?parseFloat(s.saldoInicial)||0:parseFloat(b.saldoInicial)||0;
+    const mv=movsAf.filter(function(m){return m.via===b.codi;});
+    const norm=mv.filter(function(m){return!esTraspas(m);});
+    const ing=norm.filter(function(m){return m.tipus==='ing';}).reduce(function(s,m){return s+(parseFloat(m.import)||0);},0);
+    const gast=norm.filter(function(m){return m.tipus==='gast';}).reduce(function(s,m){return s+(parseFloat(m.import)||0);},0);
+    const tras=netTraspassos(mv);
+    let ultim='';mv.forEach(function(m){const d=pvIso(m.data);if(d>ultim)ultim=d;});
+    return{b:b,ini:pvArr(ini),ing:pvArr(ing),gast:pvArr(gast),tras:pvArr(tras),nTras:mv.filter(esTraspas).length,nMov:mv.length,ultim:ultim,saldo:pvArr(ini+ing-gast+tras)};
+  });
+  const sumaTipus=function(tipus){
+    const c=comptes.filter(function(x){return tipus.indexOf(x.b.tipus)>=0;});
+    return{ini:pvArr(c.reduce(function(s,x){return s+x.ini;},0)),saldo:pvArr(c.reduce(function(s,x){return s+x.saldo;},0))};
+  };
+  const sense=movsAf.filter(function(m){return!codis[m.via];});
+  const fonsDelegats=pvArr((fons||[]).filter(function(f){return f.delegEmail!=='_event';}).reduce(function(s,f){
+    const v=parseFloat(f.import)||0;
+    return s+(f.tipus==='lliurament'||f.tipus==='reintegrament'?v:(f.tipus==='gast_fons'||f.tipus==='devolucio'||f.tipus==='avanc'?-v:0));
+  },0));
+  const ini=pvArr(comptes.reduce(function(s,x){return s+x.ini;},0)),saldo=pvArr(comptes.reduce(function(s,x){return s+x.saldo;},0));
+  return{comptes:comptes,ini:ini,saldo:saldo,variacio:pvArr(saldo-ini),bancs:sumaTipus(['bank']),efectiu:sumaTipus(['cash']),tpv:sumaTipus(['tpv']),
+    fonsDelegats:fonsDelegats,senseCompte:{n:sense.length,import:pvArr(sense.reduce(function(s,m){return s+(m.tipus==='ing'?1:-1)*(parseFloat(m.import)||0);},0))},
+    nTras:movsAf.filter(esTraspas).length,netTras:netTraspassos(movsAf)};
+}
+function renderReport5(){
+  const af=getAnyFiscal();
+  const r=repBancsCalc((DB.config&&DB.config.bancs)||[],DB.saldos||{},af,DB.moviments||[],DB.fons||[]);
+  const fmtS=function(v){return(v>=0?'+':'-')+fmtD(v);};// amb cèntims (el fmtS global arrodoneix a euros)
+  const col=function(v){return v>=0?'var(--green)':'var(--red)';};
+  const fila=function(et,val,estil){return'<div class="flow-row"'+(estil?' style="'+estil+'"':'')+'><span style="color:var(--text2)">'+et+'</span><span style="font-weight:500">'+val+'</span></div>';};
+  let html='<div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap"><span class="af-badge"><i class="ti ti-calendar" style="font-size:14px"></i> Any fiscal '+esc(af)+'</span></div>';
+  html+='<div class="metrics" style="margin-bottom:16px">'
+    +'<div class="metric"><div class="metric-label">Saldo inicial</div><div class="metric-value">'+fmtD(r.ini)+'</div></div>'
+    +'<div class="metric"><div class="metric-label">Saldo actual</div><div class="metric-value '+(r.saldo>=0?'ok':'danger')+'">'+fmtD(r.saldo)+'</div></div>'
+    +'<div class="metric"><div class="metric-label">Variació</div><div class="metric-value" style="color:'+col(r.variacio)+'">'+fmtS(r.variacio)+'</div></div>'
+    +'</div>';
+  // Resum per tipus de compte
+  html+='<div class="card"><div class="card-title">Resum</div>';
+  [['Bancs',r.bancs],['Caixa efectiu',r.efectiu],['TPV',r.tpv]].forEach(function(x){
+    const v=x[1];
+    html+='<div class="flow-row"><span>'+x[0]+'</span><span><span style="color:var(--text3);font-size:12px;margin-right:10px">'+fmtD(v.ini)+' → </span><b>'+fmtD(v.saldo)+'</b>'
+      +' <span style="color:'+col(v.saldo-v.ini)+';font-size:12px;margin-left:6px">'+fmtS(v.saldo-v.ini)+'</span></span></div>';
+  });
+  html+='</div>';
+  // Un quadre per compte
+  r.comptes.forEach(function(c){
+    const icon=c.b.tipus==='bank'?'ti-building-bank':c.b.tipus==='cash'?'ti-wallet':'ti-credit-card';
+    html+='<div class="card"><div class="card-title" style="text-align:left"><i class="ti '+icon+'" style="margin-right:6px"></i>'+esc(c.b.nom)+' <span style="font-weight:400;color:var(--text3);font-size:12px">· '+esc(c.b.codi)+(c.b.compte?' · '+esc(c.b.compte):'')+'</span></div>'
+      +fila('Saldo inicial',fmtD(c.ini))
+      +(c.ing?fila('Cobraments','<span style="color:var(--green)">+'+fmtD(c.ing)+'</span>'):'')
+      +(c.gast?fila('Pagaments','<span style="color:var(--red)">-'+fmtD(c.gast)+'</span>'):'')
+      +(c.nTras?fila('Traspassos entre comptes (net, '+c.nTras+' apunts)',c.tras?fmtS(c.tras):'0,00 €'):'')
+      +'<div class="flow-row" style="font-weight:600;border-top:1px solid var(--border2);margin-top:4px;padding-top:8px"><span>Saldo actual</span><span style="color:'+col(c.saldo)+'">'+fmtD(c.saldo)+'</span></div>'
+      +fila('Variació des de l\'inici',fmtS(c.saldo-c.ini),'font-size:12px')
+      +fila('Últim apunt',c.ultim?esc(fmtDateInput(c.ultim)):'—','font-size:12px');
+    if(c.b.tipus==='cash'){
+      const fisica=pvArr(c.saldo-r.fonsDelegats);
+      html+='<div style="font-size:12px;margin-top:8px;padding-top:8px;border-top:0.5px solid var(--border);color:var(--text2);line-height:1.6">'
+        +'L\'efectiu de l\'app inclou els diners que tenen els delegats. Fons en mans dels delegats (amb els avançaments pendents restats): <b>'+fmtS(r.fonsDelegats)+'</b>. '
+        +'Caixa física que hi hauria de ser: <b>'+fmtD(fisica)+'</b>. Si el recompte és diferent, falta algun apunt d\'efectiu.</div>';
+    }
+    html+='</div>';
+  });
+  if(r.senseCompte.n)html+='<div class="card" style="color:var(--amber);font-size:12px"><i class="ti ti-alert-triangle"></i> '+r.senseCompte.n+' moviments amb una via que no és cap compte donat d\'alta (net '+fmtS(r.senseCompte.import)+'): no compten a cap saldo.</div>';
+  if(r.nTras)html+='<div class="card">'+_htmlControlTraspassos(r.nTras,r.netTras)+'</div>';
+  document.getElementById('rep-container').innerHTML=html;
 }
 
 function renderReport1(){

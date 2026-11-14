@@ -1223,3 +1223,16 @@ punt de partida és el real del 25/26 i el 26/27 per als recurrents i habituals;
   - És un **valor de quadrament, no un recompte d'obertura**: només val si tots els moviments d'efectiu fins al dia del recompte estan declarats (assumit per Emilio). Una despesa en efectiu amb data ≤ 14/11 que aparega després **puja** el saldo inicial en eixe import; un ingrés el **baixa**. Els moviments posteriors al recompte no el toquen.
   - **Precisió sobre D-022**: «caixa física + saldos positius dels delegats» no tenia en compte els avançaments pendents; la fórmula exacta usa tots els saldos amb signe. Amb les dades d'avui la diferència és 1.369,39 € (16.836,62 € amb només els positius, contra 15.467,23 €).
   - L'efectiu que acabava el 25/26 passa de 17.856 € a 15.467,23 €: els pagaments en efectiu no registrats del 25/26 pugen 2.388,77 € (≥ 134.306,97 €) i el resultat real del 25/26 continua sent només conegut per al banc (`PLA_PREVISIO_TRESORERIA.md` §10).
+
+---
+
+### D-062: Report «Bancs» a la pantalla Reports, sota el permís de Flux d'efectiu
+**Date**: 2026-11-14
+**Status**: Accepted · v4.5.2
+**Context**: Emilio (14/11) va demanar un report amb els saldos de tots els comptes (el que mostra Configuració → Bancs) accessible a la pantalla Reports, només per consultar.
+**Decision**:
+  1. Pestanya nova `r5` «Bancs» a `REPORTS_DEF`, amb la funció pura `repBancsCalc` (mateix càlcul que Configuració → Bancs i Flux: saldo inicial + ingressos − despeses, amb els traspassos dins el saldo) i `renderReport5`. Mostra el resum per tipus, una targeta per compte, la caixa física esperada a l'efectiu (saldo de l'app − Σ fons dels delegats amb signe, D-061) i la línia de control dels traspassos.
+  2. **Sense mòdul nou a la matriu**: la pestanya usa el permís del mòdul `flux` (camp `modul` a `REPORTS_DEF`) i el menú Reports també es mostra a qui només té `flux`. Així no cal migració ni canviar rols: els saldos de tots els comptes els veu qui ja veia Flux d'efectiu (President, Tresoreria). Si més endavant cal un permís propi, es crearà el mòdul `r5` amb una migració com la de `cens_moduls`.
+**Consequences**:
+  - Només lectura; no escriu res ni toca la base de dades. Provat amb l'app i la base reals (pont): President i Tresoreria el veuen, l'àrea i el delegat no; totals iguals als de Configuració → Bancs.
+  - El report mostra l'avís dels 26 traspassos (net −10.000 €): la sortida del 03 Banc del 25/10 no té l'entrada de l'altre costat; Emilio no sap encara a quin compte va.

@@ -132,6 +132,7 @@ traspassos i avisen si el net no és 0 (falta un costat o un extracte). La marca
 Tresoreria la poden posar o treure a mà. Les exportacions CSV els etiqueten
 "Traspas (entrada)/(eixida)".
 **Status**: R1–R4 implementats. R5–R8 pendents.
+**Report «Bancs»** (v4.5.2, D-062; al codi és la pestanya `r5`, no el R5 d'aquest pla): per a cada compte (bancs, efectiu i TPV) saldo inicial de l'exercici, cobraments, pagaments, traspassos (net), saldo actual, variació i últim apunt, amb el total i un resum per tipus; a l'efectiu, la caixa física que hi hauria de ser (saldo de l'app − fons en mans dels delegats, amb els avançaments pendents restats). Mostra la línia de control dels traspassos. Només consulta; el veu qui veu Flux d'efectiu.
 
 ---
 
