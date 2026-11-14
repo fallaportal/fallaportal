@@ -126,6 +126,7 @@ Cremà (19/03) i el 31/03 serveixen per liquidar els pendents de Falles dins del
   l'avançament personal sí; el Reintegrament només puja el saldo del delegat. Els diners que ixen del banc cap a un
   delegat o la caixa (xec, transferència) s'apunten com a traspàs a Administració · Tresoreria (sortida del banc +
   entrada a l'efectiu), mai com a despesa. Els diners que els delegats tenen a les mans compten dins la Caixa efectiu.
+- **Caixa efectiu = caixa física + suma dels saldos dels delegats, amb el signe** (D-061): l'avançament personal fa apunt d'efectiu però els diners mai van ser a la caixa, i el saldo negatiu del delegat ho compensa. Recompte del 14/11/2026: 1.380,00 € físics; saldo inicial de l'efectiu del 26/27 = 15.467,23 € (deduït, assumint tots els moviments declarats; abans 17.856,00 €). Un moviment d'efectiu ≤ 14/11 no declarat el desquadra (despesa: puja; ingrés: baixa).
 - **Convenció dels traspassos entre comptes**: els dos costats s'apunten a Administració i Secretaria · Tresoreria
   (`TRASPASO PROPIO`), de manera que el resultat per àrea és zero.
 - Un xec de l'extracte (`CARG.CHEQUE nnnnnn`) pot ser una retirada d'efectiu, diners per a un delegat o un pagament

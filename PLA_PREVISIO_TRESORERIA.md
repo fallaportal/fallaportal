@@ -219,10 +219,10 @@ Troballes:
    −0,01 € per arrodoniment; 02 Banc, 600,60 €: la correcció del 27/10, que l'export encara no porta). Resultat dels bancs al
    25/26: **+4.157,70 €**.
 2. **El costat de l'efectiu no serveix de base**: al 25/26 hi ha 149.943,20 € de recàrregues en efectiu de falles.app i només
-   669 € de pagaments en efectiu registrats. Amb 17.856 € a l'1/4/2026, **com a mínim 131.918,20 € de pagaments en efectiu no es
+   669 € de pagaments en efectiu registrats. Amb 15.467,23 € a l'1/4/2026 (D-061; abans 17.856 €), **com a mínim 134.306,97 € de pagaments en efectiu no es
    van registrar** (més el que hi haguera a l'1/4/2025, que l'app no té, A-28). La despesa del bar, el casal i els events pagada
    en efectiu s'ha d'estimar amb el 26/27 (caixes i fons ja es registren) i amb la tresoreria. El «resultat» del 25/26 segons
-   l'app (+121.964,69 €) no és real; el real és +4.157,70 € + (17.856 € − efectiu a l'1/4/2025, que no se sap).
+   l'app (+121.964,69 €) no és real; el real és +4.157,70 € + (15.467,23 € − efectiu a l'1/4/2025, que no se sap).
 3. **Calendari d'ingressos**: quatre remeses de quotes de ≈ 28.100–29.500 € (mitjan maig, agost, novembre i febrer; 116.698 € en
    total, més 11.226 € de pagaments individuals i −3.101 € de devolucions); loteria al novembre; recàrregues de falles.app de
    gener a març; vendes amb targeta als events sobretot al novembre, desembre i març.

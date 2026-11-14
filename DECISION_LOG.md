@@ -1207,3 +1207,19 @@ punt de partida és el real del 25/26 i el 26/27 per als recurrents i habituals;
 **Consequences**:
   - Amb les dades del 10/11, tot inclòs (loteria completa i compra a Farda): el pla baixa del mínim al **desembre (−4.466 €)**, al **gener (−11.833 €)** i al **febrer (−306 €)**; no hi ha marge per a cap despesa fins al març, quan es poden gastar fins a **23.880 €** (març o abril). Saldo del 30/04: 64.292 €.
   - 122 proves en Node. Verificat a l'app real amb la base real (pont de només lectura).
+
+---
+
+### D-061: El saldo inicial de la Caixa efectiu del 26/27 es dedueix del recompte físic (15.467,23 €)
+**Date**: 2026-11-14
+**Status**: Accepted · aplicat a la base (`saldos_inicials`, compte `b3`, exercici `26/27`)
+**Context**: El saldo inicial de l'efectiu del 26/27 era 17.856,00 €, aproximat (per a l'efectiu no hi ha extracte que el confirme). Emilio (14/11) va comptar la caixa física: **1.380,00 €**, sense els diners dels delegats (recompte confirmat per ell), i va demanar calcular què hi havia a l'1/4/2026 assumint que tots els moviments d'efectiu estan declarats.
+**Decision**:
+  1. **Fórmula**: el saldo de la Caixa efectiu a l'app = caixa física + suma dels saldos dels delegats **amb el seu signe**. Lliurament, despesa contra fons, devolució, avançament i reintegrament mantenen eixa igualtat: l'avançament fa apunt d'efectiu però els diners mai van ser a la caixa, i el saldo negatiu del delegat ho compensa. Per tant: **saldo inicial = (caixa física + Σ saldos dels delegats) − moviment net de l'efectiu des de l'1/4 fins al dia del recompte**.
+  2. **Xifres (14/11; últim apunt d'efectiu, del 13/11)**: ingressos 34.409,40 € − despeses 46.431,89 € = −12.022,49 €. Saldos dels delegats +2.064,74 € (positius: Noelia 2.891,13, Gema 355, Antonio Javier 100, Maria José 88; negatius: Juanba −1.230, Juanjo −88,17, Arturo −40, Emilio David −11,22; al 25/26 tots a 0). Efectiu en llibre = 1.380 + 2.064,74 = 3.444,74 €; **saldo inicial = 3.444,74 + 12.022,49 = 15.467,23 €**, 2.388,77 € menys que els 17.856,00 € d'abans (amb aquell, el llibre esperava 3.768,77 € a la caixa física i se'n van comptar 1.380).
+  3. Aplicat: `update` d'una sola fila de `saldos_inicials` en transacció (només `modificat_at`; `modificat_per` té clau forana a `usuaris` i no es va assignar a ningú).
+  4. **Regularització de Juanjo**: al llibre no hi ha cap moviment d'efectiu de regularització a nom seu; només dos registres de fons que no fan apunt: el lliurament de 4.352,00 € (24/9, «Regularització de despeses») i la devolució de 205,00 € (24/10, «Regularitzacio»). Emilio la descriu com una entrega d'efectiu via lliurament de fons, i així ja està registrada; no toca el saldo d'efectiu del llibre.
+**Consequences**:
+  - És un **valor de quadrament, no un recompte d'obertura**: només val si tots els moviments d'efectiu fins al dia del recompte estan declarats (assumit per Emilio). Una despesa en efectiu amb data ≤ 14/11 que aparega després **puja** el saldo inicial en eixe import; un ingrés el **baixa**. Els moviments posteriors al recompte no el toquen.
+  - **Precisió sobre D-022**: «caixa física + saldos positius dels delegats» no tenia en compte els avançaments pendents; la fórmula exacta usa tots els saldos amb signe. Amb les dades d'avui la diferència és 1.369,39 € (16.836,62 € amb només els positius, contra 15.467,23 €).
+  - L'efectiu que acabava el 25/26 passa de 17.856 € a 15.467,23 €: els pagaments en efectiu no registrats del 25/26 pugen 2.388,77 € (≥ 134.306,97 €) i el resultat real del 25/26 continua sent només conegut per al banc (`PLA_PREVISIO_TRESORERIA.md` §10).
