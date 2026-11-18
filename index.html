@@ -5024,7 +5024,7 @@ function renderFonsCard(u){
         '<div style="font-size:11px;color:var(--text2)">'+(u.arees||[]).map(function(id){const a=DB.config.areas.find(function(x){return x.id===id;});return a?a.name:id;}).join(', ')+'</div>'+
       '</div>'+
       '<div style="text-align:right">'+
-        '<div style="font-size:18px;font-weight:500;color:'+(saldo<0?'var(--red)':saldo===0?'var(--text2)':'var(--green)')+'">'+fmt(Math.abs(saldo))+'</div>'+
+        '<div style="font-size:18px;font-weight:500;color:'+(saldo<0?'var(--red)':saldo===0?'var(--text2)':'var(--green)')+'">'+fmtD(saldo)+'</div>'+
         '<div style="font-size:10px;color:var(--text3)">'+(saldo<0?'excedit':saldo===0?'liquidat':'disponible')+'</div>'+
       '</div>'+
       '<i class="ti '+(expanded?'ti-chevron-up':'ti-chevron-down')+'" style="color:var(--text3);font-size:16px"></i>'+
