@@ -1212,7 +1212,7 @@ punt de partida és el real del 25/26 i el 26/27 per als recurrents i habituals;
 
 ### D-061: El saldo inicial de la Caixa efectiu del 26/27 es dedueix del recompte físic (15.467,23 €)
 **Date**: 2026-11-14
-**Status**: Accepted · aplicat a la base (`saldos_inicials`, compte `b3`, exercici `26/27`)
+**Status**: Accepted · aplicat a la base (`saldos_inicials`, compte `b3`, exercici `26/27`) · superat en el valor per D-064 (15.379,23 €)
 **Context**: El saldo inicial de l'efectiu del 26/27 era 17.856,00 €, aproximat (per a l'efectiu no hi ha extracte que el confirme). Emilio (14/11) va comptar la caixa física: **1.380,00 €**, sense els diners dels delegats (recompte confirmat per ell), i va demanar calcular què hi havia a l'1/4/2026 assumint que tots els moviments d'efectiu estan declarats.
 **Decision**:
   1. **Fórmula**: el saldo de la Caixa efectiu a l'app = caixa física + suma dels saldos dels delegats **amb el seu signe**. Lliurament, despesa contra fons, devolució, avançament i reintegrament mantenen eixa igualtat: l'avançament fa apunt d'efectiu però els diners mai van ser a la caixa, i el saldo negatiu del delegat ho compensa. Per tant: **saldo inicial = (caixa física + Σ saldos dels delegats) − moviment net de l'efectiu des de l'1/4 fins al dia del recompte**.
@@ -1251,3 +1251,19 @@ punt de partida és el real del 25/26 i el 26/27 per als recurrents i habituals;
   - Només lectura; cap canvi de dades ni d'esquema, sense migració.
   - El botó Enrere del telèfon no torna del detall al resum (la memòria de navegació és per pantalles); cal el botó de dins la pantalla.
   - Verificat al navegador amb dades simulades (àrea i total, tornar, reinici en canviar de pantalla, exportacions, HTML escapat, sense errors a la consola); no s'ha provat amb la base real.
+
+### D-064: Els 88 € de recàrregues de Maria José ja eren a la caixa en el recompte; correcció del saldo inicial de l'efectiu (15.379,23 €) i de les recàrregues dels reintegraments
+**Date**: 2026-11-18
+**Status**: Accepted · aplicat a la base el 18/11/2026 (transacció guardada: només es confirmava amb caixa física = 1.380,00 €)
+**Context**: Després del recompte (1.380,00 €) l'informe Bancs donava 980,00 € de caixa física esperada, 400,00 € menys. Hi havia tres registres de fons del 17/11 sense apunt d'efectiu: dos reintegraments d'origen `caixa` (Juanba 400 €, «contra recàrrega»; Juanjo 88 €, «recàrrega») i la devolució de 88 € de Maria José (04/11, «A Antonio Javier»).
+**Decision**:
+  1. **Juanba i Juanjo**: eren recàrregues de saldo de l'app que ells mateixos van fer i van descomptar del que la falla els deu, no diners que isquen de la caixa. S'han esborrat els dos reintegraments i s'han declarat com a recàrregues (ingrés d'efectiu + lliurament de fons a la mateixa operació, 17/11): Juanba 400 € (saldo −830,00 €), Juanjo 88 € (saldo −0,17 €). Aplicat el 18/11 amb nota d'auditoria.
+  2. **Maria José i Antonio Javier — fets confirmats per Emilio**: Maria José va fer recàrregues per un total de **88 €**, els va tindre a la seua mà (lliurament de fons del 03/10, «Cerregues APP») i els va entregar a Antonio Javier **abans del recompte**. Antonio Javier els va posar físicament a la caixa però no va declarar res; per això a l'app el saldo seguia a nom de Maria José. La devolució de 88 € del 04/11 (registrada el 17/11) és el registre correcte: **no genera cap lliurament a Antonio Javier**, i els 88 € ja formaven part dels 1.380 € comptats.
+  3. **Correcció de D-061**: D-061 va sumar eixos 88 € dues voltes (dins de la caixa física i com a saldo positiu de Maria José). Amb la devolució registrada, el saldo de la Caixa efectiu el 14/11 és 1.380 + (2.064,74 − 88) = 3.356,74 €, i el **saldo inicial és 3.356,74 + 12.022,49 = 15.379,23 €** (88 € menys que els 15.467,23 €).
+  4. **Aplicat**: esborrat el lliurament de 88 € a Antonio Javier (afegit per error el mateix 18/11) i la seua operació; `saldos_inicials` del compte `b3` al 26/27 passa de 15.467,23 € a 15.379,23 €; la nota de la devolució de Maria José diu «Recàrregues entregades a Antonio Javier, que les va posar a la caixa abans del recompte del 14/11». Antonio Javier no té cap registre de fons: els diners no eren seus.
+**Consequences**:
+  - Resultat verificat a la base: Caixa efectiu 1.169,24 €, fons dels delegats −210,76 €, caixa física 1.380,00 €.
+  - El resultat real del 25/26 queda 88 € més alt del que deia D-061 (els pagaments en efectiu no registrats del 25/26 pugen 2.300,77 € en lloc de 2.388,77 €).
+  - Una recàrrega o un reintegrament no s'han de confondre: un reintegrament origen `caixa` diu que han eixit diners de la caixa; si el delegat es queda efectiu de recàrregues, cal declarar la recàrrega.
+
+---
