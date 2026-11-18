@@ -11295,10 +11295,10 @@ function renderReport2(){
 
   html+='<div class="metrics" style="margin-bottom:16px">';
   html+='<div class="metric"><div class="metric-label">Delegats</div><div class="metric-value">'+rows.length+'</div></div>';
-  html+='<div class="metric"><div class="metric-label">Total lliurat</div><div class="metric-value">'+fmt(totLl)+'</div></div>';
-  html+='<div class="metric"><div class="metric-label">Total gastat</div><div class="metric-value danger">'+fmt(totGast)+'</div></div>';
-  html+='<div class="metric"><div class="metric-label">Total retornat</div><div class="metric-value ok">'+fmt(totDev)+'</div></div>';
-  html+='<div class="metric" style="background:'+(totSaldo===0?'var(--green)':totSaldo>0?'var(--amber)':'var(--red)')+'"><div class="metric-label" style="color:rgba(255,255,255,0.8)">Fons en circulació</div><div class="metric-value" style="color:#fff">'+fmt(totSaldo)+'</div></div>';
+  html+='<div class="metric"><div class="metric-label">Total lliurat</div><div class="metric-value">'+fmtD(totLl)+'</div></div>';
+  html+='<div class="metric"><div class="metric-label">Total gastat</div><div class="metric-value danger">'+fmtD(totGast)+'</div></div>';
+  html+='<div class="metric"><div class="metric-label">Total retornat</div><div class="metric-value ok">'+fmtD(totDev)+'</div></div>';
+  html+='<div class="metric" style="background:'+(totSaldo===0?'var(--green)':totSaldo>0?'var(--amber)':'var(--red)')+'"><div class="metric-label" style="color:rgba(255,255,255,0.8)">Fons en circulació</div><div class="metric-value" style="color:#fff">'+fmtD(totSaldo)+'</div></div>';
   html+='</div>';
 
   if(!rows.length){
@@ -11324,10 +11324,10 @@ function renderReport2(){
     html+='<tbody>';
     html+='<tr style="background:'+bg+';cursor:pointer" onclick="var el=document.getElementById(\'rep2det'+i+'\');el.style.display=el.style.display===\'none\'?\'table-row-group\':\'none\'">';
     html+='<td style="padding:8px 10px;border-bottom:1px solid var(--border);font-weight:500">'+esc(r.nom)+'</td>';
-    html+='<td style="padding:8px 10px;border-bottom:1px solid var(--border);text-align:right">'+fmt(r.lliuraments)+'</td>';
-    html+='<td style="padding:8px 10px;border-bottom:1px solid var(--border);text-align:right">'+fmt(r.gastFons)+'</td>';
-    html+='<td style="padding:8px 10px;border-bottom:1px solid var(--border);text-align:right">'+fmt(r.devolucions)+'</td>';
-    html+='<td style="padding:8px 10px;border-bottom:1px solid var(--border);text-align:right;font-weight:600;color:'+sCol+'">'+fmt(r.saldo)+'</td>';
+    html+='<td style="padding:8px 10px;border-bottom:1px solid var(--border);text-align:right">'+fmtD(r.lliuraments)+'</td>';
+    html+='<td style="padding:8px 10px;border-bottom:1px solid var(--border);text-align:right">'+fmtD(r.gastFons)+'</td>';
+    html+='<td style="padding:8px 10px;border-bottom:1px solid var(--border);text-align:right">'+fmtD(r.devolucions)+'</td>';
+    html+='<td style="padding:8px 10px;border-bottom:1px solid var(--border);text-align:right;font-weight:600;color:'+sCol+'">'+fmtD(r.saldo)+'</td>';
     html+='<td style="padding:8px 10px;border-bottom:1px solid var(--border);text-align:center;color:var(--text3)"><i class="ti ti-chevron-down"></i></td>';
     html+='</tr>';
     html+='</tbody>';
@@ -11339,7 +11339,7 @@ function renderReport2(){
       html+='<td style="padding:5px 20px;color:var(--text2)">'+esc(d.data||'—')+'</td>';
       html+='<td style="padding:5px 10px;color:var(--text2)">'+esc(tipusLabel[d.tipus]||d.tipus)+'</td>';
       html+='<td style="padding:5px 10px;color:var(--text3)">'+esc(d.nota||'—')+'</td>';
-      html+='<td style="padding:5px 20px;text-align:right;font-weight:500">'+fmt(d.import||0)+'</td>';
+      html+='<td style="padding:5px 20px;text-align:right;font-weight:500">'+fmtD(d.import||0)+'</td>';
       html+='</tr>';
     });
     html+='</table></td></tr>';
@@ -11347,10 +11347,10 @@ function renderReport2(){
   });
   html+='<tbody><tr style="background:var(--bg2);font-weight:700">';
   html+='<td style="padding:8px 10px;border-top:2px solid var(--border)">TOTAL</td>';
-  html+='<td style="padding:8px 10px;border-top:2px solid var(--border);text-align:right">'+fmt(totLl)+'</td>';
-  html+='<td style="padding:8px 10px;border-top:2px solid var(--border);text-align:right">'+fmt(totGast)+'</td>';
-  html+='<td style="padding:8px 10px;border-top:2px solid var(--border);text-align:right">'+fmt(totDev)+'</td>';
-  html+='<td style="padding:8px 10px;border-top:2px solid var(--border);text-align:right;color:'+(totSaldo===0?'var(--green)':totSaldo>0?'var(--amber)':'var(--red)')+'">'+fmt(totSaldo)+'</td>';
+  html+='<td style="padding:8px 10px;border-top:2px solid var(--border);text-align:right">'+fmtD(totLl)+'</td>';
+  html+='<td style="padding:8px 10px;border-top:2px solid var(--border);text-align:right">'+fmtD(totGast)+'</td>';
+  html+='<td style="padding:8px 10px;border-top:2px solid var(--border);text-align:right">'+fmtD(totDev)+'</td>';
+  html+='<td style="padding:8px 10px;border-top:2px solid var(--border);text-align:right;color:'+(totSaldo===0?'var(--green)':totSaldo>0?'var(--amber)':'var(--red)')+'">'+fmtD(totSaldo)+'</td>';
   html+='<td style="padding:8px 10px;border-top:2px solid var(--border)"'+(perm('canConfig')?' colspan="2"':'')+' ></td>';
   html+='</tr></tbody>';
   html+='</table></div>';
